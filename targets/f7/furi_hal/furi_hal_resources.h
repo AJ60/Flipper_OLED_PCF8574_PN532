@@ -244,6 +244,10 @@ GND - GND
 // #define NFC_IRQ_Pin       LL_GPIO_PIN_2
 // #define NFC_IRQ_GPIO_Port GPIOA
 
+// OLED I2C1 (PA9 SCL, PB9 SDA)
+#define DISPLAY_I2C (&furi_hal_i2c_handle_1)  // I2C1
+#define DISPLAY_I2C_ADDR 0x3C  // Стандарт SSD1306 (или 0x3D)
+
 #define I2C_1_SCL_Pin       LL_GPIO_PIN_9
 #define I2C_1_SCL_GPIO_Port GPIOA
 #define I2C_1_SDA_Pin       LL_GPIO_PIN_9

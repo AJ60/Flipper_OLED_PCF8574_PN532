@@ -422,11 +422,20 @@ int32_t subghz_app(char* p) {
                 view_dispatcher_stop(subghz->view_dispatcher);
             }
         }
-    } else {
+} else {
         view_dispatcher_attach_to_gui(
             subghz->view_dispatcher, subghz->gui, ViewDispatcherTypeFullscreen);
         furi_string_set(subghz->file_path, SUBGHZ_APP_FOLDER);
-        if(subghz_txrx_is_database_loaded(subghz->txrx)) {
+
+        // Проверка наличия CC1101
+        if(!furi_hal_subghz_is_alive()) {
+            scene_manager_set_scene_state(
+                subghz->scene_manager, SubGhzSceneShowError, SubGhzCustomEventManagerSet);
+            furi_string_set(
+                subghz->error_str,
+                "No CC1101 module\nconnected.\nPlease attach\nradio module.");
+            scene_manager_next_scene(subghz->scene_manager, SubGhzSceneShowError);
+        } else if(subghz_txrx_is_database_loaded(subghz->txrx)) {
             scene_manager_next_scene(subghz->scene_manager, SubGhzSceneStart);
         } else {
             scene_manager_set_scene_state(

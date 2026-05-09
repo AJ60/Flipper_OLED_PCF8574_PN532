@@ -1,5 +1,5 @@
 entry,status,name,type,params
-Version,+,87.4,,
+Version,+,87.5,,
 Header,+,applications/drivers/subghz/cc1101_ext/cc1101_ext_interconnect.h,,
 Header,+,applications/main/archive/helpers/archive_helpers_ext.h,,
 Header,+,applications/main/subghz/subghz_fap.h,,
@@ -1805,6 +1805,8 @@ Function,+,furi_hal_subghz_get_rolling_counter_mult,int32_t,
 Function,+,furi_hal_subghz_get_rssi,float,
 Function,+,furi_hal_subghz_idle,void,
 Function,-,furi_hal_subghz_init,void,
+Function,,furi_hal_subghz_is_alive,_Bool,
+Function,,furi_hal_subghz_is_alive,_Bool,
 Function,+,furi_hal_subghz_is_async_tx_complete,_Bool,
 Function,+,furi_hal_subghz_is_frequency_valid,_Bool,uint32_t
 Function,+,furi_hal_subghz_is_rx_data_crc_valid,_Bool,

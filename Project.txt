@@ -1,0 +1,361 @@
+DIY Flipper Zero — Полное описание проекта
+==========================================
+
+1. Общая сводка проекта
+----------------------
+- Тип проекта: DIY клон Flipper Zero на базе STM32WB55
+- Репозиторий: lamtranBKHN/diy_flipper_zero
+- Таргет прошивки: mntm-ssd1306_mcp23017-cd5aa75c
+- Версия сборки: mntm-dev (cd5aa75c-dirty)
+- API прошивки: 87.4
+- Базовая прошивка: кастомный Momentum (mntm) форк, адаптированный под неоригинальное железо
+
+Это не официальная прошивка Flipper Zero и не mntm-012 напрямую, а самостоятельная сборка на базе Momentum,
+с кастомными пинами, дисплеем и IO-экспандером.
+
+
+2. Аппаратная конфигурация
+--------------------------
+MCU: STM32WB55CGU6 (Bluetooth 5, ARM Cortex-M4 @ 64 MHz) (Плата WeAct)
+
+Дисплей:
+  - Тип: 128×64 OLED
+  - Контроллер: SH1106 / SSD1306 (в проекте постоянный спор между ними)
+  - Интерфейс: I2C1
+  - SCL: PA9
+  - SDA: PB9
+  - В коде используется: u8x8_d_sh1106_128x64_noname (с 2px offset в init)
+
+IO Expander:
+  - Чип: MCP23017
+  - Интерфейс: I2C (одна шина с дисплеем и INA219)
+
+Power Monitor:
+  - Чип: INA219
+  - Интерфейс: I2C
+
+Звук:
+  - Speaker PWM: PB8
+
+1-Wire / iButton:
+  - Пин: PA3
+
+NFC:
+  - CS (SPI chip select): PE4
+  - IRQ: выключена автором (polling-режим)
+
+UART:
+  - TX: PB6
+  - RX: PB7
+
+USB:
+  - D-: PA11
+  - D+: PA12
+
+
+3. Программная конфигурация
+---------------------------
+- Build tool: FBT (Flipper Build Tool) на базе SCons + Python
+- Основные цели сборки:
+  - .\\fbt fw_dist — собрать прошивку
+  - .\\fbt updater_package — собрать updater Pak (updater.bin, updater.dfu, resources.tar)
+  - .\\fbt fap_dist — собрать все .fap приложения
+
+Папки с приложениями:
+  - applications/main/ — встроенные системные приложения (nfc, subghz, rfid, ibutton, badusb)
+  - applications/services/ — сервисы (notification, input, storage)
+  - applications/system/ — системные компоненты
+  - applications/external/ — внешние .fap приложения (игры, утилиты, инструменты)
+  - applications/examples/ — примеры разработки (туториалы, обычно не нужны на устройстве)
+
+API версии:
+  - Текущая: 87.4
+  - mntm-012 (серийный релиз Momentum): вероятно 88+ (нужна проверка в официальном SDK)
+
+
+4. Откуда подгружаются приложения
+---------------------------------
+Приложения в FBT определяются по application.fam:
+
+application.fam — манПоверст приложения, содержит:
+  - appid — уникальный ID
+  - name — имя
+  - apptype — тип приложения:
+    - FlipperAppType.EXTERNAL — внешнее .fap
+    - FlipperAppType.SERVICE — системный сервис
+    - FlipperAppType.STARTUP — запускается при старте
+    - FlipperAppType.APP — обычное приложение
+  - entry_point — точка входа (функция)
+  - category — категория меню
+
+FBT рекурсивно сканирует:
+  - applications/
+  - applications_user/ (если есть)
+  - applications/external/
+и находит все application.fam.
+
+Важные правила:
+  - Каждый appid должен быть уникальным
+  - Если есть дубликат appid — FBT выдаёт warning/error
+  - Если в папке нет application.fam — FBT выдаёт "missing manifest"
+  - Папки с application.fam вне applications/ (например, _cli_bridge_disabled в корне) обычно игнорируются,
+    но если там остались следы или старые build-артефакты, они могут мешать.
+
+
+5. Текущие проблемы и баги
+---------------------------
+5.1. cli/cli_i.h: No such file or directory
+--------------------------------------------
+Файл: applications/external/cli_bridge/cli_control.c:6
+#include <cli/cli_i.h>
+^^^^^^^^^
+fatal error: cli/cli_i.h: No such file or directory
+
+ Объяснение:
+  - cli_i.h — внутренний приватный заголовок Flipper API
+  - Начиная с новых версий SDK он больше не экспортируется в external apps
+  - Приложение cli_bridge старое, рассчитано на API, где этот заголовок был доступен
+  - Решение: убрать cli_bridge из сборки или переписать под публичный API
+
+ Практическое решение в проекте:
+  - Вынести папку cli_bridge за пределы дерева проектов:
+    Move-Item .\\_cli_bridge_disabled C:\\Users\\artem\\Desktop\\flipper_disabled_apps\\
+  - Очистить build:
+    .\\fbt -c
+    Remove-Item .\\build -Recurse -Force
+  - Пересобрать:
+    .\\fbt updater_package
+
+
+5.2. Дубликаты appid (nfc)
+----------------------------
+Пример:
+  applications/main/nfc/application.fam: appid="nfc"
+  applications/main/nfc_bck/application.fam: appid="nfc"
+
+ Решение:
+  - Убрать backup-копию из дерева applications:
+    move applications\\main\\nfc_bck backup_apps\\
+  - Или изменить appid во втором файле.
+
+
+5.3. NFC IRQ не поддерживается
+------------------------------
+В targets\\f7\\furi_hal\\furi_hal_resources.h:
+  // #define NFC_IRQ_Pin       LL_GPIO_PIN_2
+  // #define NFC_IRQ_GPIO_Port GPIOA
+
+НFC IRQ закомментирована, автор специально отключил её, потому что:
+  - Нет отдельной IRQ-линии на плате
+  - Либо реализована polling-стратегия
+
+Последствия:
+  - Приложения, ожидающие NVIC/IRQ для NFC, могут падать
+  - legacy NFC-библиотеки (как в chat, esubghz_chat) не будут работать
+  - Это не критично для базового использования NFC, но важно для продвинутых приложений.
+
+
+6. Оптимизация проекта
+----------------------
+Цели оптимизации:
+  - Ускорить сборку
+  - Уменьшить шум в меню
+  - Уменьшить размер прошивки
+  - Убрать нерабочие/проблемные приложения
+
+Категории для удаления:
+
+1) applications/examples/ — ВСЕ
+   - Туториалы для разработчиков
+   - Не нужны на устройстве
+   - Примеры: example_adc, example_plugins, example_event_loop и т.д.
+
+2) Игры из applications/external/ — оставить максимум 4
+   Оставляем:
+     - air_arkanoid
+     - air_labyrinth
+     - tetris
+     - snake_2
+   Удаляем все остальные:
+     - 2048, arkanoid, asteroids, chess, doom, flappy_bird, minesweeper, peggle,	pinball0,
+       pong, quadrastic, reversi, rubiks_cube_scrambler, slots, solitaire, tictactoe,
+       videopoker, yatzee, zombiez и т.д.
+
+3) WiFi/Marauder/экзотика RF — удалить
+   - esp8266_deauther, esp_flasher
+   - wifi_deauther, wifi_marauder_companion, wifi_scanner
+   - wardriver
+   - ghost_esp, flip_wifi
+   - mayhem_marauder, mayhem_qrcode
+
+4) Malveke (GB/GBC/GBA эмуляция) — удалить, если не используешь
+   - malveke_gba_cartridge
+   - malveke_gb_cartridge
+   - malveke_gb_emulator
+   - malveke_gb_link_camera
+   - malveke_gb_live_camera
+   - malveke_gb_photo
+   - malveke_pin_test
+
+5) CLI-мосты / проблемные
+   - cli_bridge / cli_gui (уже вынес)
+
+6) NFC-приложения (если не планируешь чинить NFC сейчас)
+   - nfc_magic, nfc_eink, nfc_apdu_runner, nfc_rfid_detector, nfc_playlist, nfc_maker
+   - mfkey, mifare_fuzzer, multi_fuzzer, picopass
+
+Оставшиеся полезные приложения (внешние):
+
+- Утилиты для DIY/embedded:
+  - calculator
+  - gpio_badge
+  - gpio_controller
+  - gpio_explorer
+  - gpio_reader_a
+  - gpio_reader_b
+  - hex_editor
+  - hex_viewer
+  - i2ctools
+  - image_viewer
+  - ina_meter
+  - ir_remote
+  - ir_scope
+  - uart_terminal
+  - totp
+  - qrcode
+  - barcode_gen
+  - wav_player
+  - music_player
+  - video_player
+  - text_viewer
+  - oscilloscope
+  - spectrum_analyzer
+  - radio_scanner
+  - subghz_remote
+  - subghz_playlist
+  - subghz_playlist_creator
+
+
+7. Структура проекта после очистки
+----------------------------------
+diy_flipper_zero/
+├── applications/
+│   ├── external/           (только 31 приложение)
+│   │   ├── games:
+│   │   │   - air_arkanoid
+│   │   │   - air_labyrinth
+│   │   │   - tetris
+│   │   │   - snake_2
+│   │   ├── Утилиты:
+│   │   │   - calculator
+│   │   │   - i2ctools
+│   │   │   - ina_meter
+│   │   │   - gpio_badge
+│   │   │   - gpio_controller
+│   │   │   - gpio_explorer
+│   │   │   - gpio_reader_a
+│   │   │   - gpio_reader_b
+│   │   │   - uart_terminal
+│   │   │   - hex_editor
+│   │   │   - hex_viewer
+│   │   │   - oscilloscope
+│   │   │   - spectrum_analyzer
+│   │   │   - radio_scanner
+│   │   │   - subghz_remote
+│   │   │   - subghz_playlist
+│   │   │   - subghz_playlist_creator
+│   │   │   - ir_remote
+│   │   │   - ir_scope
+│   │   │   - image_viewer
+│   │   │   - text_viewer
+│   │   │   - wav_player
+│   │   │   - music_player
+│   │   │   - video_player
+│   │   │   - qrcode
+│   │   │   - barcode_gen
+│   │   │   - totp
+│   ├── main/               (не трогать)
+│   ├── services/           (не трогать)
+│   └── system/             (не трогать)
+├── _disabled_apps/         (196 отключённых приложений)
+├── build/                  (генерируется FBT)
+├── dist/                   (updater.dfu, updater.bin и т.д.)
+└── cleanup_apps.ps1        (скрипт очистки)
+
+
+8. PIN-таблица
+--------------
+DMCU: STM32WB55CGU6
+
+периферия       | функция            | порт/пас
+-------------------------------------------------
+I2C1            | SCL                | PA9
+I2C1            | SDA                | PB9
+(I2C1 shared)   | OLED SH1106        | A9/B9
+                | MCP23017           | A9/B9
+                | INA219             | A9/B9
+
+PWM             | Speaker            | PB8
+
+1-Wire          | iButton            | PA3
+
+SPI             | NFC CS             | PE4
+
+UART            | TX                 | PB6
+UART            | RX                 | PB7
+
+USB             | D-                 | PA11
+USB             | D+                 | PA12
+
+
+9. Как обновить / отладить
+---------------------------
+a) Пересборка проекта:
+.\fbt -c
+Remove-Item .\\build -Recurse -Force
+.\fbt updater_package
+
+b) Прошивка по USB:
+.\fbt flash_usb_full
+
+c) Установка на SD-карту:
+1. Скопировать updater.bin из dist\\f7-C\\f7-update-mntm-ssd1306_mcp23017-cd5aa75c\\
+2. На Flipper: File → find → update folder → Update
+
+d) Установка отдельных .fap приложений:
+1. Скопировать .fap из dist\\f7-firmware-C\\apps\\
+2. На SD: /ext/apps/имя_приложения.fap
+
+
+10. Сравнение с официальным mntm-012
+-------------------------------------
+Твоя сборка:
+- Версия: mntm-ssd1306_mcp23017-cd5aa75c
+- Коммит: cd5aa75c
+- API: 87.4
+- Целевая платформа: DIY STM32WB55 с SSD1306/SH1106 + MCP23017
+
+Мomentum mntm-012 (официальный):
+- Версия: mntm-012 (31.12.25)
+- Dev build: 430a3d50 (08.03.26)
+- Вероятный API: 88+
+- Целевая платформа: оригинальный Flipper Zero
+
+Разница:
+- API версии могут быть несовместимы для .fap
+- Твоё железо требует кастомных GPIO, дисплея и IO
+- Переход на mntm-012 целиком потребует повторной адаптации под твою плату
+- Более разумно: оставить свою сборку и брать внешние .fap из mntm-012 точечно
+
+
+11. Рекомендации
+----------------
+1) Использовать keep-список приложений (см. выше) — сократить время сборки и шум в меню.
+2) Не трогать applications/main/, services/, system/ без понимания зависимостей.
+3) При добавлении новых приложений — проверять наличие дубликатов appid.
+4) Использовать applications_user/ для личных/экспериментальных приложений.
+5) При проблемах с build — проверять:
+   - наличие application.fam
+   - уникальность appid
+   - отсутствие .fam в неправильных папках
+6) По мере необходимости собирать новые .fap из mntm-012 и копировать их в applications_user/.

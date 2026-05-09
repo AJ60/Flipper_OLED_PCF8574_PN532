@@ -42,6 +42,9 @@ const GpioPin gpio_ext_pb2 = {.port = PB2_GPIO_Port, .pin = PB2_Pin};
 const GpioPin gpio_ext_pb3 = {.port = PB3_GPIO_Port, .pin = PB3_Pin};
 const GpioPin gpio_ext_pa4 = {.port = PA4_GPIO_Port, .pin = PA4_Pin};
 const GpioPin gpio_ext_pa6 = {.port = PA6_GPIO_Port, .pin = PA6_Pin};
+// WARNING: On this DIY board, gpio_ext_pa7 is physically mapped to PB5 (SPI1 MOSI).
+// PA7 MCU pin is used for I2C3 SCL and is NOT available as GPIO.
+// gpio_ext_pa7 keeps its original logical name for app compatibility.
 const GpioPin gpio_ext_pa7 = {.port = PA7_GPIO_Port, .pin = PA7_Pin};
 
 const GpioPin gpio_button_up;
@@ -75,6 +78,7 @@ const GpioPin gpio_usb_dp = {.port = GPIOA, .pin = LL_GPIO_PIN_12};
 
 const GpioPinRecord gpio_pins[] = {
     // 5V: 1
+	// Logical pin "PA7" on header = physically PB5 (SPI1 MOSI) on this board
     {.pin = &gpio_ext_pa7,
      .name = "PA7",
      .channel = FuriHalAdcChannel12,

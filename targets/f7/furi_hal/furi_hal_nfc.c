@@ -6,6 +6,7 @@
 #include <furi.h>
 #include <furi_hal_spi.h>
 
+
 #define TAG "FuriHalNfc"
 
 const FuriHalNfcTechBase* const furi_hal_nfc_tech[FuriHalNfcTechNum] = {

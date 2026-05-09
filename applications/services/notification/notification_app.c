@@ -14,6 +14,9 @@
 #define TAG "NotificationSrv"
 
 static const uint8_t minimal_delay = 100;
+static const uint8_t lcd_contrast_map[] = {
+    3, 15, 30, 35, 45, 55, 68, 88, 112, 140, 172, 208, 220, 230, 240, 250, 255
+};
 static const uint8_t led_off_values[NOTIFICATION_LED_COUNT] = {0x00, 0x00, 0x00};
 
 static const uint8_t reset_red_mask = 1 << 0;
@@ -48,10 +51,8 @@ static void
     furi_assert(layer);
     furi_assert(layer->index < LayerMAX);
 
-    // set value
     layer->value[LayerInternal] = layer_value;
 
-    // apply if current layer is internal
     if(layer->index == LayerInternal) {
         furi_hal_light_set(layer->light, layer->value[LayerInternal]);
     }
@@ -63,16 +64,16 @@ static void notification_apply_lcd_contrast(NotificationApp* app, uint8_t contra
     u8x8_t* u8x8 = &gui->canvas->fb.u8x8;
 
     furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-    
+
     uint32_t i2c_addr = (uint32_t)u8x8_GetI2CAddress(u8x8);
-    // FURI_LOG_I(TAG, "u8x8 I2C address (raw) = 0x%02X", (unsigned int)i2c_addr);
 
     uint8_t tx_buf0[3];
-    tx_buf0[0] = 0x00; // control byte: Co=0, D/C#=0 (command)
-    tx_buf0[1] = 0x81; // SETCONTRAST
+    tx_buf0[0] = 0x00;
+    tx_buf0[1] = 0x81;
     tx_buf0[2] = (uint8_t)contrast;
 
-    bool ok1 = furi_hal_i2c_tx(&furi_hal_i2c_handle_power, i2c_addr, tx_buf0, sizeof(tx_buf0), 50);
+    bool ok1 =
+        furi_hal_i2c_tx(&furi_hal_i2c_handle_power, i2c_addr, tx_buf0, sizeof(tx_buf0), 50);
     FURI_LOG_D(TAG, "Direct I2C (control=0x00) map=%d tx result: %d", (int)contrast, (int)ok1);
     furi_hal_i2c_release(&furi_hal_i2c_handle_power);
 
@@ -100,11 +101,8 @@ static void notification_apply_notification_led_layer(
     furi_assert(layer);
     furi_assert(layer->index < LayerMAX);
 
-    // set value
     layer->index = LayerNotification;
-    // set layer
     layer->value[LayerNotification] = layer_value;
-    // apply
     furi_hal_light_set(layer->light, layer->value[LayerNotification]);
 }
 
@@ -112,12 +110,9 @@ static void notification_reset_notification_led_layer(NotificationLedLayer* laye
     furi_assert(layer);
     furi_assert(layer->index < LayerMAX);
 
-    // set value
     layer->value[LayerNotification] = 0;
-    // set layer
     layer->index = LayerInternal;
 
-    // apply
     furi_hal_light_set(layer->light, layer->value[LayerInternal]);
 }
 
@@ -145,12 +140,14 @@ static void notification_reset_notification_layer(
     }
     if(reset_mask & reset_display_mask) {
         if(!float_is_equal(display_brightness_set, app->settings.display_brightness)) {
-            // furi_hal_light_set(LightBacklight, app->settings.display_brightness * 0xFF);
-            // Update LCD contrast after brightness change so SH1106 reflects new value
-            int contrast = 127 + (app->settings.contrast * 20); // 20 = 255 / (2 * 8)
-            if(contrast < 0) contrast = 0;
-            if(contrast > 255) contrast = 255;
-            notification_apply_lcd_contrast(app, (uint8_t)contrast);
+            int idx = (int)app->settings.contrast;
+
+            if(idx < -8) idx = -8;
+            if(idx > 8) idx = 8;
+
+            idx = idx + 8;
+
+            notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
         }
         furi_timer_start(app->display_timer, notification_settings_display_off_delay_ticks(app));
     }
@@ -232,9 +229,6 @@ static void notification_process_notification_message(
     while(notification_message != NULL) {
         switch(notification_message->type) {
         case NotificationMessageTypeLedDisplayBacklight:
-            // if on - switch on and start timer
-            // if off - switch off and stop timer
-            // on timer - switch off
             if(notification_message->data.led.value > 0x00) {
                 notification_apply_notification_led_layer(
                     &app->display,
@@ -270,28 +264,24 @@ static void notification_process_notification_message(
             }
             break;
         case NotificationMessageTypeLedRed:
-            // store and send on delay or after seq
             led_active = true;
             led_values[0] = notification_message->data.led.value;
             app->led[0].value_last[LayerNotification] = led_values[0];
             reset_mask |= reset_red_mask;
             break;
         case NotificationMessageTypeLedGreen:
-            // store and send on delay or after seq
             led_active = true;
             led_values[1] = notification_message->data.led.value;
             app->led[1].value_last[LayerNotification] = led_values[1];
             reset_mask |= reset_green_mask;
             break;
         case NotificationMessageTypeLedBlue:
-            // store and send on delay or after seq
             led_active = true;
             led_values[2] = notification_message->data.led.value;
             app->led[2].value_last[LayerNotification] = led_values[2];
             reset_mask |= reset_blue_mask;
             break;
         case NotificationMessageTypeLedBlinkStart:
-            // store and send on delay or after seq
             led_active = true;
             furi_hal_light_blink_start(
                 notification_message->data.led_blink.color,
@@ -374,19 +364,23 @@ static void notification_process_notification_message(
             reset_mask |= reset_green_mask;
             reset_mask |= reset_blue_mask;
             break;
-        case NotificationMessageTypeLcdContrastUpdate:
-            // FURI_LOG_I(TAG, "Received LcdContrastUpdate message");
-            int contrast = 127 + (app->settings.contrast * 20); // 20 = 255 / (2 * 8)
-            if(contrast < 0) contrast = 0;
-            if(contrast > 255) contrast = 255;  
-            notification_apply_lcd_contrast(app, (uint8_t)contrast);
+        case NotificationMessageTypeLcdContrastUpdate: {
+            int idx = (int)app->settings.contrast;
+
+            if(idx < -8) idx = -8;
+            if(idx > 8) idx = 8;
+
+            idx = idx + 8;
+
+            notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
             break;
         }
+        }
+
         notification_message_index++;
         notification_message = (*message->sequence)[notification_message_index];
     }
 
-    // send and do minimal delay
     if(led_active) {
         bool need_minimal_delay = false;
         if(notification_is_any_led_layer_internal_and_not_empty(app)) {
@@ -425,7 +419,7 @@ static void
             break;
         case NotificationMessageTypeLedRed:
         case NotificationMessageTypeLedGreen:
-        case NotificationMessageTypeLedBlue:
+        case NotificationMessageTypeLedBlue: {
             uint8_t i = notification_message->type - NotificationMessageTypeLedRed;
             app->led[i].value_last[LayerInternal] = notification_message->data.led.value;
             notification_apply_internal_led_layer(
@@ -433,6 +427,7 @@ static void
                 notification_settings_get_rgb_led_brightness(
                     app, notification_message->data.led.value));
             break;
+        }
         case NotificationMessageTypeLedBrightnessSettingApply:
             for(uint8_t i = 0; i < NOTIFICATION_LED_COUNT; i++) {
                 uint8_t new_val = notification_settings_get_rgb_led_brightness(
@@ -443,6 +438,7 @@ static void
         default:
             break;
         }
+
         notification_message_index++;
         notification_message = (*message->sequence)[notification_message_index];
     }
@@ -484,7 +480,6 @@ static void ascii_event_callback(const void* value, void* context) {
     notification_message(app, &sequence_display_backlight_on);
 }
 
-// App alloc
 static NotificationApp* notification_app_alloc(void) {
     NotificationApp* app = malloc(sizeof(NotificationApp));
     app->queue = furi_message_queue_alloc(8, sizeof(NotificationAppMessage));
@@ -518,7 +513,6 @@ static NotificationApp* notification_app_alloc(void) {
 
     app->settings.version = NOTIFICATION_SETTINGS_VERSION;
 
-    // display backlight control
     app->event_record = furi_record_open(RECORD_INPUT_EVENTS);
     furi_pubsub_subscribe(app->event_record, input_event_callback, app);
     app->ascii_record = furi_record_open(RECORD_ASCII_EVENTS);
@@ -546,10 +540,15 @@ static void notification_apply_settings(NotificationApp* app) {
     if(!notification_load_settings(app)) {
         // notification_save_settings(app);
     }
-    int contrast = 127 + (app->settings.contrast * 20); // 20 = 255 / (2 * 8)
-    if(contrast < 0) contrast = 0;
-    if(contrast > 255) contrast = 255;
-    notification_apply_lcd_contrast(app, (uint8_t)contrast);
+
+    int idx = (int)app->settings.contrast;
+
+    if(idx < -8) idx = -8;
+    if(idx > 8) idx = 8;
+
+    idx = idx + 8;
+
+    notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
 }
 
 static void notification_init_settings(NotificationApp* app) {
@@ -564,7 +563,6 @@ static void notification_init_settings(NotificationApp* app) {
     notification_apply_settings(app);
 }
 
-// App
 int32_t notification_srv(void* p) {
     UNUSED(p);
     NotificationApp* app = notification_app_alloc();

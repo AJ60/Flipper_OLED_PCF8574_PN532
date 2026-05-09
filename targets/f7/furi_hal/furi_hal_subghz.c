@@ -89,6 +89,10 @@ void furi_hal_subghz_set_bypass_region(bool enabled) {
 bool furi_hal_subghz_get_bypass_region(void) {
     return furi_hal_subghz.bypass_region;
 }
+bool furi_hal_subghz_is_alive(void) {
+    return furi_hal_subghz.state != SubGhzStateInit &&
+           furi_hal_subghz.state != SubGhzStateBroken;
+}
 
 void furi_hal_subghz_set_async_mirror_pin(const GpioPin* pin) {
     furi_hal_subghz.async_mirror_pin = pin;
@@ -168,7 +172,7 @@ void furi_hal_subghz_init(void) {
 }
 
 void furi_hal_subghz_sleep(void) {
-    furi_check(furi_hal_subghz.state == SubGhzStateIdle);
+    if(furi_hal_subghz.state != SubGhzStateIdle) return;
 
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
 

@@ -182,6 +182,12 @@ SubGhzTx furi_hal_subghz_check_tx(uint32_t value);
  */
 bool furi_hal_subghz_is_tx_allowed(uint32_t value);
 
+/** Check if SubGhz hardware is initialized and operational
+ *
+ * @return     true if CC1101 is alive (not in Init or Broken state)
+ */
+bool furi_hal_subghz_is_alive(void);
+
 /** Get the current rolling protocols counter ++/-- value
  * @return    int32_t current value
  */

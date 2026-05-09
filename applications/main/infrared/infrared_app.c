@@ -512,13 +512,13 @@ static void infrared_load_settings(InfraredApp* infrared) {
 
     if(!infrared_settings_load(&settings)) {
         FURI_LOG_D(TAG, "Failed to load settings, using defaults");
-        // infrared_save_settings(infrared);
     }
 
+    settings.tx_pin = FuriHalInfraredTxPinInternal;
+    settings.otg_enabled = false;
+
     infrared_set_tx_pin(infrared, settings.tx_pin);
-    if(settings.tx_pin < FuriHalInfraredTxPinMax) {
-        infrared_enable_otg(infrared, settings.otg_enabled);
-    }
+    infrared_enable_otg(infrared, settings.otg_enabled);
     infrared->app_state.is_easy_mode = settings.easy_mode;
 }
 

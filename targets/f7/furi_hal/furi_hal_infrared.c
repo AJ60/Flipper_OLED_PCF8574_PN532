@@ -108,7 +108,7 @@ static void furi_hal_infrared_tim_rx_isr(void* context) {
 
         /* Timers CNT register starts to counting from 0 to ARR, but it is
          * reseted when Channel 1 catches interrupt. It is not reseted by
-         * channel 2, though, so we have to distract it's values (see TimerIRQSourceCCI1 ISR).
+         * channel 2, though, so we have to distract it\'s values (see TimerIRQSourceCCI1 ISR).
          * This can cause false timeout: when time is over, but we started
          * receiving new signal few microseconds ago, because CNT register
          * is reseted once per period, not per sample. */
@@ -331,7 +331,7 @@ static void furi_hal_infrared_tx_dma_isr(void* context) {
             furi_hal_infrared_tx_fill_buffer_last(next_buf_num);
             furi_hal_infrared_tx_dma_set_buffer(next_buf_num);
         } else {
-            /* if it's not end of the packet - continue receiving */
+            /* if it\'s not end of the packet - continue receiving */
             furi_hal_infrared_tx_dma_set_buffer(next_buf_num);
         }
         if(infrared_tim_tx.signal_sent_callback && infrared_tim_tx.buffer[buf_num].packet_end &&
@@ -356,7 +356,7 @@ static void furi_hal_infrared_configure_tim_pwm_tx(uint32_t freq, float duty_cyc
         __LL_TIM_CALC_ARR(SystemCoreClock, LL_TIM_GetPrescaler(INFRARED_DMA_TIMER), freq));
 
     if(infrared_tx_output == FuriHalInfraredTxPinInternal) {
-        /* PA8 only supports TIM1_CH1 (regular), not CH3N */
+        /* PA8: TIM1_CH1 regular output */
         LL_TIM_OC_SetCompareCH1(
             INFRARED_DMA_TIMER,
             ((LL_TIM_GetAutoReload(INFRARED_DMA_TIMER) + 1) * (1.0f - duty_cycle)));
@@ -368,6 +368,7 @@ static void furi_hal_infrared_configure_tim_pwm_tx(uint32_t freq, float duty_cyc
         LL_TIM_CC_EnableChannel(INFRARED_DMA_TIMER, LL_TIM_CHANNEL_CH1);
         LL_TIM_DisableIT_CC1(INFRARED_DMA_TIMER);
     } else if(infrared_tx_output == FuriHalInfraredTxPinExtPA7) {
+        /* PA7: TIM1_CH1N complementary output */
         LL_TIM_OC_SetCompareCH1(
             INFRARED_DMA_TIMER,
             ((LL_TIM_GetAutoReload(INFRARED_DMA_TIMER) + 1) * (1.0f - duty_cycle)));
@@ -389,12 +390,8 @@ static void furi_hal_infrared_configure_tim_pwm_tx(uint32_t freq, float duty_cyc
 static void furi_hal_infrared_configure_tim_cmgr2_dma_tx(void) {
     LL_DMA_InitTypeDef dma_config = {0};
 
-    if(infrared_tx_output == FuriHalInfraredTxPinInternal) {
-        /* PA8 uses CCMR1 (CH1), not CCMR2 (CH3) */
-        dma_config.PeriphOrM2MSrcAddress = (uint32_t)(&(INFRARED_DMA_TIMER->CCMR1));
-    } else if(infrared_tx_output == FuriHalInfraredTxPinExtPA7) {
-        dma_config.PeriphOrM2MSrcAddress = (uint32_t)(&(INFRARED_DMA_TIMER->CCMR1));
-    }
+    /* Both Internal (CH1/PA8) and ExtPA7 (CH1N) use CCMR1 */
+    dma_config.PeriphOrM2MSrcAddress = (uint32_t)(&(INFRARED_DMA_TIMER->CCMR1));
 
     dma_config.MemoryOrM2MDstAddress = (uint32_t)NULL;
     dma_config.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
@@ -518,14 +515,10 @@ static void furi_hal_infrared_tx_fill_buffer(uint8_t buf_num, uint8_t polarity_s
         const float num_of_impulses_f =
             duration / infrared_tim_tx.cycle_duration + infrared_tim_tx.cycle_remainder;
         const uint32_t num_of_impulses = roundf(num_of_impulses_f);
-        // Save the remainder (in carrier periods) for later use
         infrared_tim_tx.cycle_remainder = num_of_impulses_f - num_of_impulses;
 
         if(num_of_impulses == 0) {
             if((*size == 0) && (status == FuriHalInfraredTxGetDataStateDone)) {
-                /* if this is one sample in current buffer, but we
-                 * have more to send - continue
-                 */
                 status = FuriHalInfraredTxGetDataStateOk;
             }
         } else if((num_of_impulses - 1) > UINT16_MAX) {
@@ -577,7 +570,6 @@ static void furi_hal_infrared_tx_dma_set_buffer(uint8_t buf_num) {
     InfraredTxBuf* buffer = &infrared_tim_tx.buffer[buf_num];
     furi_check(buffer->data != NULL);
 
-    /* non-circular mode requires disabled channel before setup */
     FURI_CRITICAL_ENTER();
     bool channel_enabled = LL_DMA_IsEnabledChannel(INFRARED_DMA_CH2_DEF);
     if(channel_enabled) {
@@ -660,10 +652,10 @@ void furi_hal_infrared_async_tx_start(uint32_t freq, float duty_cycle) {
     LL_TIM_GenerateEvent_UPDATE(INFRARED_DMA_TIMER); /* DMA -> TIMx_RCR */
     furi_delay_us(5);
 
+    /* FIX 1: PushPull + PullNo — обязательно для корректной работы IR LED carrier */
     const GpioPin* tx_gpio = infrared_tx_pins[infrared_tx_output];
-        LL_GPIO_SetOutputPin(tx_gpio->port, tx_gpio->pin); /* keep high (LED off) before enabling AF */
     furi_hal_gpio_init_ex(
-        tx_gpio, GpioModeAltFunctionOpenDrain, GpioPullDown, GpioSpeedHigh, GpioAltFn1TIM1);
+        tx_gpio, GpioModeAltFunctionPushPull, GpioPullNo, GpioSpeedHigh, GpioAltFn1TIM1);
 
     FURI_CRITICAL_ENTER();
     LL_TIM_GenerateEvent_UPDATE(INFRARED_DMA_TIMER); /* TIMx_RCR -> Repetition counter */

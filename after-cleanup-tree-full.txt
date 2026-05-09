@@ -1,0 +1,84 @@
+diy_flipper_zero/
+├── applications/
+│   ├── external/
+│   │   ├── air_arkanoid/
+│   │   ├── air_labyrinth/
+│   │   ├── tetris/
+│   │   ├── snake_2/
+│   │   ├── calculator/
+│   │   ├── gpio_badge/
+│   │   ├── gpio_controller/
+│   │   ├── gpio_explorer/
+│   │   ├── gpio_reader_a/
+│   │   ├── gpio_reader_b/
+│   │   ├── hex_editor/
+│   │   ├── hex_viewer/
+│   │   ├── i2ctools/
+│   │   ├── image_viewer/
+│   │   ├── ina_meter/
+│   │   ├── ir_remote/
+│   │   ├── ir_scope/
+│   │   ├── uart_terminal/
+│   │   ├── totp/
+│   │   ├── qrcode/
+│   │   ├── barcode_gen/
+│   │   ├── wav_player/
+│   │   ├── music_player/
+│   │   ├── video_player/
+│   │   ├── text_viewer/
+│   │   ├── oscilloscope/
+│   │   ├── spectrum_analyzer/
+│   │   ├── radio_scanner/
+│   │   ├── subghz_remote/
+│   │   ├── subghz_playlist/
+│   │   └── subghz_playlist_creator/
+│   │
+│   ├── main/                  (не трогать)
+│   │   ├── subghz/
+│   │   ├── nfc/
+│   │   ├── rfid/
+│   │   ├── ibutton/
+│   │   └── badusb/
+│   │
+│   ├── services/              (не трогать)
+│   │   ├── notification/
+│   │   ├── input/
+│   │   └── storage/
+│   │
+│   └── system/                (не трогать)
+│       ├── findmy/
+│       ├── hid_app/
+│       └── js_app/
+│
+├── _disabled_examples/
+│   └── example_*/             (all tutorial examples)
+│
+├── _disabled_apps/
+│   └── ... все отключённые external apps
+│     ├── games_removed/
+│     ├── wifi_removed/
+│     ├── malveke_removed/
+│     └── nfc_removed/
+│
+├── applications_user/         (для твоих экспериментальных apps)
+│
+├── build/                     (генерируется FBT, можно удалить)
+│
+├── dist/                      (готовые .fap и updater пакеты)
+│   └── f7-firmware-C/
+│       ├── apps/              (готовые .fap)
+│      ─── update_*           (updater.bin, updater.dfu)
+│
+├── targets/
+│   └── f7/                    (целевая платформа STM32WB55)
+│
+├── scripts/
+│   └── fbt/
+│
+└── lib/                       (библиотеки и утилиты FBT)
+
+Логика очистки:
+- applications/examples -> _disabled_examples
+- applications/external/* -> оставить только keepList приложений
+- всё остальное external -> _disabled_apps
+- applications/main, services, system -> не трогать
