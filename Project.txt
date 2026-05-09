@@ -4,10 +4,10 @@ DIY Flipper Zero — Полное описание проекта
 1. Общая сводка проекта
 ----------------------
 - Тип проекта: DIY клон Flipper Zero на базе STM32WB55
-- Репозиторий: lamtranBKHN/diy_flipper_zero
+- Репозиторий: artema0g/oled_flipper
 - Таргет прошивки: mntm-ssd1306_mcp23017-cd5aa75c
 - Версия сборки: mntm-dev (cd5aa75c-dirty)
-- API прошивки: 87.4
+- API прошивки: 87.5
 - Базовая прошивка: кастомный Momentum (mntm) форк, адаптированный под неоригинальное железо
 
 Это не официальная прошивка Flipper Zero и не mntm-012 напрямую, а самостоятельная сборка на базе Momentum,
@@ -118,8 +118,7 @@ fatal error: cli/cli_i.h: No such file or directory
   - Решение: убрать cli_bridge из сборки или переписать под публичный API
 
  Практическое решение в проекте:
-  - Вынести папку cli_bridge за пределы дерева проектов:
-    Move-Item .\\_cli_bridge_disabled C:\\Users\\artem\\Desktop\\flipper_disabled_apps\\
+  - Вынести папку cli_bridge за пределы дерева проектов
   - Очистить build:
     .\\fbt -c
     Remove-Item .\\build -Recurse -Force
