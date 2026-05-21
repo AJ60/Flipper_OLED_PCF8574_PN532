@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-/** Preset for ST25R916 */
-// extern const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_low_8m_NFC;
+/** Preset for ST25R3916 */
+extern const LL_SPI_InitTypeDef furi_hal_spi_preset_2edge_low_8m_NFC;
 
 /** Preset for CC1101 */
 extern const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_low_8m;
@@ -23,7 +23,7 @@ extern const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_low_2m;
 
 
 
-/** Furi Hal Spi Bus D (Display, SdCard) */
+/** Furi Hal Spi Bus for all peripherals on SPI1 */
 extern FuriHalSpiBus furi_hal_spi_bus;
 
 /** CC1101 on `furi_hal_spi_bus` */
@@ -57,9 +57,10 @@ extern const FuriHalSpiBusHandle furi_hal_spi_bus_handle_sd_fast;
 /** SdCard in slow mode on `furi_hal_spi_bus_d` */
 extern const FuriHalSpiBusHandle furi_hal_spi_bus_handle_sd_slow;
 
-// extern const FuriHalSpiBusHandle furi_hal_spi_bus_handle_button_sr;
 
 
+/** Extra external on `furi_hal_spi_bus` */
+//extern const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external_extra;										   
 
 #ifdef __cplusplus
 }

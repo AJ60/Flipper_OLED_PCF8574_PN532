@@ -77,7 +77,7 @@ void furi_hal_spi_release(const FuriHalSpiBusHandle* handle) {
     furi_hal_power_insomnia_exit();
 }
 
-static void furi_hal_spi_bus_end_txrx(const FuriHalSpiBusHandle* handle, uint32_t timeout) {
+/* static void furi_hal_spi_bus_end_txrx(const FuriHalSpiBusHandle* handle, uint32_t timeout) {
     UNUSED(timeout); // FIXME
     while(LL_SPI_GetTxFIFOLevel(handle->bus->spi) != LL_SPI_TX_FIFO_EMPTY)
         ;
@@ -85,6 +85,47 @@ static void furi_hal_spi_bus_end_txrx(const FuriHalSpiBusHandle* handle, uint32_
         ;
     while(LL_SPI_GetRxFIFOLevel(handle->bus->spi) != LL_SPI_RX_FIFO_EMPTY) {
         LL_SPI_ReceiveData8(handle->bus->spi);
+    }
+} */
+
+static void furi_hal_spi_bus_end_txrx(
+    const FuriHalSpiBusHandle* handle,
+    uint32_t timeout) {
+
+    UNUSED(timeout);
+
+    uint32_t guard;
+
+    guard = 1000000;
+    while(
+        LL_SPI_GetTxFIFOLevel(handle->bus->spi) != LL_SPI_TX_FIFO_EMPTY &&
+        guard--) {
+    }
+
+    if(!guard) {
+        FURI_LOG_E(TAG, "SPI TX FIFO stuck");
+    }
+
+    guard = 1000000;
+    while(
+        LL_SPI_IsActiveFlag_BSY(handle->bus->spi) &&
+        guard--) {
+    }
+
+    if(!guard) {
+        FURI_LOG_E(TAG, "SPI BSY stuck");
+    }
+
+    guard = 1000000;
+    while(
+        LL_SPI_GetRxFIFOLevel(handle->bus->spi) != LL_SPI_RX_FIFO_EMPTY &&
+        guard--) {
+
+        LL_SPI_ReceiveData8(handle->bus->spi);
+    }
+
+    if(!guard) {
+        FURI_LOG_E(TAG, "SPI RX FIFO stuck");
     }
 }
 

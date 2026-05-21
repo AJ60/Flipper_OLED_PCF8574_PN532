@@ -33,12 +33,18 @@ typedef struct {
     Light light;
 } NotificationLedLayer;
 
-#define NOTIFICATION_SETTINGS_VERSION 0x02
+#define NOTIFICATION_SETTINGS_VERSION 0x03
 #define NOTIFICATION_SETTINGS_MAGIC   0x16
+
+typedef enum {
+    NotificationOledDriverSSD1306 = 0,
+    NotificationOledDriverSH1106 = 1,
+} NotificationOledDriver;
 
 typedef struct {
     uint8_t version;
     float display_brightness;
+	uint8_t oled_driver;
     float led_brightness;
     float speaker_volume;
     uint32_t display_off_delay_ms;

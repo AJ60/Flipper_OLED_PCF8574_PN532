@@ -1,4 +1,7 @@
 #include "u8g2_glue.h"
+#include <applications/services/notification/notification_app.h>
+#include <toolbox/saved_struct.h>
+#include <notification/notification_settings_filename.h>
 
 #include <furi_hal.h>
 
@@ -228,6 +231,24 @@ static const u8x8_display_info_t u8x8_st756x_128x64_display_info = {
     .flipmode_x_offset = 4,
     .pixel_width = 128,
     .pixel_height = 64};
+	
+static uint8_t u8g2_get_oled_driver(void) {
+    NotificationSettings settings = {0};
+    settings.oled_driver = NotificationOledDriverSSD1306;
+
+    if(saved_struct_load(
+           "/int/.notification.settings",//NOTIFICATION_SETTINGS_PATH
+           &settings,
+           sizeof(NotificationSettings),
+           NOTIFICATION_SETTINGS_MAGIC,
+           NOTIFICATION_SETTINGS_VERSION)) {
+        if(settings.oled_driver <= NotificationOledDriverSH1106) {
+            return settings.oled_driver;
+        }
+    }
+
+    return NotificationOledDriverSSD1306;
+}
 
 uint8_t u8x8_d_st756x_common(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
     uint8_t x, c;
@@ -377,7 +398,24 @@ void u8g2_Setup_st756x_flipper(
     uint8_t* buf;
     UNUSED(byte_cb);
     // Hardware I2C with proper byte handler
-    u8g2_SetupDisplay(u8g2, u8x8_d_ssd1306_128x64_noname, u8x8_cad_ssd13xx_fast_i2c, u8x8_byte_hw_i2c_stm32, gpio_and_delay_cb);
+	
+    uint8_t oled_driver = u8g2_get_oled_driver();
+
+if(oled_driver == NotificationOledDriverSH1106) {
+    u8g2_SetupDisplay(
+        u8g2,
+        u8x8_d_sh1106_128x64_noname,
+        u8x8_cad_ssd13xx_fast_i2c,
+        u8x8_byte_hw_i2c_stm32,
+        gpio_and_delay_cb);
+} else {
+    u8g2_SetupDisplay(
+        u8g2,
+        u8x8_d_ssd1306_128x64_noname,
+        u8x8_cad_ssd13xx_fast_i2c,
+        u8x8_byte_hw_i2c_stm32,
+        gpio_and_delay_cb);
+}
     buf = u8g2_m_16_8_f(&tile_buf_height);
     u8g2_SetupBuffer(u8g2, buf, tile_buf_height, u8g2_ll_hvline_vertical_top_lsb, rotation);
     u8x8_SetI2CAddress(&u8g2->u8x8, 0x3C << 1);

@@ -9,7 +9,7 @@
 
 // Legacy/debug GPIOs removed: keep main pin definitions only.
 
-
+//const GpioPin gpio_button_IRQ = {.port = GPIOA, .pin = LL_GPIO_PIN_9};
 const GpioPin gpio_swdio = {.port = GPIOA, .pin = LL_GPIO_PIN_13};
 const GpioPin gpio_swclk = {.port = GPIOA, .pin = LL_GPIO_PIN_14};
 
@@ -27,6 +27,8 @@ const GpioPin gpio_subghz_cs = {.port = CC1101_CS_GPIO_Port, .pin = CC1101_CS_Pi
 const GpioPin gpio_sdcard_cs = {.port = SD_CS_GPIO_Port, .pin = SD_CS_Pin};
 // SD card CD not used
 const GpioPin gpio_nfc_cs = {.port = NFC_CS_GPIO_Port, .pin = NFC_CS_Pin};
+const GpioPin gpio_nfc_irq = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
+const GpioPin gpio_nfc_irq_rfid_pull = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 
 // MCU button GpioPin definitions removed — board uses MCP23017 for inputs.
 
@@ -78,7 +80,6 @@ const GpioPin gpio_usb_dp = {.port = GPIOA, .pin = LL_GPIO_PIN_12};
 
 const GpioPinRecord gpio_pins[] = {
     // 5V: 1
-	// Logical pin "PA7" on header = physically PB5 (SPI1 MOSI) on this board
     {.pin = &gpio_ext_pa7,
      .name = "PA7",
      .channel = FuriHalAdcChannel12,
@@ -262,7 +263,7 @@ void furi_hal_resources_init(void) {
     
    furi_hal_gpio_init(&gpio_ibutton, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
 
-    // furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedLow);
+   //furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedLow);
     // FURI_LOG_T(TAG, "IRQ4");
 
   //  furi_hal_gpio_init(&gpio_rf_sw_0, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);

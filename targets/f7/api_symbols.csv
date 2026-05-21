@@ -142,6 +142,7 @@ Header,+,lib/nfc/helpers/iso14443_crc.h,,
 Header,+,lib/nfc/helpers/nfc_data_generator.h,,
 Header,+,lib/nfc/helpers/nfc_util.h,,
 Header,+,lib/nfc/nfc.h,,
+Header,+,lib/nfc/nfc_common.h,,
 Header,+,lib/nfc/nfc_device.h,,
 Header,+,lib/nfc/nfc_listener.h,,
 Header,+,lib/nfc/nfc_poller.h,,
@@ -1147,7 +1148,7 @@ Function,+,felica_save,_Bool,"const FelicaData*, FlipperFormat*"
 Function,+,felica_service_get_attribute_string,void,"const FelicaService*, FuriString*"
 Function,+,felica_set_uid,_Bool,"FelicaData*, const uint8_t*, size_t"
 Function,+,felica_verify,_Bool,"FelicaData*, const FuriString*"
-Function,+,felica_write_directory_tree,void,"const FelicaData*, FuriString*"
+Function,+,felica_write_directory_tree,void,"const FelicaSystem*, FuriString*"
 Function,-,feof,int,FILE*
 Function,-,feof_unlocked,int,FILE*
 Function,-,ferror,int,FILE*
@@ -1805,8 +1806,7 @@ Function,+,furi_hal_subghz_get_rolling_counter_mult,int32_t,
 Function,+,furi_hal_subghz_get_rssi,float,
 Function,+,furi_hal_subghz_idle,void,
 Function,-,furi_hal_subghz_init,void,
-Function,,furi_hal_subghz_is_alive,_Bool,
-Function,,furi_hal_subghz_is_alive,_Bool,
+Function,+,furi_hal_subghz_is_alive,_Bool,
 Function,+,furi_hal_subghz_is_async_tx_complete,_Bool,
 Function,+,furi_hal_subghz_is_frequency_valid,_Bool,uint32_t
 Function,+,furi_hal_subghz_is_rx_data_crc_valid,_Bool,
@@ -4370,6 +4370,7 @@ Variable,+,furi_hal_spi_bus_handle_subghz,const FuriHalSpiBusHandle,
 Variable,+,furi_hal_spi_preset_1edge_low_16m,const LL_SPI_InitTypeDef,
 Variable,+,furi_hal_spi_preset_1edge_low_2m,const LL_SPI_InitTypeDef,
 Variable,+,furi_hal_spi_preset_1edge_low_8m,const LL_SPI_InitTypeDef,
+Variable,+,furi_hal_spi_preset_2edge_low_8m_NFC,const LL_SPI_InitTypeDef,
 Variable,+,gpio_button_back,const GpioPin,
 Variable,+,gpio_button_down,const GpioPin,
 Variable,+,gpio_button_left,const GpioPin,
@@ -4394,6 +4395,8 @@ Variable,+,gpio_infrared_rx,const GpioPin,
 Variable,+,gpio_infrared_tx,const GpioPin,
 Variable,+,gpio_mcp_int,const GpioPin,
 Variable,+,gpio_nfc_cs,const GpioPin,
+Variable,+,gpio_nfc_irq,const GpioPin,
+Variable,+,gpio_nfc_irq_rfid_pull,const GpioPin,
 Variable,+,gpio_pins,const GpioPinRecord[],
 Variable,+,gpio_pins_count,const size_t,
 Variable,+,gpio_sdcard_cs,const GpioPin,

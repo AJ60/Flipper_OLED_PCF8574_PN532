@@ -4,26 +4,8 @@
 #include <furi_hal_bus.h> // For bus clock enable/disable
 #include <furi.h>
 
-// Include necessary LL drivers
-#include <stm32wbxx_ll_spi.h>
-#include <stm32wbxx_ll_gpio.h>
-
 #define TAG "FuriHalSpiConfig"
 
-
-
-const LL_SPI_InitTypeDef furi_hal_spi_preset_2edge_low_8m_NFC = {
-    .Mode = LL_SPI_MODE_MASTER,
-    .TransferDirection = LL_SPI_FULL_DUPLEX,
-    .DataWidth = LL_SPI_DATAWIDTH_8BIT,
-    .ClockPolarity = LL_SPI_POLARITY_LOW,
-    .ClockPhase = LL_SPI_PHASE_2EDGE,
-    .NSS = LL_SPI_NSS_SOFT,
-    .BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV64, //low speed 128
-    .BitOrder = LL_SPI_MSB_FIRST,
-    .CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE,
-    .CRCPoly = 7,
-};
 
 const LL_SPI_InitTypeDef furi_hal_spi_preset_2edge_low_8m = {
     .Mode = LL_SPI_MODE_MASTER,
@@ -71,24 +53,11 @@ const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_low_16m = {
     .ClockPolarity = LL_SPI_POLARITY_LOW,
     .ClockPhase = LL_SPI_PHASE_1EDGE,
     .NSS = LL_SPI_NSS_SOFT,
-    .BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV4,
+    .BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV2,
     .BitOrder = LL_SPI_MSB_FIRST,
     .CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE,
     .CRCPoly = 7,
 };
-
-// const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_LCD_2m = {
-    // .Mode = LL_SPI_MODE_MASTER,
-    // .TransferDirection = LL_SPI_FULL_DUPLEX,
-    // .DataWidth = LL_SPI_DATAWIDTH_8BIT,
-    // .ClockPolarity = LL_SPI_POLARITY_LOW,
-    // .ClockPhase = LL_SPI_PHASE_1EDGE,
-    // .NSS = LL_SPI_NSS_SOFT,
-    // .BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV128,
-    // .BitOrder = LL_SPI_MSB_FIRST,
-    // .CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE,
-    // .CRCPoly = 7,
-// };
 
 const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_low_2m = {
     .Mode = LL_SPI_MODE_MASTER,
@@ -110,23 +79,23 @@ FuriMutex* furi_hal_spi_bus_mutex = NULL;
 
 void furi_hal_spi_config_init_early(void) {
     furi_hal_spi_bus_init(&furi_hal_spi_bus);
-//    furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_display);
 }
 
 void furi_hal_spi_config_deinit_early(void) {
-//    furi_hal_spi_bus_handle_deinit(&furi_hal_spi_bus_handle_display);
     furi_hal_spi_bus_deinit(&furi_hal_spi_bus);
 }
 
 void furi_hal_spi_config_init(void) {
-	furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_subghz);
+    furi_hal_spi_bus_init(&furi_hal_spi_bus);
+
+    furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_subghz);
     furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_nfc);
     furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_sd_fast);
     furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_sd_slow);
     furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_external);
     furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_external_extra);
 
-    //   FURI_LOG_I(TAG, "Init OK");
+    FURI_LOG_I(TAG, "Init OK");
 }
 
 static void furi_hal_spi_bus_event_callback(FuriHalSpiBus* bus, FuriHalSpiBusEvent event) {
@@ -134,10 +103,7 @@ static void furi_hal_spi_bus_event_callback(FuriHalSpiBus* bus, FuriHalSpiBusEve
         furi_hal_spi_bus_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
         bus->current_handle = NULL;
     } else if(event == FuriHalSpiBusEventDeinit) {
-    if(furi_hal_spi_bus_mutex) {
         furi_mutex_free(furi_hal_spi_bus_mutex);
-        furi_hal_spi_bus_mutex = NULL;
-        }
     } else if(event == FuriHalSpiBusEventLock) {
         furi_check(furi_mutex_acquire(furi_hal_spi_bus_mutex, FuriWaitForever) == FuriStatusOk);
     } else if(event == FuriHalSpiBusEventUnlock) {
@@ -172,40 +138,39 @@ inline static void furi_hal_spi_bus_external_handle_event_callback(
         furi_hal_gpio_write(handle->cs, true);
         furi_hal_gpio_init(handle->cs, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
     } else if(event == FuriHalSpiBusHandleEventActivate) {
-    furi_hal_gpio_write(handle->cs, true);
-    furi_hal_gpio_init(handle->cs, GpioModeOutputPushPull, GpioPullNo, GpioSpeedVeryHigh);
+        LL_SPI_Init(handle->bus->spi, (LL_SPI_InitTypeDef*)preset);
+        LL_SPI_SetRxFIFOThreshold(handle->bus->spi, LL_SPI_RX_FIFO_TH_QUARTER);
+        LL_SPI_Enable(handle->bus->spi);
 
-    LL_SPI_Init(handle->bus->spi, (LL_SPI_InitTypeDef*)preset);
-    LL_SPI_SetRxFIFOThreshold(handle->bus->spi, LL_SPI_RX_FIFO_TH_QUARTER);
-    LL_SPI_Enable(handle->bus->spi);
+        furi_hal_gpio_init_ex(
+            handle->miso,
+            GpioModeAltFunctionPushPull,
+            GpioPullDown,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI1);
+        furi_hal_gpio_init_ex(
+            handle->mosi,
+            GpioModeAltFunctionPushPull,
+            GpioPullDown,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI1);
+        furi_hal_gpio_init_ex(
+            handle->sck,
+            GpioModeAltFunctionPushPull,
+            GpioPullDown,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI1);
 
-    furi_hal_gpio_init_ex(
-        handle->miso,
-        GpioModeAltFunctionPushPull,
-        GpioPullNo,
-        GpioSpeedVeryHigh,
-        GpioAltFn5SPI1);
-    furi_hal_gpio_init_ex(
-        handle->mosi,
-        GpioModeAltFunctionPushPull,
-        GpioPullNo,
-        GpioSpeedVeryHigh,
-        GpioAltFn5SPI1);
-    furi_hal_gpio_init_ex(
-        handle->sck,
-        GpioModeAltFunctionPushPull,
-        GpioPullNo,
-        GpioSpeedVeryHigh,
-        GpioAltFn5SPI1);
-} else if(event == FuriHalSpiBusHandleEventDeactivate) {
-    furi_hal_gpio_write(handle->cs, true);
+        furi_hal_gpio_write(handle->cs, false);
+    } else if(event == FuriHalSpiBusHandleEventDeactivate) {
+        furi_hal_gpio_write(handle->cs, true);
 
-    furi_hal_gpio_init(handle->miso, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
-    furi_hal_gpio_init(handle->mosi, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
-    furi_hal_gpio_init(handle->sck, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+        furi_hal_gpio_init(handle->miso, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+        furi_hal_gpio_init(handle->mosi, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+        furi_hal_gpio_init(handle->sck, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
 
-    LL_SPI_Disable(handle->bus->spi);
-}
+        LL_SPI_Disable(handle->bus->spi);
+    }
 }
 
 inline static void furi_hal_spi_bus_nfc_handle_event_callback(
@@ -213,21 +178,35 @@ inline static void furi_hal_spi_bus_nfc_handle_event_callback(
     FuriHalSpiBusHandleEvent event,
     const LL_SPI_InitTypeDef* preset) {
     if(event == FuriHalSpiBusHandleEventInit) {
+        // Configure GPIOs in normal SPI mode
+        furi_hal_gpio_init_ex(
+            handle->miso,
+            GpioModeAltFunctionPushPull,
+            GpioPullNo,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI1);
+        furi_hal_gpio_init_ex(
+            handle->mosi,
+            GpioModeAltFunctionPushPull,
+            GpioPullNo,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI1);
+        furi_hal_gpio_init_ex(
+            handle->sck,
+            GpioModeAltFunctionPushPull,
+            GpioPullNo,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI1);
         furi_hal_gpio_write(handle->cs, true);
         furi_hal_gpio_init(handle->cs, GpioModeOutputPushPull, GpioPullNo, GpioSpeedVeryHigh);
     } else if(event == FuriHalSpiBusHandleEventDeinit) {
-        furi_hal_gpio_write(handle->cs, true);
-        furi_hal_gpio_init(handle->cs, GpioModeInput, GpioPullUp, GpioSpeedLow);
-
+        // Configure GPIOs for st25r3916 Transparent mode
         furi_hal_gpio_init(handle->sck, GpioModeInput, GpioPullUp, GpioSpeedLow);
         furi_hal_gpio_init(handle->miso, GpioModeInput, GpioPullUp, GpioSpeedLow);
-
+        furi_hal_gpio_init(handle->cs, GpioModeInput, GpioPullUp, GpioSpeedLow);
         furi_hal_gpio_write(handle->mosi, false);
         furi_hal_gpio_init(handle->mosi, GpioModeOutputPushPull, GpioPullNo, GpioSpeedVeryHigh);
     } else if(event == FuriHalSpiBusHandleEventActivate) {
-        furi_hal_gpio_write(handle->cs, true);
-        furi_hal_gpio_init(handle->cs, GpioModeOutputPushPull, GpioPullNo, GpioSpeedVeryHigh);
-
         LL_SPI_Init(handle->bus->spi, (LL_SPI_InitTypeDef*)preset);
         LL_SPI_SetRxFIFOThreshold(handle->bus->spi, LL_SPI_RX_FIFO_TH_QUARTER);
         LL_SPI_Enable(handle->bus->spi);
@@ -250,9 +229,8 @@ inline static void furi_hal_spi_bus_nfc_handle_event_callback(
             GpioPullNo,
             GpioSpeedVeryHigh,
             GpioAltFn5SPI1);
-    } else if(event == FuriHalSpiBusHandleEventDeactivate) {
-        furi_hal_gpio_write(handle->cs, true);
 
+    } else if(event == FuriHalSpiBusHandleEventDeactivate) {
         furi_hal_gpio_init(handle->miso, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
         furi_hal_gpio_init(handle->mosi, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
         furi_hal_gpio_init(handle->sck, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
@@ -275,18 +253,30 @@ inline static void furi_hal_spi_bus_generic_handle_event_callback(
         furi_hal_gpio_write(handle->cs, true);
         furi_hal_gpio_init(handle->cs, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
     } else if(event == FuriHalSpiBusHandleEventActivate) {
-    furi_hal_gpio_write(handle->cs, true);
-    furi_hal_gpio_init(handle->cs, GpioModeOutputPushPull, GpioPullNo, GpioSpeedVeryHigh);
+        LL_SPI_Init(handle->bus->spi, (LL_SPI_InitTypeDef*)preset);
+        LL_SPI_SetRxFIFOThreshold(handle->bus->spi, LL_SPI_RX_FIFO_TH_QUARTER);
+        LL_SPI_Enable(handle->bus->spi);
 
-    LL_SPI_Init(handle->bus->spi, (LL_SPI_InitTypeDef*)preset);
-    LL_SPI_SetRxFIFOThreshold(handle->bus->spi, LL_SPI_RX_FIFO_TH_QUARTER);
-    LL_SPI_Enable(handle->bus->spi);
+        furi_hal_gpio_init_ex(
+            handle->miso,
+            GpioModeAltFunctionPushPull,
+            GpioPullNo,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI1);
+        furi_hal_gpio_init_ex(
+            handle->mosi,
+            GpioModeAltFunctionPushPull,
+            GpioPullNo,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI1);
+        furi_hal_gpio_init_ex(
+            handle->sck,
+            GpioModeAltFunctionPushPull,
+            GpioPullNo,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI1);
 
-    furi_hal_gpio_init_ex(handle->miso, GpioModeAltFunctionPushPull, GpioPullNo, GpioSpeedVeryHigh, GpioAltFn5SPI1);
-    furi_hal_gpio_init_ex(handle->mosi, GpioModeAltFunctionPushPull, GpioPullNo, GpioSpeedVeryHigh, GpioAltFn5SPI1);
-    furi_hal_gpio_init_ex(handle->sck, GpioModeAltFunctionPushPull, GpioPullNo, GpioSpeedVeryHigh, GpioAltFn5SPI1);
-
-    //furi_hal_gpio_write(handle->cs, false);
+        furi_hal_gpio_write(handle->cs, false);
     } else if(event == FuriHalSpiBusHandleEventDeactivate) {
         furi_hal_gpio_write(handle->cs, true);
 
@@ -299,14 +289,46 @@ inline static void furi_hal_spi_bus_generic_handle_event_callback(
 }
 
 
+inline static void furi_hal_spi_bus_handle_event_callback(
+    const FuriHalSpiBusHandle* handle,
+    FuriHalSpiBusHandleEvent event,
+    const LL_SPI_InitTypeDef* preset) {
+    if(event == FuriHalSpiBusHandleEventInit) {
+        furi_hal_gpio_write(handle->cs, true);
+        furi_hal_gpio_init(handle->cs, GpioModeOutputPushPull, GpioPullUp, GpioSpeedVeryHigh);
 
+        furi_hal_gpio_init_ex(
+            handle->miso,
+            GpioModeAltFunctionPushPull,
+            GpioPullNo,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI2);
+        furi_hal_gpio_init_ex(
+            handle->mosi,
+            GpioModeAltFunctionPushPull,
+            GpioPullNo,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI2);
+        furi_hal_gpio_init_ex(
+            handle->sck,
+            GpioModeAltFunctionPushPull,
+            GpioPullNo,
+            GpioSpeedVeryHigh,
+            GpioAltFn5SPI2);
 
-/**
- * @brief Event callback for external SPI handles.
- * Assumes shared SPI pins but potentially different GPIO pull settings if needed.
- * Defined before its wrapper.
- */
-
+    } else if(event == FuriHalSpiBusHandleEventDeinit) {
+        furi_hal_gpio_write(handle->cs, true);
+        furi_hal_gpio_init(handle->cs, GpioModeAnalog, GpioPullUp, GpioSpeedLow);
+    } else if(event == FuriHalSpiBusHandleEventActivate) {
+        LL_SPI_Init(handle->bus->spi, (LL_SPI_InitTypeDef*)preset);
+        LL_SPI_SetRxFIFOThreshold(handle->bus->spi, LL_SPI_RX_FIFO_TH_QUARTER);
+        LL_SPI_Enable(handle->bus->spi);
+        furi_hal_gpio_write(handle->cs, false);
+    } else if(event == FuriHalSpiBusHandleEventDeactivate) {
+        furi_hal_gpio_write(handle->cs, true);
+        LL_SPI_Disable(handle->bus->spi);
+    }
+}
 
 static void furi_hal_spi_bus_handle_sd_fast_event_callback(
     const FuriHalSpiBusHandle* handle,
@@ -329,30 +351,7 @@ static void furi_hal_spi_bus_handle_subghz_event_callback(
         handle, event, &furi_hal_spi_preset_1edge_low_8m);
 }
 
-static void furi_hal_spi_bus_handle_nfc_wrapper_event_callback(
-    const FuriHalSpiBusHandle* handle,
-    FuriHalSpiBusHandleEvent event) {
-    furi_hal_spi_bus_nfc_handle_event_callback(handle, event, &furi_hal_spi_preset_2edge_low_8m_NFC);
-}
-
-// Wrapper for External handles - calls the specific external callback implementation
-static void furi_hal_spi_bus_handle_external_wrapper_event_callback(
-    const FuriHalSpiBusHandle* handle,
-    FuriHalSpiBusHandleEvent event) {
-    furi_hal_spi_bus_external_handle_event_callback(
-        handle, event, &furi_hal_spi_preset_1edge_low_2m);
-}
-
 /* ======================== SPI Bus Handle Definitions ======================= */
-
-/* const FuriHalSpiBusHandle furi_hal_spi_bus_handle_display = {
-    .bus = &furi_hal_spi_bus,
-    .callback = furi_hal_spi_bus_handle_display_event_callback,
-    .miso = &gpio_spi_miso,
-    .mosi = &gpio_spi_mosi,
-    .sck = &gpio_spi_sck,
-    .cs = &gpio_display_cs,
-}; */
 
 const FuriHalSpiBusHandle furi_hal_spi_bus_handle_sd_fast = {
     .bus = &furi_hal_spi_bus,
@@ -381,20 +380,34 @@ const FuriHalSpiBusHandle furi_hal_spi_bus_handle_subghz = {
     .cs = &gpio_subghz_cs,
 };
 
+
+static void furi_hal_spi_bus_handle_nfc_event_callback(
+    const FuriHalSpiBusHandle* handle,
+    FuriHalSpiBusHandleEvent event) {
+    furi_hal_spi_bus_nfc_handle_event_callback(
+        handle, event, &furi_hal_spi_preset_1edge_low_8m);
+}
+
 const FuriHalSpiBusHandle furi_hal_spi_bus_handle_nfc = {
     .bus = &furi_hal_spi_bus,
-    .callback = furi_hal_spi_bus_handle_nfc_wrapper_event_callback,
+    .callback = furi_hal_spi_bus_handle_nfc_event_callback,
     .miso = &gpio_spi_miso,
     .mosi = &gpio_spi_mosi,
     .sck = &gpio_spi_sck,
     .cs = &gpio_nfc_cs,
 };
 
+static void furi_hal_spi_bus_handle_external_event_callback(
+    const FuriHalSpiBusHandle* handle,
+    FuriHalSpiBusHandleEvent event) {
+    furi_hal_spi_bus_external_handle_event_callback(
+        handle, event, &furi_hal_spi_preset_1edge_low_2m);
+}
 
 // External Handles reinstated - pointing to shared SPI pins
 const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external = {
     .bus = &furi_hal_spi_bus,
-    .callback = furi_hal_spi_bus_handle_external_wrapper_event_callback, // Use wrapper
+    .callback = furi_hal_spi_bus_handle_external_event_callback, // Use wrapper
     .miso = &gpio_spi_miso, // Use shared pin
     .mosi = &gpio_spi_mosi, // Use shared pin
     .sck = &gpio_spi_sck, // Use shared pin
@@ -404,9 +417,9 @@ const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external = {
 
 const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external_extra = {
     .bus = &furi_hal_spi_bus,
-    .callback = furi_hal_spi_bus_handle_external_wrapper_event_callback, // Use wrapper
+    .callback = furi_hal_spi_bus_handle_external_event_callback, // Use wrapper
     .miso = &gpio_spi_miso, // Use shared pin
     .mosi = &gpio_spi_mosi, // Use shared pin
     .sck = &gpio_spi_sck, // Use shared pin
-    .cs = &gpio_ext_pc1, // Ensure this pin is defined and unique
+    .cs = &gpio_ext_pc3, // Ensure this pin is defined and unique
 };

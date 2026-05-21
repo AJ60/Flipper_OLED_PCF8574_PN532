@@ -32,7 +32,10 @@ const uint32_t MSIRangeTable[16UL] = {
     0UL,
     0UL,
     0UL}; /* 0UL values are incorrect cases */
-
+	
+	/** ISR type */
+typedef void (*element_t)(void);//added
+extern const element_t reset_vector[];//added
 /** MCU Initialization Routine. Part of ST HAL convention, so we keep it.*/
 void SystemInit(void) {
     // Set ISR Vector location
@@ -41,7 +44,8 @@ void SystemInit(void) {
     SCB->VTOR = SRAM1_BASE;
 #else
     // Point ISR Vector to 0x0, which is mapped to 0x08000000(Flash)
-    SCB->VTOR = 0x0;
+    SCB->VTOR = (uint32_t)reset_vector;//CHANGED
+    //SCB->VTOR = 0x0;
 #endif
 
 #if(__FPU_PRESENT == 1) && (__FPU_USED == 1)
@@ -107,8 +111,6 @@ FURI_NAKED void Reset_Handler(void) {
     furi_crash("WhyExit?");
 }
 
-/** ISR type */
-typedef void (*element_t)(void);
 
 /** System initialization vector. Contains: main stack end address, 15 pointers
  * to unmask-able ISR and 63 to mask-able ISR. */

@@ -99,7 +99,8 @@ extern const GpioPin gpio_ext_pa4;
 extern const GpioPin gpio_ext_pa6;
 extern const GpioPin gpio_ext_pa7;
 
-// extern const GpioPin gpio_nfc_irq_rfid_pull;
+extern const GpioPin gpio_nfc_irq;
+extern const GpioPin gpio_nfc_irq_rfid_pull; //new
 // extern const GpioPin gpio_rfid_carrier_out;
 // extern const GpioPin gpio_rfid_data_in;
 // extern const GpioPin gpio_rfid_carrier;
@@ -161,7 +162,7 @@ Header pins
 5V - 5V
 A7 - B5
 A6 - A6
-A4 - A4
+A2 - A2
 B3 - B3
 B2 - B2
 C3 - A5
@@ -241,12 +242,12 @@ GND - GND
 #define SPI_SCK_GPIO_Port  GPIOB
 #define SPI_SCK_Pin        LL_GPIO_PIN_3
 
-// #define NFC_IRQ_Pin       LL_GPIO_PIN_2
-// #define NFC_IRQ_GPIO_Port GPIOA
+#define NFC_IRQ_Pin       LL_GPIO_PIN_2
+#define NFC_IRQ_GPIO_Port GPIOA
 
 // OLED I2C1 (PA9 SCL, PB9 SDA)
 #define DISPLAY_I2C (&furi_hal_i2c_handle_1)  // I2C1
-#define DISPLAY_I2C_ADDR 0x3C  // Стандарт SSD1306 (или 0x3D)
+#define DISPLAY_I2C_ADDR 0x3C  // SD1306
 
 #define I2C_1_SCL_Pin       LL_GPIO_PIN_9
 #define I2C_1_SCL_GPIO_Port GPIOA

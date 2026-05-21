@@ -87,6 +87,7 @@ const IRQn_Type furi_hal_interrupt_irqn[FuriHalInterruptIdMax] = {
 
 FURI_ALWAYS_INLINE static void furi_hal_interrupt_call(FuriHalInterruptId index) {
     const FuriHalInterruptISRPair* isr_descr = &furi_hal_interrupt.isr[index];
+	FURI_LOG_D(TAG, "interrupt_call index=%d isr=%p ctx=%p", index, isr_descr->isr, isr_descr->context);
     furi_check(isr_descr->isr);
 
     FURI_HAL_INTERRUPT_ACCOUNT_START();
@@ -194,7 +195,9 @@ void TIM1_UP_TIM16_IRQHandler(void) {
 }
 
 void TIM1_TRG_COM_TIM17_IRQHandler(void) {
+    FURI_LOG_D(TAG, "TIM1_TRG_COM_TIM17_IRQHandler ENTER");
     furi_hal_interrupt_call(FuriHalInterruptIdTim1TrgComTim17);
+    FURI_LOG_D(TAG, "TIM1_TRG_COM_TIM17_IRQHandler EXIT");
 }
 
 void TIM1_CC_IRQHandler(void) {

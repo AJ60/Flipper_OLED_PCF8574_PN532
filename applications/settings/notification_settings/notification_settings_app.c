@@ -20,6 +20,12 @@ static const NotificationSequence sequence_note_c = {
     NULL,
 };
 
+#define OLED_DRIVER_COUNT 2
+const char* const oled_driver_text[OLED_DRIVER_COUNT] = {
+    "SSD1306",
+    "SH1106",
+};
+
 #define CONTRAST_COUNT 17
 const char* const contrast_text[CONTRAST_COUNT] = {
     "-8",
@@ -136,6 +142,18 @@ static NotificationAppSettings* alloc_settings(void) {
         value_index_int32(app->notification->settings.contrast, contrast_value, CONTRAST_COUNT);
     variable_item_set_current_value_index(item, value_index);
     variable_item_set_current_value_text(item, contrast_text[value_index]);
+	
+	const uint8_t oled_driver_value[OLED_DRIVER_COUNT] = {
+    NotificationOledDriverSSD1306,
+    NotificationOledDriverSH1106,
+	};
+	
+	item = variable_item_list_add(
+    app->variable_item_list, "OLED Driver", OLED_DRIVER_COUNT, oled_driver_changed, app);
+	value_index = value_index_uint32(
+    app->notification->settings.oled_driver, oled_driver_value, OLED_DRIVER_COUNT);
+	variable_item_set_current_value_index(item, value_index);
+	variable_item_set_current_value_text(item, oled_driver_text[value_index]);
 
     // item = variable_item_list_add(
     //     app->variable_item_list, "LCD Backlight", BACKLIGHT_COUNT, backlight_changed, app);
