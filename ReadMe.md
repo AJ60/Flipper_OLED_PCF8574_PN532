@@ -19,10 +19,9 @@
   - [☕ Support this project](#-support-this-project)
 
 ## Summary
-This target implements a Flipper-style board based on the `STM32WB55CGU6` and integrates the following external hardware:
+This target implements a Flipper-style board based on the `We act STM32WB55CGU6` and integrates the following external hardware:
 
-- <a href="mics/IMG_20260201_161815.JPG"><img src="mics/IMG_20260201_161815.JPG" alt="Prototype board photo" width="480" style="max-width:100%; height:auto;"></a>
-- <p><em>Figure 1 — Prototyp</em></p>
+
 
 - ✅ I2C OLED display (SH1106 / SSD1306)
 - ✅ INA219 (battery/current monitor)
