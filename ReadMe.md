@@ -43,7 +43,7 @@ This target implements a Flipper-style board based on the `STM32WB55CGU6` and in
 - ✅ MCP23017 handles buttons, RGB LED and vibro (pins B1/B2/B3, B0 respectively).
 - ✅ SD card over SPI is supported (CS on PA10).
 
-- ⚠️ NFC won't work.
+- ✅ NFC also WORKS NOW!!!
 
 ## Key pins & wiring (quick reference)
 Important: these macros are defined in `furi_hal_resources.*` and are used across the HAL code.
@@ -59,7 +59,7 @@ Important: these macros are defined in `furi_hal_resources.*` and are used acros
 | IR | GPIO / ALT | RX: PA0 (`IR_RX_Pin`), TX: PA8 (`IR_TX_Pin`) | TX is IR LED drive — use proper resistor/transistor |
 | Speaker | PWM | PB8 (`SPEAKER_Pin`) — TIM16 | Use transistor/amplifier if needed |
 | iButton | 1-Wire | PA3 (`iBTN_Pin`) | |
-| NFC CS | SPI | PE4 (`NFC_CS_Pin`) | Verify wiring & driver integration |
+| NFC CS | SPI2 | PE4 (`NFC_CS_Pin`), PA2 (`NFC_IRQ_Pin`) | Work with Elechouse ST25R3916 NFC Reader Module |
 | UART | USART1 | TX: PB6, RX: PB7 | Debug / serial |
 | USB | USB | DM/DP: PA11 / PA12 | USB lines handled by HAL init code |
 
@@ -147,19 +147,4 @@ Step 3 — Install firmware (qFlipper)
 - If a peripheral is not detected, try switching MCP23017 to the external I2C bus with `furi_hal_mcp23017_set_i2c_bus()`.
 
 ## Credits
-Thanks to Nucleus Dark for inspiring this project.
-
-## Currently busy with a high-priority production release: baby_v1.0 🧑‍🍼
-
-- This README was generated with the help of Copilot using a guided structure. I’ve reviewed it carefully, but you may still notice the occasional “robotic” sentence 😄  
-- My baby needs his father, but I’ll always do my best to support this project. If you run into any issues, please feel free to open one.  
-- If you find this project helpful, please consider supporting me and my growing family ❤️  
-
-## ☕ Support this project
-If this project helps you, please consider buying me a coffee: <br>
-
-<a href="https://ko-fi.com/lamtran81949" target="_blank">
-  <img src="https://storage.ko-fi.com/cdn/kofi3.png?v=3" 
-       alt="Buy Me a Coffee at ko-fi.com"
-       height="45">
-</a>
+Thanks to Nucleus Dark AND Lamtran for inspiring this project.
