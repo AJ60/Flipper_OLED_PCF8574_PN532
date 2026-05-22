@@ -4,7 +4,7 @@
 #include <gui/view_dispatcher.h>
 #include <lib/toolbox/value_index.h>
 
-#define MAX_NOTIFICATION_SETTINGS 4
+#define MAX_NOTIFICATION_SETTINGS 5
 
 typedef struct {
     NotificationApp* notification;
@@ -20,10 +20,11 @@ static const NotificationSequence sequence_note_c = {
     NULL,
 };
 
-#define OLED_DRIVER_COUNT 2
+#define OLED_DRIVER_COUNT 3
 const char* const oled_driver_text[OLED_DRIVER_COUNT] = {
     "SSD1306",
     "SH1106",
+    "ST7567S",
 };
 
 #define CONTRAST_COUNT 17
@@ -82,6 +83,37 @@ const char* const vibro_text[VIBRO_COUNT] = {
     "ON",
 };
 const bool vibro_value[VIBRO_COUNT] = {false, true};
+
+static void oled_driver_changed(VariableItem* item) {
+    NotificationAppSettings* app = variable_item_get_context(item);
+    uint8_t index = variable_item_get_current_value_index(item);
+
+    variable_item_set_current_value_text(item, oled_driver_text[index]);
+
+    switch(index) {
+    case 0:
+        app->notification->settings.oled_driver =
+            NotificationOledDriverSSD1306;
+        break;
+
+    case 1:
+        app->notification->settings.oled_driver =
+            NotificationOledDriverSH1106;
+        break;
+
+    case 2:
+        app->notification->settings.oled_driver =
+            NotificationOledDriverST7567S;
+        break;
+
+    default:
+        app->notification->settings.oled_driver =
+            NotificationOledDriverSSD1306;
+        break;
+    }
+
+    notification_message_save_settings(app->notification);
+}
 
 static void contrast_changed(VariableItem* item) {
     NotificationAppSettings* app = variable_item_get_context(item);
@@ -142,18 +174,19 @@ static NotificationAppSettings* alloc_settings(void) {
         value_index_int32(app->notification->settings.contrast, contrast_value, CONTRAST_COUNT);
     variable_item_set_current_value_index(item, value_index);
     variable_item_set_current_value_text(item, contrast_text[value_index]);
-	
-	const uint8_t oled_driver_value[OLED_DRIVER_COUNT] = {
-    NotificationOledDriverSSD1306,
-    NotificationOledDriverSH1106,
-	};
-	
-	item = variable_item_list_add(
+
+
+item = variable_item_list_add(
     app->variable_item_list, "OLED Driver", OLED_DRIVER_COUNT, oled_driver_changed, app);
-	value_index = value_index_uint32(
-    app->notification->settings.oled_driver, oled_driver_value, OLED_DRIVER_COUNT);
-	variable_item_set_current_value_index(item, value_index);
-	variable_item_set_current_value_text(item, oled_driver_text[value_index]);
+
+value_index = app->notification->settings.oled_driver;
+
+if(value_index >= OLED_DRIVER_COUNT) {
+    value_index = 0;
+}
+
+variable_item_set_current_value_index(item, value_index);
+variable_item_set_current_value_text(item, oled_driver_text[value_index]);
 
     // item = variable_item_list_add(
     //     app->variable_item_list, "LCD Backlight", BACKLIGHT_COUNT, backlight_changed, app);

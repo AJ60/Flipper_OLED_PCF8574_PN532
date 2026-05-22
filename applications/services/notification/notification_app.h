@@ -39,6 +39,7 @@ typedef struct {
 typedef enum {
     NotificationOledDriverSSD1306 = 0,
     NotificationOledDriverSH1106 = 1,
+    NotificationOledDriverST7567S = 2,
 } NotificationOledDriver;
 
 typedef struct {
