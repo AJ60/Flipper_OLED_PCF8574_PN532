@@ -18,8 +18,7 @@ void furi_hal_light_init(void) {
 
 void furi_hal_light_set(Light light, uint8_t value) {
     // MCP23017 only supports on/off, not PWM brightness
-    // Treat any value > 0x7F as "on"
-    bool on = (value > 0x7F);
+    bool on = value > 0;
     
     if(light & LightRed) {
         furi_hal_mcp23017_led_set_red(on);
@@ -60,6 +59,7 @@ void furi_hal_light_blink_set_color(Light light) {
 }
 
 void furi_hal_light_sequence(const char* sequence) {
+	if(!sequence) return;
     do {
         switch(*sequence) {
         case 'R':

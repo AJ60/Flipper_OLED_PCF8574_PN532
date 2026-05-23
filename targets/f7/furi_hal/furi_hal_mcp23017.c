@@ -21,11 +21,18 @@
 
 #define TAG "FuriHalMCP23017"
 
+// MCP23017: 0x20 -> 0x40
+// OLED:     0x3C -> 0x78
+// INA219:   0x40 -> 0x80
+
 static uint8_t mcp_addr = 0x20; // default 7-bit
+static uint8_t mcp_i2c_addr(void) {
+    return (uint8_t)(mcp_addr << 1);
+}
 // If true, the driver should use the 8-bit address form (addr<<1) when talking
 // to the device. Some environments/devices require the 8-bit form for low-level
 // register ops. This is discovered during probe and then cached.
-static bool mcp_use_8bit_addr = false;
+
 // I2C bus handle - configurable for either power or external bus
 // Default to power bus (I2C1) as it's initialized earlier in boot
 // Call furi_hal_mcp23017_set_i2c_bus() to switch to external (I2C3)
@@ -36,7 +43,6 @@ static void* exti_ctx = NULL;
 static bool mcp_write_reg(uint8_t reg, uint8_t val);
 static bool mcp_read_reg(uint8_t reg, uint8_t* val);
 static bool mcp_write_reg_locked(uint8_t reg, uint8_t val);
-static bool mcp_write_reg_locked_addr(uint8_t addr, uint8_t reg, uint8_t val);
 
 // Set which I2C bus to use (power or external). Call this before init().
 void furi_hal_mcp23017_set_i2c_bus(const FuriHalI2cBusHandle* bus_handle) {
@@ -47,112 +53,124 @@ void furi_hal_mcp23017_set_i2c_bus(const FuriHalI2cBusHandle* bus_handle) {
 
 // Internal implementation that accepts explicit I2C address
 bool furi_hal_mcp23017_init_ex(uint8_t i2c_addr) {
-    // Accept explicit I2C address and store as normalized 7-bit form
     mcp_addr = i2c_addr;
-    FURI_LOG_I(TAG, "Initializing MCP23017 at I2C address 0x%02X on I2C bus", mcp_addr);
-    // Acquire bus and probe device similarly to INA219 driver
+
+    FURI_LOG_I(
+        TAG,
+        "Initializing MCP23017 at I2C address 0x%02X on I2C bus",
+        mcp_addr);
+
     furi_hal_i2c_acquire(mcp_i2c_handle);
+
     bool detected = false;
-    // Quick device ready probe using 7-bit address
-    if(furi_hal_i2c_is_device_ready(mcp_i2c_handle, mcp_addr, 100)) {
+
+    if(furi_hal_i2c_is_device_ready(
+           mcp_i2c_handle,
+           mcp_i2c_addr(),
+           100)) {
+
         detected = true;
     } else {
-        // Try direct register read probes using both 7-bit and 8-bit address forms
         uint8_t probe = 0;
-        if(furi_hal_i2c_read_reg_8(mcp_i2c_handle, mcp_addr, MCP_IOCON, &probe, 200)) {
+
+        if(furi_hal_i2c_read_reg_8(
+               mcp_i2c_handle,
+               mcp_i2c_addr(),
+               MCP_IOCON,
+               &probe,
+               200)) {
+
             detected = true;
-        } else {
-            uint8_t probe8 = (uint8_t)(mcp_addr << 1);
-            if(furi_hal_i2c_read_reg_8(mcp_i2c_handle, probe8, MCP_IOCON, &probe, 200)) {
-                detected = true;
-            }
         }
     }
 
     if(!detected) {
         furi_hal_i2c_release(mcp_i2c_handle);
-        FURI_LOG_E(TAG, "MCP23017 not detected at 0x%02X", mcp_addr);
+
+        FURI_LOG_E(
+            TAG,
+            "MCP23017 not detected at 0x%02X",
+            mcp_addr);
+
         return false;
     }
 
-    // set IOCON: Mirror interrupts, active-low open-drain (common config)
     bool io_ok = false;
-    // Try a few times with 7-bit address then 8-bit address form
+
     for(int attempt = 0; attempt < 3 && !io_ok; ++attempt) {
         if(mcp_write_reg_locked(MCP_IOCON, 0x44)) {
             io_ok = true;
             break;
         }
-        // try 8-bit address form
-        uint8_t addr8 = (uint8_t)(mcp_addr << 1);
-        if(mcp_write_reg_locked_addr(addr8, MCP_IOCON, 0x44)) {
-            io_ok = true;
-            // remember that the device expects 8-bit address form
-            mcp_use_8bit_addr = true;
-            break;
-        }
+
         furi_delay_ms(10);
     }
 
+    furi_hal_i2c_release(mcp_i2c_handle);
+
     if(!io_ok) {
         FURI_LOG_E(TAG, "Failed to write IOCON");
-        furi_hal_i2c_release(&furi_hal_i2c_handle_power);
-        return false; // MIRROR=1, INTPOL=0, ODR=1
+        return false;
     }
-    furi_hal_i2c_release(mcp_i2c_handle);
+
     FURI_LOG_I(TAG, "MCP23017 initialized");
+
     return true;
 }
 
 // Public no-argument wrapper kept for API compatibility. Calls the
-// explicit-address implementation with the default address 0x27.
+// explicit-address implementation with the default address 0x20.
 bool furi_hal_mcp23017_init(void) {
     return furi_hal_mcp23017_init_ex(mcp_addr);
 }
 
 static bool mcp_write_reg(uint8_t reg, uint8_t val) {
-    bool ret = false;
+    bool ret;
+
     furi_hal_i2c_acquire(mcp_i2c_handle);
-    if(mcp_use_8bit_addr) {
-        uint8_t addr8 = (uint8_t)(mcp_addr << 1);
-        ret = furi_hal_i2c_write_reg_8(mcp_i2c_handle, addr8, reg, val, 200);
-    } else {
-        ret = furi_hal_i2c_write_reg_8(mcp_i2c_handle, mcp_addr, reg, val, 200);
-    }
+
+    ret = furi_hal_i2c_write_reg_8(
+        mcp_i2c_handle,
+        mcp_i2c_addr(),
+        reg,
+        val,
+        200);
+
     furi_hal_i2c_release(mcp_i2c_handle);
+
     return ret;
 }
 
 static bool mcp_read_reg(uint8_t reg, uint8_t* val) {
-    bool ret = false;
+    bool ret;
+
     furi_hal_i2c_acquire(mcp_i2c_handle);
-    if(mcp_use_8bit_addr) {
-        uint8_t addr8 = (uint8_t)(mcp_addr << 1);
-        ret = furi_hal_i2c_read_reg_8(mcp_i2c_handle, addr8, reg, val, 200);
-    } else {
-        ret = furi_hal_i2c_read_reg_8(mcp_i2c_handle, mcp_addr, reg, val, 200);
-    }
+
+    ret = furi_hal_i2c_read_reg_8(
+        mcp_i2c_handle,
+        mcp_i2c_addr(),
+        reg,
+        val,
+        200);
+
     furi_hal_i2c_release(mcp_i2c_handle);
+
     return ret;
 }
 
 static bool mcp_write_reg_locked(uint8_t reg, uint8_t val) {
-    // Caller must hold the I2C bus
-    if(mcp_use_8bit_addr) {
-        uint8_t addr8 = (uint8_t)(mcp_addr << 1);
-        return furi_hal_i2c_write_reg_8(mcp_i2c_handle, addr8, reg, val, 200);
-    }
-    return furi_hal_i2c_write_reg_8(mcp_i2c_handle, mcp_addr, reg, val, 200);
-}
-
-static bool mcp_write_reg_locked_addr(uint8_t addr, uint8_t reg, uint8_t val) {
-    return furi_hal_i2c_write_reg_8(mcp_i2c_handle, addr, reg, val, 200);
+    return furi_hal_i2c_write_reg_8(
+        mcp_i2c_handle,
+        mcp_i2c_addr(),
+        reg,
+        val,
+        200);
 }
 
 // mcp_read_reg_locked removed (not needed). Use mcp_read_reg which acquires/releases bus.
 
 bool furi_hal_mcp23017_read_gpio(uint16_t* gpio_state) {
-    uint8_t a,b;
+    uint8_t a, b;
     if(!mcp_read_reg(MCP_GPIOA, &a)) return false;
     if(!mcp_read_reg(MCP_GPIOB, &b)) return false;
     *gpio_state = (uint16_t)a | ((uint16_t)b << 8);
@@ -313,8 +331,10 @@ bool furi_hal_mcp23017_led_set_color(bool red, bool green, bool blue) {
 
 // Set LED with brightness value (0x00 = off, 0xFF = on)
 bool furi_hal_mcp23017_led_set(uint8_t red, uint8_t green, uint8_t blue) {
-    // Convert brightness to on/off: anything > 0x7F is considered "on"
-    return furi_hal_mcp23017_led_set_color(red > 0x7F, green > 0x7F, blue > 0x7F);
+    return furi_hal_mcp23017_led_set_color(
+        red > 0,
+        green > 0,
+        blue > 0);
 }
 
 // Turn all LEDs off
