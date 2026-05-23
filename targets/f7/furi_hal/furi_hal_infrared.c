@@ -12,6 +12,7 @@
 
 #define INFRARED_TIM_TX_DMA_BUFFER_SIZE 200
 #define INFRARED_POLARITY_SHIFT         1
+#define INFRARED_DMA_SYNC_DELAY_US      5
 
 #define INFRARED_TX_CCMR_HIGH \
     (TIM_CCMR1_OC1PE | LL_TIM_OCMODE_PWM2) /* Mark time - enable PWM2 mode */
@@ -596,10 +597,20 @@ static void furi_hal_infrared_async_tx_free_resources(void) {
     furi_hal_bus_disable(INFRARED_DMA_TIMER_BUS);
 
     furi_semaphore_free(infrared_tim_tx.stop_semaphore);
-    free(infrared_tim_tx.buffer[0].data);
-    free(infrared_tim_tx.buffer[1].data);
-    free(infrared_tim_tx.buffer[0].polarity);
-    free(infrared_tim_tx.buffer[1].polarity);
+    infrared_tim_tx.stop_semaphore = NULL;
+
+    if(infrared_tim_tx.buffer[0].data) {
+        free(infrared_tim_tx.buffer[0].data);
+    }
+    if(infrared_tim_tx.buffer[1].data) {
+        free(infrared_tim_tx.buffer[1].data);
+    }
+    if(infrared_tim_tx.buffer[0].polarity) {
+        free(infrared_tim_tx.buffer[0].polarity);
+    }
+    if(infrared_tim_tx.buffer[1].polarity) {
+        free(infrared_tim_tx.buffer[1].polarity);
+    }
 
     infrared_tim_tx.buffer[0].data = NULL;
     infrared_tim_tx.buffer[1].data = NULL;
@@ -622,13 +633,18 @@ void furi_hal_infrared_async_tx_start(uint32_t freq, float duty_cycle) {
     size_t alloc_size_data = INFRARED_TIM_TX_DMA_BUFFER_SIZE * sizeof(uint16_t);
     infrared_tim_tx.buffer[0].data = malloc(alloc_size_data);
     infrared_tim_tx.buffer[1].data = malloc(alloc_size_data);
+    furi_check(infrared_tim_tx.buffer[0].data);
+    furi_check(infrared_tim_tx.buffer[1].data);
 
     size_t alloc_size_polarity =
         (INFRARED_TIM_TX_DMA_BUFFER_SIZE + INFRARED_POLARITY_SHIFT) * sizeof(uint8_t);
     infrared_tim_tx.buffer[0].polarity = malloc(alloc_size_polarity);
     infrared_tim_tx.buffer[1].polarity = malloc(alloc_size_polarity);
+    furi_check(infrared_tim_tx.buffer[0].polarity);
+    furi_check(infrared_tim_tx.buffer[1].polarity);
 
     infrared_tim_tx.stop_semaphore = furi_semaphore_alloc(1, 0);
+    furi_check(infrared_tim_tx.stop_semaphore);
     infrared_tim_tx.cycle_duration = 1000000.0 / freq;
     infrared_tim_tx.tx_timing_rest_duration = 0;
     infrared_tim_tx.cycle_remainder = 0;
@@ -648,12 +664,12 @@ void furi_hal_infrared_async_tx_start(uint32_t freq, float duty_cycle) {
     LL_TIM_ClearFlag_UPDATE(INFRARED_DMA_TIMER);
     LL_DMA_EnableChannel(INFRARED_DMA_CH1_DEF);
     LL_DMA_EnableChannel(INFRARED_DMA_CH2_DEF);
-    furi_delay_us(5);
+    furi_delay_us(INFRARED_DMA_SYNC_DELAY_US);
     LL_TIM_GenerateEvent_UPDATE(INFRARED_DMA_TIMER); /* DMA -> TIMx_RCR */
-    furi_delay_us(5);
+    furi_delay_us(INFRARED_DMA_SYNC_DELAY_US);
 
-    /* FIX 1: PushPull + PullNo — обязательно для корректной работы IR LED carrier */
     const GpioPin* tx_gpio = infrared_tx_pins[infrared_tx_output];
+    LL_GPIO_ResetOutputPin(tx_gpio->port, tx_gpio->pin);
     furi_hal_gpio_init_ex(
         tx_gpio, GpioModeAltFunctionPushPull, GpioPullNo, GpioSpeedHigh, GpioAltFn1TIM1);
 
