@@ -9,8 +9,6 @@
 extern "C" {
 #endif
 
-typedef void (*Mcp23017IntCallback)(void* ctx);
-
 // Set which I2C bus to use (power or external). Call BEFORE init().
 // Default is I2C1 (furi_hal_i2c_handle_power) for early boot compatibility.
 // Call this to switch to I2C3: furi_hal_mcp23017_set_i2c_bus(&furi_hal_i2c_handle_external);
@@ -57,7 +55,7 @@ bool furi_hal_mcp23017_led_set_blue(bool on);
 // Set all three colors at once
 bool furi_hal_mcp23017_led_set_color(bool red, bool green, bool blue);
 
-// Set LED with brightness value (0x00=off, 0xFF=on, >0x7F=on)
+// Set LED with brightness value: 0 = off, any value > 0 = on
 bool furi_hal_mcp23017_led_set(uint8_t red, uint8_t green, uint8_t blue);
 
 // Turn all LEDs off
