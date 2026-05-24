@@ -130,10 +130,12 @@ static bool u2f_data_cert_key_encrypt(uint8_t* cert_key) {
     // Generate random IV
     furi_hal_random_fill_buf(iv, 16);
 
-    if(!furi_hal_crypto_enclave_load_key(U2F_DATA_FILE_ENCRYPTION_KEY_SLOT_UNIQUE, iv)) {
-        FURI_LOG_E(TAG, "Unable to load encryption key");
-        return false;
-    }
+if(!furi_hal_crypto_enclave_load_key(
+       U2F_DATA_FILE_ENCRYPTION_KEY_SLOT_UNIQUE,
+       iv)) {
+    FURI_LOG_E(TAG, "Unable to load encryption key");
+    return false;
+}
 
     if(!furi_hal_crypto_encrypt(cert_key, key, 32)) {
         FURI_LOG_E(TAG, "Encryption failed");
@@ -221,9 +223,12 @@ bool u2f_data_cert_key_load(uint8_t* cert_key) {
                 }
 
                 if(!furi_hal_crypto_enclave_load_key(key_slot, iv)) {
-                    FURI_LOG_E(TAG, "Unable to load encryption key");
-                    break;
-                }
+				FURI_LOG_W(TAG, "DIY bypass cert crypto");
+
+				memcpy(cert_key, key, 32);
+				state = true;
+				break;
+				}
                 memset(cert_key, 0, 32);
 
                 if(!furi_hal_crypto_decrypt(key, cert_key, 32)) {

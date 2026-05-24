@@ -5,6 +5,7 @@
 #include <furi.h>
 
 #include <usb_ccid.h>
+#define TAG "FuriHalUsbCcid"
 
 #define USB_DEVICE_NO_CLASS    (0x0)
 #define USB_DEVICE_NO_SUBCLASS (0x0)
@@ -229,15 +230,25 @@ static void ccid_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx) {
     FuriHalUsbCcidConfig* cfg = (FuriHalUsbCcidConfig*)ctx;
 
     furi_check(furi_hal_usb_ccid == NULL);
+
     furi_hal_usb_ccid = malloc(sizeof(FuriHalUsbCcid));
+    furi_check(furi_hal_usb_ccid);
+
+    memset(furi_hal_usb_ccid, 0, sizeof(FuriHalUsbCcid));
 
     furi_hal_usb_ccid->usb_dev = dev;
-    furi_hal_usb_ccid->ccid_semaphore = furi_semaphore_alloc(1, 1);
+
+    furi_hal_usb_ccid->ccid_semaphore =
+        furi_semaphore_alloc(1,1);
+
+    furi_check(furi_hal_usb_ccid->ccid_semaphore);
 
     usb_ccid.dev_descr->iManufacturer = 0;
     usb_ccid.dev_descr->iProduct = 0;
+
     usb_ccid.str_manuf_descr = NULL;
     usb_ccid.str_prod_descr = NULL;
+
     usb_ccid.dev_descr->idVendor = CCID_VID_DEFAULT;
     usb_ccid.dev_descr->idProduct = CCID_PID_DEFAULT;
 
@@ -246,13 +257,19 @@ static void ccid_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx) {
         usb_ccid.dev_descr->idProduct = cfg->pid;
 
         if(cfg->manuf[0] != '\0') {
-            usb_ccid.str_manuf_descr = ccid_set_string_descr(cfg->manuf);
-            usb_ccid.dev_descr->iManufacturer = UsbDevManuf;
+            usb_ccid.str_manuf_descr =
+                ccid_set_string_descr(cfg->manuf);
+
+            usb_ccid.dev_descr->iManufacturer =
+                UsbDevManuf;
         }
 
         if(cfg->product[0] != '\0') {
-            usb_ccid.str_prod_descr = ccid_set_string_descr(cfg->product);
-            usb_ccid.dev_descr->iProduct = UsbDevProduct;
+            usb_ccid.str_prod_descr =
+                ccid_set_string_descr(cfg->product);
+
+            usb_ccid.dev_descr->iProduct =
+                UsbDevProduct;
         }
     }
 
@@ -262,24 +279,47 @@ static void ccid_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx) {
     usbd_connect(dev, true);
 
     furi_hal_usb_ccid->receive_buffer_data_index = 0;
-    furi_hal_usb_ccid->ccid_thread = furi_thread_alloc_ex("CcidWorker", 2048, ccid_worker, ctx);
-    furi_thread_start(furi_hal_usb_ccid->ccid_thread);
+
+	furi_hal_usb_ccid->ccid_thread =
+    furi_thread_alloc_ex(
+        "CcidWorker",
+        2048,
+        ccid_worker,
+        ctx);
+
+	furi_check(furi_hal_usb_ccid->ccid_thread);
+
+	furi_thread_start(
+    furi_hal_usb_ccid->ccid_thread);
 }
 
 static void ccid_deinit(usbd_device* dev) {
-    furi_thread_flags_set(furi_thread_get_id(furi_hal_usb_ccid->ccid_thread), WorkerEvtStop);
-    furi_thread_join(furi_hal_usb_ccid->ccid_thread);
-    furi_thread_free(furi_hal_usb_ccid->ccid_thread);
+    furi_thread_flags_set(
+        furi_thread_get_id(
+            furi_hal_usb_ccid->ccid_thread),
+        WorkerEvtStop);
 
-    usbd_reg_config(dev, NULL);
-    usbd_reg_control(dev, NULL);
+    furi_thread_join(
+        furi_hal_usb_ccid->ccid_thread);
 
+    furi_thread_free(
+        furi_hal_usb_ccid->ccid_thread);
+
+    usbd_reg_config(dev,NULL);
+    usbd_reg_control(dev,NULL);
+
+    free(usb_ccid.str_manuf_descr);
     free(usb_ccid.str_prod_descr);
     free(usb_ccid.str_serial_descr);
 
+    if(furi_hal_usb_ccid->ccid_semaphore) {
+        furi_semaphore_free(
+            furi_hal_usb_ccid->ccid_semaphore);
+    }
+
     free(furi_hal_usb_ccid);
 
-    furi_hal_usb_ccid = NULL;
+    furi_hal_usb_ccid=NULL;
 }
 
 static void ccid_on_wakeup(usbd_device* dev) {
@@ -459,12 +499,29 @@ void furi_hal_usb_ccid_set_callbacks(CcidCallbacks* cb, void* context) {
 void ccid_send_packet(uint8_t* data, uint8_t len) {
     furi_check(furi_hal_usb_ccid);
 
-    if(furi_hal_usb_ccid->ccid_semaphore == NULL || furi_hal_usb_ccid->connected == false) return;
-    furi_check(
-        furi_semaphore_acquire(furi_hal_usb_ccid->ccid_semaphore, FuriWaitForever) ==
-        FuriStatusOk);
-    if(furi_hal_usb_ccid->connected == true) {
-        usbd_ep_write(furi_hal_usb_ccid->usb_dev, CCID_IN_EPADDR, data, len);
+    if(
+        !furi_hal_usb_ccid->ccid_semaphore ||
+        !furi_hal_usb_ccid->connected
+    ) {
+        return;
+    }
+
+    if(
+        furi_semaphore_acquire(
+            furi_hal_usb_ccid->ccid_semaphore,
+            1000
+        ) != FuriStatusOk
+    ) {
+        FURI_LOG_E(TAG,"CCID TX timeout");
+        return;
+    }
+
+    if(furi_hal_usb_ccid->connected) {
+        usbd_ep_write(
+            furi_hal_usb_ccid->usb_dev,
+            CCID_IN_EPADDR,
+            data,
+            len);
     }
 }
 
@@ -484,28 +541,45 @@ static void ccid_rx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep) {
     UNUSED(dev);
     UNUSED(event);
     UNUSED(ep);
-    furi_check(furi_hal_usb_ccid);
 
-    furi_semaphore_release(furi_hal_usb_ccid->ccid_semaphore);
+    if(!furi_hal_usb_ccid)
+        return;
+
+    if(furi_hal_usb_ccid->ccid_semaphore) {
+        furi_semaphore_release(
+            furi_hal_usb_ccid->ccid_semaphore);
+    }
 }
 
 static void ccid_tx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep) {
     UNUSED(dev);
     UNUSED(ep);
+
     if(event == usbd_evt_eprx) {
         furi_check(furi_hal_usb_ccid);
+
         int32_t bytes_read = usbd_ep_read(
             furi_hal_usb_ccid->usb_dev,
             CCID_OUT_EPADDR,
-            &furi_hal_usb_ccid->receive_buffer[furi_hal_usb_ccid->receive_buffer_data_index],
+            &furi_hal_usb_ccid->receive_buffer[
+                furi_hal_usb_ccid->receive_buffer_data_index],
             CCID_EPSIZE);
 
         if(bytes_read > 0) {
-            furi_hal_usb_ccid->receive_buffer_data_index =
-                furi_hal_usb_ccid->receive_buffer_data_index + bytes_read;
+            if(
+                ((size_t)furi_hal_usb_ccid->receive_buffer_data_index +
+                 (size_t)bytes_read)
+                <= sizeof(furi_hal_usb_ccid->receive_buffer)
+            ) {
+                furi_hal_usb_ccid->receive_buffer_data_index += bytes_read;
+            } else {
+                FURI_LOG_E(TAG, "CCID RX overflow");
+                furi_hal_usb_ccid->receive_buffer_data_index = 0;
+            }
 
             furi_thread_flags_set(
-                furi_thread_get_id(furi_hal_usb_ccid->ccid_thread), WorkerEvtRequest);
+                furi_thread_get_id(furi_hal_usb_ccid->ccid_thread),
+                WorkerEvtRequest);
         }
     }
 }

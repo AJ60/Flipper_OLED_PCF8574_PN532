@@ -6,6 +6,8 @@
 #include "usb.h"
 #include "usb_hid.h"
 
+#define TAG "FuriHalUsbU2f"
+
 #define HID_PAGE_FIDO   0xF1D0
 #define HID_FIDO_U2F    0x01
 #define HID_FIDO_INPUT  0x20
@@ -194,6 +196,7 @@ static void hid_u2f_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx)
     UNUSED(ctx);
     if(hid_u2f_semaphore == NULL) {
         hid_u2f_semaphore = furi_semaphore_alloc(1, 1);
+		furi_check(hid_u2f_semaphore);
     }
     usb_dev = dev;
 
@@ -206,6 +209,11 @@ static void hid_u2f_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx)
 static void hid_u2f_deinit(usbd_device* dev) {
     usbd_reg_config(dev, NULL);
     usbd_reg_control(dev, NULL);
+
+    hid_u2f_connected = false;
+    callback = NULL;
+    cb_ctx = NULL;
+    usb_dev = NULL;
 }
 
 static void hid_u2f_on_wakeup(usbd_device* dev) {
@@ -220,7 +228,10 @@ static void hid_u2f_on_suspend(usbd_device* dev) {
     UNUSED(dev);
     if(hid_u2f_connected) {
         hid_u2f_connected = false;
-        furi_semaphore_release(hid_u2f_semaphore);
+        if(hid_u2f_semaphore) {
+			furi_semaphore_release(
+			hid_u2f_semaphore);
+		}
         if(callback != NULL) {
             callback(HidU2fDisconnected, cb_ctx);
         }
@@ -228,15 +239,36 @@ static void hid_u2f_on_suspend(usbd_device* dev) {
 }
 
 void furi_hal_hid_u2f_send_response(uint8_t* data, uint8_t len) {
-    if((hid_u2f_semaphore == NULL) || (hid_u2f_connected == false)) return;
-    furi_check(furi_semaphore_acquire(hid_u2f_semaphore, FuriWaitForever) == FuriStatusOk);
-    if(hid_u2f_connected == true) {
-        usbd_ep_write(usb_dev, HID_EP_OUT, data, len);
+    if(!hid_u2f_semaphore || !hid_u2f_connected)
+        return;
+
+    if(
+        furi_semaphore_acquire(
+            hid_u2f_semaphore,
+            1000
+        ) != FuriStatusOk
+    ) {
+        FURI_LOG_E(TAG, "U2F TX timeout");
+        return;
+    }
+
+    if(hid_u2f_connected) {
+        usbd_ep_write(
+            usb_dev,
+            HID_EP_IN,
+            data,
+            len);
     }
 }
 
 uint32_t furi_hal_hid_u2f_get_request(uint8_t* data) {
-    int32_t len = usbd_ep_read(usb_dev, HID_EP_IN, data, HID_U2F_PACKET_LEN);
+    int32_t len =
+        usbd_ep_read(
+            usb_dev,
+            HID_EP_OUT,
+            data,
+            HID_U2F_PACKET_LEN);
+
     return (len < 0) ? 0 : len;
 }
 
@@ -253,7 +285,10 @@ static void hid_u2f_tx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep) 
     UNUSED(dev);
     UNUSED(event);
     UNUSED(ep);
-    furi_semaphore_release(hid_u2f_semaphore);
+
+    if(hid_u2f_semaphore) {
+        furi_semaphore_release(hid_u2f_semaphore);
+    }
 }
 
 static void hid_u2f_txrx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep) {
@@ -280,7 +315,11 @@ static usbd_respond hid_u2f_ep_config(usbd_device* dev, uint8_t cfg) {
         usbd_ep_config(dev, HID_EP_OUT, USB_EPTYPE_INTERRUPT, HID_U2F_PACKET_LEN);
         usbd_reg_endpoint(dev, HID_EP_IN, hid_u2f_txrx_ep_callback);
         usbd_reg_endpoint(dev, HID_EP_OUT, hid_u2f_txrx_ep_callback);
-        usbd_ep_write(dev, HID_U2F_PACKET_LEN, 0, 0);
+        usbd_ep_write(
+		dev,
+		HID_EP_IN,
+		0,
+		0);
         return usbd_ack;
     default:
         return usbd_fail;
