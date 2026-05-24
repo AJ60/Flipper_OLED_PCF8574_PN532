@@ -3,6 +3,7 @@
 #include <furi.h> // For FURI_NORETURN, basic types, PropertyValueCallback
 #include <stdbool.h>
 #include <stdint.h>
+#include <math.h>
 
 
  #include <furi_hal_clock.h>
@@ -77,7 +78,6 @@ void furi_hal_power_init(void) {
     // Initialize our INA219 wrapper; detection result stored internally
     furi_hal_ina219_init();
     FURI_LOG_I(TAG, "INA219 initialization complete");
-    return;
 #else
     // INA219 not used, do nothing
 FURI_LOG_I(TAG, "INA219 support not enabled at build time");
@@ -155,17 +155,19 @@ uint8_t furi_hal_power_get_pct(void) {
     if(furi_hal_ina219_is_ready()) {
         float v = 0.0f, i = 0.0f;
         if(furi_hal_ina219_get_voltage_current(&v, &i)) {
+			if(v < 3.0f || v > 4.25f) {
+				return curr_soc_percent > 1.0f ? (uint8_t)(curr_soc_percent + 0.5f) : 90;
+			}
             // If is charging and charge current is less than 100mA, set pct to 99%
-            bool is_charging = furi_hal_power_is_charging();
-            if(is_charging && i > -0.0f && i < 0.1f) {
+            //bool is_charging = (v > 3.3f) && (i > 0.005f);
+/*             if(is_charging && v > 3.3f && i > 0.005f && i < 0.1f) {
                 FURI_LOG_D(TAG, "INA219 CHARGING LOW CURRENT: Setting SOC to 99%% (I=%.3fA)", (double)i);
                 soc_percent = 99.0f;
                 curr_soc_percent = 99.0f;
                 last_ms = 0; // Reset timer
                 return 99;
-            }
+            } */
             // Current sign convention (reversed shunt wiring): 
-            // NEGATIVE current = discharge, POSITIVE current = charge
             
             // Load-compensated voltage estimate (approximate internal resistance)
             // Use a slightly larger internal resistance to better compensate
@@ -410,7 +412,7 @@ bool furi_hal_power_is_charging(void) {
         float v = 0.0f, i = 0.0f;
         if(furi_hal_ina219_get_voltage_current(&v, &i)) {
             // Positive current indicates discharging, negative indicates charging
-            bool charging = (i > 0.0f);
+            bool charging = (v > 3.3f) && (i > 0.005f);
             FURI_LOG_D(TAG, "INA219 voltage=%.3f V, current=%.3f A, charging=%s", (double)v, (double)i, charging ? "YES" : "NO");
             return charging;
         }
@@ -585,12 +587,10 @@ float furi_hal_power_get_battery_current(FuriHalPowerIC ic) {
     float Ceq = (capacity_Ah * 3600.0f) / (V_MAX - V_MIN);
     float dvdt = dv / dt;
     float i_a = Ceq * dvdt;
-    float i_ma = i_a * 1000.0f;
-    if(i_ma > 5000.0f) i_ma = 5000.0f;
-    if(i_ma < -5000.0f) i_ma = -5000.0f;
+    if(i_a > 5.0f) i_a = 5.0f;
+	if(i_a < -5.0f) i_a = -5.0f;
 
-    UNUSED(i_ma);
-    return 0.10f; // Return a default small current value
+	return i_a;
 }
 
 // Remove internal static function
