@@ -379,8 +379,14 @@ static SdSpiCmdAnswer
         sd_spi_deselect_card();
 
         // and wait for it to be ready
-        while(sd_spi_read_byte() != 0xFF) {
-        };
+        FuriHalCortexTimer timer =
+    furi_hal_cortex_timer_get(SD_TIMEOUT_MS * 1000);
+
+	while(sd_spi_read_byte() != 0xFF) {
+    if(furi_hal_cortex_timer_is_expired(timer)) {
+        break;
+    }
+	}
 
         break;
     case SdSpiCmdAnswerTypeR2:

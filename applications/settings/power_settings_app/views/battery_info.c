@@ -1,5 +1,6 @@
 #include "battery_info.h"
 #include <furi.h>
+#include <furi_hal_ina219.h>
 #include <gui/elements.h>
 #include <assets_icons.h>
 #include <locale/locale.h>
@@ -21,7 +22,20 @@ static void draw_battery(Canvas* canvas, BatteryInfoModel* data, int x, int y) {
     char header[20] = {};
     char value[20] = {};
 
-    int32_t current = 1000.0f * data->gauge_current;
+    float ina_voltage = data->gauge_voltage;
+    float ina_current = data->gauge_current;
+
+	if(furi_hal_ina219_is_ready()) {
+    float v = 0.0f;
+    float i = 0.0f;
+
+    if(furi_hal_ina219_get_voltage_current(&v, &i)) {
+        ina_voltage = v;
+        ina_current = i;
+    }
+	}
+
+	int32_t current = (int32_t)(ina_current * 1000.0f);
 
     // Draw battery
     canvas_draw_icon(canvas, x, y, &I_BatteryBody_52x28);
@@ -46,8 +60,8 @@ static void draw_battery(Canvas* canvas, BatteryInfoModel* data, int x, int y) {
             value,
             sizeof(value),
             "%lu.%luV   %lumA",
-            (uint32_t)(data->vbus_voltage),
-            (uint32_t)(data->vbus_voltage * 10) % 10,
+            (uint32_t)ina_voltage,
+			(uint32_t)(ina_voltage * 100) % 100,
             current);
     } else if(current < -5) {
         // 0-5ma deadband
@@ -60,9 +74,8 @@ static void draw_battery(Canvas* canvas, BatteryInfoModel* data, int x, int y) {
         snprintf(
             value,
             sizeof(value),
-            "%ld %s",
-            ABS(current),
-            current < HIGH_DRAIN_CURRENT_THRESHOLD ? "mA!" : "mA");
+            "~%ldmA",
+			ABS(current));
     } else if(data->vbus_voltage > 0) {
         if(data->charge_voltage_limit < 4.2f) {
             // Non-default battery charging limit, mention it
@@ -126,12 +139,25 @@ static void battery_info_draw_callback(Canvas* canvas, void* context) {
             "%lu F",
             (uint32_t)locale_celsius_to_fahrenheit(model->gauge_temperature));
     }
-    snprintf(
-        voltage,
-        sizeof(voltage),
-        "%lu.%01lu V",
-        (uint32_t)model->gauge_voltage,
-        (uint32_t)(model->gauge_voltage * 10) % 10UL);
+    float ina_voltage = model->gauge_voltage;
+	float ina_current = model->gauge_current;
+
+	if(furi_hal_ina219_is_ready()) {
+		float v = 0.0f;
+		float i = 0.0f;
+
+    if(furi_hal_ina219_get_voltage_current(&v, &i)) {
+        ina_voltage = v;
+        ina_current = i;
+    }
+}
+
+snprintf(
+    voltage,
+    sizeof(voltage),
+    "%lu.%02lu V",
+    (uint32_t)ina_voltage,
+    (uint32_t)(ina_voltage * 100) % 100UL);
     snprintf(health, sizeof(health), "%d%%", model->health);
 
     int h = model->alt ? 28 : 42;

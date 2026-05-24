@@ -107,8 +107,10 @@ FURI_ALWAYS_INLINE static void furi_hal_interrupt_clear_pending(FuriHalInterrupt
     NVIC_ClearPendingIRQ(furi_hal_interrupt_irqn[index]);
 }
 
-FURI_ALWAYS_INLINE static void furi_hal_interrupt_get_pending(FuriHalInterruptId index) {
-    NVIC_GetPendingIRQ(furi_hal_interrupt_irqn[index]);
+FURI_ALWAYS_INLINE static bool furi_hal_interrupt_get_pending(
+    FuriHalInterruptId index) {
+    return NVIC_GetPendingIRQ(
+        furi_hal_interrupt_irqn[index]);
 }
 
 FURI_ALWAYS_INLINE static void furi_hal_interrupt_set_pending(FuriHalInterruptId index) {
