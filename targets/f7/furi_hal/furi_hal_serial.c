@@ -20,6 +20,9 @@
 #define FURI_HAL_SERIAL_LPUART_DMA_INSTANCE (DMA1)
 #define FURI_HAL_SERIAL_LPUART_DMA_CHANNEL  (LL_DMA_CHANNEL_7)
 
+static uint8_t usart_dma_rx_buffer[FURI_HAL_SERIAL_DMA_BUFFER_SIZE];
+static uint8_t lpuart_dma_rx_buffer[FURI_HAL_SERIAL_DMA_BUFFER_SIZE];
+
 typedef struct {
     uint8_t* buffer_rx_ptr;
     size_t buffer_rx_index_write;
@@ -187,7 +190,8 @@ static void furi_hal_serial_usart_init_dma_rx(void) {
     furi_check(furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_ptr == NULL);
     furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_index_write = 0;
     furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_index_read = 0;
-    furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_ptr = malloc(FURI_HAL_SERIAL_DMA_BUFFER_SIZE);
+    furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_ptr =
+    usart_dma_rx_buffer;
     LL_DMA_SetMemoryAddress(
         FURI_HAL_SERIAL_USART_DMA_INSTANCE,
         FURI_HAL_SERIAL_USART_DMA_CHANNEL,
@@ -249,7 +253,6 @@ static void furi_hal_serial_usart_deinit_dma_rx(void) {
 
         LL_DMA_DeInit(FURI_HAL_SERIAL_USART_DMA_INSTANCE, FURI_HAL_SERIAL_USART_DMA_CHANNEL);
         furi_hal_interrupt_set_isr(FuriHalInterruptIdDma1Ch6, NULL, NULL);
-        free(furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_ptr);
         furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_ptr = NULL;
     }
 }
@@ -388,7 +391,8 @@ static void furi_hal_serial_lpuart_init_dma_rx(void) {
     furi_check(furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_ptr == NULL);
     furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_index_write = 0;
     furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_index_read = 0;
-    furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_ptr = malloc(FURI_HAL_SERIAL_DMA_BUFFER_SIZE);
+    furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_ptr =
+    lpuart_dma_rx_buffer;
     LL_DMA_SetMemoryAddress(
         FURI_HAL_SERIAL_LPUART_DMA_INSTANCE,
         FURI_HAL_SERIAL_LPUART_DMA_CHANNEL,
@@ -452,7 +456,6 @@ static void furi_hal_serial_lpuart_deinit_dma_rx(void) {
 
         LL_DMA_DeInit(FURI_HAL_SERIAL_LPUART_DMA_INSTANCE, FURI_HAL_SERIAL_LPUART_DMA_CHANNEL);
         furi_hal_interrupt_set_isr(FuriHalInterruptIdDma1Ch7, NULL, NULL);
-        free(furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_ptr);
         furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_ptr = NULL;
     }
 }
