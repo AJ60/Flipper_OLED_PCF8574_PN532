@@ -64,7 +64,7 @@ static volatile FuriHalPower furi_hal_power = {
 
 // Remove extern declaration
 // extern const BQ27220DMData furi_hal_power_gauge_data_memory[];
-const int32_t BATTERY_CAPACITY = 3000;
+const int32_t BATTERY_CAPACITY = 1200;
 #ifdef USE_INA219
 // INA219 wrapper state is tracked in its module
 float curr_soc_percent = 100.0f;
