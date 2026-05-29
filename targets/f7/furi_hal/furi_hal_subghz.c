@@ -133,8 +133,8 @@ void furi_hal_subghz_init(void) {
             ;
 
         if(furi_hal_gpio_read(&gpio_cc1101_g0) != false) {
-            break;
-        }
+			FURI_LOG_W(TAG, "Skip GDO0 LOW test");
+		}
 
         // GD0 high
         timeout = furi_hal_cortex_timer_get(10000);
@@ -145,8 +145,8 @@ void furi_hal_subghz_init(void) {
             ;
 
         if(furi_hal_gpio_read(&gpio_cc1101_g0) != true) {
-            break;
-        }
+			FURI_LOG_W(TAG, "Skip GDO0 HIGH test");
+		}
 
         // Reset GD0 to floating state
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHighImpedance);
@@ -327,24 +327,32 @@ void furi_hal_subghz_idle(void) {
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     cc1101_switch_to_idle(&furi_hal_spi_bus_handle_subghz);
     //waiting for the chip to switch to IDLE mode
-    furi_check(cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000));
+		if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000)) {
+			FURI_LOG_E(TAG, "CC1101 IDLE failed");
+		}
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
 }
 
 void furi_hal_subghz_rx(void) {
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     cc1101_switch_to_rx(&furi_hal_spi_bus_handle_subghz);
-    //waiting for the chip to switch to Rx mode
-    furi_check(cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateRX, 10000));
+
+    if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateRX, 10000)) {
+        FURI_LOG_E(TAG, "CC1101 RX failed");
+    }
+
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
 }
-
 bool furi_hal_subghz_tx(void) {
     if(furi_hal_subghz.regulation != SubGhzRegulationTxRx) return false;
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     cc1101_switch_to_tx(&furi_hal_spi_bus_handle_subghz);
     //waiting for the chip to switch to Tx mode
-    furi_check(cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateTX, 10000));
+		if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateTX, 10000)) {
+		FURI_LOG_E(TAG, "CC1101 TX failed");
+		furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+		return false;
+		}
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
     return true;
 }
@@ -449,7 +457,9 @@ uint32_t furi_hal_subghz_set_frequency(uint32_t value) {
     uint32_t real_frequency = cc1101_set_frequency(&furi_hal_spi_bus_handle_subghz, value);
     cc1101_calibrate(&furi_hal_spi_bus_handle_subghz);
 
-    furi_check(cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000));
+    if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000)) {
+    FURI_LOG_E(TAG, "CC1101 set frequency IDLE failed");
+	}
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
     return real_frequency;

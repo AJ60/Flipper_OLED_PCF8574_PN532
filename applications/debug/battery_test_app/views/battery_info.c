@@ -1,5 +1,7 @@
 #include "battery_info.h"
 #include <furi.h>
+#include <furi_hal_power.h>
+#include <furi_hal_ina219.h>
 #include <gui/elements.h>
 #include <assets_icons.h>
 
@@ -100,14 +102,31 @@ static void battery_info_draw_callback(Canvas* canvas, void* context) {
     char voltage[10];
     char health[10];
 
-    snprintf(batt_level, sizeof(batt_level), "%lu%%", (uint32_t)model->charge);
-    snprintf(temperature, sizeof(temperature), "%lu C", (uint32_t)model->gauge_temperature);
-    snprintf(
-        voltage,
-        sizeof(voltage),
-        "%lu.%01lu V",
-        (uint32_t)model->gauge_voltage,
-        (uint32_t)(model->gauge_voltage * 10) % 10UL);
+float v = model->gauge_voltage;
+float i = model->gauge_current;
+
+if(furi_hal_ina219_is_ready()) {
+    furi_hal_ina219_get_voltage_current(&v, &i);
+}
+
+snprintf(
+    batt_level,
+    sizeof(batt_level),
+    "%u%%",
+    furi_hal_power_get_pct());
+
+snprintf(
+    temperature,
+    sizeof(temperature),
+    "%lu C",
+    (uint32_t)model->gauge_temperature);
+
+snprintf(
+    voltage,
+    sizeof(voltage),
+    "%lu.%01lu V",
+    (uint32_t)v,
+    (uint32_t)(v * 10) % 10UL);
     snprintf(health, sizeof(health), "%d%%", model->health);
 
     draw_stat(canvas, 8, 42, &I_Battery_16x16, batt_level);

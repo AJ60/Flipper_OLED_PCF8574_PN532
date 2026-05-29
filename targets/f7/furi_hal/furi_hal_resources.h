@@ -138,7 +138,7 @@ extern const GpioPin gpio_usb_dp;
 //extern const GpioPin gpio_button_sr_latch;
 
 #define CC1101_CS_GPIO_Port GPIOA
-#define CC1101_CS_Pin       LL_GPIO_PIN_15
+#define CC1101_CS_Pin       LL_GPIO_PIN_4
 #define CC1101_G0_GPIO_Port GPIOA
 #define CC1101_G0_Pin       LL_GPIO_PIN_1
 

@@ -22,6 +22,12 @@
 static bool s_detected = false;
 static uint8_t s_address = INA219_I2C_ADDR_BASE;
 
+static float s_cached_voltage_v = 0.0f;
+static float s_cached_current_a = 0.0f;
+static uint32_t s_last_read_tick = 0;
+
+#define INA219_READ_PERIOD_MS 500
+
 static bool ina219_read_reg16(uint8_t reg, uint16_t* out) {
     const FuriHalI2cBusHandle* handle = &furi_hal_i2c_handle_power;
     uint8_t addr8 = (uint8_t)(s_address << 1);
@@ -97,6 +103,15 @@ bool furi_hal_ina219_get_voltage_current(float* voltage_v, float* current_a) {
     if(!voltage_v || !current_a) return false;
     if(!s_detected) return false;
 
+    uint32_t now = furi_get_tick();
+    uint32_t period_ticks = furi_ms_to_ticks(INA219_READ_PERIOD_MS);
+
+    if(s_last_read_tick != 0 && (now - s_last_read_tick) < period_ticks) {
+        *voltage_v = s_cached_voltage_v;
+        *current_a = s_cached_current_a;
+        return true;
+    }
+
     uint16_t bus_raw = 0;
     uint16_t shunt_raw = 0;
 
@@ -105,22 +120,33 @@ bool furi_hal_ina219_get_voltage_current(float* voltage_v, float* current_a) {
     bool ok2 = ina219_read_reg16(INA219_REG_SHUNT_VOLTAGE, &shunt_raw);
     furi_hal_i2c_release(&furi_hal_i2c_handle_power);
 
-    if(!ok1 && !ok2) return false;
+    if(!ok1 && !ok2) {
+        if(s_last_read_tick != 0) {
+            *voltage_v = s_cached_voltage_v;
+            *current_a = s_cached_current_a;
+            return true;
+        }
+        return false;
+    }
 
-    float voltage = 0.0f;
+    float voltage = s_cached_voltage_v;
     if(ok1) {
         uint16_t v = (uint16_t)(bus_raw >> 3);
         voltage = (float)v * 0.004f;
     }
 
-    float current = 0.0f;
+    float current = s_cached_current_a;
     if(ok2) {
         int16_t s = (int16_t)shunt_raw;
         float shunt_v = (float)s * 10e-6f;
         current = -(shunt_v / INA219_SHUNT_OHMS);
     }
 
-    *voltage_v = voltage;
-    *current_a = current;
+    s_cached_voltage_v = voltage;
+    s_cached_current_a = current;
+    s_last_read_tick = now;
+
+    *voltage_v = s_cached_voltage_v;
+    *current_a = s_cached_current_a;
     return true;
 }
