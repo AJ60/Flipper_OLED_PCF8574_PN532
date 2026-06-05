@@ -17,6 +17,11 @@
   - [Credits](#credits)
   - [Currently busy with a high-priority production release: baby\_v1.0 🧑‍🍼](#currently-busy-with-a-high-priority-production-release-baby_v10-)
   - [☕ Support this project](#-support-this-project)
+ 
+    
+    ##  Hardware Schematic
+
+![Hardware Schematic](misc/shematic.png)
 
 ## Summary
 This target implements a Flipper-style board based on the `We act STM32WB55CGU6` and integrates the following external hardware:
