@@ -17,6 +17,8 @@ const GpioPin gpio_swclk = {.port = GPIOA, .pin = LL_GPIO_PIN_14};
 const GpioPin gpio_ibutton = {.port = iBTN_GPIO_Port, .pin = iBTN_Pin};
 
 const GpioPin gpio_cc1101_g0 = {.port = CC1101_G0_GPIO_Port, .pin = CC1101_G0_Pin};
+const GpioPin gpio_rf_sw_0 = {.port = GPIOC, .pin = LL_GPIO_PIN_0}; // WeAct: Stub for compatibility
+
 const GpioPin gpio_mcp_int = {.port = MCP_INT_GPIO_Port, .pin = MCP_INT_Pin};
 // RF switch pin omitted for this board
 
