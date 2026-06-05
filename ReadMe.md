@@ -27,12 +27,12 @@ This target implements a Flipper-style board based on the `We act STM32WB55CGU6`
 - ✅ INA219 (battery/current monitor)
 - ✅ MCP23017 (I/O expander for buttons, RGB, vibro)
 - ✅ microSD (SPI)
-- ✅ CC1101 sub-GHz module
+- ✅ In TEST mode CC1101 sub-GHz module
 - ✅ Buttons (handled via MCP23017)
 - ✅ RGB status LED (via MCP23017)
 - ✅ Speaker / buzzer (TIM16)
 - ✅ IR RX/TX
-- ✅ Vibration motor (via MCP23017)
+- ✅ Vibro motor (via MCP23017)
 - ✅ Li-ion battery + optional 3.7→5V boost
 
 ## What works / Limitations
@@ -51,7 +51,7 @@ Important: these macros are defined in `furi_hal_resources.*` and are used acros
 |---|---:|---|---|
 | I2C (power/default, I2C1) | I2C1 | SCL: PA9 (`I2C_1_SCL_GPIO_Port`/`I2C_1_SCL_Pin`)<br/>SDA: PB9 (`I2C_1_SDA_GPIO_Port`/`I2C_1_SDA_Pin`) | Used by INA219, default MCP23017 and oled screen |
 | I2C (external, I2C3) | I2C3 | SCL: PA7 (`I2C_3_SCL_GPIO_Port`/`I2C_3_SCL_Pin`)<br/>SDA: PB4 (`I2C_3_SDA_GPIO_Port`/`I2C_3_SDA_Pin`) | Useful for external I2C |
-| SPI1 (shared) | SPI1 | MISO: PA6 (`SPI_MISO_Pin`), MOSI: PB5 (`SPI_MOSI_Pin`), SCK: PB3 (`SPI_SCK_Pin`) | CC1101 and SD share this bus |
+| SPI1 (shared) | SPI1 | MISO: PA6 (`SPI_MISO_Pin`), MOSI: PB5 (`SPI_MOSI_Pin`), SCK: PB3 (`SPI_SCK_Pin`) | CC1101, NFC, SD share this bus |
 | CC1101 | SPI + IRQ | CS: PA15 (`CC1101_CS_Pin`), G0: PA1 (`CC1101_G0_Pin`) | Module IRQ on G0 |
 | SD card | SPI | CS: PA10 (`SD_CS_Pin`) | SD on SPI; slow/fast presets available |
 | MCP23017 | I2C | INT: PB0 (`MCP_INT_Pin`) | Default I2C address 0x20; RGB pins B1/B2/B3 (MCP pins 9/10/11); vibro on B0 (pin 8) |
