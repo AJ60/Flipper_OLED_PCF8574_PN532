@@ -1,4 +1,4 @@
-# ⚙️ DIY Flipper Zero
+# ⚙️ DIY Flipper Zero OLED version SH1106 and SSD1306
 
 > WARNING: I do not take responsibility if you damage your board or property. This guide is for educational purposes only — proceed at your own risk.
 
