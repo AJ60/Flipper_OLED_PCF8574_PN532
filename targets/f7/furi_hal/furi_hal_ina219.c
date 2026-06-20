@@ -56,7 +56,7 @@ bool furi_hal_ina219_init(void) {
             uint16_t cfg = 0;
 
             furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-            bool ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, s_address, 100);
+            bool ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, s_address << 1, 100);
             bool ok = false;
 
             if(ready) {

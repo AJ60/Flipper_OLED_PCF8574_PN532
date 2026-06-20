@@ -215,6 +215,32 @@ inline static void furi_hal_spi_bus_nfc_handle_event_callback(
     if(event == FuriHalSpiBusHandleEventInit) {
         furi_hal_gpio_write(handle->cs, true);
         furi_hal_gpio_init(handle->cs, GpioModeOutputPushPull, GpioPullNo, GpioSpeedVeryHigh);
+
+        if(handle->bus->current_handle == handle) {
+            // Restore SPI pins since we are re-initializing an active handle (e.g. exiting transparent mode)
+            LL_SPI_Init(handle->bus->spi, (LL_SPI_InitTypeDef*)preset);
+            LL_SPI_SetRxFIFOThreshold(handle->bus->spi, LL_SPI_RX_FIFO_TH_QUARTER);
+            LL_SPI_Enable(handle->bus->spi);
+
+            furi_hal_gpio_init_ex(
+                handle->miso,
+                GpioModeAltFunctionPushPull,
+                GpioPullNo,
+                GpioSpeedVeryHigh,
+                GpioAltFn5SPI1);
+            furi_hal_gpio_init_ex(
+                handle->mosi,
+                GpioModeAltFunctionPushPull,
+                GpioPullNo,
+                GpioSpeedVeryHigh,
+                GpioAltFn5SPI1);
+            furi_hal_gpio_init_ex(
+                handle->sck,
+                GpioModeAltFunctionPushPull,
+                GpioPullNo,
+                GpioSpeedVeryHigh,
+                GpioAltFn5SPI1);
+        }
     } else if(event == FuriHalSpiBusHandleEventDeinit) {
         furi_hal_gpio_write(handle->cs, true);
         furi_hal_gpio_init(handle->cs, GpioModeInput, GpioPullUp, GpioSpeedLow);
@@ -325,8 +351,15 @@ static void furi_hal_spi_bus_handle_sd_slow_event_callback(
 static void furi_hal_spi_bus_handle_subghz_event_callback(
     const FuriHalSpiBusHandle* handle,
     FuriHalSpiBusHandleEvent event) {
-    furi_hal_spi_bus_generic_handle_event_callback(
-        handle, event, &furi_hal_spi_preset_1edge_low_8m);
+    if(event == FuriHalSpiBusHandleEventActivate) {
+        furi_hal_spi_bus_generic_handle_event_callback(handle, event, &furi_hal_spi_preset_1edge_low_8m);
+        furi_hal_gpio_write(handle->cs, false);
+    } else if(event == FuriHalSpiBusHandleEventDeactivate) {
+        furi_hal_gpio_write(handle->cs, true);
+        furi_hal_spi_bus_generic_handle_event_callback(handle, event, &furi_hal_spi_preset_1edge_low_8m);
+    } else {
+        furi_hal_spi_bus_generic_handle_event_callback(handle, event, &furi_hal_spi_preset_1edge_low_8m);
+    }
 }
 
 static void furi_hal_spi_bus_handle_nfc_wrapper_event_callback(

@@ -287,12 +287,12 @@ FuriHalNfcError furi_hal_nfc_init(void) {
             ST25R3916_REG_FIELD_THRESHOLD_DEACTV,
             ST25R3916_REG_FIELD_THRESHOLD_DEACTV_rfe_mask,
             ST25R3916_REG_FIELD_THRESHOLD_DEACTV_rfe_75mV);
-        // Enable external load modulation
+        // Disable external load modulation (not present on ELECHOUSE module)
         st25r3916_change_reg_bits(
             handle,
             ST25R3916_REG_AUX_MOD,
             ST25R3916_REG_AUX_MOD_lm_ext,
-            ST25R3916_REG_AUX_MOD_lm_ext);
+            0x00);
         // Enable internal load modulation
         st25r3916_change_reg_bits(
             handle,

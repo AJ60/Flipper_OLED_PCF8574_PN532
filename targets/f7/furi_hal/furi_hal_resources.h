@@ -69,7 +69,6 @@ extern const GpioPin gpio_mcp_int;
 //extern const GpioPin gpio_rf_sw_0;
 
 extern const GpioPin gpio_subghz_cs;
-extern const GpioPin gpio_rf_sw_0;
 // extern const GpioPin gpio_display_cs;
 // extern const GpioPin gpio_display_rst_n;
 // extern const GpioPin gpio_display_di;
@@ -84,7 +83,6 @@ extern const GpioPin gpio_button_right;
 extern const GpioPin gpio_button_left;
 extern const GpioPin gpio_button_ok;
 extern const GpioPin gpio_button_back;
-
 
 extern const GpioPin gpio_spi_miso;
 extern const GpioPin gpio_spi_mosi;
@@ -210,8 +208,8 @@ GND - GND
 // #define RFID_RF_IN_Pin         LL_GPIO_PIN_0
 // #define RFID_CARRIER_GPIO_Port GPIOC
 // #define RFID_CARRIER_Pin       LL_GPIO_PIN_0
-#define RF_SW_0_GPIO_Port GPIOC
-#define RF_SW_0_Pin       LL_GPIO_PIN_0
+// #define RF_SW_0_GPIO_Port GPIOC
+// #define RF_SW_0_Pin       LL_GPIO_PIN_0
 
 #define SD_CD_GPIO_Port GPIOC
 #define SD_CD_Pin       LL_GPIO_PIN_0

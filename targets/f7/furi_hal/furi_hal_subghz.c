@@ -118,39 +118,25 @@ void furi_hal_subghz_init(void) {
 #endif
 
         // Reset
-        furi_hal_gpio_init(&gpio_cc1101_g0, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
-        cc1101_reset(&furi_hal_spi_bus_handle_subghz);
-        cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHighImpedance);
+		furi_hal_gpio_init(&gpio_cc1101_g0, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+		cc1101_reset(&furi_hal_spi_bus_handle_subghz);
 
-        // Prepare GD0 for power on self test
-        furi_hal_gpio_init(&gpio_cc1101_g0, GpioModeInput, GpioPullNo, GpioSpeedLow);
+		uint8_t part = cc1101_get_partnumber(&furi_hal_spi_bus_handle_subghz);
+		uint8_t ver = cc1101_get_version(&furi_hal_spi_bus_handle_subghz);
 
-        // GD0 low
-        FuriHalCortexTimer timeout = furi_hal_cortex_timer_get(10000);
-        cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHW);
-        while(furi_hal_gpio_read(&gpio_cc1101_g0) != false &&
-              !furi_hal_cortex_timer_is_expired(timeout))
-            ;
+		FURI_LOG_E(TAG, "CC1101 SPI TEST part=%u ver=%u", part, ver);
 
-        if(furi_hal_gpio_read(&gpio_cc1101_g0) != false) {
-			FURI_LOG_W(TAG, "Skip GDO0 LOW test");
+		// Normal CC1101: part=0, ver=20 / 0x14.
+		// If SPI is bad, do not continue to GDO0/RX/TX tests.
+		if((part != 0) || (ver != 20)) {
+			FURI_LOG_E(TAG, "CC1101 SPI test failed");
+			break;
 		}
 
-        // GD0 high
-        timeout = furi_hal_cortex_timer_get(10000);
-        cc1101_write_reg(
-            &furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHW | CC1101_IOCFG_INV);
-        while(furi_hal_gpio_read(&gpio_cc1101_g0) != true &&
-              !furi_hal_cortex_timer_is_expired(timeout))
-            ;
-
-        if(furi_hal_gpio_read(&gpio_cc1101_g0) != true) {
-			FURI_LOG_W(TAG, "Skip GDO0 HIGH test");
-		}
-
-        // Reset GD0 to floating state
-        cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHighImpedance);
-        furi_hal_gpio_init(&gpio_cc1101_g0, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+		// Keep GDO0 floating for now.
+		// GDO0 self-test is temporarily disabled.
+		cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHighImpedance);
+		furi_hal_gpio_init(&gpio_cc1101_g0, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
 
         // RF switches
      //   furi_hal_gpio_init(&gpio_rf_sw_0, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
@@ -163,6 +149,8 @@ void furi_hal_subghz_init(void) {
     } while(false);
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+	
+	FURI_LOG_E(TAG, "SUBGHZ INIT STATE=%d", furi_hal_subghz.state);
 
     if(furi_hal_subghz.state == SubGhzStateIdle) {
         FURI_LOG_I(TAG, "Init OK");
@@ -272,17 +260,26 @@ void furi_hal_subghz_flush_tx(void) {
 }
 
 bool furi_hal_subghz_rx_pipe_not_empty(void) {
-    CC1101RxBytes status[1];
+    CC1101RxBytes s1, s2;
+    uint8_t tries = 3;
+
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
-    cc1101_read_reg(
-        &furi_hal_spi_bus_handle_subghz, (CC1101_STATUS_RXBYTES) | CC1101_BURST, (uint8_t*)status);
+
+    do {
+        cc1101_read_reg(
+            &furi_hal_spi_bus_handle_subghz,
+            CC1101_STATUS_RXBYTES | CC1101_BURST,
+            (uint8_t*)&s1);
+
+        cc1101_read_reg(
+            &furi_hal_spi_bus_handle_subghz,
+            CC1101_STATUS_RXBYTES | CC1101_BURST,
+            (uint8_t*)&s2);
+    } while((s1.NUM_RXBYTES != s2.NUM_RXBYTES) && --tries);
+
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
-    // TODO: Find reason why RXFIFO_OVERFLOW doesnt work correctly
-    if(status->NUM_RXBYTES > 0) {
-        return true;
-    } else {
-        return false;
-    }
+
+    return s2.NUM_RXBYTES > 0;
 }
 
 bool furi_hal_subghz_is_rx_data_crc_valid(void) {
@@ -326,19 +323,29 @@ void furi_hal_subghz_reset(void) {
 void furi_hal_subghz_idle(void) {
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     cc1101_switch_to_idle(&furi_hal_spi_bus_handle_subghz);
-    //waiting for the chip to switch to IDLE mode
-		if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000)) {
-			FURI_LOG_E(TAG, "CC1101 IDLE failed");
-		}
+    if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 100000)) {
+        FURI_LOG_E(TAG, "CC1101 IDLE failed");
+    }
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
 }
 
 void furi_hal_subghz_rx(void) {
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
+
     cc1101_switch_to_rx(&furi_hal_spi_bus_handle_subghz);
 
     if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateRX, 10000)) {
-        FURI_LOG_E(TAG, "CC1101 RX failed");
+        uint8_t marc = 0;
+        cc1101_read_reg(
+            &furi_hal_spi_bus_handle_subghz,
+            CC1101_STATUS_MARCSTATE | CC1101_BURST,
+            &marc);
+        FURI_LOG_E(
+            TAG,
+            "CC1101 RX failed: part=%u ver=%u marc=0x%02X",
+            cc1101_get_partnumber(&furi_hal_spi_bus_handle_subghz),
+            cc1101_get_version(&furi_hal_spi_bus_handle_subghz),
+            marc);
     }
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
@@ -346,13 +353,14 @@ void furi_hal_subghz_rx(void) {
 bool furi_hal_subghz_tx(void) {
     if(furi_hal_subghz.regulation != SubGhzRegulationTxRx) return false;
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
+    cc1101_switch_to_idle(&furi_hal_spi_bus_handle_subghz);
+    cc1101_flush_tx(&furi_hal_spi_bus_handle_subghz);
     cc1101_switch_to_tx(&furi_hal_spi_bus_handle_subghz);
-    //waiting for the chip to switch to Tx mode
-		if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateTX, 10000)) {
-		FURI_LOG_E(TAG, "CC1101 TX failed");
-		furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
-		return false;
-		}
+    if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateTX, 10000)) {
+        FURI_LOG_E(TAG, "CC1101 TX failed");
+        furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+        return false;
+    }
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
     return true;
 }

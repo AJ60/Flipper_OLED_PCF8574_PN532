@@ -427,7 +427,9 @@ int32_t subghz_app(char* p) {
             subghz->view_dispatcher, subghz->gui, ViewDispatcherTypeFullscreen);
         furi_string_set(subghz->file_path, SUBGHZ_APP_FOLDER);
 
-        // Проверка наличия CC1101
+		FURI_LOG_E(TAG, "SUBGHZ APP CHECK alive=%u", furi_hal_subghz_is_alive());
+		furi_hal_subghz_dump_state();
+
         if(!furi_hal_subghz_is_alive()) {
             scene_manager_set_scene_state(
                 subghz->scene_manager, SubGhzSceneShowError, SubGhzCustomEventManagerSet);

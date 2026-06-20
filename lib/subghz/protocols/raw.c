@@ -56,11 +56,11 @@ const SubGhzProtocolDecoder subghz_protocol_raw_decoder = {
     .reset = subghz_protocol_decoder_raw_reset,
 
     .get_hash_data = NULL,
-    .get_hash_data_long = NULL,
+    //.get_hash_data_long = NULL,
     .serialize = NULL,
     .deserialize = subghz_protocol_decoder_raw_deserialize,
     .get_string = subghz_protocol_decoder_raw_get_string,
-    .get_string_brief = NULL,
+    //.get_string_brief = NULL,
 };
 
 const SubGhzProtocolEncoder subghz_protocol_raw_encoder = {
@@ -98,10 +98,6 @@ bool subghz_protocol_raw_save_to_file_init(
 
     do {
         // Create subghz folder directory if necessary
-        if(!storage_simply_mkdir(instance->storage, SUBGHZ_RAW_FOLDER)) {
-            break;
-        }
-        // Create saved directory if necessary
         if(!storage_simply_mkdir(instance->storage, SUBGHZ_RAW_FOLDER)) {
             break;
         }

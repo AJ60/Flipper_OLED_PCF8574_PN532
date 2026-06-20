@@ -111,8 +111,6 @@ bool furi_hal_crypto_enclave_ensure_key(uint8_t key_slot) {
     if(key_slot <= ENCLAVE_FACTORY_KEY_SLOTS) { // It's a factory key
         if(key_slot > keys_nb) return false;
     } else { // Unique key
-        if(keys_nb < ENCLAVE_FACTORY_KEY_SLOTS) // Some factory keys are missing
-            return false;
         for(uint8_t i = key_slot; i > ENCLAVE_FACTORY_KEY_SLOTS; i--) {
             if(furi_hal_crypto_enclave_load_key(i, empty_iv)) {
                 last_valid_slot = i;

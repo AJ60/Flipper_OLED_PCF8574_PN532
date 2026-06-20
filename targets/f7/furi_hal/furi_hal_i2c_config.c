@@ -1,21 +1,26 @@
 #include <furi_hal_i2c_config.h>
+#include <furi_hal_gpio.h>
 #include <furi_hal_resources.h>
-#include <furi_hal_version.h>
 #include <furi_hal_bus.h>
 
+#include <stm32wbxx_ll_i2c.h>
 #include <stm32wbxx_ll_rcc.h>
 
 /** Timing register value is computed with the STM32CubeMX Tool,
-  * Standard Mode @100kHz with I2CCLK = 64 MHz,
-  * rise time = 0ns, fall time = 0ns
-  */
+ * Standard Mode @100kHz with I2CCLK = 64 MHz,
+ * rise time = 0ns, fall time = 0ns
+ */
 #define FURI_HAL_I2C_CONFIG_POWER_I2C_TIMINGS_100 0x10707DBC
 
 /** Timing register value is computed with the STM32CubeMX Tool,
-  * Fast Mode @400kHz with I2CCLK = 64 MHz,
-  * rise time = 0ns, fall time = 0ns
-  */
+ * Fast Mode @400kHz with I2CCLK = 64 MHz,
+ * rise time = 0ns, fall time = 0ns
+ */
 #define FURI_HAL_I2C_CONFIG_POWER_I2C_TIMINGS_400 0x00602173
+
+// ────────────────────────────────────────────────────────────────────────────
+// Power bus (I2C1)
+// ────────────────────────────────────────────────────────────────────────────
 
 FuriMutex* furi_hal_i2c_bus_power_mutex = NULL;
 
@@ -26,8 +31,7 @@ static void furi_hal_i2c_bus_power_event(FuriHalI2cBus* bus, FuriHalI2cBusEvent 
     } else if(event == FuriHalI2cBusEventDeinit) {
         furi_mutex_free(furi_hal_i2c_bus_power_mutex);
     } else if(event == FuriHalI2cBusEventLock) {
-        furi_check(
-            furi_mutex_acquire(furi_hal_i2c_bus_power_mutex, FuriWaitForever) == FuriStatusOk);
+        furi_check(furi_mutex_acquire(furi_hal_i2c_bus_power_mutex, FuriWaitForever) == FuriStatusOk);
     } else if(event == FuriHalI2cBusEventUnlock) {
         furi_check(furi_mutex_release(furi_hal_i2c_bus_power_mutex) == FuriStatusOk);
     } else if(event == FuriHalI2cBusEventActivate) {
@@ -41,32 +45,9 @@ static void furi_hal_i2c_bus_power_event(FuriHalI2cBus* bus, FuriHalI2cBusEvent 
 }
 
 FuriHalI2cBus furi_hal_i2c_bus_power = {
-    .i2c = I2C1,
+    .i2c      = I2C1,
     .callback = furi_hal_i2c_bus_power_event,
 };
-
-FuriMutex* furi_hal_i2c_bus_external_mutex = NULL;
-
-static void furi_hal_i2c_bus_external_event(FuriHalI2cBus* bus, FuriHalI2cBusEvent event) {
-    if(event == FuriHalI2cBusEventInit) {
-        furi_hal_i2c_bus_external_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
-        bus->current_handle = NULL;
-    } else if(event == FuriHalI2cBusEventDeinit) {
-        furi_mutex_free(furi_hal_i2c_bus_external_mutex);
-    } else if(event == FuriHalI2cBusEventLock) {
-        furi_check(
-            furi_mutex_acquire(furi_hal_i2c_bus_external_mutex, FuriWaitForever) == FuriStatusOk);
-    } else if(event == FuriHalI2cBusEventUnlock) {
-        furi_check(furi_mutex_release(furi_hal_i2c_bus_external_mutex) == FuriStatusOk);
-    } else if(event == FuriHalI2cBusEventActivate) {
-        FURI_CRITICAL_ENTER();
-        furi_hal_bus_enable(FuriHalBusI2C3);
-        LL_RCC_SetI2CClockSource(LL_RCC_I2C3_CLKSOURCE_PCLK1);
-        FURI_CRITICAL_EXIT();
-    } else if(event == FuriHalI2cBusEventDeactivate) {
-        furi_hal_bus_disable(FuriHalBusI2C3);
-    }
-}
 
 void furi_hal_i2c_bus_handle_power_event(
     const FuriHalI2cBusHandle* handle,
@@ -76,25 +57,24 @@ void furi_hal_i2c_bus_handle_power_event(
             &gpio_i2c_1_sda,
             GpioModeAltFunctionOpenDrain,
             GpioPullUp,
-            GpioSpeedHigh,  // High speed for 400kHz I2C
+            GpioSpeedHigh,
             GpioAltFn4I2C1);
         furi_hal_gpio_init_ex(
             &gpio_i2c_1_scl,
             GpioModeAltFunctionOpenDrain,
             GpioPullUp,
-            GpioSpeedHigh,  // High speed for 400kHz I2C
+            GpioSpeedHigh,
             GpioAltFn4I2C1);
 
         LL_I2C_InitTypeDef I2C_InitStruct;
-        I2C_InitStruct.PeripheralMode = LL_I2C_MODE_I2C;
-        I2C_InitStruct.AnalogFilter = LL_I2C_ANALOGFILTER_ENABLE;
-        I2C_InitStruct.DigitalFilter = 0;
-        I2C_InitStruct.OwnAddress1 = 0;
+        I2C_InitStruct.PeripheralMode  = LL_I2C_MODE_I2C;
+        I2C_InitStruct.AnalogFilter    = LL_I2C_ANALOGFILTER_ENABLE;
+        I2C_InitStruct.DigitalFilter   = 0;
+        I2C_InitStruct.OwnAddress1     = 0;
         I2C_InitStruct.TypeAcknowledge = LL_I2C_ACK;
-        I2C_InitStruct.OwnAddrSize = LL_I2C_OWNADDRESS1_7BIT;
-        I2C_InitStruct.Timing = FURI_HAL_I2C_CONFIG_POWER_I2C_TIMINGS_400;  // 400kHz quieter operation
+        I2C_InitStruct.OwnAddrSize     = LL_I2C_OWNADDRESS1_7BIT;
+        I2C_InitStruct.Timing          = FURI_HAL_I2C_CONFIG_POWER_I2C_TIMINGS_400;
         LL_I2C_Init(handle->bus->i2c, &I2C_InitStruct);
-        // Explicitly enable I2C peripheral
         LL_I2C_Enable(handle->bus->i2c);
         LL_I2C_EnableAutoEndMode(handle->bus->i2c);
         LL_I2C_SetOwnAddress2(handle->bus->i2c, 0, LL_I2C_OWNADDRESS2_NOMASK);
@@ -113,8 +93,39 @@ void furi_hal_i2c_bus_handle_power_event(
 }
 
 const FuriHalI2cBusHandle furi_hal_i2c_handle_power = {
-    .bus = &furi_hal_i2c_bus_power,
+    .bus      = &furi_hal_i2c_bus_power,
     .callback = furi_hal_i2c_bus_handle_power_event,
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// External bus (I2C3) — MCP23017, OLED, INA219
+// ────────────────────────────────────────────────────────────────────────────
+
+FuriMutex* furi_hal_i2c_bus_external_mutex = NULL;
+
+static void furi_hal_i2c_bus_external_event(FuriHalI2cBus* bus, FuriHalI2cBusEvent event) {
+    if(event == FuriHalI2cBusEventInit) {
+        furi_hal_i2c_bus_external_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
+        bus->current_handle = NULL;
+    } else if(event == FuriHalI2cBusEventDeinit) {
+        furi_mutex_free(furi_hal_i2c_bus_external_mutex);
+    } else if(event == FuriHalI2cBusEventLock) {
+        furi_check(furi_mutex_acquire(furi_hal_i2c_bus_external_mutex, FuriWaitForever) == FuriStatusOk);
+    } else if(event == FuriHalI2cBusEventUnlock) {
+        furi_check(furi_mutex_release(furi_hal_i2c_bus_external_mutex) == FuriStatusOk);
+    } else if(event == FuriHalI2cBusEventActivate) {
+        FURI_CRITICAL_ENTER();
+        furi_hal_bus_enable(FuriHalBusI2C3);
+        LL_RCC_SetI2CClockSource(LL_RCC_I2C3_CLKSOURCE_PCLK1);
+        FURI_CRITICAL_EXIT();
+    } else if(event == FuriHalI2cBusEventDeactivate) {
+        furi_hal_bus_disable(FuriHalBusI2C3);
+    }
+}
+
+FuriHalI2cBus furi_hal_i2c_bus_external = {
+    .i2c      = I2C3,
+    .callback = furi_hal_i2c_bus_external_event,
 };
 
 void furi_hal_i2c_bus_handle_external_event(
@@ -122,20 +133,29 @@ void furi_hal_i2c_bus_handle_external_event(
     FuriHalI2cBusHandleEvent event) {
     if(event == FuriHalI2cBusHandleEventActivate) {
         furi_hal_gpio_init_ex(
-            &gpio_i2c_3_scl, GpioModeAltFunctionOpenDrain, GpioPullNo, GpioSpeedHigh, GpioAltFn4I2C3);
+            &gpio_i2c_3_scl,
+            GpioModeAltFunctionOpenDrain,
+            GpioPullNo,
+            GpioSpeedHigh,
+            GpioAltFn4I2C3);
         furi_hal_gpio_init_ex(
-            &gpio_i2c_3_sda, GpioModeAltFunctionOpenDrain, GpioPullNo, GpioSpeedHigh, GpioAltFn4I2C3);
+            &gpio_i2c_3_sda,
+            GpioModeAltFunctionOpenDrain,
+            GpioPullNo,
+            GpioSpeedHigh,
+            GpioAltFn4I2C3);
 
         LL_I2C_InitTypeDef I2C_InitStruct;
-        I2C_InitStruct.PeripheralMode = LL_I2C_MODE_I2C;
-        I2C_InitStruct.AnalogFilter = LL_I2C_ANALOGFILTER_ENABLE;
-        I2C_InitStruct.DigitalFilter = 0;
-        I2C_InitStruct.OwnAddress1 = 0;
+        I2C_InitStruct.PeripheralMode  = LL_I2C_MODE_I2C;
+        I2C_InitStruct.AnalogFilter    = LL_I2C_ANALOGFILTER_ENABLE;
+        I2C_InitStruct.DigitalFilter   = 0;
+        I2C_InitStruct.OwnAddress1     = 0;
         I2C_InitStruct.TypeAcknowledge = LL_I2C_ACK;
-        I2C_InitStruct.OwnAddrSize = LL_I2C_OWNADDRESS1_7BIT;
-        I2C_InitStruct.Timing = FURI_HAL_I2C_CONFIG_POWER_I2C_TIMINGS_400;
+        I2C_InitStruct.OwnAddrSize     = LL_I2C_OWNADDRESS1_7BIT;
+        I2C_InitStruct.Timing          = FURI_HAL_I2C_CONFIG_POWER_I2C_TIMINGS_400;
         LL_I2C_Init(handle->bus->i2c, &I2C_InitStruct);
-        // I2C is enabled at this point
+        // FIX: added LL_I2C_Enable(),  I2C3
+        LL_I2C_Enable(handle->bus->i2c);
         LL_I2C_EnableAutoEndMode(handle->bus->i2c);
         LL_I2C_SetOwnAddress2(handle->bus->i2c, 0, LL_I2C_OWNADDRESS2_NOMASK);
         LL_I2C_DisableOwnAddress2(handle->bus->i2c);
@@ -152,14 +172,7 @@ void furi_hal_i2c_bus_handle_external_event(
     }
 }
 
-FuriHalI2cBus furi_hal_i2c_bus_external = {
-    .i2c = I2C3,
-    .callback = furi_hal_i2c_bus_external_event,
-};
-
 const FuriHalI2cBusHandle furi_hal_i2c_handle_external = {
-    .bus = &furi_hal_i2c_bus_external,
+    .bus      = &furi_hal_i2c_bus_external,
     .callback = furi_hal_i2c_bus_handle_external_event,
 };
-
-// const FuriHalI2cBusHandle furi_hal_i2c_handle_external =  furi_hal_i2c_handle_power;

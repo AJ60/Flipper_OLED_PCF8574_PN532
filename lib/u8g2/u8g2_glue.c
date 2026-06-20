@@ -112,8 +112,8 @@ uint8_t u8g2_gpio_and_delay_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, vo
  * Performance: ~4x faster than software I2C bit-banging
  */
 uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
-    static uint8_t buffer[128];  // Increased buffer for better performance
-    static uint8_t buf_idx = 0;
+    static uint8_t buffer[256];  // Increased buffer to 256 bytes to prevent truncation of full-row draws (128 bytes + command headers)
+    static uint16_t buf_idx = 0;
     
     switch(msg) {
     case U8X8_MSG_BYTE_SEND: {

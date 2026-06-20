@@ -32,7 +32,6 @@
 #define TAG "FuriHalPower"
 
 // Remove TAG definition as logging won't happen
-#define TAG "FuriHalPower"
 
 // Remove debug GPIO defines
 // #ifndef FURI_HAL_POWER_DEBUG_WFI_GPIO

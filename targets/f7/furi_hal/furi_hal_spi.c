@@ -3,6 +3,7 @@
 #include <furi_hal_resources.h>
 #include <furi_hal_power.h>
 #include <furi_hal_interrupt.h>
+#include <furi_hal_cortex.h>
 
 #include <stm32wbxx_ll_dma.h>
 #include <stm32wbxx_ll_spi.h>
@@ -78,13 +79,29 @@ void furi_hal_spi_release(const FuriHalSpiBusHandle* handle) {
 }
 
 static void furi_hal_spi_bus_end_txrx(const FuriHalSpiBusHandle* handle, uint32_t timeout) {
-    UNUSED(timeout); // FIXME
-    while(LL_SPI_GetTxFIFOLevel(handle->bus->spi) != LL_SPI_TX_FIFO_EMPTY)
-        ;
-    while(LL_SPI_IsActiveFlag_BSY(handle->bus->spi))
-        ;
+    uint32_t timeout_us = timeout * 1000;
+    if(timeout_us < 1000) {
+        timeout_us = 1000;
+    }
+    FuriHalCortexTimer timer = furi_hal_cortex_timer_get(timeout_us);
+    while(LL_SPI_GetTxFIFOLevel(handle->bus->spi) != LL_SPI_TX_FIFO_EMPTY) {
+        if(furi_hal_cortex_timer_is_expired(timer)) {
+            FURI_LOG_E(TAG, "SPI TX FIFO clear timeout");
+            break;
+        }
+    }
+    while(LL_SPI_IsActiveFlag_BSY(handle->bus->spi)) {
+        if(furi_hal_cortex_timer_is_expired(timer)) {
+            FURI_LOG_E(TAG, "SPI busy clear timeout");
+            break;
+        }
+    }
     while(LL_SPI_GetRxFIFOLevel(handle->bus->spi) != LL_SPI_RX_FIFO_EMPTY) {
         LL_SPI_ReceiveData8(handle->bus->spi);
+        if(furi_hal_cortex_timer_is_expired(timer)) {
+            FURI_LOG_E(TAG, "SPI RX FIFO purge timeout");
+            break;
+        }
     }
 }
 
