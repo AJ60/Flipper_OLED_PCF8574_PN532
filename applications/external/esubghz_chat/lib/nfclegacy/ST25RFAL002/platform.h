@@ -24,8 +24,8 @@ void rfal_platform_spi_release();
 #define ST25R_SS_PIN NFC_CS_Pin
 #define ST25R_SS_PORT NFC_CS_GPIO_Port
 
-#define ST25R_INT_PIN NFCIRQPin
-#define ST25R_INT_PORT NFCIRQGPIOPort
+#define ST25R_INT_PIN NFC_IRQ_Pin
+#define ST25R_INT_PORT NFC_IRQ_GPIO_Port
 
 #define RFAL_ANALOG_CONFIG_CUSTOM \
     true /*!< Enable/Disable RFAL custom analog configuration                           */
