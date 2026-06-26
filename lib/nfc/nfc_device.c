@@ -8,6 +8,7 @@
 
 #define NFC_FILE_HEADER    "Flipper NFC device"
 #define NFC_DEV_TYPE_ERROR "Protocol type mismatch"
+#define TAG                "NfcDevice"
 
 #define NFC_DEVICE_UID_KEY  "UID"
 #define NFC_DEVICE_TYPE_KEY "Device type"
@@ -162,14 +163,21 @@ bool nfc_device_save(NfcDevice* instance, const char* path) {
     FuriString* temp_str = furi_string_alloc();
 
     if(instance->loading_callback) {
+        FURI_LOG_D(TAG, "Loading callback start");
         instance->loading_callback(instance->loading_callback_context, true);
+        FURI_LOG_D(TAG, "Loading callback start done");
     }
 
     do {
         // Open file
-        if(!flipper_format_buffered_file_open_always(ff, path)) break;
+        FURI_LOG_I(TAG, "Open save file: %s", path);
+        if(!flipper_format_buffered_file_open_always(ff, path)) {
+            FURI_LOG_W(TAG, "Open save file failed");
+            break;
+        }
 
         // Write header
+        FURI_LOG_D(TAG, "Write header");
         if(!flipper_format_write_header_cstr(ff, NFC_FILE_HEADER, NFC_CURRENT_FORMAT_VERSION))
             break;
 
@@ -198,18 +206,26 @@ bool nfc_device_save(NfcDevice* instance, const char* path) {
         if(!flipper_format_write_hex(ff, NFC_DEVICE_UID_KEY, uid, uid_len)) break;
 
         // Write protocol-dependent data
-        if(!nfc_devices[instance->protocol]->save(instance->protocol_data, ff)) break;
+        FURI_LOG_D(TAG, "Write protocol data");
+        if(!nfc_devices[instance->protocol]->save(instance->protocol_data, ff)) {
+            FURI_LOG_W(TAG, "Write protocol data failed");
+            break;
+        }
 
         saved = true;
     } while(false);
 
     if(instance->loading_callback) {
+        FURI_LOG_D(TAG, "Loading callback stop");
         instance->loading_callback(instance->loading_callback_context, false);
+        FURI_LOG_D(TAG, "Loading callback stop done");
     }
 
     furi_string_free(temp_str);
     flipper_format_free(ff);
     furi_record_close(RECORD_STORAGE);
+
+    FURI_LOG_I(TAG, "Save result: %u", saved);
 
     return saved;
 }

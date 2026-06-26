@@ -56,19 +56,10 @@ static NfcCommand nfc_scene_read_poller_callback_mf_classic(NfcGenericEvent even
     NfcCommand command = NfcCommandContinue;
 
     if(mfc_event->type == MfClassicPollerEventTypeRequestMode) {
-        nfc_device_set_data(
-            instance->nfc_device, NfcProtocolMfClassic, nfc_poller_get_data(instance->poller));
-        size_t uid_len = 0;
-        const uint8_t* uid = nfc_device_get_uid(instance->nfc_device, &uid_len);
-        if(mf_classic_key_cache_load(instance->mfc_key_cache, uid, uid_len)) {
-            FURI_LOG_I(TAG, "Key cache found");
-            mfc_event->data->poller_mode.mode = MfClassicPollerModeRead;
-        } else {
-            FURI_LOG_I(TAG, "Key cache not found");
-            view_dispatcher_send_custom_event(
-                instance->view_dispatcher, NfcCustomEventPollerIncomplete);
-            command = NfcCommandStop;
-        }
+        const MfClassicData* mfc_data = mfc_event->data->poller_mode.data;
+        FURI_LOG_I(TAG, "Trying default keys");
+        mf_classic_key_cache_load_default_keys(instance->mfc_key_cache, mfc_data->type);
+        mfc_event->data->poller_mode.mode = MfClassicPollerModeRead;
     } else if(mfc_event->type == MfClassicPollerEventTypeRequestReadSector) {
         uint8_t sector_num = 0;
         MfClassicKey key = {};
@@ -83,14 +74,23 @@ static NfcCommand nfc_scene_read_poller_callback_mf_classic(NfcGenericEvent even
             mfc_event->data->read_sector_request_data.key_provided = false;
         }
     } else if(mfc_event->type == MfClassicPollerEventTypeSuccess) {
-        nfc_device_set_data(
-            instance->nfc_device, NfcProtocolMfClassic, nfc_poller_get_data(instance->poller));
-        const MfClassicData* mfc_data =
-            nfc_device_get_data(instance->nfc_device, NfcProtocolMfClassic);
-        NfcCustomEvent custom_event = mf_classic_is_card_read(mfc_data) ?
-                                          NfcCustomEventPollerSuccess :
-                                          NfcCustomEventPollerIncomplete;
-        view_dispatcher_send_custom_event(instance->view_dispatcher, custom_event);
+        const MfClassicData* mfc_data = nfc_poller_get_data(instance->poller);
+        nfc_device_set_data(instance->nfc_device, NfcProtocolMfClassic, mfc_data);
+        if(mf_classic_is_card_read(mfc_data)) {
+            view_dispatcher_send_custom_event(
+                instance->view_dispatcher, NfcCustomEventPollerSuccess);
+        } else {
+            view_dispatcher_send_custom_event(
+                instance->view_dispatcher, NfcCustomEventPollerIncomplete);
+        }
+        command = NfcCommandStop;
+    } else if(mfc_event->type == MfClassicPollerEventTypeFail) {
+        FURI_LOG_W(TAG, "Read failed");
+        view_dispatcher_send_custom_event(instance->view_dispatcher, NfcCustomEventPollerFailure);
+        command = NfcCommandStop;
+    } else if(mfc_event->type == MfClassicPollerEventTypeCardLost) {
+        FURI_LOG_W(TAG, "Card lost");
+        view_dispatcher_send_custom_event(instance->view_dispatcher, NfcCustomEventPollerFailure);
         command = NfcCommandStop;
     }
 
@@ -271,9 +271,18 @@ static bool nfc_scene_save_name_on_event_mf_classic(NfcApp* instance, SceneManag
     bool consumed = false;
 
     if(event.type == SceneManagerEventTypeCustom && event.event == NfcCustomEventTextInputDone) {
+        bool was_acquired = furi_hal_nfc_is_mine();
+        if(was_acquired) {
+            furi_hal_nfc_release();
+            instance->nfc_hal_acquired = false;
+        }
         mf_classic_key_cache_save(
             instance->mfc_key_cache,
             nfc_device_get_data(instance->nfc_device, NfcProtocolMfClassic));
+        if(was_acquired) {
+            furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+            instance->nfc_hal_acquired = true;
+        }
         consumed = true;
     }
 

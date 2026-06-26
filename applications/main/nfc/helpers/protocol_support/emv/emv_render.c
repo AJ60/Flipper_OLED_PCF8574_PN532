@@ -99,41 +99,59 @@ void nfc_render_emv_transactions(const EmvApplication* apl, FuriString* str) {
         return;
     }
 
-    Storage* storage = furi_record_open(RECORD_STORAGE);
-    FuriString* tmp = furi_string_alloc();
-
     furi_string_cat_printf(str, "Transactions:\n");
     for(int i = 0; i < len; i++) {
         // If no date and amount - skip
         if((!apl->trans[i].date) && (!apl->trans[i].amount)) continue;
         // transaction counter
-        furi_string_cat_printf(str, "\e#%d: ", apl->trans[i].atc);
+        furi_string_cat_printf(str, "\e##%d: ", apl->trans[i].atc);
 
         // Print transaction amount
         if(!apl->trans[i].amount) {
             furi_string_cat_printf(str, "???");
         } else {
             FURI_LOG_D("EMV Render", "Amount: %llX\n", apl->trans[i].amount);
-            uint8_t amount_bytes[6];
-            bit_lib_num_to_bytes_le(apl->trans[i].amount, 6, amount_bytes);
+            const uint8_t* amount_bytes = (const uint8_t*)&apl->trans[i].amount;
 
-            bool junk = false;
-            uint64_t amount = bit_lib_bytes_to_num_bcd(amount_bytes, 6, &junk);
+            // EMV sums are stored in BCD but are padded. We need to skip leading zero bytes.
+            uint8_t start_offset = 0;
+            while(start_offset < 5 && amount_bytes[start_offset] == 0) {
+                start_offset++;
+            }
+
+            bool is_bcd = false;
+            uint64_t amount = bit_lib_bytes_to_num_bcd(&amount_bytes[start_offset], 6 - start_offset, &is_bcd);
+            if(!is_bcd) {
+                amount = apl->trans[i].amount;
+            }
             uint8_t amount_cents = amount % 100;
 
             furi_string_cat_printf(str, "%llu.%02u", amount / 100, amount_cents);
         }
 
         if(apl->trans[i].currency) {
-            furi_string_set_str(tmp, "UNK");
-            nfc_emv_parser_get_currency_name(storage, apl->trans[i].currency, tmp);
-            furi_string_cat_printf(str, " %s\n", furi_string_get_cstr(tmp));
+            uint16_t cur = apl->trans[i].currency;
+            if(cur == 0x0643 || cur == 643 || cur == 0x0810 || cur == 810) {
+                furi_string_cat_printf(str, " RUB");
+            } else if(cur == 0x0840 || cur == 840) {
+                furi_string_cat_printf(str, " USD");
+            } else if(cur == 0x0978 || cur == 978) {
+                furi_string_cat_printf(str, " EUR");
+            } else {
+                furi_string_cat_printf(str, " Cur: %03X", cur);
+            }
         }
+        furi_string_cat_printf(str, "\n");
 
         if(apl->trans[i].country) {
-            furi_string_set_str(tmp, "UNK");
-            nfc_emv_parser_get_country_name(storage, apl->trans[i].country, tmp);
-            furi_string_cat_printf(str, "Country: %s\n", furi_string_get_cstr(tmp));
+            uint16_t count = apl->trans[i].country;
+            if(count == 0x0643 || count == 643 || count == 0x0810 || count == 810) {
+                furi_string_cat_printf(str, "RUS  ");
+            } else if(count == 0x0840 || count == 840) {
+                furi_string_cat_printf(str, "USA  ");
+            } else {
+                furi_string_cat_printf(str, "Cnt: %03X  ", count);
+            }
         }
 
         if(apl->trans[i].date)
@@ -155,9 +173,6 @@ void nfc_render_emv_transactions(const EmvApplication* apl, FuriString* str) {
         // Line break
         furi_string_cat_printf(str, "\n");
     }
-
-    furi_string_free(tmp);
-    furi_record_close(RECORD_STORAGE);
 }
 
 void nfc_render_emv_extra(const EmvData* data, FuriString* str) {

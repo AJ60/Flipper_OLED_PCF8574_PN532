@@ -10,11 +10,11 @@ const NotificationSequence subghz_sequence_rx = {
 
     &message_display_backlight_on,
 
-    
+    &message_vibro_on,
     &message_note_c6,
     &message_delay_50,
     &message_sound_off,
-    
+    &message_vibro_off,
 
     &message_delay_50,
     NULL,
@@ -25,11 +25,11 @@ const NotificationSequence subghz_sequence_rx_locked = {
 
     &message_display_backlight_on,
 
-    
+    &message_vibro_on,
     &message_note_c6,
     &message_delay_50,
     &message_sound_off,
-    
+    &message_vibro_off,
 
     &message_delay_500,
 
@@ -38,11 +38,11 @@ const NotificationSequence subghz_sequence_rx_locked = {
 };
 
 const NotificationSequence subghz_sequence_tx_beep = {
-    
+    &message_vibro_on,
     &message_note_c6,
     &message_delay_50,
     &message_sound_off,
-    
+    &message_vibro_off,
     &message_delay_50,
     NULL,
 };
@@ -97,9 +97,9 @@ static void subghz_scene_receiver_update_statusbar(void* context) {
     } else {
         subghz_view_receiver_add_data_statusbar(
             subghz->subghz_receiver,
+            "",
+            "",
             furi_string_get_cstr(history_stat_str),
-            "",
-            "",
             subghz_txrx_hopper_get_state(subghz->txrx) != SubGhzHopperStateOFF,
             READ_BIT(subghz->filter, SubGhzProtocolFlag_BinRAW) > 0,
             show_sats,
@@ -255,12 +255,16 @@ void subghz_scene_receiver_on_enter(void* context) {
 
     if(subghz_rx_key_state_get(subghz) == SubGhzRxKeyStateIDLE) {
         subghz_txrx_set_preset_internal(
-            subghz->txrx, subghz->last_settings->frequency, subghz->last_settings->preset_index);
+            subghz->txrx,
+            subghz->last_settings->frequency,
+            subghz->last_settings->preset_index,
+            subghz->last_settings->tx_power);
 
         subghz->filter = subghz->last_settings->filter;
         subghz_txrx_receiver_set_filter(subghz->txrx, subghz->filter);
         subghz->ignore_filter = subghz->last_settings->ignore_filter;
         subghz_txrx_receiver_set_ignore_filter(subghz->txrx, subghz->ignore_filter);
+        subghz->tx_power = subghz->last_settings->tx_power;
 
         subghz_history_reset(history);
         subghz_rx_key_state_set(subghz, SubGhzRxKeyStateStart);

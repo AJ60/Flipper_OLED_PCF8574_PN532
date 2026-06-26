@@ -126,6 +126,18 @@ typedef struct {
     size_t dict_keys_current;
 } NfcMfUltralightCDictContext;
 
+typedef enum {
+    NfcMfUltralightCWriteDictIdle, /**< No dict open; safe to open either dict. */
+    NfcMfUltralightCWriteDictUser, /**< User dict currently open. */
+    NfcMfUltralightCWriteDictSystem, /**< System dict currently open. */
+    NfcMfUltralightCWriteDictExhausted, /**< All dicts tried; do not re-open. */
+} NfcMfUltralightCWriteDictState;
+
+typedef struct {
+    bool copy_key; /**< True = overwrite target 3DES key with source key pages. */
+    NfcMfUltralightCWriteDictState dict_state; /**< Which dict is open for write-phase auth. */
+} NfcMfUltralightCWriteContext;
+
 struct NfcApp {
     DialogsApp* dialogs;
     Storage* storage;
@@ -165,11 +177,12 @@ struct NfcApp {
     SlixUnlock* slix_unlock;
     NfcMfClassicDictAttackContext nfc_dict_context;
     NfcMfUltralightCDictContext mf_ultralight_c_dict_context;
+    NfcMfUltralightCWriteContext mf_ultralight_c_write_context;
     Mfkey32Logger* mfkey32_logger;
     MfUserDict* mf_user_dict;
     MfClassicKeyCache* mfc_key_cache;
     CompositeApiResolver* api_resolver;
-    NfcProtocolSupport* protocol_support;
+    NfcProtocolSupport* cached_protocol_supports[NfcProtocolNum];
     NfcSupportedCards* nfc_supported_cards;
 
     NfcDevice* nfc_device;
@@ -179,6 +192,7 @@ struct NfcApp {
     FuriTimer* timer;
 
     bool fav_timeout;
+    bool nfc_hal_acquired;
 };
 
 typedef enum {

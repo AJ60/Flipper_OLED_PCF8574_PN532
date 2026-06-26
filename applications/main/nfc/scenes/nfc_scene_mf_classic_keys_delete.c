@@ -13,6 +13,11 @@ void nfc_scene_mf_classic_keys_delete_widget_callback(
 void nfc_scene_mf_classic_keys_delete_on_enter(void* context) {
     NfcApp* instance = context;
 
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     uint32_t key_index =
         scene_manager_get_scene_state(instance->scene_manager, NfcSceneMfClassicKeysDelete);
     FuriString* key_str = furi_string_alloc();
@@ -74,4 +79,9 @@ void nfc_scene_mf_classic_keys_delete_on_exit(void* context) {
 
     mf_user_dict_free(instance->mf_user_dict);
     widget_reset(instance->widget);
+
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
 }

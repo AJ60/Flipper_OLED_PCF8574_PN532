@@ -182,6 +182,10 @@ FuriHalNfcError furi_hal_nfc_felica_listener_set_sensf_res_data(
     furi_check(pmm_len == FURI_HAL_FELICA_IDM_PMM_LENGTH);
 
     const FuriHalSpiBusHandle* handle = &furi_hal_spi_bus_handle_nfc;
+
+    FuriHalNfcError error = furi_hal_nfc_acquire();
+    if(error != FuriHalNfcErrorNone) return error;
+
     // Write PT Memory
     FuriHalFelicaPtMemory pt;
     pt.system_code = sys_code;
@@ -191,6 +195,9 @@ FuriHalNfcError furi_hal_nfc_felica_listener_set_sensf_res_data(
     memcpy(pt.Pmm, pmm, pmm_len);
 
     st25r3916_write_ptf_mem(handle, (uint8_t*)&pt, sizeof(FuriHalFelicaPtMemory));
+
+    furi_hal_nfc_release();
+
     return FuriHalNfcErrorNone;
 }
 

@@ -57,32 +57,50 @@ void furi_hal_mcp23017_set_i2c_bus(const FuriHalI2cBusHandle* bus_handle) {
 
 // Internal implementation that accepts explicit I2C address
 bool furi_hal_mcp23017_init_ex(uint8_t i2c_addr) {
-    mcp_addr = i2c_addr;
+    // Wait for the power rail and chip to fully stabilize
+    furi_delay_ms(100);
 
     FURI_LOG_I(
         TAG,
-        "Initializing MCP23017 at I2C address 0x%02X on I2C bus",
-        mcp_addr);
+        "Initializing MCP23017 on I2C bus");
 
     furi_hal_i2c_acquire(mcp_i2c_handle);
 
     bool detected = false;
+    uint8_t detected_addr = 0;
 
-    if(furi_hal_i2c_is_device_ready(
-           mcp_i2c_handle,
-           mcp_i2c_addr(),
-           100)) {
+    // Probe the requested address first
+    uint8_t test_addr = i2c_addr;
+    if(furi_hal_i2c_is_device_ready(mcp_i2c_handle, (uint8_t)(test_addr << 1), 200)) {
         detected = true;
+        detected_addr = test_addr;
     } else {
         uint8_t probe = 0;
-
-        if(furi_hal_i2c_read_reg_8(
-               mcp_i2c_handle,
-               mcp_i2c_addr(),
-               MCP_IOCON,
-               &probe,
-               200)) {
+        if(furi_hal_i2c_read_reg_8(mcp_i2c_handle, (uint8_t)(test_addr << 1), MCP_IOCON, &probe, 200)) {
             detected = true;
+            detected_addr = test_addr;
+        }
+    }
+
+    // If not detected, fallback to testing the entire 0x20 - 0x27 range
+    if(!detected) {
+        uint8_t probe_addrs[] = {0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27};
+        for(size_t i = 0; i < sizeof(probe_addrs) / sizeof(probe_addrs[0]); i++) {
+            test_addr = probe_addrs[i];
+            if(test_addr == i2c_addr) continue; // already tested
+
+            if(furi_hal_i2c_is_device_ready(mcp_i2c_handle, (uint8_t)(test_addr << 1), 200)) {
+                detected = true;
+                detected_addr = test_addr;
+                break;
+            } else {
+                uint8_t probe = 0;
+                if(furi_hal_i2c_read_reg_8(mcp_i2c_handle, (uint8_t)(test_addr << 1), MCP_IOCON, &probe, 200)) {
+                    detected = true;
+                    detected_addr = test_addr;
+                    break;
+                }
+            }
         }
     }
 
@@ -91,11 +109,13 @@ bool furi_hal_mcp23017_init_ex(uint8_t i2c_addr) {
 
         FURI_LOG_E(
             TAG,
-            "MCP23017 not detected at 0x%02X",
-            mcp_addr);
+            "MCP23017 not detected at any address");
 
         return false;
     }
+
+    mcp_addr = detected_addr;
+    FURI_LOG_I(TAG, "MCP23017 detected at address 0x%02X", mcp_addr);
 
     bool io_ok = false;
 
@@ -180,6 +200,13 @@ bool furi_hal_mcp23017_read_gpio(uint16_t* gpio_state) {
     return true;
 }
 
+bool furi_hal_mcp23017_read_port(uint8_t port_idx, uint8_t* port_state) {
+    furi_check(port_state);
+    if(port_idx > 1) return false;
+    return mcp_read_reg(port_idx == 0 ? MCP_GPIOA : MCP_GPIOB, port_state);
+}
+
+
 bool furi_hal_mcp23017_configure_interrupts(uint16_t gpios_to_input_mask) {
     FURI_LOG_I(TAG, "Configuring MCP23017 interrupts with mask 0x%04X", gpios_to_input_mask);
 
@@ -229,6 +256,54 @@ bool furi_hal_mcp23017_configure_interrupts(uint16_t gpios_to_input_mask) {
 
     FURI_LOG_I(TAG, "MCP23017 interrupts configured");
     return true;
+}
+
+// Verify the MCP23017 still holds its expected configuration. After a silent
+// brown-out/reset the chip reverts IODIR to all-inputs and clears IOCON, which
+// silently kills button interrupts. We detect the mismatch and re-apply config.
+bool furi_hal_mcp23017_check_and_restore(uint16_t expected_mask) {
+    uint8_t mask_a = (uint8_t)(expected_mask & 0xFF);
+
+    // Cheap health probe: a single register read. IOCON reverts to 0x00 after a
+    // silent reset, so it is a reliable, low-cost canary. We deliberately avoid
+    // reading 7+ registers on every idle tick because this shares the power I2C
+    // bus with battery monitoring and would starve the input thread under load.
+    uint8_t iocon = 0;
+    uint8_t iodira = 0;
+    bool ok;
+
+    furi_hal_i2c_acquire(mcp_i2c_handle);
+    ok = mcp_read_reg_locked(MCP_IOCON, &iocon);
+    if(ok) ok = mcp_read_reg_locked(MCP_IODIRA, &iodira);
+    furi_hal_i2c_release(mcp_i2c_handle);
+
+    if(!ok) {
+        // I2C probe failed — the MCP23017 may have been disturbed by RF interference
+        // from NFC field activity. Wait briefly for the bus to stabilize before re-init.
+        FURI_LOG_D(TAG, "check_and_restore: I2C probe failed, attempting re-init");
+        furi_delay_ms(50);
+        if(furi_hal_mcp23017_init()) {
+            return furi_hal_mcp23017_configure_interrupts(expected_mask);
+        }
+        return false;
+    }
+
+    // Healthy if IOCON kept its value and the input pins are still inputs.
+    if(iocon == 0x44 && (iodira & mask_a) == mask_a) {
+        return true;
+    }
+
+    FURI_LOG_W(
+        TAG,
+        "MCP config lost (IOCON:0x%02X IODIRA:0x%02X), restoring",
+        iocon,
+        iodira);
+
+    furi_hal_i2c_acquire(mcp_i2c_handle);
+    mcp_write_reg_locked(MCP_IOCON, 0x44);
+    furi_hal_i2c_release(mcp_i2c_handle);
+
+    return furi_hal_mcp23017_configure_interrupts(expected_mask);
 }
 
 void furi_hal_mcp23017_attach_int(GpioExtiCallback cb, void* ctx) {

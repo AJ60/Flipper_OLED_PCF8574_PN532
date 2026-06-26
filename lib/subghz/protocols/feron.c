@@ -77,7 +77,7 @@ void* subghz_protocol_encoder_feron_alloc(SubGhzEnvironment* environment) {
     instance->base.protocol = &subghz_protocol_feron;
     instance->generic.protocol_name = instance->base.protocol->name;
 
-    instance->encoder.repeat = 10;
+    instance->encoder.repeat = 3;
     instance->encoder.size_upload = 256;
     instance->encoder.upload = malloc(instance->encoder.size_upload * sizeof(LevelDuration));
     instance->encoder.is_running = false;
@@ -163,13 +163,12 @@ SubGhzProtocolStatus
         if(ret != SubGhzProtocolStatusOk) {
             break;
         }
-        //optional parameter parameter
+        // Optional value
         flipper_format_read_uint32(
             flipper_format, "Repeat", (uint32_t*)&instance->encoder.repeat, 1);
 
         subghz_protocol_feron_check_remote_controller(&instance->generic);
         subghz_protocol_encoder_feron_get_upload(instance);
-        instance->encoder.front = 0;
         instance->encoder.is_running = true;
     } while(false);
 
@@ -179,7 +178,6 @@ SubGhzProtocolStatus
 void subghz_protocol_encoder_feron_stop(void* context) {
     SubGhzProtocolEncoderFeron* instance = context;
     instance->encoder.is_running = false;
-    instance->encoder.front = 0;
 }
 
 LevelDuration subghz_protocol_encoder_feron_yield(void* context) {
@@ -193,7 +191,7 @@ LevelDuration subghz_protocol_encoder_feron_yield(void* context) {
     LevelDuration ret = instance->encoder.upload[instance->encoder.front];
 
     if(++instance->encoder.front == instance->encoder.size_upload) {
-        instance->encoder.repeat--;
+        if(!subghz_block_generic_global.endless_tx) instance->encoder.repeat--;
         instance->encoder.front = 0;
     }
 

@@ -86,6 +86,11 @@ void nfc_scene_mf_classic_update_initial_on_enter(void* context) {
     nfc_scene_mf_classic_update_initial_setup_view(instance);
 
     // Setup and start worker
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     instance->poller = nfc_poller_alloc(instance->nfc, NfcProtocolMfClassic);
     nfc_poller_start(instance->poller, nfc_mf_classic_update_initial_worker_callback, instance);
     nfc_blink_emulate_start(instance);
@@ -134,6 +139,11 @@ void nfc_scene_mf_classic_update_initial_on_exit(void* context) {
 
     nfc_poller_stop(instance->poller);
     nfc_poller_free(instance->poller);
+
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
 
     scene_manager_set_scene_state(
         instance->scene_manager,

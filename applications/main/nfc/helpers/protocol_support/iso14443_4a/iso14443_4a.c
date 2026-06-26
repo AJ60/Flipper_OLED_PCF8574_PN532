@@ -25,6 +25,12 @@ static void nfc_scene_info_on_enter_iso14443_4a(NfcApp* instance) {
     furi_string_free(temp_str);
 }
 
+// Time-based retry for flaky NFC connections on DIY board.
+// Allows up to 1 second to recover from jitter/signal drops, preventing loop loops
+// while keeping "Scanning..." fallback responsive when card is removed.
+#define ISO14443_4A_READ_TIMEOUT_MS (1000)
+static uint32_t iso14443_4a_read_start_tick = 0;
+
 static NfcCommand
     nfc_scene_read_poller_callback_iso14443_4a(NfcGenericEvent event, void* context) {
     furi_assert(event.protocol == NfcProtocolIso14443_4a);
@@ -37,12 +43,21 @@ static NfcCommand
             instance->nfc_device, NfcProtocolIso14443_4a, nfc_poller_get_data(instance->poller));
         view_dispatcher_send_custom_event(instance->view_dispatcher, NfcCustomEventPollerSuccess);
         return NfcCommandStop;
+    } else if(iso14443_4a_event->type == Iso14443_4aPollerEventTypeError) {
+        uint32_t elapsed = furi_get_tick() - iso14443_4a_read_start_tick;
+        if(elapsed >= ISO14443_4A_READ_TIMEOUT_MS) {
+            view_dispatcher_send_custom_event(
+                instance->view_dispatcher, NfcCustomEventPollerFailure);
+            return NfcCommandStop;
+        }
+        return NfcCommandContinue;
     }
 
     return NfcCommandContinue;
 }
 
 static void nfc_scene_read_on_enter_iso14443_4a(NfcApp* instance) {
+    iso14443_4a_read_start_tick = furi_get_tick();
     nfc_poller_start(instance->poller, nfc_scene_read_poller_callback_iso14443_4a, instance);
 }
 

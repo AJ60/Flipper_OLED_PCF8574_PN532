@@ -2,6 +2,7 @@
 
 #include "../helpers/protocol_support/nfc_protocol_support_gui_common.h"
 #include "../helpers/protocol_support/emv/emv_render.h"
+#include <bit_lib.h>
 
 void nfc_scene_emv_transactions_on_enter(void* context) {
     NfcApp* nfc = context;
@@ -19,9 +20,13 @@ void nfc_scene_emv_transactions_on_enter(void* context) {
 }
 
 bool nfc_scene_emv_transactions_on_event(void* context, SceneManagerEvent event) {
-    UNUSED(context);
-    UNUSED(event);
-    return false;
+    NfcApp* nfc = context;
+    bool consumed = false;
+
+    if(event.type == SceneManagerEventTypeBack) {
+        consumed = scene_manager_previous_scene(nfc->scene_manager);
+    }
+    return consumed;
 }
 
 void nfc_scene_emv_transactions_on_exit(void* context) {

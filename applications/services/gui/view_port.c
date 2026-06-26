@@ -142,14 +142,17 @@ void view_port_enabled_set(ViewPort* view_port, bool enabled) {
 
     // We are not going to lockup system, but will notify you instead
     // Make sure that you don't call viewport methods inside of another mutex, especially one that is used in draw call
-    if(furi_mutex_acquire(view_port->mutex, 2) != FuriStatusOk) {
+    bool is_locked = (furi_mutex_acquire(view_port->mutex, 2) == FuriStatusOk);
+    if(!is_locked) {
         FURI_LOG_W(TAG, "ViewPort lockup: see %s:%d", __FILE__, __LINE__ - 3);
     }
     if(view_port->is_enabled != enabled) {
         view_port->is_enabled = enabled;
         if(view_port->gui) gui_update(view_port->gui);
     }
-    furi_mutex_release(view_port->mutex);
+    if(is_locked) {
+        furi_mutex_release(view_port->mutex);
+    }
 }
 
 bool view_port_is_enabled(const ViewPort* view_port) {
@@ -195,12 +198,15 @@ void view_port_update(ViewPort* view_port) {
 
     // We are not going to lockup system, but will notify you instead
     // Make sure that you don't call viewport methods inside of another mutex, especially one that is used in draw call
-    if(furi_mutex_acquire(view_port->mutex, 2) != FuriStatusOk) {
+    bool is_locked = (furi_mutex_acquire(view_port->mutex, 2) == FuriStatusOk);
+    if(!is_locked) {
         FURI_LOG_W(TAG, "ViewPort lockup: see %s:%d", __FILE__, __LINE__ - 3);
     }
 
     if(view_port->gui && view_port->is_enabled) gui_update(view_port->gui);
-    furi_mutex_release(view_port->mutex);
+    if(is_locked) {
+        furi_mutex_release(view_port->mutex);
+    }
 }
 
 void view_port_gui_set(ViewPort* view_port, Gui* gui) {
@@ -216,7 +222,8 @@ void view_port_draw(ViewPort* view_port, Canvas* canvas) {
 
     // We are not going to lockup system, but will notify you instead
     // Make sure that you don't call viewport methods inside of another mutex, especially one that is used in draw call
-    if(furi_mutex_acquire(view_port->mutex, 2) != FuriStatusOk) {
+    bool is_locked = (furi_mutex_acquire(view_port->mutex, 2) == FuriStatusOk);
+    if(!is_locked) {
         FURI_LOG_W(TAG, "ViewPort lockup: see %s:%d", __FILE__, __LINE__ - 3);
     }
 
@@ -227,7 +234,9 @@ void view_port_draw(ViewPort* view_port, Canvas* canvas) {
         view_port->draw_callback(canvas, view_port->draw_callback_context);
     }
 
-    furi_mutex_release(view_port->mutex);
+    if(is_locked) {
+        furi_mutex_release(view_port->mutex);
+    }
 }
 
 void view_port_input(ViewPort* view_port, InputEvent* event) {
@@ -302,10 +311,13 @@ ViewPortOrientation view_port_get_orientation(const ViewPort* view_port) {
     furi_check(view_port);
     // We are not going to lockup system, but will notify you instead
     // Make sure that you don't call viewport methods inside of another mutex, especially one that is used in draw call
-    if(furi_mutex_acquire(view_port->mutex, 2) != FuriStatusOk) {
+    bool is_locked = (furi_mutex_acquire(view_port->mutex, 2) == FuriStatusOk);
+    if(!is_locked) {
         FURI_LOG_W(TAG, "ViewPort lockup: see %s:%d", __FILE__, __LINE__ - 3);
     }
     ViewPortOrientation orientation = view_port->orientation;
-    furi_mutex_release(view_port->mutex);
+    if(is_locked) {
+        furi_mutex_release(view_port->mutex);
+    }
     return orientation;
 }

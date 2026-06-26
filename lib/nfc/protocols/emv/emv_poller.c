@@ -112,7 +112,7 @@ static NfcCommand emv_poller_handler_read_extra_data(EmvPoller* instance) {
     emv_poller_get_pin_try_counter(instance);
 
     // Search cardholder name. This operation may break communication with the card, so it should be the last one
-    emv_poller_read_afl(instance, true, &instance->records_mask);
+    // emv_poller_read_afl(instance, true, &instance->records_mask);
 
     instance->state = EmvPollerStateReadSuccess;
     return NfcCommandContinue;
@@ -121,6 +121,7 @@ static NfcCommand emv_poller_handler_read_extra_data(EmvPoller* instance) {
 static NfcCommand emv_poller_handler_read_fail(EmvPoller* instance) {
     FURI_LOG_D(TAG, "Read failed");
     iso14443_4a_poller_halt(instance->iso14443_4a_poller);
+    instance->emv_event.type = EmvPollerEventTypeReadFailed;
     instance->emv_event.data->error = instance->error;
     NfcCommand command = instance->callback(instance->general_event, instance->context);
     instance->state = EmvPollerStateIdle;

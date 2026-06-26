@@ -21,8 +21,16 @@
 #define INPUT_LONG_PRESS_COUNTS 5
 #define INPUT_THREAD_FLAG_ISR 0x00000001
 
+// Wake the input thread at least this often even without an interrupt. This lets
+// us poll the MCP and recover from a silent reset that would otherwise leave the
+// buttons dead because no further INT edge ever arrives.
+#define INPUT_IDLE_WAIT_TICKS 500
+// How often to verify/restore MCP configuration while idle. Kept long because
+// the probe touches the shared power I2C bus; doing it too often starves other
+// consumers (battery monitor) and hurts responsiveness under heavy SPI load.
+#define INPUT_MCP_RESTORE_PERIOD_MS 3000
+
 #define TAG "Input"
-#define MCP_ADDR 0x20
 
 typedef struct {
     const InputPin* pin;
@@ -34,7 +42,9 @@ typedef struct {
     volatile uint32_t counter;
 } InputPinState;
 
-static volatile uint16_t g_mcp_gpio_state = 0;
+// Cached MCP GPIO state. Initialized to all-high because the buttons are
+// active-low with pull-ups; an unread MCP must not look like "all pressed".
+static volatile uint16_t g_mcp_gpio_state = 0xFFFF;
 
 // Default mapping from input indices to MCP pins.
 // Update this array to match your hardware wiring.
@@ -86,7 +96,7 @@ void input_press_timer_callback(void* arg) {
     if(input_pin->press_counter == INPUT_LONG_PRESS_COUNTS) {
         event.type = InputTypeLong;
         if(input_pin->event_pubsub) {
-            FURI_LOG_I(
+            FURI_LOG_D(
                 TAG,
                 "Publish: key=%s type=Long seq=%u",
                 input_pin->pin->name,
@@ -97,7 +107,7 @@ void input_press_timer_callback(void* arg) {
         input_pin->press_counter--;
         event.type = InputTypeRepeat;
         if(input_pin->event_pubsub) {
-            FURI_LOG_I(
+            FURI_LOG_D(
                 TAG,
                 "Publish: key=%s type=Repeat seq=%u",
                 input_pin->pin->name,
@@ -183,23 +193,24 @@ int32_t input_srv(void* p) {
     }
 
 #ifdef USE_MCP23017
+    // Full interrupt mask for all mapped buttons; reused for periodic restore.
+    uint16_t mcp_int_mask = 0;
+    for(size_t i = 0; i < input_pins_count; i++) {
+        mcp_int_mask |= input_mcp_mask_for_index(i);
+    }
+
     // Initialize MCP23017 and configure the mapped inputs as interrupt-driven inputs.
     if(!furi_hal_mcp23017_init()) {
         FURI_LOG_E(TAG, "MCP23017 init failed");
     } else {
-        uint16_t mask = 0;
-        for(size_t i = 0; i < input_pins_count; i++) {
-            mask |= input_mcp_mask_for_index(i);
-        }
-
-        FURI_LOG_I(TAG, "MCP interrupt mask: 0x%04X", mask);
-        furi_hal_mcp23017_configure_interrupts(mask);
+        FURI_LOG_I(TAG, "MCP interrupt mask: 0x%04X", mcp_int_mask);
+        furi_hal_mcp23017_configure_interrupts(mcp_int_mask);
 
         // Seed the cache with the current MCP state to avoid spurious events.
-        uint16_t tmp_state = 0;
-        if(furi_hal_mcp23017_read_gpio(&tmp_state)) {
-            g_mcp_gpio_state = tmp_state;
-            FURI_LOG_I(TAG, "Initial MCP state: 0x%04X", (unsigned)tmp_state);
+        uint8_t tmp_state = 0;
+        if(furi_hal_mcp23017_read_port(0, &tmp_state)) {
+            g_mcp_gpio_state = (uint16_t)tmp_state | 0xFF00;
+            FURI_LOG_I(TAG, "Initial MCP state: 0x%02X", (unsigned)tmp_state);
 
             for(size_t j = 0; j < input_pins_count; j++) {
                 pin_states[j].state = GPIO_Read_MCP_BY_IDX(j);
@@ -229,21 +240,26 @@ int32_t input_srv(void* p) {
     }
 #endif
 
+#ifdef USE_MCP23017
+    uint32_t last_restore_tick = furi_get_tick();
+#endif
+
     while(1) {
         bool is_changing = false;
 
 #ifdef USE_MCP23017
         // Read MCP state once per loop and update the cached value.
-        uint16_t new_state = 0;
-        if(furi_hal_mcp23017_read_gpio(&new_state)) {
-            if(g_mcp_gpio_state != new_state) {
-                FURI_LOG_I(
+        uint8_t new_state = 0;
+        if(furi_hal_mcp23017_read_port(0, &new_state)) {
+            uint16_t cached_val = (uint16_t)new_state | 0xFF00;
+            if(g_mcp_gpio_state != cached_val) {
+                FURI_LOG_D(
                     TAG,
-                    "MCP state changed: 0x%04X -> 0x%04X",
-                    (unsigned)g_mcp_gpio_state,
+                    "MCP state changed: 0x%02X -> 0x%02X",
+                    (unsigned)(uint8_t)g_mcp_gpio_state,
                     (unsigned)new_state);
             }
-            g_mcp_gpio_state = new_state;
+            g_mcp_gpio_state = cached_val;
         } else {
             FURI_LOG_W(TAG, "Failed to read MCP state");
         }
@@ -270,7 +286,7 @@ int32_t input_srv(void* p) {
             if(pin_states[i].debounce > 0 && pin_states[i].debounce < INPUT_DEBOUNCE_TICKS) {
                 is_changing = true;
             } else if(pin_states[i].state != state) {
-                FURI_LOG_I(
+                FURI_LOG_D(
                     TAG,
                     "Stable change: idx=%u key=%s raw=%u stable_prev=%u debounce=%u",
                     (unsigned)i,
@@ -296,7 +312,7 @@ int32_t input_srv(void* p) {
                     InputEvent press_event = base_event;
                     press_event.type = InputTypePress;
 
-                    FURI_LOG_I(
+                    FURI_LOG_D(
                         TAG,
                         "Publish: key=%s type=Press seq=%u",
                         pin_states[i].pin->name,
@@ -316,7 +332,7 @@ int32_t input_srv(void* p) {
 					InputEvent short_event = base_event;
 					short_event.type = InputTypeShort;
 
-					FURI_LOG_I(
+					FURI_LOG_D(
 						TAG,
 						"Publish: key=%s type=Short seq=%u",
 						pin_states[i].pin->name,
@@ -329,7 +345,7 @@ int32_t input_srv(void* p) {
 				InputEvent release_event = base_event;
 				release_event.type = InputTypeRelease;
 
-				FURI_LOG_I(
+				FURI_LOG_D(
 					TAG,
 					"Publish: key=%s type=Release seq=%u press_counter=%u",
 					pin_states[i].pin->name,
@@ -347,7 +363,20 @@ int32_t input_srv(void* p) {
         if(is_changing) {
             furi_delay_tick(1);
         } else {
-            furi_thread_flags_wait(INPUT_THREAD_FLAG_ISR, FuriFlagWaitAny, FuriWaitForever);
+            // Wait for an interrupt, but wake periodically so we can self-heal a
+            // silently reset MCP that would otherwise never raise INT again.
+            // FuriFlagWaitAny clears matched flags on return, so we must NOT
+            // clear again afterwards or we could drop an INT raised in between.
+            furi_thread_flags_wait(
+                INPUT_THREAD_FLAG_ISR, FuriFlagWaitAny, INPUT_IDLE_WAIT_TICKS);
+
+#ifdef USE_MCP23017
+            uint32_t now = furi_get_tick();
+            if((now - last_restore_tick) >= INPUT_MCP_RESTORE_PERIOD_MS) {
+                last_restore_tick = now;
+                furi_hal_mcp23017_check_and_restore(mcp_int_mask);
+            }
+#endif
         }
     }
 

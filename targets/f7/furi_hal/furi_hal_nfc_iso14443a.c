@@ -18,7 +18,7 @@ static FuriHalNfcError furi_hal_nfc_iso14443a_common_init(const FuriHalSpiBusHan
 
     // 1st stage zero = 600kHz, 3rd stage zero = 200 kHz
     st25r3916_write_reg(handle, ST25R3916_REG_RX_CONF1, ST25R3916_REG_RX_CONF1_z600k);
-    // AGC enabled, ratio 3:1, squelch after TX
+    // AGC enabled, ratio 6:1, squelch after TX
     st25r3916_write_reg(
         handle,
         ST25R3916_REG_RX_CONF2,
@@ -48,11 +48,11 @@ static FuriHalNfcError furi_hal_nfc_iso14443a_poller_init(const FuriHalSpiBusHan
         ST25R3916_REG_MODE_om_mask | ST25R3916_REG_MODE_tr_am,
         ST25R3916_REG_MODE_om_iso14443a | ST25R3916_REG_MODE_tr_am_ook);
 
-    // Overshoot protection - is this necessary here?
-    st25r3916_change_reg_bits(handle, ST25R3916_REG_OVERSHOOT_CONF1, 0xff, 0x40);
-    st25r3916_change_reg_bits(handle, ST25R3916_REG_OVERSHOOT_CONF2, 0xff, 0x03);
-    st25r3916_change_reg_bits(handle, ST25R3916_REG_UNDERSHOOT_CONF1, 0xff, 0x40);
-    st25r3916_change_reg_bits(handle, ST25R3916_REG_UNDERSHOOT_CONF2, 0xff, 0x03);
+    // Overshoot protection - disabled (0x00) for custom/DIY antennas
+    st25r3916_change_reg_bits(handle, ST25R3916_REG_OVERSHOOT_CONF1, 0xff, 0x00);
+    st25r3916_change_reg_bits(handle, ST25R3916_REG_OVERSHOOT_CONF2, 0xff, 0x00);
+    st25r3916_change_reg_bits(handle, ST25R3916_REG_UNDERSHOOT_CONF1, 0xff, 0x00);
+    st25r3916_change_reg_bits(handle, ST25R3916_REG_UNDERSHOOT_CONF2, 0xff, 0x00);
 
     return furi_hal_nfc_iso14443a_common_init(handle);
 }
@@ -69,7 +69,7 @@ static FuriHalNfcError furi_hal_nfc_iso14443a_poller_deinit(const FuriHalSpiBusH
 
 static FuriHalNfcError furi_hal_nfc_iso14443a_listener_init(const FuriHalSpiBusHandle* handle) {
     furi_check(iso14443_3a_signal == NULL);
-    iso14443_3a_signal = iso14443_3a_signal_alloc(&gpio_spi_mosi);
+    iso14443_3a_signal = iso14443_3a_signal_alloc(&gpio_spi_r_mosi);
 
     st25r3916_write_reg(
         handle,
@@ -121,8 +121,11 @@ static FuriHalNfcEvent furi_hal_nfc_iso14443_3a_listener_wait_event(uint32_t tim
     const FuriHalSpiBusHandle* handle = &furi_hal_spi_bus_handle_nfc;
 
     if(event & FuriHalNfcEventListenerActive) {
-        st25r3916_set_reg_bits(
-            handle, ST25R3916_REG_PASSIVE_TARGET, ST25R3916_REG_PASSIVE_TARGET_d_106_ac_a);
+        if(furi_hal_nfc_acquire() == FuriHalNfcErrorNone) {
+            st25r3916_set_reg_bits(
+                handle, ST25R3916_REG_PASSIVE_TARGET, ST25R3916_REG_PASSIVE_TARGET_d_106_ac_a);
+            furi_hal_nfc_release();
+        }
     }
 
     return event;
@@ -132,6 +135,9 @@ FuriHalNfcError furi_hal_nfc_iso14443a_poller_trx_short_frame(FuriHalNfcaShortFr
     FuriHalNfcError error = FuriHalNfcErrorNone;
 
     const FuriHalSpiBusHandle* handle = &furi_hal_spi_bus_handle_nfc;
+
+    error = furi_hal_nfc_acquire();
+    if(error != FuriHalNfcErrorNone) return error;
 
     // Disable crc check
     st25r3916_set_reg_bits(handle, ST25R3916_REG_AUX, ST25R3916_REG_AUX_no_crc_rx);
@@ -155,6 +161,8 @@ FuriHalNfcError furi_hal_nfc_iso14443a_poller_trx_short_frame(FuriHalNfcaShortFr
     } else {
         st25r3916_direct_cmd(handle, ST25R3916_CMD_TRANSMIT_WUPA);
     }
+
+    furi_hal_nfc_release();
 
     return error;
 }
@@ -187,6 +195,9 @@ FuriHalNfcError
     FuriHalNfcError err = FuriHalNfcErrorNone;
     const FuriHalSpiBusHandle* handle = &furi_hal_spi_bus_handle_nfc;
 
+    err = furi_hal_nfc_acquire();
+    if(err != FuriHalNfcErrorNone) return err;
+
     // Prepare tx
     st25r3916_direct_cmd(handle, ST25R3916_CMD_CLEAR_FIFO);
     st25r3916_clear_reg_bits(
@@ -207,6 +218,9 @@ FuriHalNfcError
 
     st25r3916_write_fifo(handle, tx_data, tx_bits);
     st25r3916_direct_cmd(handle, ST25R3916_CMD_TRANSMIT_WITHOUT_CRC);
+
+    furi_hal_nfc_release();
+
     return err;
 }
 
@@ -221,6 +235,9 @@ FuriHalNfcError furi_hal_nfc_iso14443a_listener_set_col_res_data(
     FuriHalNfcError error = FuriHalNfcErrorNone;
 
     const FuriHalSpiBusHandle* handle = &furi_hal_spi_bus_handle_nfc;
+
+    error = furi_hal_nfc_acquire();
+    if(error != FuriHalNfcErrorNone) return error;
 
     // Set 4 or 7 bytes UID
     if(uid_len == 4) {
@@ -250,6 +267,8 @@ FuriHalNfcError furi_hal_nfc_iso14443a_listener_set_col_res_data(
     pt_memory[14] = sak & ~0x04;
 
     st25r3916_write_pta_mem(handle, pt_memory, sizeof(pt_memory));
+
+    furi_hal_nfc_release();
 
     return error;
 }
@@ -286,6 +305,9 @@ FuriHalNfcError furi_hal_nfc_iso14443a_listener_tx_custom_parity(
 
     const FuriHalSpiBusHandle* handle = &furi_hal_spi_bus_handle_nfc;
 
+    FuriHalNfcError error = furi_hal_nfc_acquire();
+    if(error != FuriHalNfcErrorNone) return error;
+
     st25r3916_direct_cmd(handle, ST25R3916_CMD_TRANSPARENT_MODE);
     // Reconfigure gpio for Transparent mode
     furi_hal_spi_bus_handle_deinit(&furi_hal_spi_bus_handle_nfc);
@@ -294,11 +316,13 @@ FuriHalNfcError furi_hal_nfc_iso14443a_listener_tx_custom_parity(
     iso14443_3a_signal_tx(iso14443_3a_signal, tx_data, tx_parity, tx_bits);
 
     // Exit transparent mode
-    furi_hal_gpio_write(&gpio_spi_mosi, false);
+    furi_hal_gpio_write(&gpio_spi_r_mosi, false);
 
     // Configure gpio back to SPI and exit transparent
     furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_nfc);
     st25r3916_direct_cmd(handle, ST25R3916_CMD_UNMASK_RECEIVE_DATA);
+
+    furi_hal_nfc_release();
 
     return FuriHalNfcErrorNone;
 }

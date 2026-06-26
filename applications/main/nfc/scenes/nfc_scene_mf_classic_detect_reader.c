@@ -46,6 +46,11 @@ void nfc_scene_mf_classic_timer_callback(void* context) {
 void nfc_scene_mf_classic_detect_reader_on_enter(void* context) {
     NfcApp* instance = context;
 
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     if(nfc_device_get_protocol(instance->nfc_device) == NfcProtocolInvalid) {
         Iso14443_3aData iso3_data = {
             .uid_len = 7,
@@ -154,6 +159,11 @@ void nfc_scene_mf_classic_detect_reader_on_exit(void* context) {
 
     furi_timer_stop(instance->timer);
     furi_timer_free(instance->timer);
+
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
 
     // Stop notifications
     nfc_blink_stop(instance);

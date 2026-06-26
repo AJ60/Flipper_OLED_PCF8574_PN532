@@ -11,6 +11,11 @@ void nfc_scene_mf_classic_keys_list_submenu_callback(void* context, uint32_t ind
 void nfc_scene_mf_classic_keys_list_on_enter(void* context) {
     NfcApp* instance = context;
 
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     instance->mf_user_dict = mf_user_dict_alloc(NFC_SCENE_MF_CLASSIC_KEYS_LIST_MAX);
 
     submenu_set_header(instance->submenu, "Select key to delete:");
@@ -48,4 +53,9 @@ void nfc_scene_mf_classic_keys_list_on_exit(void* context) {
     NfcApp* instance = context;
 
     submenu_reset(instance->submenu);
+
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
 }

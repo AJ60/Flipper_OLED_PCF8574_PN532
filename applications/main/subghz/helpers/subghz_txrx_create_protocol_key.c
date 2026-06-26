@@ -125,7 +125,7 @@ bool subghz_txrx_gen_keeloq_protocol( //TODO lead to a general appearance
     return res;
 }
 
-bool subghz_txrx_gen_keeloq_bft_protocol(
+bool subghz_txrx_gen_keeloq_seed_protocol(
     void* context,
     const char* preset_name,
     uint32_t frequency,
@@ -142,7 +142,7 @@ bool subghz_txrx_gen_keeloq_bft_protocol(
         subghz_transmitter_alloc_init(txrx->environment, SUBGHZ_PROTOCOL_KEELOQ_NAME);
     subghz_txrx_set_preset(txrx, preset_name, frequency, NAN, NAN, NULL, 0);
 
-    if(txrx->transmitter && subghz_protocol_keeloq_bft_create_data(
+    if(txrx->transmitter && subghz_protocol_keeloq_seed_create_data(
                                 subghz_transmitter_get_protocol_instance(txrx->transmitter),
                                 txrx->fff_data,
                                 serial,
@@ -162,7 +162,7 @@ bool subghz_txrx_gen_keeloq_bft_protocol(
 
         flipper_format_write_hex(txrx->fff_data, "Seed", seed_data, sizeof(uint32_t));
 
-        flipper_format_write_string_cstr(txrx->fff_data, "Manufacture", "BFT");
+        flipper_format_write_string_cstr(txrx->fff_data, "Manufacture", manufacture_name);
     }
 
     subghz_transmitter_free(txrx->transmitter);
@@ -321,6 +321,156 @@ bool subghz_txrx_gen_somfy_telis_protocol(
     subghz_txrx_set_preset(txrx, preset_name, frequency, NAN, NAN, NULL, 0);
 
     if(txrx->transmitter && subghz_protocol_somfy_telis_create_data(
+                                subghz_transmitter_get_protocol_instance(txrx->transmitter),
+                                txrx->fff_data,
+                                serial,
+                                btn,
+                                cnt,
+                                txrx->preset)) {
+        res = true;
+    }
+
+    subghz_transmitter_free(txrx->transmitter);
+
+    return res;
+}
+
+bool subghz_txrx_gen_somfy_keytis_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint16_t cnt) {
+    SubGhzTxRx* txrx = context;
+
+    bool res = false;
+
+    txrx->transmitter =
+        subghz_transmitter_alloc_init(txrx->environment, SUBGHZ_PROTOCOL_SOMFY_KEYTIS_NAME);
+    subghz_txrx_set_preset(txrx, preset_name, frequency, NAN, NAN, NULL, 0);
+
+    if(txrx->transmitter && subghz_protocol_somfy_keytis_create_data(
+                                subghz_transmitter_get_protocol_instance(txrx->transmitter),
+                                txrx->fff_data,
+                                serial,
+                                btn,
+                                cnt,
+                                txrx->preset)) {
+        res = true;
+    }
+
+    subghz_transmitter_free(txrx->transmitter);
+
+    return res;
+}
+
+bool subghz_txrx_gen_kinggates_stylo_4k_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint16_t cnt) {
+    SubGhzTxRx* txrx = context;
+
+    bool res = false;
+
+    txrx->transmitter =
+        subghz_transmitter_alloc_init(txrx->environment, SUBGHZ_PROTOCOL_KINGGATES_STYLO_4K_NAME);
+    subghz_txrx_set_preset(txrx, preset_name, frequency, NAN, NAN, NULL, 0);
+
+    if(txrx->transmitter && subghz_protocol_kinggates_stylo_4k_create_data(
+                                subghz_transmitter_get_protocol_instance(txrx->transmitter),
+                                txrx->fff_data,
+                                serial,
+                                btn,
+                                cnt,
+                                txrx->preset)) {
+        res = true;
+    }
+
+    subghz_transmitter_free(txrx->transmitter);
+
+    return res;
+}
+
+bool subghz_txrx_gen_beninca_arc_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint32_t cnt) {
+    SubGhzTxRx* txrx = context;
+
+    bool res = false;
+
+    txrx->transmitter =
+        subghz_transmitter_alloc_init(txrx->environment, SUBGHZ_PROTOCOL_BENINCA_ARC_NAME);
+    subghz_txrx_set_preset(txrx, preset_name, frequency, NAN, NAN, NULL, 0);
+
+    if(txrx->transmitter && subghz_protocol_beninca_arc_create_data(
+                                subghz_transmitter_get_protocol_instance(txrx->transmitter),
+                                txrx->fff_data,
+                                serial,
+                                btn,
+                                cnt,
+                                txrx->preset)) {
+        res = true;
+    }
+
+    subghz_transmitter_free(txrx->transmitter);
+
+    return res;
+}
+
+bool subghz_txrx_gen_jarolift_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint16_t cnt) {
+    SubGhzTxRx* txrx = context;
+
+    bool res = false;
+
+    txrx->transmitter =
+        subghz_transmitter_alloc_init(txrx->environment, SUBGHZ_PROTOCOL_JAROLIFT_NAME);
+    subghz_txrx_set_preset(txrx, preset_name, frequency, NAN, NAN, NULL, 0);
+
+    if(txrx->transmitter && subghz_protocol_jarolift_create_data(
+                                subghz_transmitter_get_protocol_instance(txrx->transmitter),
+                                txrx->fff_data,
+                                serial,
+                                btn,
+                                cnt,
+                                txrx->preset)) {
+        res = true;
+    }
+
+    subghz_transmitter_free(txrx->transmitter);
+
+    return res;
+}
+
+bool subghz_txrx_gen_ditec_gol4_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint16_t cnt) {
+    SubGhzTxRx* txrx = context;
+
+    bool res = false;
+
+    txrx->transmitter =
+        subghz_transmitter_alloc_init(txrx->environment, SUBGHZ_PROTOCOL_DITEC_GOL4_NAME);
+    subghz_txrx_set_preset(txrx, preset_name, frequency, NAN, NAN, NULL, 0);
+
+    if(txrx->transmitter && subghz_protocol_ditec_gol4_create_data(
                                 subghz_transmitter_get_protocol_instance(txrx->transmitter),
                                 txrx->fff_data,
                                 serial,

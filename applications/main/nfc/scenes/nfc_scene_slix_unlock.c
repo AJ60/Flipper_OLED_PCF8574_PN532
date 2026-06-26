@@ -29,6 +29,11 @@ NfcCommand nfc_scene_slix_unlock_worker_callback(NfcGenericEvent event, void* co
 void nfc_scene_slix_unlock_on_enter(void* context) {
     NfcApp* instance = context;
 
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     popup_set_icon(instance->popup, 0, 8, &I_NFC_manual_60x50);
     popup_set_header(instance->popup, "Unlocking", 97, 15, AlignCenter, AlignTop);
     popup_set_text(
@@ -67,6 +72,11 @@ void nfc_scene_slix_unlock_on_exit(void* context) {
 
     nfc_poller_stop(instance->poller);
     nfc_poller_free(instance->poller);
+
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
 
     popup_reset(instance->popup);
 

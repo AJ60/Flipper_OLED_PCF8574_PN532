@@ -346,6 +346,11 @@ static void nfc_scene_mf_classic_dict_attack_prepare_view(NfcApp* instance) {
 void nfc_scene_mf_classic_dict_attack_on_enter(void* context) {
     NfcApp* instance = context;
 
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     scene_manager_set_scene_state(
         instance->scene_manager, NfcSceneMfClassicDictAttack, DictAttackStateCUIDDictInProgress);
     nfc_scene_mf_classic_dict_attack_prepare_view(instance);
@@ -495,6 +500,13 @@ void nfc_scene_mf_classic_dict_attack_on_exit(void* context) {
         free(instance->nfc_dict_context.cuid_key_indices_bitmap);
         instance->nfc_dict_context.cuid_key_indices_bitmap = NULL;
     }
+
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
+
+    nfc_blink_stop(instance);
 
     instance->nfc_dict_context.current_sector = 0;
     instance->nfc_dict_context.sectors_total = 0;

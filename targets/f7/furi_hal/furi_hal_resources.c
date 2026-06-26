@@ -28,6 +28,7 @@ const GpioPin gpio_mcp_int = {.port = MCP_INT_GPIO_Port, .pin = MCP_INT_Pin};
 const GpioPin gpio_sdcard_cs = {.port = SD_CS_GPIO_Port, .pin = SD_CS_Pin};
 // SD card CD not used
 const GpioPin gpio_nfc_cs = {.port = NFC_CS_GPIO_Port, .pin = NFC_CS_Pin};
+const GpioPin gpio_nfc_miso = {.port = GPIOB, .pin = LL_GPIO_PIN_4};
 const GpioPin gpio_nfc_irq = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 const GpioPin gpio_nfc_irq_rfid_pull = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 
@@ -35,6 +36,7 @@ const GpioPin gpio_nfc_irq_rfid_pull = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IR
 
 const GpioPin gpio_spi_miso = {.port = SPI_MISO_GPIO_Port, .pin = SPI_MISO_Pin};
 const GpioPin gpio_spi_mosi = {.port = SPI_MOSI_GPIO_Port, .pin = SPI_MOSI_Pin};
+const GpioPin gpio_spi_r_mosi = {.port = SPI_MOSI_GPIO_Port, .pin = SPI_MOSI_Pin};
 //const GpioPin gpio_spi_mosi1 = {.port = SPI_MOSI_GPIO_Port1, .pin = SPI_MOSI_Pin1};
 const GpioPin gpio_spi_sck = {.port = SPI_SCK_GPIO_Port, .pin = SPI_SCK_Pin};
 

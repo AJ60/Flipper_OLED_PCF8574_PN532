@@ -18,6 +18,11 @@ NfcCommand
 void nfc_scene_mf_ultralight_capture_pass_on_enter(void* context) {
     NfcApp* instance = context;
 
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     // Setup view
     widget_add_string_multiline_element(
         instance->widget,
@@ -61,6 +66,12 @@ void nfc_scene_mf_ultralight_capture_pass_on_exit(void* context) {
     // Clear view
     nfc_listener_stop(instance->listener);
     nfc_listener_free(instance->listener);
+
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
+
     widget_reset(instance->widget);
 
     nfc_blink_stop(instance);

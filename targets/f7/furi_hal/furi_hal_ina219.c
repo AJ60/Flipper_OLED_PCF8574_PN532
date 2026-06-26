@@ -31,13 +31,13 @@ static uint32_t s_last_read_tick = 0;
 static bool ina219_read_reg16(uint8_t reg, uint16_t* out) {
     const FuriHalI2cBusHandle* handle = &furi_hal_i2c_handle_power;
     uint8_t addr8 = (uint8_t)(s_address << 1);
-    return furi_hal_i2c_read_reg_16(handle, addr8, reg, out, 200);
+    return furi_hal_i2c_read_reg_16(handle, addr8, reg, out, 20);
 }
 
 static bool ina219_write_reg16(uint8_t reg, uint16_t val) {
     const FuriHalI2cBusHandle* handle = &furi_hal_i2c_handle_power;
     uint8_t addr8 = (uint8_t)(s_address << 1);
-    return furi_hal_i2c_write_reg_16(handle, addr8, reg, val, 200);
+    return furi_hal_i2c_write_reg_16(handle, addr8, reg, val, 20);
 }
 
 bool furi_hal_ina219_init(void) {

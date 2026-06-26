@@ -495,25 +495,33 @@ void cli_command_free_blocks(PipeSide* pipe, FuriString* args, void* context) {
 
 void cli_command_i2c(PipeSide* pipe, FuriString* args, void* context) {
     UNUSED(pipe);
-    UNUSED(args);
     UNUSED(context);
 
-    furi_hal_i2c_acquire(&furi_hal_i2c_handle_external);
-    printf("Scanning external i2c on PC0(SCL)/PC1(SDA)\r\n"
+    const FuriHalI2cBusHandle* handle = &furi_hal_i2c_handle_external;
+    const char* bus_name = "external (PC0/PC1)";
+
+    if(furi_string_cmp(args, "power") == 0 || furi_string_cmp(args, "power_bus") == 0) {
+        handle = &furi_hal_i2c_handle_power;
+        bus_name = "power (PA9/PB9)";
+    }
+
+    furi_hal_i2c_acquire(handle);
+    printf("Scanning i2c on %s\r\n"
            "Clock: 100khz, 7bit address\r\n"
-           "\r\n");
+           "\r\n",
+           bus_name);
     printf("  | 0 1 2 3 4 5 6 7 8 9 A B C D E F\r\n");
     printf("--+--------------------------------\r\n");
     for(uint8_t row = 0; row < 0x8; row++) {
         printf("%x | ", row);
         for(uint8_t column = 0; column <= 0xF; column++) {
             bool ret = furi_hal_i2c_is_device_ready(
-                &furi_hal_i2c_handle_external, ((row << 4) + column) << 1, 2);
+                handle, ((row << 4) + column) << 1, 2);
             printf("%c ", ret ? '#' : '-');
         }
         printf("\r\n");
     }
-    furi_hal_i2c_release(&furi_hal_i2c_handle_external);
+    furi_hal_i2c_release(handle);
 }
 
 /**

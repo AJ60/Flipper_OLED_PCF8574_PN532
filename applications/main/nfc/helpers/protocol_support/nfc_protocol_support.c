@@ -13,6 +13,7 @@
 #include "nfc_protocol_support_gui_common.h"
 
 #include <flipper_application/plugins/plugin_manager.h>
+#include <furi_hal_nfc.h>
 
 #define TAG "NfcProtocolSupport"
 
@@ -120,7 +121,7 @@ const char* nfc_protocol_support_plugin_names[NfcProtocolNum] = {
     /* Add new protocol support plugin names here */
 };
 
-void nfc_protocol_support_alloc(NfcProtocol protocol, void* context) {
+static NfcProtocolSupport* nfc_protocol_support_alloc(NfcProtocol protocol, void* context) {
     furi_assert(context);
 
     NfcApp* instance = context;
@@ -132,6 +133,11 @@ void nfc_protocol_support_alloc(NfcProtocol protocol, void* context) {
     FuriString* plugin_path =
         furi_string_alloc_printf(APP_ASSETS_PATH("plugins/nfc_%s.fal"), protocol_name);
     FURI_LOG_D(TAG, "Loading %s", furi_string_get_cstr(plugin_path));
+
+    bool hal_acquired = furi_hal_nfc_is_mine();
+    if(hal_acquired) {
+        furi_hal_nfc_release();
+    }
 
     protocol_support->plugin_manager = plugin_manager_alloc(
         NFC_PROTOCOL_SUPPORT_PLUGIN_APP_ID,
@@ -158,9 +164,13 @@ void nfc_protocol_support_alloc(NfcProtocol protocol, void* context) {
         protocol_support->plugin_manager = NULL;
     }
 
+    if(hal_acquired) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+
     furi_string_free(plugin_path);
 
-    instance->protocol_support = protocol_support;
+    return protocol_support;
 }
 
 void nfc_protocol_support_free(void* context) {
@@ -168,27 +178,29 @@ void nfc_protocol_support_free(void* context) {
 
     NfcApp* instance = context;
 
-    if(instance->protocol_support->plugin_manager) {
-        plugin_manager_free(instance->protocol_support->plugin_manager);
+    for(uint32_t i = 0; i < NfcProtocolNum; i++) {
+        if(instance->cached_protocol_supports[i]) {
+            if(instance->cached_protocol_supports[i]->plugin_manager) {
+                plugin_manager_free(instance->cached_protocol_supports[i]->plugin_manager);
+            }
+            free(instance->cached_protocol_supports[i]);
+            instance->cached_protocol_supports[i] = NULL;
+        }
     }
-    free(instance->protocol_support);
-    instance->protocol_support = NULL;
 }
 
 static const NfcProtocolSupportBase*
     nfc_protocol_support_get(NfcProtocol protocol, void* context) {
     furi_assert(context);
+    furi_assert(protocol < NfcProtocolNum);
 
     NfcApp* instance = context;
 
-    if(instance->protocol_support && instance->protocol_support->protocol != protocol) {
-        nfc_protocol_support_free(instance);
-    }
-    if(!instance->protocol_support) {
-        nfc_protocol_support_alloc(protocol, instance);
+    if(!instance->cached_protocol_supports[protocol]) {
+        instance->cached_protocol_supports[protocol] = nfc_protocol_support_alloc(protocol, instance);
     }
 
-    return instance->protocol_support->base;
+    return instance->cached_protocol_supports[protocol]->base;
 }
 
 // Interface functions
@@ -302,11 +314,30 @@ static void nfc_protocol_support_scene_read_on_enter(NfcApp* instance) {
 
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcViewPopup);
 
+    if(instance->scanner) {
+        nfc_scanner_stop(instance->scanner);
+        nfc_scanner_free(instance->scanner);
+        instance->scanner = NULL;
+    }
+
+    if(instance->poller) {
+        nfc_poller_stop(instance->poller);
+        nfc_poller_free(instance->poller);
+        instance->poller = NULL;
+    }
+
     const NfcProtocol protocol = nfc_detected_protocols_get_selected(instance->detected_protocols);
     instance->poller = nfc_poller_alloc(instance->nfc, protocol);
 
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcViewPopup);
     //nfc_supported_cards_load_cache(instance->nfc_supported_cards);
+
+    // Poller runs in its own worker thread and acquires the NFC HAL there.
+    // Release the GUI-thread lock first to avoid a cross-thread deadlock/crash.
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
 
     // Start poller with the appropriate callback
     nfc_protocol_support_get(protocol, instance)->scene_read.on_enter(instance);
@@ -321,6 +352,7 @@ static bool nfc_protocol_support_scene_read_on_event(NfcApp* instance, SceneMana
         if(event.event == NfcCustomEventPollerSuccess) {
             nfc_poller_stop(instance->poller);
             nfc_poller_free(instance->poller);
+            instance->poller = NULL;
             notification_message(instance->notifications, &sequence_success);
             scene_manager_next_scene(instance->scene_manager, NfcSceneReadSuccess);
             dolphin_deed(DolphinDeedNfcReadSuccess);
@@ -328,6 +360,7 @@ static bool nfc_protocol_support_scene_read_on_event(NfcApp* instance, SceneMana
         } else if(event.event == NfcCustomEventPollerIncomplete) {
             nfc_poller_stop(instance->poller);
             nfc_poller_free(instance->poller);
+            instance->poller = NULL;
             bool card_read = nfc_supported_cards_read(
                 instance->nfc_supported_cards, instance->nfc_device, instance->nfc);
             if(card_read) {
@@ -344,6 +377,7 @@ static bool nfc_protocol_support_scene_read_on_event(NfcApp* instance, SceneMana
         } else if(event.event == NfcCustomEventPollerFailure) {
             nfc_poller_stop(instance->poller);
             nfc_poller_free(instance->poller);
+            instance->poller = NULL;
             if(scene_manager_has_previous_scene(instance->scene_manager, NfcSceneDetect)) {
                 scene_manager_search_and_switch_to_previous_scene(
                     instance->scene_manager, NfcSceneDetect);
@@ -358,6 +392,7 @@ static bool nfc_protocol_support_scene_read_on_event(NfcApp* instance, SceneMana
     } else if(event.type == SceneManagerEventTypeBack) {
         nfc_poller_stop(instance->poller);
         nfc_poller_free(instance->poller);
+        instance->poller = NULL;
         static const uint32_t possible_scenes[] = {NfcSceneSelectProtocol, NfcSceneStart};
         scene_manager_search_and_switch_to_previous_scene_one_of(
             instance->scene_manager, possible_scenes, COUNT_OF(possible_scenes));
@@ -368,6 +403,18 @@ static bool nfc_protocol_support_scene_read_on_event(NfcApp* instance, SceneMana
 }
 
 static void nfc_protocol_support_scene_read_on_exit(NfcApp* instance) {
+    if(instance->poller) {
+        nfc_poller_stop(instance->poller);
+        nfc_poller_free(instance->poller);
+        instance->poller = NULL;
+    }
+
+    // Re-acquire the HAL for the GUI thread to keep the app invariant.
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
+
     popup_reset(instance->popup);
 
     nfc_blink_stop(instance);
@@ -488,11 +535,12 @@ static void nfc_protocol_support_scene_read_success_on_enter(NfcApp* instance) {
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcViewPopup);
 
     FuriString* temp_str = furi_string_alloc();
-    if(nfc_supported_cards_parse(instance->nfc_supported_cards, instance->nfc_device, temp_str)) {
+    const NfcProtocol protocol = nfc_device_get_protocol(instance->nfc_device);
+    if((protocol != NfcProtocolMfClassic) &&
+       nfc_supported_cards_parse(instance->nfc_supported_cards, instance->nfc_device, temp_str)) {
         widget_add_text_scroll_element(
             instance->widget, 0, 0, 128, 52, furi_string_get_cstr(temp_str));
     } else {
-        const NfcProtocol protocol = nfc_device_get_protocol(instance->nfc_device);
         nfc_protocol_support_get(protocol, instance)->scene_read_success.on_enter(instance);
     }
 
@@ -814,6 +862,29 @@ static void nfc_protocol_support_scene_emulate_on_enter(NfcApp* instance) {
     text_box_set_focus(text_box, TextBoxFocusEnd);
     furi_string_reset(instance->text_box_store);
 
+    const char* card_name = nfc_device_get_name(instance->nfc_device, NfcDeviceNameTypeFull);
+    size_t uid_len = 0;
+    const uint8_t* uid = nfc_device_get_uid(instance->nfc_device, &uid_len);
+
+    FuriString* uid_str = furi_string_alloc();
+    if(uid_len > 0) {
+        for(size_t i = 0; i < uid_len; ++i) {
+            furi_string_cat_printf(uid_str, "%02X ", uid[i]);
+        }
+        furi_string_trim(uid_str);
+        FURI_LOG_I("NfcApp", "Starting emulation of %s (UID: %s)", card_name, furi_string_get_cstr(uid_str));
+    } else {
+        FURI_LOG_I("NfcApp", "Starting emulation of %s", card_name);
+    }
+    furi_string_free(uid_str);
+
+    // Listener runs in its own worker thread and acquires the NFC HAL there.
+    // Release the GUI-thread lock first to avoid a cross-thread deadlock/reboot.
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     // instance->listener is allocated in the respective on_enter() handler
     nfc_protocol_support_get(protocol, instance)->scene_emulate.on_enter(instance);
 
@@ -885,6 +956,12 @@ static void nfc_protocol_support_scene_emulate_stop_listener(NfcApp* instance) {
 
 static void nfc_protocol_support_scene_emulate_on_exit(NfcApp* instance) {
     nfc_protocol_support_scene_emulate_stop_listener(instance);
+
+    // Re-acquire the HAL for the GUI thread to keep the app invariant.
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
 
     // Clear view
     widget_reset(instance->widget);
@@ -1003,6 +1080,13 @@ static void nfc_protocol_support_scene_write_on_enter(NfcApp* instance) {
 
     const NfcProtocol protocol = nfc_device_get_protocol(instance->nfc_device);
 
+    // Poller/scanner runs in its own worker thread and acquires the NFC HAL there.
+    // Release the GUI-thread lock first to avoid a cross-thread deadlock/crash.
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     // instance->poller is allocated in the respective on_enter() handler
     nfc_protocol_support_get(protocol, instance)->scene_write.on_enter(instance);
 
@@ -1069,7 +1153,14 @@ static void nfc_protocol_support_scene_write_on_exit(NfcApp* instance) {
     if(instance->poller) {
         nfc_poller_stop(instance->poller);
         nfc_poller_free(instance->poller);
+        instance->poller = NULL;
     }
+
+    // Re-acquire the HAL for the GUI thread to keep the app invariant.
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
 
     // Clear view
     popup_reset(instance->popup);

@@ -66,14 +66,44 @@ bool momentum_app_scene_misc_on_event(void* context, SceneManagerEvent event) {
             scene_manager_next_scene(app->scene_manager, MomentumAppSceneMiscVgm);
             break;
         case VarItemListIndexShowMomentumIntro: {
-            for(int i = 0; i < 10; i++) {
-                if(storage_common_copy(
-                       app->storage, EXT_PATH("dolphin/firstboot.bin"), SLIDESHOW_FS_PATH)) {
+            DialogMessage* confirm_msg = dialog_message_alloc();
+            dialog_message_set_header(confirm_msg, "Show Intro?", 64, 0, AlignCenter, AlignTop);
+            dialog_message_set_buttons(confirm_msg, "Cancel", NULL, "OK");
+            dialog_message_set_text(
+                confirm_msg,
+                "This will reboot your Flipper\nto play the intro slideshow.",
+                64,
+                32,
+                AlignCenter,
+                AlignCenter);
+            if(dialog_message_show(app->dialogs, confirm_msg) == DialogMessageButtonRight) {
+                bool copy_success = false;
+                for(int i = 0; i < 10; i++) {
+                    if(storage_common_copy(
+                           app->storage, EXT_PATH("dolphin/firstboot.bin"), SLIDESHOW_FS_PATH) == FSE_OK) {
+                        copy_success = true;
+                        break;
+                    }
+                }
+                if(copy_success) {
                     app->show_slideshow = true;
                     momentum_app_apply(app);
-                    break;
+                } else {
+                    DialogMessage* err_msg = dialog_message_alloc();
+                    dialog_message_set_header(err_msg, "Error", 64, 0, AlignCenter, AlignTop);
+                    dialog_message_set_buttons(err_msg, NULL, "OK", NULL);
+                    dialog_message_set_text(
+                        err_msg,
+                        "dolphin/firstboot.bin\nnot found on SD card!",
+                        64,
+                        32,
+                        AlignCenter,
+                        AlignCenter);
+                    dialog_message_show(app->dialogs, err_msg);
+                    dialog_message_free(err_msg);
                 }
             }
+            dialog_message_free(confirm_msg);
             break;
         }
         default:

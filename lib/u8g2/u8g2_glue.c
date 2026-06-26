@@ -13,6 +13,8 @@
 // SSD1306 I2C address - scanner detected at 0x3C
 #define SSD1306_I2C_ADDRESS 0x3C
 
+volatile bool display_needs_reinit = false;
+
 uint8_t u8g2_gpio_and_delay_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
     UNUSED(u8x8);
     UNUSED(arg_ptr);
@@ -118,10 +120,12 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
     switch(msg) {
     case U8X8_MSG_BYTE_SEND: {
         uint8_t* data = (uint8_t*)arg_ptr;
-        // Accumulate bytes in buffer
         for(uint8_t i = 0; i < arg_int; i++) {
             if(buf_idx < sizeof(buffer)) {
                 buffer[buf_idx++] = data[i];
+            } else {
+                display_needs_reinit = true;
+                break;
             }
         }
         break;
@@ -138,13 +142,21 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
     case U8X8_MSG_BYTE_END_TRANSFER:
         // Send accumulated buffer via hardware I2C as ONE transaction
         if(buf_idx > 0) {
-            bool success = furi_hal_i2c_tx(
-                &furi_hal_i2c_handle_power,
-                u8x8_GetI2CAddress(u8x8),
-                buffer,
-                buf_idx,
-                10);
+            bool success = false;
+            for(int retry = 0; retry < 8; retry++) {
+                success = furi_hal_i2c_tx(
+                    &furi_hal_i2c_handle_power,
+                    u8x8_GetI2CAddress(u8x8),
+                    buffer,
+                    buf_idx,
+                    10);
+                if(success) {
+                    break;
+                }
+                furi_delay_ms(2);
+            }
             if(!success) {
+                display_needs_reinit = true;
                 furi_hal_i2c_release(&furi_hal_i2c_handle_power);
                 return 0;
             }
@@ -254,6 +266,11 @@ static uint8_t u8g2_get_oled_driver(void) {
         if(settings.oled_driver <= NotificationOledDriverST7567S) {
             driver = settings.oled_driver;
         }
+    }
+
+    // DIY board uses I2C SSD1306/SH1106 only; legacy ST7567S setting maps to SSD1306.
+    if(driver == NotificationOledDriverST7567S) {
+        driver = NotificationOledDriverSSD1306;
     }
 
     return driver;
@@ -406,41 +423,20 @@ void u8g2_Setup_st756x_flipper(
     uint8_t tile_buf_height;
     uint8_t* buf;
     UNUSED(byte_cb);
-	
-uint8_t oled_driver = u8g2_get_oled_driver();
 
-if(oled_driver == NotificationOledDriverST7567S) {
+    const uint8_t oled_driver = u8g2_get_oled_driver();
+    const u8x8_msg_cb display_cb = (oled_driver == NotificationOledDriverSH1106) ?
+                                       u8x8_d_sh1106_128x64_noname :
+                                       u8x8_d_ssd1306_128x64_noname;
+
     u8g2_SetupDisplay(
         u8g2,
-        u8x8_d_ssd1306_128x64_noname,
+        display_cb,
         u8x8_cad_ssd13xx_fast_i2c,
         u8x8_byte_hw_i2c_stm32,
         gpio_and_delay_cb);
+    u8x8_SetI2CAddress(&u8g2->u8x8, SSD1306_I2C_ADDRESS << 1);
 
-    u8x8_SetI2CAddress(&u8g2->u8x8, 0x3C << 1); //3F
-} else if(oled_driver == NotificationOledDriverSH1106) {
-    u8g2_SetupDisplay(
-        u8g2,
-        u8x8_d_sh1106_128x64_noname,
-        u8x8_cad_ssd13xx_fast_i2c,
-        u8x8_byte_hw_i2c_stm32,
-        gpio_and_delay_cb);
-
-    u8x8_SetI2CAddress(&u8g2->u8x8, 0x3C << 1);
-
-} else {
-    u8g2_SetupDisplay(
-        u8g2,
-        u8x8_d_ssd1306_128x64_noname,
-        u8x8_cad_ssd13xx_fast_i2c,
-        u8x8_byte_hw_i2c_stm32,
-        gpio_and_delay_cb);
-
-    u8x8_SetI2CAddress(&u8g2->u8x8, 0x3C << 1);
-}
-
-	
     buf = u8g2_m_16_8_f(&tile_buf_height);
     u8g2_SetupBuffer(u8g2, buf, tile_buf_height, u8g2_ll_hvline_vertical_top_lsb, rotation);
-//    u8x8_SetI2CAddress(&u8g2->u8x8, 0x3C << 1);
 }

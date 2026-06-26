@@ -1020,6 +1020,7 @@ FuriStatus furi_hal_sd_write_blocks(const uint32_t* buff, uint32_t sector, uint3
     furi_check(buff);
 
     FuriStatus status;
+    bool single_sector = count == 1;
 
     sd_cache_invalidate_range(sector, sector + count);
 
@@ -1041,6 +1042,10 @@ FuriStatus furi_hal_sd_write_blocks(const uint32_t* buff, uint32_t sector, uint3
             }
             counter--;
         }
+    }
+
+    if(status == FuriStatusOk && single_sector) {
+        sd_cache_put(sector, (uint32_t*)buff);
     }
 
     return status;

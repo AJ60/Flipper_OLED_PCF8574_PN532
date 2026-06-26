@@ -27,31 +27,37 @@ Iso14443_4aError
     furi_check(instance);
     furi_check(data);
 
-    bit_buffer_reset(instance->tx_buffer);
-    bit_buffer_append_byte(instance->tx_buffer, ISO14443_4A_CMD_READ_ATS);
-    bit_buffer_append_byte(instance->tx_buffer, ISO14443_4A_FSDI_256 << 4);
-
     Iso14443_4aError error = Iso14443_4aErrorNone;
+    const uint8_t max_retries = 3;
 
-    do {
+    for(uint8_t attempt = 0; attempt < max_retries; attempt++) {
+        bit_buffer_reset(instance->tx_buffer);
+        bit_buffer_append_byte(instance->tx_buffer, ISO14443_4A_CMD_READ_ATS);
+        bit_buffer_append_byte(instance->tx_buffer, ISO14443_4A_FSDI_256 << 4);
+
         const Iso14443_3aError iso14443_3a_error = iso14443_3a_poller_send_standard_frame(
             instance->iso14443_3a_poller,
             instance->tx_buffer,
             instance->rx_buffer,
             ISO14443_4A_POLLER_ATS_FWT_FC);
 
-        if(iso14443_3a_error != Iso14443_3aErrorNone) {
-            FURI_LOG_E(TAG, "ATS request failed");
+        if(iso14443_3a_error == Iso14443_3aErrorNone) {
+            if(iso14443_4a_ats_parse(data, instance->rx_buffer)) {
+                error = Iso14443_4aErrorNone;
+                break;
+            } else {
+                FURI_LOG_W(TAG, "Failed to parse ATS response on attempt %d", attempt + 1);
+                error = Iso14443_4aErrorProtocol;
+            }
+        } else {
+            FURI_LOG_W(TAG, "ATS request failed on attempt %d: %d", attempt + 1, iso14443_3a_error);
             error = iso14443_4a_process_error(iso14443_3a_error);
-            break;
-
-        } else if(!iso14443_4a_ats_parse(data, instance->rx_buffer)) {
-            FURI_LOG_E(TAG, "Failed to parse ATS response");
-            error = Iso14443_4aErrorProtocol;
-            break;
         }
 
-    } while(false);
+        if(attempt < max_retries - 1) {
+            furi_delay_ms(10);
+        }
+    }
 
     return error;
 }

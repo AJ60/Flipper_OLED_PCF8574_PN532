@@ -2,6 +2,7 @@
 #include "nfc_poller.h"
 
 #include <nfc/protocols/nfc_poller_defs.h>
+#include <nfc/protocols/nfc_device_defs.h>
 
 #include <furi/furi.h>
 
@@ -105,10 +106,10 @@ void nfc_scanner_state_handler_try_base_pollers(NfcScanner* instance) {
                 instance->current_protocol;
             instance->detected_base_protocols_num++;
 
-            if(instance->first_detected_protocol == NfcProtocolInvalid) {
-                instance->first_detected_protocol = instance->current_protocol;
-                instance->current_protocol = NfcProtocolInvalid;
-            }
+            instance->first_detected_protocol = instance->current_protocol;
+            instance->state = NfcScannerStateFindChildrenProtocols;
+            furi_delay_ms(80);
+            break;
         }
 
         instance->base_protocols_idx =
@@ -139,14 +140,40 @@ void nfc_scanner_state_handler_detect_children_protocols(NfcScanner* instance) {
 
     instance->current_protocol = instance->children_protocols[instance->children_protocols_idx];
 
-    NfcPoller* poller = nfc_poller_alloc(instance->nfc, instance->current_protocol);
-    bool protocol_detected = nfc_poller_detect(poller);
-    nfc_poller_free(poller);
+    // Check if the direct parent of current_protocol has been successfully detected
+    NfcProtocol parent = nfc_protocol_get_parent(instance->current_protocol);
+    bool parent_detected = false;
+    for(size_t i = 0; i < instance->detected_protocols_num; i++) {
+        if(instance->detected_protocols[i] == parent) {
+            parent_detected = true;
+            break;
+        }
+    }
 
-    if(protocol_detected) {
-        instance->detected_protocols[instance->detected_protocols_num] =
-            instance->current_protocol;
-        instance->detected_protocols_num++;
+    // If ISO14443-4A was detected, skip Mifare Classic/Ultralight (which are ISO14443-3A only)
+    if(parent_detected && parent == NfcProtocolIso14443_3a &&
+       instance->current_protocol != NfcProtocolIso14443_4a) {
+        for(size_t i = 0; i < instance->detected_protocols_num; i++) {
+            if(instance->detected_protocols[i] == NfcProtocolIso14443_4a) {
+                parent_detected = false;
+                break;
+            }
+        }
+    }
+
+    if(parent_detected) {
+        NfcPoller* poller = nfc_poller_alloc(instance->nfc, instance->current_protocol);
+        bool protocol_detected = nfc_poller_detect(poller);
+        nfc_poller_free(poller);
+
+        if(protocol_detected) {
+            instance->detected_protocols[instance->detected_protocols_num] =
+                instance->current_protocol;
+            instance->detected_protocols_num++;
+        }
+
+        // Allow the card's internal chip/enclave capacitor to discharge fully
+        furi_delay_ms(80);
     }
 
     instance->children_protocols_idx++;

@@ -20,11 +20,10 @@ static const NotificationSequence sequence_note_c = {
     NULL,
 };
 
-#define OLED_DRIVER_COUNT 3
+#define OLED_DRIVER_COUNT 2
 const char* const oled_driver_text[OLED_DRIVER_COUNT] = {
     "SSD1306",
     "SH1106",
-    "ST7567S",
 };
 
 #define CONTRAST_COUNT 17
@@ -99,11 +98,6 @@ static void oled_driver_changed(VariableItem* item) {
     case 1:
         app->notification->settings.oled_driver =
             NotificationOledDriverSH1106;
-        break;
-
-    case 2:
-        app->notification->settings.oled_driver =
-            NotificationOledDriverST7567S;
         break;
 
     default:

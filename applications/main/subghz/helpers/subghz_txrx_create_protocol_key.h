@@ -63,7 +63,7 @@ bool subghz_txrx_gen_keeloq_protocol(
     uint16_t cnt,
     const char* manufacture_name);
 
-bool subghz_txrx_gen_keeloq_bft_protocol(
+bool subghz_txrx_gen_keeloq_seed_protocol(
     void* context,
     const char* preset_name,
     uint32_t frequency,
@@ -101,6 +101,46 @@ bool subghz_txrx_gen_alutech_at_4n_protocol(
     uint16_t cnt);
 
 bool subghz_txrx_gen_somfy_telis_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint16_t cnt);
+
+bool subghz_txrx_gen_somfy_keytis_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint16_t cnt);
+
+bool subghz_txrx_gen_kinggates_stylo_4k_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint16_t cnt);
+
+bool subghz_txrx_gen_beninca_arc_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint32_t cnt);
+
+bool subghz_txrx_gen_jarolift_protocol(
+    void* context,
+    const char* preset_name,
+    uint32_t frequency,
+    uint32_t serial,
+    uint8_t btn,
+    uint16_t cnt);
+
+bool subghz_txrx_gen_ditec_gol4_protocol(
     void* context,
     const char* preset_name,
     uint32_t frequency,

@@ -3,6 +3,7 @@
 #include <furi_hal_spi.h> // Provides SPI HAL functions and types
 #include <furi_hal_bus.h> // For bus clock enable/disable
 #include <furi.h>
+#include <stdio.h>
 
 // Include necessary LL drivers
 #include <stm32wbxx_ll_spi.h>
@@ -134,9 +135,9 @@ static void furi_hal_spi_bus_event_callback(FuriHalSpiBus* bus, FuriHalSpiBusEve
         furi_hal_spi_bus_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
         bus->current_handle = NULL;
     } else if(event == FuriHalSpiBusEventDeinit) {
-    if(furi_hal_spi_bus_mutex) {
-        furi_mutex_free(furi_hal_spi_bus_mutex);
-        furi_hal_spi_bus_mutex = NULL;
+        if(furi_hal_spi_bus_mutex) {
+            furi_mutex_free(furi_hal_spi_bus_mutex);
+            furi_hal_spi_bus_mutex = NULL;
         }
     } else if(event == FuriHalSpiBusEventLock) {
         furi_check(furi_mutex_acquire(furi_hal_spi_bus_mutex, FuriWaitForever) == FuriStatusOk);
@@ -417,7 +418,7 @@ const FuriHalSpiBusHandle furi_hal_spi_bus_handle_subghz = {
 const FuriHalSpiBusHandle furi_hal_spi_bus_handle_nfc = {
     .bus = &furi_hal_spi_bus,
     .callback = furi_hal_spi_bus_handle_nfc_wrapper_event_callback,
-    .miso = &gpio_spi_miso,
+    .miso = &gpio_nfc_miso,
     .mosi = &gpio_spi_mosi,
     .sck = &gpio_spi_sck,
     .cs = &gpio_nfc_cs,

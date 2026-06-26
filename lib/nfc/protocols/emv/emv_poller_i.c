@@ -459,7 +459,7 @@ EmvError emv_poller_select_ppse(EmvPoller* instance) {
             instance->iso14443_4a_poller, instance->tx_buffer, instance->rx_buffer);
 
         if(iso14443_4a_error != Iso14443_4aErrorNone) {
-            FURI_LOG_E(TAG, "Failed select PPSE");
+            FURI_LOG_E(TAG, "Failed select PPSE, error %d", iso14443_4a_error);
             error = emv_process_error(iso14443_4a_error);
             break;
         }
@@ -513,7 +513,7 @@ EmvError emv_poller_select_application(EmvPoller* instance) {
         emv_trace(instance, "Start application answer:");
 
         if(iso14443_4a_error != Iso14443_4aErrorNone) {
-            FURI_LOG_E(TAG, "Failed to read PAN or PDOL");
+            FURI_LOG_E(TAG, "Failed to read PAN or PDOL, error %d", iso14443_4a_error);
             error = emv_process_error(iso14443_4a_error);
             break;
         }
@@ -610,7 +610,7 @@ EmvError emv_poller_read_sfi_record(EmvPoller* instance, uint8_t sfi, uint8_t re
         emv_trace(instance, furi_string_get_cstr(text));
 
         if(iso14443_4a_error != Iso14443_4aErrorNone) {
-            FURI_LOG_E(TAG, "Failed to read SFI 0x%X record %d", sfi, record_num);
+            FURI_LOG_E(TAG, "Failed to read SFI 0x%X record %d, error %d", sfi, record_num, iso14443_4a_error);
             error = emv_process_error(iso14443_4a_error);
             break;
         }

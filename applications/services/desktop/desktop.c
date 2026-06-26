@@ -154,6 +154,10 @@ static bool desktop_custom_event_callback(void* context, uint32_t event) {
         desktop_keybinds_migrate(desktop);
         desktop_settings_load(&desktop->settings);
         desktop_apply_settings(desktop);
+        if(scene_manager_get_current_scene(desktop->scene_manager) == DesktopSceneMain &&
+           storage_file_exists(desktop->storage, SLIDESHOW_FS_PATH)) {
+            scene_manager_next_scene(desktop->scene_manager, DesktopSceneSlideshow);
+        }
 
     } else {
         return scene_manager_handle_custom_event(desktop->scene_manager, event);

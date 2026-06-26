@@ -7,9 +7,14 @@ typedef enum {
     GenFaacSLH,
     GenKeeloq,
     GenCameAtomo,
-    GenKeeloqBFT,
+    GenKeeloqSeed,
     GenAlutechAt4n,
     GenSomfyTelis,
+    GenSomfyKeytis,
+    GenKingGatesStylo4k,
+    GenBenincaARC,
+    GenJarolift,
+    GenDitecGOL4,
     GenNiceFlorS,
     GenSecPlus1,
     GenSecPlus2,
@@ -50,7 +55,7 @@ typedef struct {
             uint16_t cnt;
             uint32_t seed;
             const char* manuf;
-        } keeloq_bft;
+        } keeloq_seed;
         struct {
             uint32_t serial;
             uint8_t btn;
@@ -61,6 +66,26 @@ typedef struct {
             uint8_t btn;
             uint16_t cnt;
         } somfy_telis;
+        struct {
+            uint32_t serial;
+            uint8_t btn;
+            uint16_t cnt;
+        } somfy_keytis;
+        struct {
+            uint32_t serial;
+            uint8_t btn;
+            uint16_t cnt;
+        } kinggates_stylo_4k;
+        struct {
+            uint32_t serial;
+            uint8_t btn;
+            uint32_t cnt;
+        } beninca_arc;
+        struct {
+            uint32_t serial;
+            uint8_t btn;
+            uint16_t cnt;
+        } jarolift;
         struct {
             uint32_t serial;
             uint8_t btn;
@@ -76,6 +101,11 @@ typedef struct {
             uint32_t serial;
             uint16_t cnt;
         } phoenix_v2;
+        struct {
+            uint32_t serial;
+            uint8_t btn;
+            uint16_t cnt;
+        } ditec_gol4;
     };
 } GenInfo;
 

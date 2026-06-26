@@ -8,6 +8,7 @@
 
 #define FURI_HAL_NFC_ISO15693_MAX_FRAME_SIZE         (1024U)
 #define FURI_HAL_NFC_ISO15693_POLLER_MAX_BUFFER_SIZE (64)
+#define FURI_HAL_NFC_ISO15693_BIT_LEN                (4)
 
 #define FURI_HAL_NFC_ISO15693_RESP_SOF_SIZE    (5)
 #define FURI_HAL_NFC_ISO15693_RESP_EOF_SIZE    (5)
@@ -34,9 +35,9 @@ typedef struct {
 
 typedef struct {
     // 4 bits per data bit on transmit
-    uint8_t fifo_buf[FURI_HAL_NFC_ISO15693_POLLER_MAX_BUFFER_SIZE * 4];
+    uint8_t fifo_buf[FURI_HAL_NFC_ISO15693_POLLER_MAX_BUFFER_SIZE * FURI_HAL_NFC_ISO15693_BIT_LEN];
     size_t fifo_buf_bits;
-    uint8_t frame_buf[FURI_HAL_NFC_ISO15693_POLLER_MAX_BUFFER_SIZE * 2];
+    uint8_t frame_buf[FURI_HAL_NFC_ISO15693_POLLER_MAX_BUFFER_SIZE * FURI_HAL_NFC_ISO15693_BIT_LEN];
     size_t frame_buf_bits;
 } FuriHalNfcIso15693Poller;
 
@@ -46,7 +47,7 @@ static FuriHalNfcIso15693Poller* furi_hal_nfc_iso15693_poller = NULL;
 static FuriHalNfcIso15693Listener* furi_hal_nfc_iso15693_listener_alloc(void) {
     FuriHalNfcIso15693Listener* instance = malloc(sizeof(FuriHalNfcIso15693Listener));
 
-    instance->signal = iso15693_signal_alloc(&gpio_spi_mosi);
+    instance->signal = iso15693_signal_alloc(&gpio_spi_r_mosi);
     instance->parser =
         iso15693_parser_alloc(&gpio_nfc_irq_rfid_pull, FURI_HAL_NFC_ISO15693_MAX_FRAME_SIZE);
 

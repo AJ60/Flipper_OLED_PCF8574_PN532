@@ -2,6 +2,8 @@
 #include <furi_hal_version.h>
 #include <furi_hal_power.h>
 #include <furi_hal_cortex.h>
+#include <furi_hal_gpio.h>
+#include <furi_hal_resources.h>
 
 #include <stm32wbxx_ll_i2c.h>
 #include <stm32wbxx_ll_gpio.h>
@@ -195,6 +197,77 @@ static bool furi_hal_i2c_transaction(
     return true;
 }
 
+static void furi_hal_i2c_recover_bus(const FuriHalI2cBusHandle* handle) {
+    const GpioPin* scl_pin = NULL;
+    const GpioPin* sda_pin = NULL;
+    GpioAltFn alt_fn = GpioAltFnUnused;
+
+    if(handle->bus == &furi_hal_i2c_bus_power) {
+        scl_pin = &gpio_i2c_1_scl;
+        sda_pin = &gpio_i2c_1_sda;
+        alt_fn = GpioAltFn4I2C1;
+    } else if(handle->bus == &furi_hal_i2c_bus_external) {
+        scl_pin = &gpio_i2c_3_scl;
+        sda_pin = &gpio_i2c_3_sda;
+        alt_fn = GpioAltFn4I2C3;
+    } else {
+        return;
+    }
+
+    // Always reset the peripheral state machine to clear BERR/ARLO/OVR errors.
+    LL_I2C_Disable(handle->bus->i2c);
+    LL_I2C_Enable(handle->bus->i2c);
+
+    // Only perform the physical pin-toggling sequence if lines are actually stuck low.
+    bool sda_low = !furi_hal_gpio_read(sda_pin);
+    bool scl_low = !furi_hal_gpio_read(scl_pin);
+    if(!sda_low && !scl_low) {
+        return;
+    }
+
+    // 1. Disable I2C peripheral again for GPIO configuration
+    LL_I2C_Disable(handle->bus->i2c);
+
+    // 2. Configure SCL and SDA as GPIO open-drain outputs with pull-up
+    furi_hal_gpio_write(scl_pin, true);
+    furi_hal_gpio_write(sda_pin, true);
+    furi_hal_gpio_init(scl_pin, GpioModeOutputOpenDrain, GpioPullUp, GpioSpeedHigh);
+    furi_hal_gpio_init(sda_pin, GpioModeOutputOpenDrain, GpioPullUp, GpioSpeedHigh);
+
+    // Give it a moment to pull up
+    furi_hal_cortex_delay_us(10);
+
+    // 3. If SDA is low, toggle SCL up to 9 times to free stuck slave
+    if(!furi_hal_gpio_read(sda_pin)) {
+        for(int i = 0; i < 9; i++) {
+            furi_hal_gpio_write(scl_pin, false);
+            furi_hal_cortex_delay_us(5);
+            furi_hal_gpio_write(scl_pin, true);
+            furi_hal_cortex_delay_us(5);
+            if(furi_hal_gpio_read(sda_pin)) {
+                break;
+            }
+        }
+    }
+
+    // 4. Generate a STOP condition (SDA goes low while SCL is high, then SDA goes high)
+    furi_hal_gpio_write(sda_pin, false);
+    furi_hal_cortex_delay_us(5);
+    furi_hal_gpio_write(scl_pin, false);
+    furi_hal_cortex_delay_us(5);
+    furi_hal_gpio_write(scl_pin, true);
+    furi_hal_cortex_delay_us(5);
+    furi_hal_gpio_write(sda_pin, true);
+    furi_hal_cortex_delay_us(5);
+
+    // 5. Re-initialize pins to Alt Function Open Drain for I2C
+    furi_hal_gpio_init_ex(sda_pin, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, alt_fn);
+    furi_hal_gpio_init_ex(scl_pin, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, alt_fn);
+
+    // 6. Enable I2C peripheral
+    LL_I2C_Enable(handle->bus->i2c);
+}
+
 bool furi_hal_i2c_rx_ext(
     const FuriHalI2cBusHandle* handle,
     uint16_t address,
@@ -208,8 +281,17 @@ bool furi_hal_i2c_rx_ext(
 
     FuriHalCortexTimer timer = furi_hal_cortex_timer_get(timeout * 1000);
 
-    return furi_hal_i2c_transaction(
+    bool ok = furi_hal_i2c_transaction(
         handle->bus->i2c, address, ten_bit, data, size, begin, end, true, timer);
+
+    if(!ok) {
+        // FURI_LOG_E(TAG, "I2C rx failed, recovering bus...");
+        furi_hal_i2c_recover_bus(handle);
+        timer = furi_hal_cortex_timer_get(timeout * 1000);
+        ok = furi_hal_i2c_transaction(
+            handle->bus->i2c, address, ten_bit, data, size, begin, end, true, timer);
+    }
+    return ok;
 }
 
 bool furi_hal_i2c_tx_ext(
@@ -225,8 +307,17 @@ bool furi_hal_i2c_tx_ext(
 
     FuriHalCortexTimer timer = furi_hal_cortex_timer_get(timeout * 1000);
 
-    return furi_hal_i2c_transaction(
+    bool ok = furi_hal_i2c_transaction(
         handle->bus->i2c, address, ten_bit, (uint8_t*)data, size, begin, end, false, timer);
+
+    if(!ok) {
+        // FURI_LOG_E(TAG, "I2C tx failed, recovering bus...");
+        furi_hal_i2c_recover_bus(handle);
+        timer = furi_hal_cortex_timer_get(timeout * 1000);
+        ok = furi_hal_i2c_transaction(
+            handle->bus->i2c, address, ten_bit, (uint8_t*)data, size, begin, end, false, timer);
+    }
+    return ok;
 }
 
 bool furi_hal_i2c_tx(

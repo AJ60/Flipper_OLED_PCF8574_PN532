@@ -68,6 +68,8 @@ const SubGhzProtocol subghz_protocol_revers_rb2 = {
 
     .decoder = &subghz_protocol_revers_rb2_decoder,
     .encoder = &subghz_protocol_revers_rb2_encoder,
+
+    .filter = SubGhzProtocolFilter_ReversRB2,
 };
 
 void* subghz_protocol_encoder_revers_rb2_alloc(SubGhzEnvironment* environment) {
@@ -77,8 +79,8 @@ void* subghz_protocol_encoder_revers_rb2_alloc(SubGhzEnvironment* environment) {
     instance->base.protocol = &subghz_protocol_revers_rb2;
     instance->generic.protocol_name = instance->base.protocol->name;
 
-    instance->encoder.repeat = 10;
-    instance->encoder.size_upload = 1768;
+    instance->encoder.repeat = 3;
+    instance->encoder.size_upload = 256;
     instance->encoder.upload = malloc(instance->encoder.size_upload * sizeof(LevelDuration));
     instance->encoder.is_running = false;
     return instance;
@@ -128,30 +130,27 @@ static void
     furi_assert(instance);
     size_t index = 0;
 
-    for(size_t r = 0; r < 6; r++) {
-        ManchesterEncoderState enc_state;
-        manchester_encoder_reset(&enc_state);
-        ManchesterEncoderResult result;
+    ManchesterEncoderState enc_state;
+    manchester_encoder_reset(&enc_state);
+    ManchesterEncoderResult result;
 
-        for(uint8_t i = instance->generic.data_count_bit; i > 0; i--) {
-            if(!manchester_encoder_advance(
-                   &enc_state, bit_read(instance->generic.data, i - 1), &result)) {
-                instance->encoder.upload[index++] =
-                    subghz_protocol_encoder_revers_rb2_add_duration_to_upload(result);
-                manchester_encoder_advance(
-                    &enc_state, bit_read(instance->generic.data, i - 1), &result);
-            }
+    for(uint8_t i = instance->generic.data_count_bit; i > 0; i--) {
+        if(!manchester_encoder_advance(
+               &enc_state, bit_read(instance->generic.data, i - 1), &result)) {
             instance->encoder.upload[index++] =
                 subghz_protocol_encoder_revers_rb2_add_duration_to_upload(result);
+            manchester_encoder_advance(
+                &enc_state, bit_read(instance->generic.data, i - 1), &result);
         }
-        instance->encoder.upload[index] =
-            subghz_protocol_encoder_revers_rb2_add_duration_to_upload(
-                manchester_encoder_finish(&enc_state));
-        if(level_duration_get_level(instance->encoder.upload[index])) {
-            index++;
-        }
-        instance->encoder.upload[index++] = level_duration_make(false, (uint32_t)320);
+        instance->encoder.upload[index++] =
+            subghz_protocol_encoder_revers_rb2_add_duration_to_upload(result);
     }
+    instance->encoder.upload[index] = subghz_protocol_encoder_revers_rb2_add_duration_to_upload(
+        manchester_encoder_finish(&enc_state));
+    if(level_duration_get_level(instance->encoder.upload[index])) {
+        index++;
+    }
+    instance->encoder.upload[index++] = level_duration_make(false, (uint32_t)320);
     instance->encoder.size_upload = index;
 }
 
@@ -178,13 +177,12 @@ SubGhzProtocolStatus
         if(ret != SubGhzProtocolStatusOk) {
             break;
         }
-        //optional parameter parameter
+        // Optional value
         flipper_format_read_uint32(
             flipper_format, "Repeat", (uint32_t*)&instance->encoder.repeat, 1);
 
         subghz_protocol_revers_rb2_remote_controller(&instance->generic);
         subghz_protocol_encoder_revers_rb2_get_upload(instance);
-        instance->encoder.front = 0;
         instance->encoder.is_running = true;
     } while(false);
 
@@ -194,7 +192,6 @@ SubGhzProtocolStatus
 void subghz_protocol_encoder_revers_rb2_stop(void* context) {
     SubGhzProtocolEncoderRevers_RB2* instance = context;
     instance->encoder.is_running = false;
-    instance->encoder.front = 0;
 }
 
 LevelDuration subghz_protocol_encoder_revers_rb2_yield(void* context) {
@@ -208,7 +205,7 @@ LevelDuration subghz_protocol_encoder_revers_rb2_yield(void* context) {
     LevelDuration ret = instance->encoder.upload[instance->encoder.front];
 
     if(++instance->encoder.front == instance->encoder.size_upload) {
-        instance->encoder.repeat--;
+        if(!subghz_block_generic_global.endless_tx) instance->encoder.repeat--;
         instance->encoder.front = 0;
     }
 

@@ -5,6 +5,7 @@
 #include <dolphin/dolphin.h>
 #include <loader/firmware_api/firmware_api.h>
 #include <applications/main/archive/helpers/archive_helpers_ext.h>
+#include <furi_hal_nfc.h>
 
 bool nfc_custom_event_callback(void* context, uint32_t event) {
     furi_assert(context);
@@ -39,6 +40,22 @@ static void nfc_app_rpc_command_callback(const RpcAppSystemEvent* event, void* c
     }
 }
 
+static void nfc_app_release_hal(NfcApp* instance) {
+    furi_assert(instance);
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+}
+
+static void nfc_app_acquire_hal(NfcApp* instance) {
+    furi_assert(instance);
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
+}
+
 NfcApp* nfc_app_alloc(void) {
     NfcApp* instance = malloc(sizeof(NfcApp));
 
@@ -51,6 +68,7 @@ NfcApp* nfc_app_alloc(void) {
         instance->view_dispatcher, nfc_back_event_callback);
 
     instance->nfc = nfc_alloc();
+    instance->nfc_hal_acquired = true;
 
     instance->api_resolver = composite_api_resolver_alloc();
     composite_api_resolver_add(instance->api_resolver, firmware_api_interface);
@@ -62,6 +80,7 @@ NfcApp* nfc_app_alloc(void) {
     instance->slix_unlock = slix_unlock_alloc();
     instance->mfc_key_cache = mf_classic_key_cache_alloc();
     instance->nfc_supported_cards = nfc_supported_cards_alloc(instance->api_resolver);
+    memset(instance->cached_protocol_supports, 0, sizeof(instance->cached_protocol_supports));
 
     // Nfc device
     instance->nfc_device = nfc_device_alloc();
@@ -142,12 +161,12 @@ NfcApp* nfc_app_alloc(void) {
 void nfc_app_free(NfcApp* instance) {
     furi_assert(instance);
 
+    nfc_app_release_hal(instance);
+
     if(instance->rpc_ctx) {
         rpc_system_app_send_exited(instance->rpc_ctx);
         rpc_system_app_set_callback(instance->rpc_ctx, NULL, NULL);
     }
-
-    nfc_free(instance->nfc);
 
     nfc_detected_protocols_free(instance->detected_protocols);
     felica_auth_free(instance->felica_auth);
@@ -155,9 +174,9 @@ void nfc_app_free(NfcApp* instance) {
     slix_unlock_free(instance->slix_unlock);
     mf_classic_key_cache_free(instance->mfc_key_cache);
     nfc_supported_cards_free(instance->nfc_supported_cards);
-    if(instance->protocol_support) {
-        nfc_protocol_support_free(instance);
-    }
+    nfc_protocol_support_free(instance);
+
+    nfc_free(instance->nfc);
 
     // Nfc device
     nfc_device_free(instance->nfc_device);
@@ -266,7 +285,13 @@ bool nfc_save_file(NfcApp* instance, FuriString* path) {
     furi_assert(instance);
     furi_assert(path);
 
+    FURI_LOG_D("NfcApp", "nfc_save_file: releasing HAL...");
+    nfc_app_release_hal(instance);
+    FURI_LOG_D("NfcApp", "nfc_save_file: calling nfc_device_save...");
     bool result = nfc_device_save(instance->nfc_device, furi_string_get_cstr(instance->file_path));
+    FURI_LOG_D("NfcApp", "nfc_save_file: nfc_device_save returned %d, acquiring HAL...", result);
+    nfc_app_acquire_hal(instance);
+    FURI_LOG_D("NfcApp", "nfc_save_file: HAL acquired");
 
     if(!result) {
         dialog_message_show_storage_error(instance->dialogs, "Cannot save\nkey file");
@@ -302,8 +327,16 @@ static bool nfc_has_shadow_file_internal(NfcApp* instance, FuriString* path) {
     do {
         if(furi_string_empty(path)) break;
         if(!nfc_set_shadow_file_path(path, shadow_file_path)) break;
+
+        bool was_acquired = furi_hal_nfc_is_mine();
+        if(was_acquired) {
+            nfc_app_release_hal(instance);
+        }
         has_shadow_file =
             storage_common_exists(instance->storage, furi_string_get_cstr(shadow_file_path));
+        if(was_acquired) {
+            nfc_app_acquire_hal(instance);
+        }
     } while(false);
 
     furi_string_free(shadow_file_path);
@@ -323,7 +356,13 @@ static bool nfc_save_internal(NfcApp* instance, const char* extension) {
 
     bool result = false;
 
+    FURI_LOG_D("NfcApp", "nfc_save_internal: releasing HAL...");
+    nfc_app_release_hal(instance);
+    FURI_LOG_D("NfcApp", "nfc_save_internal: making folders...");
     nfc_make_app_folders(instance);
+    FURI_LOG_D("NfcApp", "nfc_save_internal: acquiring HAL...");
+    nfc_app_acquire_hal(instance);
+    FURI_LOG_D("NfcApp", "nfc_save_internal: HAL acquired");
 
     if(furi_string_end_with(instance->file_path, NFC_APP_EXTENSION) ||
        (furi_string_end_with(instance->file_path, NFC_APP_SHADOW_EXTENSION))) {
@@ -334,7 +373,9 @@ static bool nfc_save_internal(NfcApp* instance, const char* extension) {
     furi_string_cat_printf(
         instance->file_path, "/%s%s", furi_string_get_cstr(instance->file_name), extension);
 
+    FURI_LOG_D("NfcApp", "nfc_save_internal: calling nfc_save_file...");
     result = nfc_save_file(instance, instance->file_path);
+    FURI_LOG_D("NfcApp", "nfc_save_internal: nfc_save_file returned %d", result);
 
     return result;
 }
@@ -369,7 +410,9 @@ bool nfc_load_file(NfcApp* instance, FuriString* path, bool show_dialog) {
         furi_string_set(load_path, path);
     }
 
+    nfc_app_release_hal(instance);
     result = nfc_device_load(instance->nfc_device, furi_string_get_cstr(load_path));
+    nfc_app_acquire_hal(instance);
 
     if(result) {
         path_extract_filename(load_path, instance->file_name, true);
@@ -387,7 +430,12 @@ bool nfc_load_file(NfcApp* instance, FuriString* path, bool show_dialog) {
 bool nfc_delete(NfcApp* instance) {
     furi_assert(instance);
 
+    FURI_LOG_D("NfcApp", "nfc_delete: releasing HAL...");
+    nfc_app_release_hal(instance);
+
+    FURI_LOG_D("NfcApp", "nfc_delete: checking shadow file...");
     if(nfc_has_shadow_file(instance)) {
+        FURI_LOG_D("NfcApp", "nfc_delete: deleting shadow file...");
         nfc_delete_shadow_file(instance);
     }
 
@@ -396,7 +444,14 @@ bool nfc_delete(NfcApp* instance) {
         furi_string_replace_at(instance->file_path, path_len - 4, 4, NFC_APP_EXTENSION);
     }
 
-    return storage_simply_remove(instance->storage, furi_string_get_cstr(instance->file_path));
+    FURI_LOG_D("NfcApp", "nfc_delete: removing file %s...", furi_string_get_cstr(instance->file_path));
+    bool result = storage_simply_remove(instance->storage, furi_string_get_cstr(instance->file_path));
+
+    FURI_LOG_D("NfcApp", "nfc_delete: acquiring HAL...");
+    nfc_app_acquire_hal(instance);
+    FURI_LOG_D("NfcApp", "nfc_delete: HAL acquired");
+
+    return result;
 }
 
 bool nfc_delete_shadow_file(NfcApp* instance) {
@@ -404,8 +459,15 @@ bool nfc_delete_shadow_file(NfcApp* instance) {
 
     FuriString* shadow_file_path = furi_string_alloc();
 
+    bool was_acquired = furi_hal_nfc_is_mine();
+    if(was_acquired) {
+        nfc_app_release_hal(instance);
+    }
     bool result = nfc_set_shadow_file_path(instance->file_path, shadow_file_path) &&
                   storage_simply_remove(instance->storage, furi_string_get_cstr(shadow_file_path));
+    if(was_acquired) {
+        nfc_app_acquire_hal(instance);
+    }
 
     furi_string_free(shadow_file_path);
     return result;
@@ -421,9 +483,13 @@ bool nfc_load_from_file_select(NfcApp* instance) {
 
     bool success = false;
     do {
+        nfc_app_release_hal(instance);
         // Input events and views are managed by file_browser
-        if(!dialog_file_browser_show(
-               instance->dialogs, instance->file_path, instance->file_path, &browser_options))
+        bool browser_result = dialog_file_browser_show(
+               instance->dialogs, instance->file_path, instance->file_path, &browser_options);
+        nfc_app_acquire_hal(instance);
+
+        if(!browser_result)
             break;
 
         nfc_show_loading_popup(instance, true);

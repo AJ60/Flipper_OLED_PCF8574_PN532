@@ -23,9 +23,15 @@ bool furi_hal_mcp23017_init_ex(uint8_t i2c_addr);
 // Read GPIOA and GPIOB registers (16 bits)
 bool furi_hal_mcp23017_read_gpio(uint16_t* gpio_state);
 
+// Read only GPIOA or GPIOB (8 bits). port_idx: 0 = GPIOA, 1 = GPIOB
+bool furi_hal_mcp23017_read_port(uint8_t port_idx, uint8_t* port_state);
+
 // Configure IOCON / interrupt registers as minimal convenience
 // gpios_to_input_mask: lower 8 bits = GPIOA mask, upper 8 bits = GPIOB mask
 bool furi_hal_mcp23017_configure_interrupts(uint16_t gpios_to_input_mask);
+
+// Check if MCP23017 lost configuration (e.g. after silent reset) and restore it
+bool furi_hal_mcp23017_check_and_restore(uint16_t expected_mask);
 
 // Attach callback for INT pin (STM32 pin) - the code will call this when INT line triggers
 void furi_hal_mcp23017_attach_int(GpioExtiCallback cb, void* ctx);

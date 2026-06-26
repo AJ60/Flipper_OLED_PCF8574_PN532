@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 /* Input Related Constants */
-#define INPUT_DEBOUNCE_TICKS 4
+#define INPUT_DEBOUNCE_TICKS 24
 
 //const GpioPin gpio_button_sr_latch = {.port = GPIOH, .pin = LL_GPIO_PIN_3};
 
@@ -75,6 +75,7 @@ extern const GpioPin gpio_subghz_cs;
 extern const GpioPin gpio_sdcard_cs;
 //extern const GpioPin gpio_sdcard_cd;
 extern const GpioPin gpio_nfc_cs;
+extern const GpioPin gpio_nfc_miso;
 
 // Dont need them but keep them to avoid missing symbol errors
 extern const GpioPin gpio_button_up;
@@ -86,6 +87,7 @@ extern const GpioPin gpio_button_back;
 
 extern const GpioPin gpio_spi_miso;
 extern const GpioPin gpio_spi_mosi;
+extern const GpioPin gpio_spi_r_mosi;
 // extern const GpioPin gpio_spi_mosi1;
 extern const GpioPin gpio_spi_sck;
 

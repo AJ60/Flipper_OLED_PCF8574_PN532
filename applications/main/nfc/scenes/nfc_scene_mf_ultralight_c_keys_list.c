@@ -11,6 +11,11 @@ void nfc_scene_mf_ultralight_c_keys_list_submenu_callback(void* context, uint32_
 void nfc_scene_mf_ultralight_c_keys_list_on_enter(void* context) {
     NfcApp* instance = context;
 
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     KeysDict* mf_ultralight_c_user_dict = keys_dict_alloc(
         NFC_APP_MF_ULTRALIGHT_C_DICT_USER_PATH,
         KeysDictModeOpenAlways,
@@ -63,4 +68,9 @@ void nfc_scene_mf_ultralight_c_keys_list_on_exit(void* context) {
     NfcApp* instance = context;
 
     submenu_reset(instance->submenu);
+
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
 }

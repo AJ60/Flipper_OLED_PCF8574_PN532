@@ -552,9 +552,8 @@ float furi_hal_power_get_battery_voltage(FuriHalPowerIC ic) {
 float furi_hal_power_get_battery_current(FuriHalPowerIC ic) {
     // Heuristic current estimator based on voltage change over time.
     // This treats the battery as an equivalent capacitor with effective
-    // capacitance derived from nominal capacity. Result is returned in mA.
+    // capacitance derived from nominal capacity. Result is returned in A (or mA based on context).
     (void)ic; // Suppress unused parameter warning
-    // return 10.0f; // Return a default small current value
 
     // If INA219 is available, return its measured current (in A)
 #ifdef USE_INA219
@@ -567,29 +566,42 @@ float furi_hal_power_get_battery_current(FuriHalPowerIC ic) {
     }
 #endif
 
-    // Fallback: heuristic current estimator based on voltage change over time.
-    const uint32_t SAMPLE_MS = 250;
-    float v1 = furi_hal_power_get_battery_voltage(ic);
-    furi_delay_ms(SAMPLE_MS);
-    float v2 = furi_hal_power_get_battery_voltage(ic);
+    // Fallback: non-blocking heuristic current estimator based on voltage change over time.
+    static float last_v = 3.7f;
+    static uint32_t last_tick = 0;
+    static float last_current = 0.0f;
 
-    float dv = v2 - v1;
-    float dt = SAMPLE_MS / 1000.0f; // seconds
+    uint32_t now = furi_get_tick();
+    if(last_tick == 0) {
+        last_v = furi_hal_power_get_battery_voltage(ic);
+        last_tick = now;
+        return 0.0f;
+    }
 
-    if(dt <= 0.0f) return 0.0f;
+    uint32_t dt_ms = now - last_tick;
+    // Calculate new estimate only if at least 500 ms has passed to filter noise
+    if(dt_ms >= 500) {
+        float current_v = furi_hal_power_get_battery_voltage(ic);
+        float dv = current_v - last_v;
+        float dt = (float)dt_ms / 1000.0f; // seconds
 
-    const float V_MIN = 3.00f;
-    const float V_MAX = 4.20f;
-    float capacity_mAh = (float)furi_hal_power_get_battery_full_capacity();
-    float capacity_Ah = capacity_mAh / 1000.0f;
+        const float V_MIN = 3.00f;
+        const float V_MAX = 4.20f;
+        float capacity_mAh = (float)furi_hal_power_get_battery_full_capacity();
+        float capacity_Ah = capacity_mAh / 1000.0f;
 
-    float Ceq = (capacity_Ah * 3600.0f) / (V_MAX - V_MIN);
-    float dvdt = dv / dt;
-    float i_a = Ceq * dvdt;
-    if(i_a > 5.0f) i_a = 5.0f;
-	if(i_a < -5.0f) i_a = -5.0f;
+        float Ceq = (capacity_Ah * 3600.0f) / (V_MAX - V_MIN);
+        float dvdt = dv / dt;
+        float i_a = Ceq * dvdt;
+        if(i_a > 5.0f) i_a = 5.0f;
+        if(i_a < -5.0f) i_a = -5.0f;
 
-	return i_a;
+        last_v = current_v;
+        last_tick = now;
+        last_current = i_a;
+    }
+
+    return last_current;
 }
 
 // Remove internal static function

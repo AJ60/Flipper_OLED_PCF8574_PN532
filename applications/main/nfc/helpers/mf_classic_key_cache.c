@@ -147,6 +147,22 @@ bool mf_classic_key_cache_load(MfClassicKeyCache* instance, const uint8_t* uid, 
     return load_success;
 }
 
+void mf_classic_key_cache_load_default_keys(MfClassicKeyCache* instance, MfClassicType type) {
+    furi_assert(instance);
+
+    mf_classic_key_cache_reset(instance);
+
+    MfClassicKey default_key = {.data = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+    uint8_t sectors_total = mf_classic_get_total_sectors_num(type);
+
+    for(uint8_t i = 0; i < sectors_total; i++) {
+        FURI_BIT_SET(instance->keys.key_a_mask, i);
+        FURI_BIT_SET(instance->keys.key_b_mask, i);
+        instance->keys.key_a[i] = default_key;
+        instance->keys.key_b[i] = default_key;
+    }
+}
+
 void mf_classic_key_cache_load_from_data(MfClassicKeyCache* instance, const MfClassicData* data) {
     furi_assert(instance);
     furi_assert(data);

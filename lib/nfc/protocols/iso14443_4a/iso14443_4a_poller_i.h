@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#define ISO14443_4A_POLLER_ATS_FWT_FC (40000)
+#define ISO14443_4A_POLLER_ATS_FWT_FC (524288UL) // FWI=7, ~38.6ms — compatible with slow EMV bank cards
 
 typedef enum {
     Iso14443_4aPollerStateIdle,

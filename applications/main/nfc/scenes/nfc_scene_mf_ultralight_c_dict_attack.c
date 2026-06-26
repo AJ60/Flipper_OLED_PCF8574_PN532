@@ -77,6 +77,15 @@ void nfc_scene_mf_ultralight_c_dict_attack_prepare_view(NfcApp* instance) {
     // Set attack type to Ultralight C
     dict_attack_set_type(instance->dict_attack, DictAttackTypeMfUltralightC);
 
+    // Guard: if a previous write phase left a dict handle open, close it now.
+    // Without this, navigating write->back->read->dict-attack would open the same
+    // file twice, corrupting VFS state and causing a ViewPort lockup.
+    if(instance->mf_ultralight_c_dict_context.dict) {
+        keys_dict_free(instance->mf_ultralight_c_dict_context.dict);
+        instance->mf_ultralight_c_dict_context.dict = NULL;
+        instance->mf_ultralight_c_write_context.dict_state = NfcMfUltralightCWriteDictIdle;
+    }
+
     if(state == DictAttackStateUserDictInProgress) {
         do {
             if(!keys_dict_check_presence(NFC_APP_MF_ULTRALIGHT_C_DICT_USER_PATH)) {
@@ -126,6 +135,11 @@ void nfc_scene_mf_ultralight_c_dict_attack_prepare_view(NfcApp* instance) {
 void nfc_scene_mf_ultralight_c_dict_attack_on_enter(void* context) {
     NfcApp* instance = context;
 
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+    }
+    instance->nfc_hal_acquired = false;
+
     scene_manager_set_scene_state(
         instance->scene_manager,
         NfcSceneMfUltralightCDictAttack,
@@ -167,6 +181,7 @@ bool nfc_scene_mf_ultralight_c_dict_attack_on_event(void* context, SceneManagerE
                     nfc_poller_stop(instance->poller);
                     nfc_poller_free(instance->poller);
                     keys_dict_free(instance->mf_ultralight_c_dict_context.dict);
+                    instance->mf_ultralight_c_dict_context.dict = NULL;
                     scene_manager_set_scene_state(
                         instance->scene_manager,
                         NfcSceneMfUltralightCDictAttack,
@@ -199,6 +214,7 @@ bool nfc_scene_mf_ultralight_c_dict_attack_on_event(void* context, SceneManagerE
                 nfc_poller_stop(instance->poller);
                 nfc_poller_free(instance->poller);
                 keys_dict_free(instance->mf_ultralight_c_dict_context.dict);
+                instance->mf_ultralight_c_dict_context.dict = NULL;
                 scene_manager_set_scene_state(
                     instance->scene_manager,
                     NfcSceneMfUltralightCDictAttack,
@@ -225,11 +241,18 @@ void nfc_scene_mf_ultralight_c_dict_attack_on_exit(void* context) {
     NfcApp* instance = context;
     nfc_poller_stop(instance->poller);
     nfc_poller_free(instance->poller);
+
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+    }
+    instance->nfc_hal_acquired = true;
+
     scene_manager_set_scene_state(
         instance->scene_manager,
         NfcSceneMfUltralightCDictAttack,
         DictAttackStateUserDictInProgress);
     keys_dict_free(instance->mf_ultralight_c_dict_context.dict);
+    instance->mf_ultralight_c_dict_context.dict = NULL;
     instance->mf_ultralight_c_dict_context.dict_keys_total = 0;
     instance->mf_ultralight_c_dict_context.dict_keys_current = 0;
     instance->mf_ultralight_c_dict_context.auth_success = false;

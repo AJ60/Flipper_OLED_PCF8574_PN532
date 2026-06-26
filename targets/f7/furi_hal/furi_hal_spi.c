@@ -4,6 +4,7 @@
 #include <furi_hal_power.h>
 #include <furi_hal_interrupt.h>
 #include <furi_hal_cortex.h>
+#include <stdio.h>
 
 #include <stm32wbxx_ll_dma.h>
 #include <stm32wbxx_ll_spi.h>
@@ -48,6 +49,8 @@ void furi_hal_spi_bus_handle_deinit(const FuriHalSpiBusHandle* handle) {
     furi_check(handle);
     handle->callback(handle, FuriHalSpiBusHandleEventDeinit);
 }
+
+
 
 void furi_hal_spi_acquire(const FuriHalSpiBusHandle* handle) {
     furi_check(handle);
@@ -129,12 +132,22 @@ bool furi_hal_spi_bus_tx(
     furi_check(size > 0);
 
     bool ret = true;
+    uint32_t timeout_us = timeout * 1000;
+    if(timeout_us < 1000) {
+        timeout_us = 1000;
+    }
+    FuriHalCortexTimer timer = furi_hal_cortex_timer_get(timeout_us);
 
     while(size > 0) {
         if(LL_SPI_IsActiveFlag_TXE(handle->bus->spi)) {
             LL_SPI_TransmitData8(handle->bus->spi, *buffer);
             buffer++;
             size--;
+        }
+        if(furi_hal_cortex_timer_is_expired(timer)) {
+            FURI_LOG_E(TAG, "SPI TX timeout");
+            ret = false;
+            break;
         }
     }
 
@@ -158,6 +171,12 @@ bool furi_hal_spi_bus_trx(
     size_t tx_size = size;
     bool tx_allowed = true;
 
+    uint32_t timeout_us = timeout * 1000;
+    if(timeout_us < 1000) {
+        timeout_us = 1000;
+    }
+    FuriHalCortexTimer timer = furi_hal_cortex_timer_get(timeout_us);
+
     while(size > 0) {
         if(tx_size > 0 && LL_SPI_IsActiveFlag_TXE(handle->bus->spi) && tx_allowed) {
             if(tx_buffer) {
@@ -179,6 +198,12 @@ bool furi_hal_spi_bus_trx(
             }
             size--;
             tx_allowed = true;
+        }
+
+        if(furi_hal_cortex_timer_is_expired(timer)) {
+            FURI_LOG_E(TAG, "SPI TRX timeout");
+            ret = false;
+            break;
         }
     }
 

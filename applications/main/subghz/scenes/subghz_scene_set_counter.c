@@ -30,9 +30,9 @@ void subghz_scene_set_counter_on_enter(void* context) {
         byte_ptr = (uint8_t*)&subghz->gen_info->came_atomo.cnt;
         byte_count = sizeof(subghz->gen_info->came_atomo.cnt);
         break;
-    case GenKeeloqBFT:
-        byte_ptr = (uint8_t*)&subghz->gen_info->keeloq_bft.cnt;
-        byte_count = sizeof(subghz->gen_info->keeloq_bft.cnt);
+    case GenKeeloqSeed:
+        byte_ptr = (uint8_t*)&subghz->gen_info->keeloq_seed.cnt;
+        byte_count = sizeof(subghz->gen_info->keeloq_seed.cnt);
         break;
     case GenAlutechAt4n:
         byte_ptr = (uint8_t*)&subghz->gen_info->alutech_at_4n.cnt;
@@ -41,6 +41,26 @@ void subghz_scene_set_counter_on_enter(void* context) {
     case GenSomfyTelis:
         byte_ptr = (uint8_t*)&subghz->gen_info->somfy_telis.cnt;
         byte_count = sizeof(subghz->gen_info->somfy_telis.cnt);
+        break;
+    case GenSomfyKeytis:
+        byte_ptr = (uint8_t*)&subghz->gen_info->somfy_keytis.cnt;
+        byte_count = sizeof(subghz->gen_info->somfy_keytis.cnt);
+        break;
+    case GenKingGatesStylo4k:
+        byte_ptr = (uint8_t*)&subghz->gen_info->kinggates_stylo_4k.cnt;
+        byte_count = sizeof(subghz->gen_info->kinggates_stylo_4k.cnt);
+        break;
+    case GenBenincaARC:
+        byte_ptr = (uint8_t*)&subghz->gen_info->beninca_arc.cnt;
+        byte_count = sizeof(subghz->gen_info->beninca_arc.cnt);
+        break;
+    case GenJarolift:
+        byte_ptr = (uint8_t*)&subghz->gen_info->jarolift.cnt;
+        byte_count = sizeof(subghz->gen_info->jarolift.cnt);
+        break;
+    case GenDitecGOL4:
+        byte_ptr = (uint8_t*)&subghz->gen_info->ditec_gol4.cnt;
+        byte_count = sizeof(subghz->gen_info->ditec_gol4.cnt);
         break;
     case GenNiceFlorS:
         byte_ptr = (uint8_t*)&subghz->gen_info->nice_flor_s.cnt;
@@ -103,8 +123,8 @@ bool subghz_scene_set_counter_on_event(void* context, SceneManagerEvent event) {
             case GenCameAtomo:
                 subghz->gen_info->came_atomo.cnt = __bswap16(subghz->gen_info->came_atomo.cnt);
                 break;
-            case GenKeeloqBFT:
-                subghz->gen_info->keeloq_bft.cnt = __bswap16(subghz->gen_info->keeloq_bft.cnt);
+            case GenKeeloqSeed:
+                subghz->gen_info->keeloq_seed.cnt = __bswap16(subghz->gen_info->keeloq_seed.cnt);
                 break;
             case GenAlutechAt4n:
                 subghz->gen_info->alutech_at_4n.cnt =
@@ -112,6 +132,22 @@ bool subghz_scene_set_counter_on_event(void* context, SceneManagerEvent event) {
                 break;
             case GenSomfyTelis:
                 subghz->gen_info->somfy_telis.cnt = __bswap16(subghz->gen_info->somfy_telis.cnt);
+                break;
+            case GenSomfyKeytis:
+                subghz->gen_info->somfy_keytis.cnt = __bswap16(subghz->gen_info->somfy_keytis.cnt);
+                break;
+            case GenKingGatesStylo4k:
+                subghz->gen_info->kinggates_stylo_4k.cnt =
+                    __bswap16(subghz->gen_info->kinggates_stylo_4k.cnt);
+                break;
+            case GenBenincaARC:
+                subghz->gen_info->beninca_arc.cnt = __bswap32(subghz->gen_info->beninca_arc.cnt);
+                break;
+            case GenJarolift:
+                subghz->gen_info->jarolift.cnt = __bswap16(subghz->gen_info->jarolift.cnt);
+                break;
+            case GenDitecGOL4:
+                subghz->gen_info->ditec_gol4.cnt = __bswap16(subghz->gen_info->ditec_gol4.cnt);
                 break;
             case GenNiceFlorS:
                 subghz->gen_info->nice_flor_s.cnt = __bswap16(subghz->gen_info->nice_flor_s.cnt);
@@ -132,7 +168,7 @@ bool subghz_scene_set_counter_on_event(void* context, SceneManagerEvent event) {
 
             switch(subghz->gen_info->type) {
             case GenFaacSLH:
-            case GenKeeloqBFT:
+            case GenKeeloqSeed:
                 scene_manager_next_scene(subghz->scene_manager, SubGhzSceneSetSeed);
                 return true;
             case GenKeeloq:
@@ -170,6 +206,51 @@ bool subghz_scene_set_counter_on_event(void* context, SceneManagerEvent event) {
                     subghz->gen_info->somfy_telis.serial,
                     subghz->gen_info->somfy_telis.btn,
                     subghz->gen_info->somfy_telis.cnt);
+                break;
+            case GenSomfyKeytis:
+                generated_protocol = subghz_txrx_gen_somfy_keytis_protocol(
+                    subghz->txrx,
+                    subghz->gen_info->mod,
+                    subghz->gen_info->freq,
+                    subghz->gen_info->somfy_keytis.serial,
+                    subghz->gen_info->somfy_keytis.btn,
+                    subghz->gen_info->somfy_keytis.cnt);
+                break;
+            case GenKingGatesStylo4k:
+                generated_protocol = subghz_txrx_gen_kinggates_stylo_4k_protocol(
+                    subghz->txrx,
+                    subghz->gen_info->mod,
+                    subghz->gen_info->freq,
+                    subghz->gen_info->kinggates_stylo_4k.serial,
+                    subghz->gen_info->kinggates_stylo_4k.btn,
+                    subghz->gen_info->kinggates_stylo_4k.cnt);
+                break;
+            case GenBenincaARC:
+                generated_protocol = subghz_txrx_gen_beninca_arc_protocol(
+                    subghz->txrx,
+                    subghz->gen_info->mod,
+                    subghz->gen_info->freq,
+                    subghz->gen_info->beninca_arc.serial,
+                    subghz->gen_info->beninca_arc.btn,
+                    subghz->gen_info->beninca_arc.cnt);
+                break;
+            case GenJarolift:
+                generated_protocol = subghz_txrx_gen_jarolift_protocol(
+                    subghz->txrx,
+                    subghz->gen_info->mod,
+                    subghz->gen_info->freq,
+                    subghz->gen_info->jarolift.serial,
+                    subghz->gen_info->jarolift.btn,
+                    subghz->gen_info->jarolift.cnt);
+                break;
+            case GenDitecGOL4:
+                generated_protocol = subghz_txrx_gen_ditec_gol4_protocol(
+                    subghz->txrx,
+                    subghz->gen_info->mod,
+                    subghz->gen_info->freq,
+                    subghz->gen_info->ditec_gol4.serial,
+                    subghz->gen_info->ditec_gol4.btn,
+                    subghz->gen_info->ditec_gol4.cnt);
                 break;
             case GenNiceFlorS:
                 generated_protocol = subghz_txrx_gen_nice_flor_s_protocol(
@@ -215,8 +296,6 @@ bool subghz_scene_set_counter_on_event(void* context, SceneManagerEvent event) {
             } else {
                 subghz_file_name_clear(subghz);
 
-                scene_manager_set_scene_state(
-                    subghz->scene_manager, SubGhzSceneSetType, SubGhzCustomEventManagerSet);
                 scene_manager_next_scene(subghz->scene_manager, SubGhzSceneSaveName);
             }
         }
