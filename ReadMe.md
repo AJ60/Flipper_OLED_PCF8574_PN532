@@ -1,8 +1,9 @@
-# DIY Flipper Zero (OLED Version)
+# ⚙️ DIY Flipper Zero (OLED Version)
 Custom firmware fork supporting standard I2C OLED screens (SH1106 and SSD1306) on DIY Flipper hardware.
 
 [![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/artema0g/oled_flipper)
 [![Platform](https://img.shields.io/badge/platform-STM32WB55-orange.svg)](https://www.st.com/en/microcontrollers-microprocessors/stm32wb-series.html)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Me-red?style=flat&logo=kofi)](https://ko-fi.com/artema0g)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
 > [!WARNING]
@@ -10,7 +11,7 @@ Custom firmware fork supporting standard I2C OLED screens (SH1106 and SSD1306) o
 
 ---
 
-## Hardware Showcase
+## 📷 Hardware Showcase
 
 Here is the physical DIY board in action:
 
@@ -21,7 +22,7 @@ Here is the physical DIY board in action:
 
 ---
 
-## Table of Contents
+## 📚 Table of Contents
 - [Summary](#summary)
 - [System Architecture](#system-architecture)
 - [What Works and Limitations](#what-works-and-limitations)
@@ -29,11 +30,11 @@ Here is the physical DIY board in action:
 - [MCP23017 Wiring Guide](#mcp23017-wiring-guide)
 - [How to Build and Flash](#how-to-build-and-flash)
 - [Schematic](#schematic)
-- [Credits](#credits)
+- [Credits and Support](#credits-and-support)
 
 ---
 
-## Summary
+## 🔍 Summary
 This project implements a custom target for a DIY Flipper-style board based on the **WeAct STM32WB55CGU6** board. It integrates the following components:
 
 *   **Display**: I2C OLED display (SH1106 / SSD1306)
@@ -46,7 +47,7 @@ This project implements a custom target for a DIY Flipper-style board based on t
 
 ---
 
-## System Architecture
+## 📐 System Architecture
 
 This diagram visualizes how the different components interface with the STM32WB55 MCU over I2C, SPI, and GPIO.
 
@@ -82,7 +83,7 @@ graph TD
 
 ---
 
-## What Works and Limitations
+## ✅ What Works and Limitations
 *   **Core Systems**: All official Flipper firmware features compile and function.
 *   **I2C Devices**: OLED, INA219, and MCP23017 are multiplexed onto the primary I2C1 bus to preserve SPI resources.
 *   **NFC Support**: Verified working with Elechouse ST25R3916 modules.
@@ -90,7 +91,7 @@ graph TD
 
 ---
 
-## Key Pins and Wiring
+## 📌 Key Pins and Wiring
 
 | Component | Bus / Interface | MCU pin (macro) | Notes |
 |---|---|---|---|
@@ -107,7 +108,7 @@ graph TD
 
 ---
 
-## MCP23017 Wiring Guide
+## 🎛️ MCP23017 Wiring Guide
 
 The MCP23017 handles all buttons, status LEDs, and haptic feedback. Connect them in an **active-low** configuration (connecting to GND when pressed/active).
 
@@ -126,7 +127,7 @@ The MCP23017 handles all buttons, status LEDs, and haptic feedback. Connect them
 
 ---
 
-## How to Build and Flash
+## 🛠️ How to Build and Flash
 
 ### 1. Build from Source
 To compile the firmware for the OLED hardware target, use the Flipper Build Tool:
@@ -152,7 +153,7 @@ To compile the firmware for the OLED hardware target, use the Flipper Build Tool
 
 ---
 
-## Schematic
+## 🔌 Schematic
 
 A complete wiring schematic is available in the repository. Refer to the image below for physical connections:
 
@@ -160,6 +161,11 @@ A complete wiring schematic is available in the repository. Refer to the image b
 
 ---
 
-## Credits
+## 🤝 Credits and Support
+
 Special thanks to:
 *   **Nucleus Dark** & **Lamtran** for their design inspiration and code contributions.
+
+### ☕ Support this Project
+If you find this project useful and would like to support its development, you can buy me a coffee here:
+*   **Ko-fi**: [Support artema0g on Ko-fi](https://ko-fi.com/artema0g)
