@@ -29,6 +29,7 @@ struct TestRunner {
     // Temporary used things
     PipeSide* pipe;
     FuriString* args;
+    bool cli;
 
     // ELF related stuff
     CompositeApiResolver* composite_resolver;
@@ -52,6 +53,7 @@ TestRunner* test_runner_alloc(PipeSide* pipe, FuriString* args) {
 
     instance->pipe = pipe;
     instance->args = args;
+    instance->cli = (pipe != NULL);
 
     instance->composite_resolver = composite_api_resolver_alloc();
     composite_api_resolver_add(instance->composite_resolver, firmware_api_interface);

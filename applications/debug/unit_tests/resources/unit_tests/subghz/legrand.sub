@@ -6,3 +6,4 @@ Protocol: Legrand
 Bit: 18
 Key: 00 00 00 00 00 02 E3 7F
 TE: 358
+Repeat: 10

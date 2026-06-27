@@ -15,6 +15,7 @@
 #include <furi.h>
 #include <cc1101.h>
 #include <stdio.h>
+#include <momentum/settings.h>
 
 #define TAG "FuriHalSubGhz"
 
@@ -462,12 +463,41 @@ uint32_t furi_hal_subghz_set_frequency(uint32_t value) {
     }
 
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
-    uint32_t real_frequency = cc1101_set_frequency(&furi_hal_spi_bus_handle_subghz, value);
-    cc1101_calibrate(&furi_hal_spi_bus_handle_subghz);
 
+    // Force IDLE before touching frequency registers.
+    // If CC1101 is in RX/TX, SCAL will be silently ignored causing a missed calibration.
+    cc1101_strobe(&furi_hal_spi_bus_handle_subghz, CC1101_STROBE_SIDLE);
+
+    uint32_t real_frequency = cc1101_set_frequency(&furi_hal_spi_bus_handle_subghz, value);
+
+    // Wait for XO to fully stabilize before calibration.
+    // DIY boards with cheap/drifty crystals need 2-5ms settling time;
+    // calibrating too early locks the VCO to the wrong band.
+    furi_delay_ms(5);
+
+    // First calibration pass — may catch XO mid-settle on cold starts.
+    cc1101_calibrate(&furi_hal_spi_bus_handle_subghz);
     if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000)) {
-    FURI_LOG_E(TAG, "CC1101 set frequency IDLE failed");
-	}
+        FURI_LOG_E(TAG, "CC1101 calibration pass 1 IDLE failed");
+    }
+
+    // Second calibration pass — XO is now warm and stable; result is reliable.
+    cc1101_calibrate(&furi_hal_spi_bus_handle_subghz);
+    if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000)) {
+        FURI_LOG_E(TAG, "CC1101 calibration pass 2 IDLE failed");
+    }
+
+    // After manual calibration, configure FS_AUTOCAL based on user preference.
+    // Auto (0x18): re-calibrates PLL on every IDLE->TX — original behavior, but may
+    //              cause frequency jitter with cheap/drifty crystals.
+    // Manual (0x08): PLL stays locked to the calibration done above — stable frequency.
+    if(momentum_settings.subghz_autocal) {
+        cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_MCSM0, 0x18);
+        FURI_LOG_I(TAG, "MCSM0=0x18: auto-cal ON (IDLE->TX recalibrates PLL)");
+    } else {
+        cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_MCSM0, 0x08);
+        FURI_LOG_I(TAG, "MCSM0=0x08: auto-cal OFF (PLL locked after manual cal)");
+    }
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
     return real_frequency;

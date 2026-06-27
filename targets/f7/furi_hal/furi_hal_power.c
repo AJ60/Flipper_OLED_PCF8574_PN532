@@ -477,14 +477,21 @@ bool furi_hal_power_is_otg_enabled(void) {
     return ret;
 }
 
+static float furi_hal_power_battery_charge_voltage_limit = 4.208f;
+
 float furi_hal_power_get_battery_charge_voltage_limit(void) {
-    // Return a typical default limit
-    return 4.2f;
+    return furi_hal_power_battery_charge_voltage_limit;
 }
 
 void furi_hal_power_set_battery_charge_voltage_limit(float voltage) {
-    // Do nothing
-    (void)voltage; // Suppress unused parameter warning
+    uint16_t voltage_mv = (uint16_t)roundf(voltage * 1000.0f);
+    if(voltage_mv < 3840) {
+        voltage_mv = 3840;
+    } else if(voltage_mv > 4208) {
+        voltage_mv = 4208;
+    }
+    uint8_t steps = (uint8_t)((voltage_mv - 3840) / 16);
+    furi_hal_power_battery_charge_voltage_limit = (float)(3840 + steps * 16) / 1000.0f;
 }
 
 bool furi_hal_power_check_otg_fault(void) {

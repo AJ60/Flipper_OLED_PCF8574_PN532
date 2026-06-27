@@ -5,3 +5,4 @@ Preset: FuriHalSubGhzPresetOok650Async
 Protocol: LinearDelta3
 Bit: 8
 Key: 00 00 00 00 00 00 00 D0
+Repeat: 10

@@ -153,7 +153,14 @@ bool subghz_view_transmitter_input(InputEvent* event, void* context) {
         },
         true);
 
+    if(!can_be_sent && event->key == InputKeyOk) {
+        FURI_LOG_E("SubGhzTransmitter", "OK key ignored: can_be_sent is FALSE");
+    }
+
     if(can_be_sent) {
+        if(event->key == InputKeyOk) {
+            FURI_LOG_E("SubGhzTransmitter", "OK key event: type=%d", event->type);
+        }
         if(event->key == InputKeyOk && event->type == InputTypePress) {
             subghz_custom_btn_set(SUBGHZ_CUSTOM_BTN_OK);
             with_view_model(
@@ -164,10 +171,12 @@ bool subghz_view_transmitter_input(InputEvent* event, void* context) {
                     model->draw_temp_button = false;
                 },
                 true);
+            FURI_LOG_E("SubGhzTransmitter", "Triggering SendStart");
             subghz_transmitter->callback(
                 SubGhzCustomEventViewTransmitterSendStart, subghz_transmitter->context);
             return true;
         } else if(event->key == InputKeyOk && event->type == InputTypeRelease) {
+            FURI_LOG_E("SubGhzTransmitter", "Triggering SendStop");
             subghz_transmitter->callback(
                 SubGhzCustomEventViewTransmitterSendStop, subghz_transmitter->context);
             return true;

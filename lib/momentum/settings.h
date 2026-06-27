@@ -104,6 +104,8 @@ typedef struct {
     FuriHalVersionColor spoof_color;
     ScreenFrameColor rpc_color_fg;
     ScreenFrameColor rpc_color_bg;
+    int32_t subghz_calib;
+    bool subghz_autocal; // true = auto-calibrate on every IDLE->TX (original behavior)
 } MomentumSettings;
 
 void momentum_settings_save(void);

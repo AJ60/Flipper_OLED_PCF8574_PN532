@@ -548,7 +548,10 @@ bool subghz_keystore_raw_get_data(const char* file_name, size_t offset, uint8_t*
         } else {
             bufer_size = (((len) / 16) + 2) * 32;
         }
-        furi_assert(SUBGHZ_KEYSTORE_FILE_DECRYPTED_LINE_SIZE >= bufer_size / 2);
+        if(SUBGHZ_KEYSTORE_FILE_DECRYPTED_LINE_SIZE < bufer_size / 2) {
+            FURI_LOG_E(TAG, "Buffer size too large");
+            break;
+        }
 
         uint8_t buffer[bufer_size];
         size_t ret = 0;
@@ -566,7 +569,10 @@ bool subghz_keystore_raw_get_data(const char* file_name, size_t offset, uint8_t*
         if(offset >= 16) {
             stream_seek(stream, ((offset / 16) - 1) * 32, StreamOffsetFromCurrent);
             ret = stream_read(stream, buffer, 32);
-            furi_assert(ret == 32);
+            if(ret != 32) {
+                FURI_LOG_E(TAG, "IV read failed");
+                break;
+            }
             for(uint16_t i = 0; i < ret - 1; i += 2) {
                 uint8_t hi_nibble = 0;
                 uint8_t lo_nibble = 0;
@@ -584,7 +590,13 @@ bool subghz_keystore_raw_get_data(const char* file_name, size_t offset, uint8_t*
         do {
             memset(buffer, 0, bufer_size);
             ret = stream_read(stream, buffer, bufer_size);
-            furi_assert(ret == bufer_size);
+            // Align ret to multiple of 32 characters (16 bytes)
+            ret = (ret / 32) * 32;
+            if(ret < len * 2) {
+                decrypted = false;
+                FURI_LOG_E(TAG, "Read size too small: %zu", ret);
+                break;
+            }
             for(uint16_t i = 0; i < ret - 1; i += 2) {
                 uint8_t hi_nibble = 0;
                 uint8_t lo_nibble = 0;
@@ -596,7 +608,7 @@ bool subghz_keystore_raw_get_data(const char* file_name, size_t offset, uint8_t*
             memset(decrypted_line, 0, SUBGHZ_KEYSTORE_FILE_DECRYPTED_LINE_SIZE);
 
             if(!furi_hal_crypto_decrypt(
-                   (uint8_t*)buffer, (uint8_t*)decrypted_line, bufer_size / 2)) {
+                   (uint8_t*)buffer, (uint8_t*)decrypted_line, ret / 2)) {
                 decrypted = false;
                 FURI_LOG_E(TAG, "Decryption failed");
                 break;

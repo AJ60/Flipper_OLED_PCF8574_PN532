@@ -16,6 +16,7 @@ void unit_tests_cli(PipeSide* pipe, FuriString* args, void* context) {
     test_runner_free(test_runner);
 }
 
+/*
 static int32_t unit_tests_thread(void* context) {
     UNUSED(context);
     furi_delay_ms(5000);
@@ -26,6 +27,7 @@ static int32_t unit_tests_thread(void* context) {
     furi_string_free(args);
     return 0;
 }
+*/
 
 void unit_tests_on_system_start(void) {
 #ifdef SRV_CLI
@@ -34,7 +36,10 @@ void unit_tests_on_system_start(void) {
         registry, "unit_tests", CliCommandFlagParallelSafe, unit_tests_cli, NULL);
     furi_record_close(RECORD_CLI);
 #endif
+    // Disable automatic test run on startup to prevent blocking loader on DIY hardware
+    /*
     if(furi_hal_is_normal_boot()) {
         run_parallel(unit_tests_thread, NULL, 4 * 1024);
     }
+    */
 }

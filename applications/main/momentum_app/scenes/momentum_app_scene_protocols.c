@@ -4,6 +4,7 @@ enum VarItemListIndex {
     VarItemListIndexSubghzFreqs,
     VarItemListIndexSubghzBypass,
     VarItemListIndexSubghzExtend,
+    VarItemListIndexSubghzCalib,
     VarItemListIndexGpioPins,
     VarItemListIndexFileNamingPrefix,
 };
@@ -28,6 +29,32 @@ static void momentum_app_scene_protocols_file_naming_prefix_changed(VariableItem
     bool value = variable_item_get_current_value_index(item);
     variable_item_set_current_value_text(item, value ? "After" : "Before");
     momentum_settings.file_naming_prefix_after = value;
+    app->save_settings = true;
+}
+
+static void momentum_app_scene_protocols_subghz_calib_changed(VariableItem* item) {
+    MomentumApp* app = variable_item_get_context(item);
+    uint32_t index = variable_item_get_current_value_index(item);
+
+    if(index == 201) {
+        // Auto mode: re-enable hardware auto-calibration on IDLE->TX.
+        // Also reset ppm correction to 0 so firmware applies no frequency offset.
+        variable_item_set_current_value_text(item, "Auto");
+        momentum_settings.subghz_autocal = true;
+        momentum_settings.subghz_calib = 0;
+    } else {
+        int32_t ppm = ((int32_t)index * 20) - 2000;
+        char calib_str[32];
+        int32_t khz_val = ppm * 43392;
+        int32_t khz_int = khz_val / 100000;
+        int32_t khz_frac = khz_val % 100000;
+        if(khz_frac < 0) khz_frac = -khz_frac;
+        khz_frac /= 10000;
+        snprintf(calib_str, sizeof(calib_str), "%+ld ppm (%+ld.%ld kHz)", (long)ppm, (long)khz_int, (long)khz_frac);
+        variable_item_set_current_value_text(item, calib_str);
+        momentum_settings.subghz_calib = ppm;
+        momentum_settings.subghz_autocal = false;
+    }
     app->save_settings = true;
 }
 
@@ -57,6 +84,32 @@ void momentum_app_scene_protocols_on_enter(void* context) {
     variable_item_set_current_value_index(item, app->subghz_extend);
     variable_item_set_current_value_text(item, app->subghz_extend ? "ON" : "OFF");
     variable_item_set_locked(item, !app->subghz_bypass, "Must bypass\nregion lock\nfirst!");
+
+    item = variable_item_list_add(
+        var_item_list,
+        "SubGHz Calib",
+        202, // indices 0..200 = -2000..+2000 ppm (step 20), index 201 = Auto
+        momentum_app_scene_protocols_subghz_calib_changed,
+        app);
+    if(momentum_settings.subghz_autocal) {
+        variable_item_set_current_value_index(item, 201);
+        variable_item_set_current_value_text(item, "Auto");
+    } else {
+        int32_t calib_val = momentum_settings.subghz_calib;
+        if(calib_val < -2000) calib_val = -2000;
+        if(calib_val > 2000) calib_val = 2000;
+        uint32_t calib_idx = (uint32_t)((calib_val + 2000) / 20);
+        variable_item_set_current_value_index(item, calib_idx);
+        char calib_str[32];
+        int32_t ppm = ((int32_t)calib_idx * 20) - 2000;
+        int32_t khz_val = ppm * 43392;
+        int32_t khz_int = khz_val / 100000;
+        int32_t khz_frac = khz_val % 100000;
+        if(khz_frac < 0) khz_frac = -khz_frac;
+        khz_frac /= 10000;
+        snprintf(calib_str, sizeof(calib_str), "%+ld ppm (%+ld.%ld kHz)", (long)ppm, (long)khz_int, (long)khz_frac);
+        variable_item_set_current_value_text(item, calib_str);
+    }
 
     item = variable_item_list_add(var_item_list, "GPIO Pins", 0, NULL, app);
     variable_item_set_current_value_text(item, ">");

@@ -47,6 +47,8 @@ MomentumSettings momentum_settings = {
     .spoof_color = FuriHalVersionColorUnknown, // Real
     .rpc_color_fg = {{ScreenColorModeDefault, {.value = 0x000000}}}, // Default Black
     .rpc_color_bg = {{ScreenColorModeDefault, {.value = 0xFF8200}}}, // Default Orange
+    .subghz_calib = 0,
+    .subghz_autocal = false, // Manual-only calibration by default (stable freq on cheap crystals)
 };
 
 typedef enum {
@@ -121,6 +123,8 @@ static const struct {
     {setting_enum(spoof_color, FuriHalVersionColorCount)},
     {setting_uint(rpc_color_fg, 0x000000, 0xFFFFFF)},
     {setting_uint(rpc_color_bg, 0x000000, 0xFFFFFF)},
+    {setting_int(subghz_calib, -2000, 2000)},
+    {setting_bool(subghz_autocal)},
 };
 
 void momentum_settings_load(void) {

@@ -5,3 +5,4 @@ Preset: FuriHalSubGhzPresetOok650Async
 Protocol: Marantec24
 Bit: 24
 Key: 00 00 00 00 00 AC 05 C4
+Repeat: 10

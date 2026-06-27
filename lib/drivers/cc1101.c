@@ -2,6 +2,10 @@
 #include <assert.h>
 #include <string.h>
 #include <furi_hal_cortex.h>
+#include <momentum/settings.h>
+#include <furi.h>
+
+#define TAG "CC1101"
 
 static bool
     cc1101_spi_trx(const FuriHalSpiBusHandle* handle, uint8_t* tx, uint8_t* rx, uint8_t size) {
@@ -125,7 +129,14 @@ CC1101Status cc1101_flush_tx(const FuriHalSpiBusHandle* handle) {
 }
 
 uint32_t cc1101_set_frequency(const FuriHalSpiBusHandle* handle, uint32_t value) {
-    uint64_t real_value = (uint64_t)value * CC1101_FDIV / CC1101_QUARTZ;
+    // Calibrate frequency using user setting (in PPM) using pure integer math
+    int32_t calib = momentum_settings.subghz_calib;
+    int32_t offset = (int32_t)((int64_t)value * calib / 1000000);
+    uint32_t calibrated_value = value + offset;
+
+    FURI_LOG_I(TAG, "val: %lu, cal: %ld, off: %ld, cal_val: %lu", value, calib, offset, calibrated_value);
+
+    uint64_t real_value = (uint64_t)calibrated_value * CC1101_FDIV / CC1101_QUARTZ;
 
     // Sanity check
     assert((real_value & CC1101_FMASK) == real_value);
@@ -134,9 +145,7 @@ uint32_t cc1101_set_frequency(const FuriHalSpiBusHandle* handle, uint32_t value)
     cc1101_write_reg(handle, CC1101_FREQ1, (real_value >> 8) & 0xFF);
     cc1101_write_reg(handle, CC1101_FREQ0, (real_value >> 0) & 0xFF);
 
-    uint64_t real_frequency = real_value * CC1101_QUARTZ / CC1101_FDIV;
-
-    return (uint32_t)real_frequency;
+    return value;
 }
 
 uint32_t cc1101_set_intermediate_frequency(const FuriHalSpiBusHandle* handle, uint32_t value) {

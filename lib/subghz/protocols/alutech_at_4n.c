@@ -219,6 +219,7 @@ static uint64_t subghz_protocol_alutech_at_4n_decrypt(uint64_t data, const char*
         subghz_protocol_alutech_at_4n_get_magic_data_from_buffer(buffer_ptr, 5)};
 
     uint32_t i = magic_data[0];
+    uint32_t limit = 0;
     do {
         data2 = data2 -
                 ((magic_data[1] + (data1 << 4)) ^ ((magic_data[2] + (data1 >> 5)) ^ (data1 + i)));
@@ -226,6 +227,10 @@ static uint64_t subghz_protocol_alutech_at_4n_decrypt(uint64_t data, const char*
         i += magic_data[3];
         data1 =
             data1 - ((magic_data[4] + (data2 << 4)) ^ ((magic_data[5] + (data2 >> 5)) ^ data3));
+        if (++limit > 1000) {
+            FURI_LOG_E("Alutech", "Infinite decryption loop detected!");
+            break;
+        }
     } while(i != 0);
 
     p[0] = (uint8_t)(data1 >> 24);
@@ -265,12 +270,17 @@ static uint64_t subghz_protocol_alutech_at_4n_encrypt(uint64_t data, const char*
         subghz_protocol_alutech_at_4n_get_magic_data_from_buffer(buffer_ptr, 2),
         subghz_protocol_alutech_at_4n_get_magic_data_from_buffer(buffer_ptr, 0)};
 
+    uint32_t limit = 0;
     do {
         data1 = data1 + magic_data[0];
         data2 = data2 + ((magic_data[1] + (data3 << 4)) ^
                          ((magic_data[2] + (data3 >> 5)) ^ (data1 + data3)));
         data3 = data3 + ((magic_data[3] + (data2 << 4)) ^
                          ((magic_data[4] + (data2 >> 5)) ^ (data1 + data2)));
+        if (++limit > 1000) {
+            FURI_LOG_E("Alutech", "Infinite encryption loop detected!");
+            break;
+        }
     } while(data1 != magic_data[5]);
     p[0] = (uint8_t)(data2 >> 24);
     p[1] = (uint8_t)(data2 >> 16);

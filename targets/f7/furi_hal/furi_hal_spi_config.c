@@ -78,19 +78,6 @@ const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_low_16m = {
     .CRCPoly = 7,
 };
 
-// const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_LCD_2m = {
-    // .Mode = LL_SPI_MODE_MASTER,
-    // .TransferDirection = LL_SPI_FULL_DUPLEX,
-    // .DataWidth = LL_SPI_DATAWIDTH_8BIT,
-    // .ClockPolarity = LL_SPI_POLARITY_LOW,
-    // .ClockPhase = LL_SPI_PHASE_1EDGE,
-    // .NSS = LL_SPI_NSS_SOFT,
-    // .BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV128,
-    // .BitOrder = LL_SPI_MSB_FIRST,
-    // .CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE,
-    // .CRCPoly = 7,
-// };
-
 const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_low_2m = {
     .Mode = LL_SPI_MODE_MASTER,
     .TransferDirection = LL_SPI_FULL_DUPLEX,
@@ -111,11 +98,9 @@ FuriMutex* furi_hal_spi_bus_mutex = NULL;
 
 void furi_hal_spi_config_init_early(void) {
     furi_hal_spi_bus_init(&furi_hal_spi_bus);
-//    furi_hal_spi_bus_handle_init(&furi_hal_spi_bus_handle_display);
 }
 
 void furi_hal_spi_config_deinit_early(void) {
-//    furi_hal_spi_bus_handle_deinit(&furi_hal_spi_bus_handle_display);
     furi_hal_spi_bus_deinit(&furi_hal_spi_bus);
 }
 
@@ -378,15 +363,6 @@ static void furi_hal_spi_bus_handle_external_wrapper_event_callback(
 }
 
 /* ======================== SPI Bus Handle Definitions ======================= */
-
-/* const FuriHalSpiBusHandle furi_hal_spi_bus_handle_display = {
-    .bus = &furi_hal_spi_bus,
-    .callback = furi_hal_spi_bus_handle_display_event_callback,
-    .miso = &gpio_spi_miso,
-    .mosi = &gpio_spi_mosi,
-    .sck = &gpio_spi_sck,
-    .cs = &gpio_display_cs,
-}; */
 
 const FuriHalSpiBusHandle furi_hal_spi_bus_handle_sd_fast = {
     .bus = &furi_hal_spi_bus,
