@@ -139,7 +139,7 @@ class Main(App):
             for section in sections:
                 data = serialize_relsection_data(section.data)
                 hash_name = hashlib.md5(section.name.encode()).hexdigest()
-                filename = f"{temp_dir}/{hash_name}.bin"
+                filename = os.path.join(temp_dir, f"{hash_name}.bin")
 
                 if os.path.isfile(filename):
                     self.logger.error(f"File {filename} already exists")

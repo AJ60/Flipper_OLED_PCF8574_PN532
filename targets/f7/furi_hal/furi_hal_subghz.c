@@ -352,12 +352,18 @@ void furi_hal_subghz_rx(void) {
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
 }
 bool furi_hal_subghz_tx(void) {
-    if(furi_hal_subghz.regulation != SubGhzRegulationTxRx) return false;
+    if(furi_hal_subghz.regulation != SubGhzRegulationTxRx) {
+        FURI_LOG_E("FuriHalSubGhz", "TX blocked by regulation status!");
+        return false;
+    }
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     cc1101_switch_to_idle(&furi_hal_spi_bus_handle_subghz);
+    if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 50000)) {
+        FURI_LOG_E(TAG, "CC1101 TX-prep IDLE failed");
+    }
     cc1101_flush_tx(&furi_hal_spi_bus_handle_subghz);
     cc1101_switch_to_tx(&furi_hal_spi_bus_handle_subghz);
-    if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateTX, 10000)) {
+    if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateTX, 50000)) {
         FURI_LOG_E(TAG, "CC1101 TX failed");
         furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
         return false;
@@ -493,10 +499,10 @@ uint32_t furi_hal_subghz_set_frequency(uint32_t value) {
     // Manual (0x08): PLL stays locked to the calibration done above — stable frequency.
     if(momentum_settings.subghz_autocal) {
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_MCSM0, 0x18);
-        FURI_LOG_I(TAG, "MCSM0=0x18: auto-cal ON (IDLE->TX recalibrates PLL)");
+        // FURI_LOG_I(TAG, "MCSM0=0x18: auto-cal ON (IDLE->TX recalibrates PLL)");
     } else {
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_MCSM0, 0x08);
-        FURI_LOG_I(TAG, "MCSM0=0x08: auto-cal OFF (PLL locked after manual cal)");
+        // FURI_LOG_I(TAG, "MCSM0=0x08: auto-cal OFF (PLL locked after manual cal)");
     }
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);

@@ -543,7 +543,7 @@ bool subghz_keystore_raw_get_data(const char* file_name, size_t offset, uint8_t*
         }
 
         size_t bufer_size;
-        if(len <= (16 - offset % 16)) {
+        if(len <= (16 - (offset & 15))) {
             bufer_size = 32;
         } else {
             bufer_size = (((len) / 16) + 2) * 32;
@@ -567,7 +567,7 @@ bool subghz_keystore_raw_get_data(const char* file_name, size_t offset, uint8_t*
         }
 
         if(offset >= 16) {
-            stream_seek(stream, ((offset / 16) - 1) * 32, StreamOffsetFromCurrent);
+            stream_seek(stream, ((offset >> 4) - 1) * 32, StreamOffsetFromCurrent);
             ret = stream_read(stream, buffer, 32);
             if(ret != 32) {
                 FURI_LOG_E(TAG, "IV read failed");
@@ -591,7 +591,7 @@ bool subghz_keystore_raw_get_data(const char* file_name, size_t offset, uint8_t*
             memset(buffer, 0, bufer_size);
             ret = stream_read(stream, buffer, bufer_size);
             // Align ret to multiple of 32 characters (16 bytes)
-            ret = (ret / 32) * 32;
+            ret = ret & ~31;
             if(ret < len * 2) {
                 decrypted = false;
                 FURI_LOG_E(TAG, "Read size too small: %zu", ret);
@@ -613,7 +613,7 @@ bool subghz_keystore_raw_get_data(const char* file_name, size_t offset, uint8_t*
                 FURI_LOG_E(TAG, "Decryption failed");
                 break;
             }
-            memcpy(data, (uint8_t*)decrypted_line + (offset - (offset / 16) * 16), len);
+            memcpy(data, (uint8_t*)decrypted_line + (offset & 15), len);
 
         } while(0);
         furi_hal_crypto_enclave_unload_key(SUBGHZ_KEYSTORE_FILE_ENCRYPTION_KEY_SLOT);

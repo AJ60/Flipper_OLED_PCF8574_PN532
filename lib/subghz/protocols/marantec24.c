@@ -306,7 +306,7 @@ uint32_t subghz_protocol_decoder_marantec24_get_hash_data(void* context) {
     furi_assert(context);
     SubGhzProtocolDecoderMarantec24* instance = context;
     return subghz_protocol_blocks_get_hash_data_long(
-        &instance->decoder, (instance->decoder.decode_count_bit / 8) + 1);
+        &instance->decoder, (instance->decoder.decode_count_bit >> 3) + 1);
 }
 
 SubGhzProtocolStatus subghz_protocol_decoder_marantec24_serialize(
