@@ -9,6 +9,10 @@ Custom firmware fork supporting standard I2C OLED screens (SH1106 and SSD1306) o
 > [!WARNING]
 > I do not take responsibility if you damage your board or property. This guide is for educational purposes only — proceed at your own risk.
 
+> [!TIP]
+> ❓ Need help or have questions about building/flashing the DIY Flipper? 
+> Join our community Q&A and troubleshooting discussion: **[GitHub Q&A Discussion #4](https://github.com/artema0g/oled_flipper/discussions/4)**
+
 ---
 
 ## <a id="hardware-showcase"></a>📷 Hardware Showcase
