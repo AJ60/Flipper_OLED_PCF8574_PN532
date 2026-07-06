@@ -32,22 +32,27 @@ Welcome to the frequently asked questions and troubleshooting guide for the DIY 
 
 ---
 
-### **Q3: How and where can I view the system logs of the DIY Flipper?**
+### **Q3: How and where can I view and enable Debug Logs on the DIY Flipper?**
 **Solution:**
-There are two primary ways to view real-time system logs from your device:
+By default, the Flipper Zero filters out low-priority debug messages to save CPU cycles. There are two steps to enable and view real-time **Debug** logs:
 
-1. **Via the qFlipper Desktop App:**
-   * Open the **qFlipper** application on your PC and connect your device.
-   * Click on the **"Log"** button (represented by a terminal or notepad icon in the bottom left, or press `Ctrl + L` / `Cmd + L`).
-   * The app will display real-time console messages from the device. You can change the log level in the Flipper's settings.
+#### 1. How to Enable Debug/Trace Logging:
+*   **On the Flipper Screen:** Go to **Settings > System > Log Level** and change it from `Default`/`Info` to **`Debug`** (or **`Trace`** for maximum granularity).
+*   **Via CLI Command:** If you are connected to the serial console, you can start streaming debug-level logs directly by running:
+    ```bash
+    log debug
+    ```
+    *(To stop the log stream, press `Ctrl + C`).*
 
-2. **Via a Serial Terminal (UART over USB):**
-   * The Flipper Zero exposes a virtual COM port when connected via USB. You can use any serial terminal client (like PuTTY, Tera Term, or `screen`/`minicom` on Linux/macOS) to connect.
-   * Configure the connection to use the correct COM port of your Flipper (baud rate is virtual and does not matter, but standard is `115200`).
-   * Once connected, type `log` and press Enter to start streaming logs. Press `Ctrl + C` to stop the log stream.
-
-> [!TIP]
-> To change the detail level of logs, go to **Settings > System > Log Level** directly on your Flipper Zero screen.
+#### 2. Where to View the Logs:
+*   **Via qFlipper (Desktop App):**
+    1. Open **qFlipper** and connect your Flipper.
+    2. Click the **"Log"** button in the bottom left corner (represented by a terminal/notepad icon, or press `Ctrl + L` / `Cmd + L`).
+*   **Via Serial Terminal (UART over USB):**
+    1. Connect your Flipper to the PC using a USB cable.
+    2. Open any serial terminal program (e.g., PuTTY, Tera Term, or run `screen`/`minicom` in Linux/macOS terminal).
+    3. Select your Flipper's virtual COM port. (Baud rate is virtual and can be left at `115200`).
+    4. Type `log debug` (or just `log`) and press Enter.
 
 ---
 
