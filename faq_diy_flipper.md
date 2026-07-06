@@ -49,9 +49,28 @@ Welcome to the frequently asked questions and troubleshooting guide for the DIY 
 
 ---
 
+### **Q5: How and where can I view the system logs of the DIY Flipper?**
+**Solution:**
+There are two primary ways to view real-time system logs from your device:
+
+1. **Via the qFlipper Desktop App:**
+   * Open the **qFlipper** application on your PC and connect your device.
+   * Click on the **"Log"** button (represented by a terminal or notepad icon in the bottom left, or press `Ctrl + L` / `Cmd + L`).
+   * The app will display real-time console messages from the device. You can change the log level in the Flipper's settings.
+
+2. **Via a Serial Terminal (UART over USB):**
+   * The Flipper Zero exposes a virtual COM port when connected via USB. You can use any serial terminal client (like PuTTY, Tera Term, or `screen`/`minicom` on Linux/macOS) to connect.
+   * Configure the connection to use the correct COM port of your Flipper (baud rate is virtual and does not matter, but standard is `115200`).
+   * Once connected, type `log` and press Enter to start streaming logs. Press `Ctrl + C` to stop the log stream.
+
+> [!TIP]
+> To change the detail level of logs, go to **Settings > System > Log Level** directly on your Flipper Zero screen.
+
+---
+
 ## 🔌 Hardware Troubleshooting
 
-### **Q5: Keyboard buttons freeze or stop responding periodically. Why?**
+### **Q6: Keyboard buttons freeze or stop responding periodically. Why?**
 > [!CAUTION]
 > Sub-GHz transmission or NFC activity generates strong RF noise that couples into the I2C1 bus, freezing the MCP23017 IO expander.
 
@@ -62,7 +81,7 @@ Welcome to the frequently asked questions and troubleshooting guide for the DIY 
 
 ---
 
-### **Q6: What are the recommendations for power filtering (capacitors) on the board?**
+### **Q7: What are the recommendations for power filtering (capacitors) on the board?**
 **Solution:**
 To suppress voltage transients during high-current operations (vibration motor clicks, NFC scans):
 *   **Decoupling:** Solder **0.1 µF** ceramic capacitors close to the VCC/GND pins of each chip (MCP23017, OLED, INA219, NFC, CC1101).
@@ -70,7 +89,7 @@ To suppress voltage transients during high-current operations (vibration motor c
 
 ---
 
-### **Q7: Why does the vibration motor cause the board to reset or freeze?**
+### **Q8: Why does the vibration motor cause the board to reset or freeze?**
 > [!CAUTION]
 > **Never connect the vibration motor directly to the MCP23017 pins!** The motor's start-up current (60-100 mA) exceeds the expander's 25 mA limit. This will damage the pin or cause MCU resets.
 
@@ -80,7 +99,7 @@ To suppress voltage transients during high-current operations (vibration motor c
 
 ---
 
-### **Q8: I get SD card read errors when using NFC at the same time. How do I fix this?**
+### **Q9: I get SD card read errors when using NFC at the same time. How do I fix this?**
 > [!NOTE]
 > The SD card, CC1101 module, and NFC module share the same physical SPI1 bus.
 
@@ -89,28 +108,28 @@ To suppress voltage transients during high-current operations (vibration motor c
 
 ---
 
-### **Q9: Dallas iButton keys (1-Wire, DS1990) are not reading on pin PA3.**
+### **Q10: Dallas iButton keys (1-Wire, DS1990) are not reading on pin PA3.**
 **Solution:**
 *   The 1-Wire protocol requires a pull-up resistor. 
 *   Solder a **2.2 kΩ** or **4.7 kΩ** resistor between the iButton data line (`PA3`) and the **3.3V** rail.
 
 ---
 
-### **Q10: Can I connect a speaker directly to pin PB8?**
+### **Q11: Can I connect a speaker directly to pin PB8?**
 **Solution:**
 *   **No**, if it is a standard low-impedance dynamic speaker (8-32Ω). Direct connection will burn out the MCU pin.
 *   Only connect **passive piezo buzzers** directly to `PB8`. For dynamic speakers, use a transistor switch circuit (like `BC847` or `2N7002`).
 
 ---
 
-### **Q11: Short IR range or poor NFC read performance on battery power.**
+### **Q12: Short IR range or poor NFC read performance on battery power.**
 **Solution:**
 *   The IR LEDs and the ST25R3916 NFC module operate at peak performance when powered by **5V**. On battery, the 5V rail is inactive.
 *   **Solution:** Install a tiny 5V boost converter (e.g., based on the `MT3608` chip) to feed the IR and NFC circuits when running on battery.
 
 ---
 
-### **Q12: The INA219 battery monitor reports incorrect current or battery percentage.**
+### **Q13: The INA219 battery monitor reports incorrect current or battery percentage.**
 **Solution:**
 *   The firmware is calibrated for a **0.1 Ω** current shunt resistor (marked `R100`).
 *   Ensure the shunt resistor installed on your board is exactly 0.1 Ω (1% tolerance).
