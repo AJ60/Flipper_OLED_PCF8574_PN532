@@ -32,24 +32,7 @@ Welcome to the frequently asked questions and troubleshooting guide for the DIY 
 
 ---
 
-### **Q3: Can I reboot into DFU mode using the Flipper settings menu?**
-**Solution:**
-*   **No.** Due to the custom keyboard interface via the MCP23017 I2C expander, software-triggered DFU reboot is not supported by the bootloader.
-*   Use the hardware method instead (hold BOOT0 while plugging in the USB cable).
-
----
-
-### **Q4: Why is the CC1101 PPM calibration set to +100 PPM?**
-> [!TIP]
-> Cheap CC1101 modules often use low-tolerance crystals that drift from the target frequency.
-
-**Solution:**
-*   Testing showed an average hardware crystal offset of **-32 kHz** (about -74 PPM).
-*   Configuring the PPM calibration to **+100 PPM** (under *Momentum App -> Protocols -> Sub-GHz -> Calib*) shifts the frequency back to the standard **433.920 MHz**, ensuring stable decoding by other Flipper Zero units.
-
----
-
-### **Q5: How and where can I view the system logs of the DIY Flipper?**
+### **Q3: How and where can I view the system logs of the DIY Flipper?**
 **Solution:**
 There are two primary ways to view real-time system logs from your device:
 
@@ -65,6 +48,23 @@ There are two primary ways to view real-time system logs from your device:
 
 > [!TIP]
 > To change the detail level of logs, go to **Settings > System > Log Level** directly on your Flipper Zero screen.
+
+---
+
+### **Q4: Can I reboot into DFU mode using the Flipper settings menu?**
+**Solution:**
+*   **No.** Due to the custom keyboard interface via the MCP23017 I2C expander, software-triggered DFU reboot is not supported by the bootloader.
+*   Use the hardware method instead (hold BOOT0 while plugging in the USB cable).
+
+---
+
+### **Q5: Why is the CC1101 PPM calibration set to +100 PPM?**
+> [!TIP]
+> Cheap CC1101 modules often use low-tolerance crystals that drift from the target frequency.
+
+**Solution:**
+*   Testing showed an average hardware crystal offset of **-32 kHz** (about -74 PPM).
+*   Configuring the PPM calibration to **+100 PPM** (under *Momentum App -> Protocols -> Sub-GHz -> Calib*) shifts the frequency back to the standard **433.920 MHz**, ensuring stable decoding by other Flipper Zero units.
 
 ---
 
