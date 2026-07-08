@@ -9,6 +9,7 @@ import threading
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from tkinter import ttk
+import webbrowser
 
 class Tooltip:
     def __init__(self, widget, text):
@@ -519,9 +520,25 @@ class OTPGeneratorApp:
             font=("Segoe UI", 8, "bold"), 
             fg="#ff4500", # Glowing neon red-orange warning color
             bg=BG_COLOR, 
-            pady=10
+            pady=2
         )
         footer_label.pack(side="bottom")
+
+        # GitHub Author Link Label
+        author_label = tk.Label(
+            self.root,
+            text="github.com/artema0g",
+            font=("Segoe UI", 8, "underline"),
+            fg=TEXT_MUTED,
+            bg=BG_COLOR,
+            cursor="hand2"
+        )
+        author_label.pack(side="bottom", pady=(5, 0))
+        
+        # Link click and hover bindings
+        author_label.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/artema0g/oled_flipper"))
+        author_label.bind("<Enter>", lambda e: author_label.config(fg=ACCENT_COLOR))
+        author_label.bind("<Leave>", lambda e: author_label.config(fg=TEXT_MUTED))
 
     def get_otp_binary_data(self):
         name = self.name_var.get().strip()
