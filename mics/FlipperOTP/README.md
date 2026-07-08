@@ -7,6 +7,8 @@ Standalone Windows application to **generate**, **flash**, and **read** the OTP 
 
 > Part of the [**oled_flipper**](https://github.com/artema0g/oled_flipper) project.
 
+![FlipperOTP GUI Screenshot](screen.png)
+
 ---
 
 ## ⚠️ WARNING
