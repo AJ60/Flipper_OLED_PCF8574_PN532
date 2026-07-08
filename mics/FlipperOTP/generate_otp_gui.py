@@ -81,11 +81,19 @@ class CustomMessagebox(tk.Toplevel):
         parent_w = parent.winfo_width()
         parent_h = parent.winfo_height()
         
-        # Height calculated dynamically based on line count so the OK button is always visible
+        # Estimate visual wrapped lines (about 48 chars per line at 370px wrap width)
+        import math
+        visual_lines = 0
+        for line in message.split('\n'):
+            line_len = len(line.strip())
+            if line_len == 0:
+                visual_lines += 1
+            else:
+                visual_lines += math.ceil(line_len / 48)
+
         w = 420
-        line_count = message.count('\n') + 1
-        # ~18px per line + 120px for header/buttons/padding
-        h = min(500, max(180, line_count * 18 + 120))
+        # ~20px per visual line + 130px for titlebar/buttons/padding
+        h = min(550, max(190, visual_lines * 20 + 130))
             
         x = parent_x + (parent_w - w) // 2
         y = parent_y + (parent_h - h) // 2
@@ -135,13 +143,13 @@ class CustomMessagebox(tk.Toplevel):
         close_btn.bind("<Enter>", lambda e: close_btn.config(fg=outer_color))
         close_btn.bind("<Leave>", lambda e: close_btn.config(fg=TEXT_MUTED))
         
-        # Message text (we pack it with expand=True, fill='both' so it scales dynamically)
-        msg_text = tk.Label(main_frame, text=message, font=("Segoe UI", 9, "bold"), fg=TEXT_MUTED, bg=CONTAINER_COLOR, justify="left", wraplength=370)
-        msg_text.pack(fill="both", expand=True, padx=15, pady=5)
-        
-        # Buttons area
+        # Pack buttons area first (side="bottom") so it is guaranteed to have space
         btn_frame = tk.Frame(main_frame, bg=CONTAINER_COLOR)
         btn_frame.pack(fill="x", side="bottom", pady=15, padx=15)
+
+        # Message text (packs in remaining space)
+        msg_text = tk.Label(main_frame, text=message, font=("Segoe UI", 9, "bold"), fg=TEXT_MUTED, bg=CONTAINER_COLOR, justify="left", wraplength=370)
+        msg_text.pack(fill="both", expand=True, padx=15, pady=5)
         
         # Add buttons dynamically
         for choice in self.choices:
