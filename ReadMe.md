@@ -140,20 +140,22 @@ To compile the firmware for the OLED hardware target, use the Flipper Build Tool
 ./fbt
 ```
 
-### 2. Configure OTP (One-Time Programmable) Memory
+### 2. Configure & Flash OTP (One-Time Programmable) Memory
 > [!CAUTION]
-> Writing OTP is a one-time operation. Ensure all connections are secure.
+> OTP memory can only be written **ONCE**. It cannot be erased or changed. Proceed at your own risk.
 
-1. Open the OTP utility `qFlipper OTP.exe` (found in the `mics/FlipperOTP/` folder).
-2. Set configuration: Version 12 | Firmware 7 | Body 9 | Connection 6.
-3. Select Display `mgg` (Monochrome Glass Grid). Generate and save the OTP file.
-4. Put the MCU into DFU mode (hold `BOOT0` and connect to PC).
-5. Open `STM32CubeProgrammer`, select `USB` mode, connect, load the OTP file, and write to `0x1FFF7000`.
+1. Open **`generate_otp_gui.exe`** (found in the [`mics/FlipperOTP/`](mics/FlipperOTP/) folder). No installation required.
+2. Set your **Device Name** (max 8 ASCII characters) and **Board Version** (`12` for WeAct STM32WB55).
+3. Select **Display Type: MGG** (Monochrome Glass Grid) — required for the SSD1306 OLED screen.
+4. Put the MCU into **DFU mode**: hold `BOOT0`, connect USB, release `BOOT0`. The app status will show **🟢 Connected**.
+5. Click **"2. Flash (DFU)"** — the tool writes OTP directly to `0x1FFF7000`.
+
+> [!TIP]
+> Alternatively, click **"1. Save .bin"** to generate the file, then flash it manually via [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html).
 
 ### 3. Flash Firmware
-1. Unplug the microSD card from your DIY board to prevent interference.
-2. Put the board back in DFU mode, open `qFlipper`, and choose **Install from file**.
-3. Select the generated `.dfu` file from the `build/` directory and flash.
+1. Put the board in DFU mode (hold `BOOT0`, connect USB, release `BOOT0`).
+2. Open **qFlipper**, choose **Install from file**, select the `.dfu` file from the `build/` directory and flash.
 
 ---
 
@@ -161,7 +163,7 @@ To compile the firmware for the OLED hardware target, use the Flipper Build Tool
 
 A complete wiring schematic is available in the repository. Refer to the image below for physical connections:
 
-![DIY Flipper Schematic](misc/shematic.png)
+![DIY Flipper Schematic](misc/schematic.png)
 
 ---
 

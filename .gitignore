@@ -72,3 +72,24 @@ node_modules/
 # cli_perf script output in case of errors
 /block.bin
 /return_block.bin
+
+# PyInstaller build artifacts
+/build_otp/
+*.spec
+
+# IDE / tool configs
+.cursor/
+.cbmignore
+
+# MCP agent data
+/data/
+/logs/
+
+# Local project files (not for repo)
+.agents/
+CHANGELOG_v*.md
+*.kicad_sym
+*.kicad_mod
+telegram_bot/
+*.otp.bin
+mics/FlipperOTP/*.bin
