@@ -249,7 +249,15 @@ class OTPGeneratorApp:
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
         
-        # Set window icon (loads from executable resources when frozen, or local directory)
+        # Set window icon with high-clarity on Windows taskbar
+        try:
+            # 1. Tell Windows this is a distinct application to prevent generic python taskbar icon grouping/scaling
+            import ctypes
+            myappid = 'diyflipper.otptool.1.0'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        except Exception:
+            pass
+
         try:
             if getattr(sys, 'frozen', False):
                 base_path = sys._MEIPASS
@@ -257,7 +265,15 @@ class OTPGeneratorApp:
                 base_path = os.path.dirname(os.path.abspath(__file__))
             icon_path = os.path.join(base_path, "flipper.ico")
             if os.path.exists(icon_path):
+                # Set iconbitmap for the titlebar
                 self.root.iconbitmap(icon_path)
+                # Set iconphoto to feed high-res sizes (32x32, 48x48, etc.) to the OS taskbar
+                from PIL import Image, ImageTk
+                img = Image.open(icon_path)
+                photo = ImageTk.PhotoImage(img)
+                self.root.iconphoto(True, photo)
+                # Save reference to prevent garbage collection
+                self._icon_photo = photo
         except Exception:
             pass
         
