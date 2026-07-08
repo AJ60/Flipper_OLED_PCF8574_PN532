@@ -137,6 +137,12 @@ Requires: Python 3.11+, PyInstaller, tkinter.
 
 ---
 
+## 🤝 Credits & Author
+
+Developed by [**artema0g**](https://github.com/artema0g).
+
+---
+
 ## 📄 License
 
 This project is licensed under the [GNU General Public License v3.0](https://github.com/artema0g/oled_flipper/blob/main/LICENSE).
