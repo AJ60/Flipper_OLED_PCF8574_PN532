@@ -481,30 +481,99 @@ class OTPGeneratorApp:
         self.region_combobox.current(0)
         self.region_combobox.pack(fill="x", pady=(0, 15))
         
-        # Action Buttons Frame
-        btn_frame = tk.Frame(container, bg=CONTAINER_COLOR)
-        btn_frame.pack(fill="x", pady=(10, 0))
+        # Action Row 1: File Operations (Load / Save)
+        file_frame = tk.Frame(container, bg=CONTAINER_COLOR)
+        file_frame.pack(fill="x", pady=(10, 4))
         
-        # Button 1: Save file (Acrylic glass styling)
-        save_btn = tk.Button(btn_frame, text="1. Save .bin", font=("Segoe UI", 9, "bold"), bg="#18233c", fg=TEXT_COLOR, activebackground="#28395f", activeforeground=TEXT_COLOR, relief="solid", bd=1, highlightthickness=1, highlightbackground="#344870", cursor="hand2", command=self.save_otp_dialog)
-        save_btn.pack(side="left", fill="x", expand=True, padx=(0, 2))
+        load_btn = tk.Button(
+            file_frame, 
+            text="Load .bin", 
+            font=("Segoe UI", 9, "bold"), 
+            bg="#18233c", 
+            fg=TEXT_COLOR, 
+            activebackground="#28395f", 
+            activeforeground=TEXT_COLOR, 
+            relief="solid", 
+            bd=1, 
+            highlightthickness=1, 
+            highlightbackground="#344870", 
+            cursor="hand2", 
+            command=self.load_otp_from_file
+        )
+        load_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
         
-        # Button 2: Direct Flash (Vibrant gloss orange)
-        self.flash_btn = tk.Button(btn_frame, text="2. Flash (DFU)", font=("Segoe UI", 9, "bold"), bg=ACCENT_COLOR, fg="#ffffff", activebackground="#ff8533", activeforeground="#ffffff", relief="solid", bd=1, highlightthickness=1, highlightbackground="#ff9e59", cursor="hand2", command=self.flash_otp)
-        self.flash_btn.pack(side="left", fill="x", expand=True, padx=(2, 2))
+        save_btn = tk.Button(
+            file_frame, 
+            text="Save .bin", 
+            font=("Segoe UI", 9, "bold"), 
+            bg="#18233c", 
+            fg=TEXT_COLOR, 
+            activebackground="#28395f", 
+            activeforeground=TEXT_COLOR, 
+            relief="solid", 
+            bd=1, 
+            highlightthickness=1, 
+            highlightbackground="#344870", 
+            cursor="hand2", 
+            command=self.save_otp_dialog
+        )
+        save_btn.pack(side="left", fill="x", expand=True)
 
-        # Button 3: Read Flash (Acrylic glass styling)
-        self.read_btn = tk.Button(btn_frame, text="3. Read (DFU)", font=("Segoe UI", 9, "bold"), bg="#18233c", fg=TEXT_COLOR, activebackground="#28395f", activeforeground=TEXT_COLOR, relief="solid", bd=1, highlightthickness=1, highlightbackground="#344870", cursor="hand2", command=self.read_otp)
-        self.read_btn.pack(side="left", fill="x", expand=True, padx=(2, 0))
+        # Action Row 2: DFU Device Operations (Read / Flash)
+        device_frame = tk.Frame(container, bg=CONTAINER_COLOR)
+        device_frame.pack(fill="x", pady=(4, 0))
+
+        self.read_btn = tk.Button(
+            device_frame, 
+            text="Read (DFU)", 
+            font=("Segoe UI", 9, "bold"), 
+            bg="#18233c", 
+            fg=TEXT_COLOR, 
+            activebackground="#28395f", 
+            activeforeground=TEXT_COLOR, 
+            relief="solid", 
+            bd=1, 
+            highlightthickness=1, 
+            highlightbackground="#344870", 
+            cursor="hand2", 
+            state="disabled",  # Disabled until DFU is Connected
+            command=self.read_otp
+        )
+        self.read_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
+
+        self.flash_btn = tk.Button(
+            device_frame, 
+            text="Flash (DFU)", 
+            font=("Segoe UI", 9, "bold"), 
+            bg=ACCENT_COLOR, 
+            fg="#ffffff", 
+            activebackground="#ff8533", 
+            activeforeground="#ffffff", 
+            relief="solid", 
+            bd=1, 
+            highlightthickness=1, 
+            highlightbackground="#ff9e59", 
+            cursor="hand2", 
+            state="disabled",  # Disabled until DFU is Connected
+            command=self.flash_otp
+        )
+        self.flash_btn.pack(side="left", fill="x", expand=True)
 
         # Helper functions for premium hover animations
         def apply_button_hover(widget, bg_hover, fg_hover, bg_normal, fg_normal):
-            widget.bind("<Enter>", lambda e: widget.config(bg=bg_hover, fg=fg_hover))
-            widget.bind("<Leave>", lambda e: widget.config(bg=bg_normal, fg=fg_normal))
+            def on_enter(e):
+                if str(widget['state']) != 'disabled':
+                    widget.config(bg=bg_hover, fg=fg_hover)
+            def on_leave(e):
+                if str(widget['state']) != 'disabled':
+                    widget.config(bg=bg_normal, fg=fg_normal)
+            widget.bind("<Enter>", on_enter)
+            widget.bind("<Leave>", on_leave)
 
+        apply_button_hover(load_btn, "#28395f", TEXT_COLOR, "#18233c", TEXT_COLOR)
         apply_button_hover(save_btn, "#28395f", TEXT_COLOR, "#18233c", TEXT_COLOR)
-        apply_button_hover(self.flash_btn, "#ff8533", "#ffffff", ACCENT_COLOR, "#ffffff")
         apply_button_hover(self.read_btn, "#28395f", TEXT_COLOR, "#18233c", TEXT_COLOR)
+        apply_button_hover(self.flash_btn, "#ff8533", "#ffffff", ACCENT_COLOR, "#ffffff")
 
         # Subtle glow animations on text entries hover
         def apply_entry_hover(entry):
@@ -619,6 +688,92 @@ class OTPGeneratorApp:
         )
         return otp_data, name.strip(chr(0))
 
+    def load_otp_from_file(self):
+        file_path = filedialog.askopenfilename(
+            parent=self.root,
+            title="Select OTP Binary File",
+            filetypes=[("Binary Files", "*.bin"), ("All Files", "*.*")]
+        )
+        if not file_path:
+            return
+
+        try:
+            with open(file_path, "rb") as f:
+                data = f.read()
+
+            if len(data) < 32:
+                CustomMessagebox.show_error(self.root, "Load Failed", "Selected file is too small to be a valid OTP profile (must be at least 32 bytes).")
+                return
+
+            # Unpack structure
+            # Header Magic (uint16), Header Version (uint8), Reserved (uint8), Timestamp (uint32)
+            # Board Version (uint8), Target (uint8), Body (uint8), Connect (uint8), Display (uint8), Res2_0 (uint8), Res2_1 (uint16)
+            # Color (uint8), Region (uint8), Res3_0 (uint16), Res3_1 (uint32)
+            # Name (char[8])
+            header_magic, header_ver, _, timestamp, \
+            b_ver, b_target, b_body, b_connect, b_display, _, _, \
+            b_color, b_region, _, _, \
+            name_bytes = struct.unpack("<HBBI BBBBBBH BBHI 8s", data)
+
+            if header_magic != 0xBABE:
+                confirm = CustomMessagebox.ask_yes_no(
+                    self.root,
+                    "Invalid Magic",
+                    f"Warning: Header magic {hex(header_magic)} is not 0xBABE.\n"
+                    "This might not be a valid Flipper OTP file.\n\n"
+                    "Do you want to load it anyway?"
+                )
+                if not confirm:
+                    return
+
+            # Set Device Name
+            name_str = name_bytes.decode('ascii', errors='ignore').strip('\x00')
+            self.name_var.set(name_str)
+
+            # Set Board Version
+            self.version_var.set(str(b_ver))
+
+            # Set Display Type
+            if b_display == 2:
+                self.display_combobox.set("MGG (Monochrome Glass Grid - Custom OLED)")
+            elif b_display == 1:
+                self.display_combobox.set("ERC (Original Flipper LCD)")
+            else:
+                self.display_combobox.set(f"Unknown (0x{b_display:02X})")
+
+            # Set Body Color
+            if b_color == 1:
+                self.color_combobox.set("Black (0x01)")
+            elif b_color == 2:
+                self.color_combobox.set("White (0x02)")
+            elif b_color == 3:
+                self.color_combobox.set("Transparent (0x03)")
+            else:
+                self.color_combobox.set(f"Unknown (0x{b_color:02X})")
+
+            # Set Sub-GHz Region
+            if b_region == 1:
+                self.region_combobox.set("Europe / Russia (0x01)")
+            elif b_region == 2:
+                self.region_combobox.set("USA / Canada / Australia (0x02)")
+            elif b_region == 3:
+                self.region_combobox.set("Japan (0x03)")
+            elif b_region == 4:
+                self.region_combobox.set("World (0x04)")
+            else:
+                self.region_combobox.set(f"Unknown (0x{b_region:02X})")
+
+            CustomMessagebox.show_info(
+                self.root,
+                "Profile Loaded",
+                f"Successfully loaded profile from '{os.path.basename(file_path)}'!\n\n"
+                f"Name: {name_str}\n"
+                f"Version: {b_ver}"
+            )
+
+        except Exception as e:
+            CustomMessagebox.show_error(self.root, "Load Error", f"Failed to parse binary file:\n{str(e)}")
+
     def save_otp_dialog(self):
         otp_data, clean_name = self.get_otp_binary_data()
         if otp_data is None:
@@ -714,7 +869,7 @@ class OTPGeneratorApp:
         except Exception as e:
             CustomMessagebox.show_error(self.root, "Process Error", f"Failed to start flash utility:\n{str(e)}")
         finally:
-            self.flash_btn.config(state="normal", text="2. Flash (DFU)")
+            self.flash_btn.config(state="normal" if self._dfu_result else "disabled", text="Flash (DFU)")
 
     def read_otp(self):
         if not self.ensure_cli_path():
@@ -805,7 +960,7 @@ class OTPGeneratorApp:
         except Exception as e:
             CustomMessagebox.show_error(self.root, "Process Error", f"An error occurred while reading OTP:\n{str(e)}")
         finally:
-            self.read_btn.config(state="normal", text="3. Read (DFU)")
+            self.read_btn.config(state="normal" if self._dfu_result else "disabled", text="Read (DFU)")
 
 if __name__ == "__main__":
     root = tk.Tk()
