@@ -245,7 +245,7 @@ class OTPGeneratorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("DIY Flipper Zero — OTP Tool")
-        self.root.geometry("455x640")
+        self.root.geometry("455x690")
         self.root.configure(bg=BG_COLOR)
         self.root.resizable(False, False)
         
@@ -455,10 +455,13 @@ class OTPGeneratorApp:
         self.name_entry = tk.Entry(container, textvariable=self.name_var, font=("Segoe UI", 11, "bold"), bg=BG_COLOR, fg=TEXT_COLOR, insertbackground=TEXT_COLOR, bd=1, relief="solid", highlightthickness=2, highlightbackground="#1b2a47", highlightcolor=TEXT_COLOR, selectbackground=ACCENT_COLOR, selectforeground="#000000", validate="key", validatecommand=vcmd_name)
         self.name_entry.pack(fill="x", pady=(0, 15))
         
-        # 2. Board Version
-        version_lbl = tk.Label(container, text="Board Version (0–255):", font=("Segoe UI", 10, "bold"), fg=TEXT_MUTED, bg=CONTAINER_COLOR)
-        version_lbl.pack(anchor="w", pady=(0, 5))
-        self.version_var = tk.StringVar(value="12")
+        # 2. 2x2 grid frame for hardware/technical versions
+        grid_frame = tk.Frame(container, bg=CONTAINER_COLOR)
+        grid_frame.pack(fill="x", pady=(0, 10))
+        
+        # Grid columns configured to distribute space evenly
+        grid_frame.columnconfigure(0, weight=1)
+        grid_frame.columnconfigure(1, weight=1)
         
         # Validation: digits only, value 0-255
         def validate_version(new_value):
@@ -473,8 +476,42 @@ class OTPGeneratorApp:
             return int(new_value) <= 255
         
         vcmd_ver = (self.root.register(validate_version), '%P')
-        self.version_entry = tk.Entry(container, textvariable=self.version_var, font=("Segoe UI", 11, "bold"), bg=BG_COLOR, fg=TEXT_COLOR, insertbackground=TEXT_COLOR, bd=1, relief="solid", highlightthickness=2, highlightbackground="#1b2a47", highlightcolor=TEXT_COLOR, selectbackground=ACCENT_COLOR, selectforeground="#000000", validate="key", validatecommand=vcmd_ver)
-        self.version_entry.pack(fill="x", pady=(0, 15))
+        
+        # Cell (0,0): Board Version
+        cell00 = tk.Frame(grid_frame, bg=CONTAINER_COLOR)
+        cell00.grid(row=0, column=0, sticky="ew", padx=(0, 5), pady=(0, 10))
+        version_lbl = tk.Label(cell00, text="Board Version (0-255):", font=("Segoe UI", 9, "bold"), fg=TEXT_MUTED, bg=CONTAINER_COLOR)
+        version_lbl.pack(anchor="w")
+        self.version_var = tk.StringVar(value="12")
+        self.version_entry = tk.Entry(cell00, textvariable=self.version_var, font=("Segoe UI", 10, "bold"), bg=BG_COLOR, fg=TEXT_COLOR, insertbackground=TEXT_COLOR, bd=1, relief="solid", highlightthickness=2, highlightbackground="#1b2a47", highlightcolor=TEXT_COLOR, selectbackground=ACCENT_COLOR, selectforeground="#000000", validate="key", validatecommand=vcmd_ver)
+        self.version_entry.pack(fill="x", pady=(2, 0))
+
+        # Cell (0,1): Firmware Target
+        cell01 = tk.Frame(grid_frame, bg=CONTAINER_COLOR)
+        cell01.grid(row=0, column=1, sticky="ew", padx=(5, 0), pady=(0, 10))
+        firmware_lbl = tk.Label(cell01, text="Firmware Target (0-255):", font=("Segoe UI", 9, "bold"), fg=TEXT_MUTED, bg=CONTAINER_COLOR)
+        firmware_lbl.pack(anchor="w")
+        self.firmware_var = tk.StringVar(value="7")
+        self.firmware_entry = tk.Entry(cell01, textvariable=self.firmware_var, font=("Segoe UI", 10, "bold"), bg=BG_COLOR, fg=TEXT_COLOR, insertbackground=TEXT_COLOR, bd=1, relief="solid", highlightthickness=2, highlightbackground="#1b2a47", highlightcolor=TEXT_COLOR, selectbackground=ACCENT_COLOR, selectforeground="#000000", validate="key", validatecommand=vcmd_ver)
+        self.firmware_entry.pack(fill="x", pady=(2, 0))
+
+        # Cell (1,0): Body Type
+        cell10 = tk.Frame(grid_frame, bg=CONTAINER_COLOR)
+        cell10.grid(row=1, column=0, sticky="ew", padx=(0, 5), pady=(0, 5))
+        body_lbl = tk.Label(cell10, text="Body Type (0-255):", font=("Segoe UI", 9, "bold"), fg=TEXT_MUTED, bg=CONTAINER_COLOR)
+        body_lbl.pack(anchor="w")
+        self.body_var = tk.StringVar(value="9")
+        self.body_entry = tk.Entry(cell10, textvariable=self.body_var, font=("Segoe UI", 10, "bold"), bg=BG_COLOR, fg=TEXT_COLOR, insertbackground=TEXT_COLOR, bd=1, relief="solid", highlightthickness=2, highlightbackground="#1b2a47", highlightcolor=TEXT_COLOR, selectbackground=ACCENT_COLOR, selectforeground="#000000", validate="key", validatecommand=vcmd_ver)
+        self.body_entry.pack(fill="x", pady=(2, 0))
+
+        # Cell (1,1): Connect Type
+        cell11 = tk.Frame(grid_frame, bg=CONTAINER_COLOR)
+        cell11.grid(row=1, column=1, sticky="ew", padx=(5, 0), pady=(0, 5))
+        connect_lbl = tk.Label(cell11, text="Connect Type (0-255):", font=("Segoe UI", 9, "bold"), fg=TEXT_MUTED, bg=CONTAINER_COLOR)
+        connect_lbl.pack(anchor="w")
+        self.connect_var = tk.StringVar(value="6")
+        self.connect_entry = tk.Entry(cell11, textvariable=self.connect_var, font=("Segoe UI", 10, "bold"), bg=BG_COLOR, fg=TEXT_COLOR, insertbackground=TEXT_COLOR, bd=1, relief="solid", highlightthickness=2, highlightbackground="#1b2a47", highlightcolor=TEXT_COLOR, selectbackground=ACCENT_COLOR, selectforeground="#000000", validate="key", validatecommand=vcmd_ver)
+        self.connect_entry.pack(fill="x", pady=(2, 0))
         
         # 3. Display Type
         display_lbl = tk.Label(container, text="Display Type:", font=("Segoe UI", 10, "bold"), fg=TEXT_MUTED, bg=CONTAINER_COLOR)
@@ -598,10 +635,16 @@ class OTPGeneratorApp:
 
         apply_entry_hover(self.name_entry)
         apply_entry_hover(self.version_entry)
+        apply_entry_hover(self.firmware_entry)
+        apply_entry_hover(self.body_entry)
+        apply_entry_hover(self.connect_entry)
 
         # Attach tooltips to each label to make the tool beginner-friendly (English only)
         Tooltip(name_lbl, "Custom name for your Flipper Zero (max 8 characters). Written into OTP permanently!")
         Tooltip(version_lbl, "Hardware board version. Normally 12 for DIY WeAct STM32WB55 boards.")
+        Tooltip(firmware_lbl, "Firmware target configuration index. Default is 7.")
+        Tooltip(body_lbl, "Hardware body type configuration index. Default is 9.")
+        Tooltip(connect_lbl, "Hardware connection type configuration index. Default is 6.")
         Tooltip(display_lbl, "Display driver. Choose 'MGG' for custom I2C SSD1306 OLED screen to function.")
         Tooltip(color_lbl, "Case body color. Changes dolphin animations and shell look in menus.")
         Tooltip(region_lbl, "Frequency bands region. Sets frequency rules for Sub-GHz CC1101 transceiver.")
@@ -647,9 +690,12 @@ class OTPGeneratorApp:
         name_bytes = name.encode('ascii', errors='ignore')
         
         try:
-            version = int(self.version_var.get())
+            version = int(self.version_var.get() or "0")
+            board_target = int(self.firmware_var.get() or "0")
+            board_body = int(self.body_var.get() or "0")
+            board_connect = int(self.connect_var.get() or "0")
         except ValueError:
-            CustomMessagebox.show_error(self.root, "Error", "Board Version must be an integer!")
+            CustomMessagebox.show_error(self.root, "Error", "All hardware configuration fields (Board Version, Firmware Target, Body Type, Connect Type) must be valid integers!")
             return None, None
             
         # Parse display index: MGG is 2, ERC is 1
@@ -668,10 +714,6 @@ class OTPGeneratorApp:
         header_version = 2
         header_reserved = 0
         header_timestamp = int(time.time())
-        
-        board_target = 7   # standard firmware target
-        board_body = 9     # custom layout body
-        board_connect = 6  # custom layout connection
         
         board_reserved2_0 = 0
         board_reserved2_1 = 0
@@ -746,8 +788,11 @@ class OTPGeneratorApp:
             name_str = name_bytes.decode('ascii', errors='ignore').strip('\x00')
             self.name_var.set(name_str)
 
-            # Set Board Version
+            # Set Board Version and hardware options
             self.version_var.set(str(b_ver))
+            self.firmware_var.set(str(b_target))
+            self.body_var.set(str(b_body))
+            self.connect_var.set(str(b_connect))
 
             # Set Display Type
             if b_display == 2:
