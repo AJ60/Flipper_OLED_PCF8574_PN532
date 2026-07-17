@@ -165,7 +165,11 @@ To compile the firmware for the OLED hardware target, use the Flipper Build Tool
 3. qFlipper will detect the board as **"Corrupted"** or in **"DFU mode"**.
 4. Click the **"Recover"** button. qFlipper will automatically restore the bootloader and rebuild the flash partitions.
 5. Once Recovery is complete, the screen might remain blank (since official firmware lacks OLED drivers), but the device will now connect to qFlipper.
-6. Now, click **"Install from file"** in qFlipper, select your custom `.dfu` file from the `build/` directory, and flash it.
+6. Now, click **"Install from file"** in qFlipper, select the custom update package (the **`.tgz`** archive found in the `dist/` or `build/` output directory, e.g., `flipper-z-f7-update-*.tgz`), and flash it. 
+
+> [!TIP]
+> **Why use the `.tgz` package?**
+> Flashing the `.tgz` update package via qFlipper will automatically install the custom firmware onto the MCU **and** unpack/copy all the required resource files (graphics, fonts, animations) onto the microSD card at the same time. You don't need to manually copy files to the SD card.
 
 #### Option B: Updating an already working board (via STM32CubeProgrammer / ST-Link)
 > [!WARNING]
