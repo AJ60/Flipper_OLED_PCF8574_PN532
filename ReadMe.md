@@ -101,10 +101,10 @@ graph TD
 |---|---|---|---|
 | **I2C1 (Power/Default)** | I2C | SCL: PA9, SDA: PB9 | Used by INA219, MCP23017, and OLED |
 | **I2C3 (External)** | I2C | SCL: PA7, SDA: PB4 | Reserved for external modules/sensors |
-| **SPI1 (Shared)** | SPI | MISO: PA6, MOSI: PB5, SCK: PB3 | Shared by CC1101, NFC, and SD card |
-| **CC1101** | SPI + IRQ | CS: PA15, G0: PA1 | Sub-GHz transceiver |
-| **SD card** | SPI | CS: PA10 | MicroSD module |
-| **NFC** | SPI | CS: PE4, IRQ: PA2 | Elechouse ST25R3916 reader |
+| **SPI1 (Shared)** | SPI | MOSI: PB5, SCK: PB3 | Shared SCK/MOSI bus for CC1101, NFC, and SD card |
+| **CC1101** | SPI + IRQ | CS: PA15, MISO: PA6, G0: PA1 | Sub-GHz transceiver |
+| **SD card** | SPI | CS: PA10, MISO: PA6 | MicroSD module |
+| **NFC** | SPI | CS: PE4, MISO: PB4, IRQ: PA2 | Elechouse ST25R3916 reader (Uses dedicated MISO) |
 | **MCP23017 Interrupt** | GPIO | INT: PB0 | Signals button state changes |
 | **IR** | GPIO | RX: PA0, TX: PA8 | Safe IR transmitter & receiver |
 | **Speaker** | PWM | PB8 (TIM16) | Sound buzzer |
@@ -154,8 +154,26 @@ To compile the firmware for the OLED hardware target, use the Flipper Build Tool
 > Alternatively, click **"1. Save .bin"** to generate the file, then flash it manually via [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html).
 
 ### 3. Flash Firmware
+
+#### Option A: Flash via qFlipper (Recommended)
 1. Put the board in DFU mode (hold `BOOT0`, connect USB, release `BOOT0`).
-2. Open **qFlipper**, choose **Install from file**, select the `.dfu` file from the `build/` directory and flash.
+2. Open **qFlipper**. It should detect the device.
+3. Choose **Install from file**, select the `.dfu` file from the `build/` directory, and flash.
+
+> [!TIP]
+> **If the board is "bricked", completely erased, or won't connect:**
+> 1. Put the board in DFU mode.
+> 2. Open **qFlipper** — it will detect the device as "Corrupted" and offer a **"Recover"** button.
+> 3. Click **Recover** to let qFlipper automatically restore the bootloader, rebuild the partition table, and write the default OTP parameters.
+> 4. Once recovered, proceed to install your custom `.dfu` file via **Install from file**.
+
+#### Option B: Flash via STM32CubeProgrammer (ST-Link / DFU)
+> [!WARNING]
+> **DO NOT use "Full Chip Erase"** in STM32CubeProgrammer!
+> Doing a full chip erase will wipe out the emulation OTP structures, flash partition tables, and calibration settings. If these are wiped, the firmware will freeze early during boot (leading to a blank screen and USB connection loss).
+> 
+> *   Set the Erase option to **"Sector Erase"** (only erase sectors occupied by the firmware).
+> *   If you did a full chip erase by mistake, run **qFlipper Recovery Mode** (Option A) to rebuild the device partitions first.
 
 ---
 
