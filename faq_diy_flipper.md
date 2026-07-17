@@ -16,7 +16,7 @@ Welcome to the frequently asked questions and troubleshooting guide for the DIY 
 3. Plug the USB cable back into the PC (while holding the button).
 4. Release the **BOOT0** button. The board is now in DFU mode.
 5. Launch **qFlipper** — it will detect the board in recovery mode.
-6. Click the **"Repair"** button. This writes the official Flipper bootloader.
+6. Click the **"Recover"** button. This writes the official Flipper bootloader.
 7. Once finished, click **"Install from file"** on the main screen and choose our custom `.dfu` or `.tgz` firmware.
 
 ---
@@ -104,12 +104,13 @@ To suppress voltage transients during high-current operations (vibration motor c
 
 ---
 
-### **Q9: I get SD card read errors when using NFC at the same time. How do I fix this?**
-> [!NOTE]
-> The SD card, CC1101 module, and NFC module share the same physical SPI1 bus.
+### **Q9: My SD card disconnects immediately when I plug in the NFC module (e.g. SCLK to PB3), or I get SD read errors. How do I fix this?**
+> [!IMPORTANT]
+> The SD card and NFC module share the SPI1 SCK/MOSI lines, but **they must use separate MISO pins** because the ST25R3916 chip does not release the MISO line (doesn't go High-Z) when deactivated.
 
 **Solution:**
-*   Solder external **10 kΩ** pull-up resistors to the 3.3V rail on all Chip Select (CS) lines: SD (`PA10`), NFC (`PE4`), and CC1101 (`PA15`). This prevents multiple devices from enabling simultaneously during resets.
+1.  **Check MISO wiring:** Ensure **NFC MISO** is connected to **PB4** (`gpio_nfc_miso`), while the **SD Card MISO** connects to **PA6** (`gpio_spi_miso`). If they share PA6, the NFC chip will block the bus and disable the SD card.
+2.  **Pull-up resistors:** Solder external **10 kΩ** pull-up resistors to the 3.3V rail on all Chip Select (CS) lines: SD (`PA10`), NFC (`PE4`), and CC1101 (`PA15`). This prevents multiple devices from enabling simultaneously during resets.
 
 ---
 
