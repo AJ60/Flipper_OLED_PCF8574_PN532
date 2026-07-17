@@ -155,25 +155,25 @@ To compile the firmware for the OLED hardware target, use the Flipper Build Tool
 
 ### 3. Flash Firmware
 
-#### Option A: Flash via qFlipper (Recommended)
+> [!IMPORTANT]
+> **If you are flashing a new, blank, or fully erased board, you MUST run qFlipper Recovery Mode first.** 
+> The firmware cannot partition the internal Flash memory on its own. Running Recovery is mandatory to build the partition table and flash the bootloader.
+
+#### How to Perform Recovery (Mandatory for first-time setup or after Full Erase):
 1. Put the board in DFU mode (hold `BOOT0`, connect USB, release `BOOT0`).
-2. Open **qFlipper**. It should detect the device.
-3. Choose **Install from file**, select the `.dfu` file from the `build/` directory, and flash.
+2. Open the **qFlipper** desktop application.
+3. qFlipper will detect the board as **"Corrupted"** or in **"DFU mode"**.
+4. Click the **"Recover"** button. qFlipper will automatically restore the bootloader and rebuild the flash partitions.
+5. Once Recovery is complete, the screen might remain blank (since official firmware lacks OLED drivers), but the device will now connect to qFlipper.
+6. Now, click **"Install from file"** in qFlipper, select your custom `.dfu` file from the `build/` directory, and flash it.
 
-> [!TIP]
-> **If the board is "bricked", completely erased, or won't connect:**
-> 1. Put the board in DFU mode.
-> 2. Open **qFlipper** — it will detect the device as "Corrupted" and offer a **"Recover"** button.
-> 3. Click **Recover** to let qFlipper automatically restore the bootloader, rebuild the partition table, and write the default OTP parameters.
-> 4. Once recovered, proceed to install your custom `.dfu` file via **Install from file**.
-
-#### Option B: Flash via STM32CubeProgrammer (ST-Link / DFU)
+#### Option B: Updating an already working board (via STM32CubeProgrammer / ST-Link)
 > [!WARNING]
 > **DO NOT use "Full Chip Erase"** in STM32CubeProgrammer!
 > Doing a full chip erase will wipe out the emulation OTP structures, flash partition tables, and calibration settings. If these are wiped, the firmware will freeze early during boot (leading to a blank screen and USB connection loss).
 > 
 > *   Set the Erase option to **"Sector Erase"** (only erase sectors occupied by the firmware).
-> *   If you did a full chip erase by mistake, run **qFlipper Recovery Mode** (Option A) to rebuild the device partitions first.
+> *   If you did a full chip erase by mistake, run **qFlipper Recovery** (Option A) to rebuild the device partitions first.
 
 ---
 
