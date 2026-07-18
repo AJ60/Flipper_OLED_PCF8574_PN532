@@ -167,20 +167,19 @@ Choose the appropriate method depending on whether you are setting up the board 
 3. qFlipper will detect the board and display **"RECOVERY MODE"** (or **"Update & Recovery Mode DFU started"**).
 4. Click the **"REPAIR"** button. qFlipper will automatically restore the official bootloader and partition the internal Flash.
 5. Once the recovery is complete, the screen might remain blank (since the official firmware lacks OLED drivers), but the device will now connect to qFlipper.
-6. Click **"Install from file"** in qFlipper.
-7. Select our custom firmware **`.dfu`** file (download it from [GitHub Releases](https://github.com/artema0g/oled_flipper/releases)) and flash it. **Your OLED screen will now turn on!**
-8. Now that the custom firmware is running and the screen is active, click **"Install from file"** again.
-9. Select the **resource package (the `.zip` or `.tgz` archive)** from the Releases page. qFlipper will automatically unpack and upload all the graphics, fonts, and animations directly to your microSD card.
+6. Now, put the board back into **DFU mode** again (so it doesn't freeze under the official firmware).
+7. Click **"Install from file"** in qFlipper.
+8. Choose your preferred update style:
+   * **Using the `.tgz` package (Recommended):** Select the **`.tgz`** archive. qFlipper will flash the firmware (the OLED screen will turn on), reboot into normal mode, and then copy the required resource files to your SD card automatically.
+   * **Using the `.dfu` file (Manual):** Select the **`.dfu`** firmware file to flash it (OLED turns on). After it boots, you will need to manually unzip the resources package and copy the files to the root of your microSD card.
 
 ---
 
 #### Method B: Regular Firmware Updates
 *Use this method to update an already working DIY Flipper.*
 
-1. Connect your DIY Flipper to the PC via USB and open **qFlipper**.
-2. Click **"Install from file"** on the main screen.
-3. Select the updated **`.dfu`** firmware file and flash it.
-4. If there is a new resource package, click **"Install from file"** again, select the updated resources **`.zip` / `.tgz`** archive, and install it to update the SD card files.
+* **Using the `.tgz` package:** Connect the Flipper to your PC via USB, open **qFlipper**, click **"Install from file"**, and select the updated **`.tgz`** archive. qFlipper will automatically flash the MCU and update all SD card files in one go.
+* **Using the `.dfu` file:** Put the board in **DFU mode**, open qFlipper, click **"Install from file"**, and select the updated **`.dfu`** firmware file.
 
 ---
 
