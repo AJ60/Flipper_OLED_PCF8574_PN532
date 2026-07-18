@@ -155,29 +155,40 @@ To compile the firmware for the OLED hardware target, use the Flipper Build Tool
 
 ### 3. Flash Firmware
 
-> [!IMPORTANT]
-> **If you are flashing a new, blank, or fully erased board, you MUST run qFlipper Recovery Mode first.** 
-> The firmware cannot partition the internal Flash memory on its own. Running Recovery is mandatory to build the partition table and flash the bootloader.
+Choose the appropriate method depending on whether you are setting up the board for the first time or just updating the firmware.
 
-#### How to Perform Recovery (Mandatory for first-time setup or after Full Erase):
+---
+
+#### Method A: First-Time Setup (or after a Full Flash Erase)
+*Use this method if the board is blank, has no bootloader, or was fully erased.*
+
 1. Put the board in DFU mode (hold `BOOT0`, connect USB, release `BOOT0`).
 2. Open the **qFlipper** desktop application.
-3. qFlipper will detect the board as **"Corrupted"** or in **"DFU mode"**.
-4. Click the **"REPAIR"** button. qFlipper will automatically restore the bootloader and rebuild the flash partitions.
-5. Once Recovery is complete, the screen might remain blank (since official firmware lacks OLED drivers), but the device will now connect to qFlipper.
-6. Now, click **"Install from file"** in qFlipper, select the custom update package (the **`.tgz`** archive — you can download pre-built release packages from [GitHub Releases](https://github.com/artema0g/oled_flipper/releases), or compile it yourself as explained in the [Build from Source](#1-build-from-source) section below), and flash it. 
+3. qFlipper will detect the board and display **"RECOVERY MODE"** (or **"Update & Recovery Mode DFU started"**).
+4. Click the **"REPAIR"** button. qFlipper will automatically restore the official bootloader and partition the internal Flash.
+5. Once the recovery is complete, the screen might remain blank (since the official firmware lacks OLED drivers), but the device will now connect to qFlipper.
+6. Now, click **"Install from file"** in qFlipper.
+7. Select the custom update package (the **`.tgz`** archive — you can download pre-built release packages from [GitHub Releases](https://github.com/artema0g/oled_flipper/releases), or compile it yourself as explained in the [Build from Source](#1-build-from-source) section below), and flash it.
 
-> [!TIP]
-> **Why use the `.tgz` package?**
-> Flashing the `.tgz` update package via qFlipper will automatically install the custom firmware onto the MCU **and** unpack/copy all the required resource files (graphics, fonts, animations) onto the microSD card at the same time. You don't need to manually copy files to the SD card.
+---
 
-#### Option B: Updating an already working board (via STM32CubeProgrammer / ST-Link)
+#### Method B: Regular Firmware Updates
+*Use this method to update an already working DIY Flipper without losing your settings.*
+
+1. Connect your DIY Flipper to the PC via USB and open **qFlipper**.
+2. Click **"Install from file"** on the main screen.
+3. Select the custom update package (the **`.tgz`** archive from the [Releases](https://github.com/artema0g/oled_flipper/releases) page or your local build output) and click **Install**.
+4. qFlipper will automatically flash the MCU and update the resource files on the SD card.
+
+---
+
+#### Option C: Flashing via STM32CubeProgrammer / ST-Link (Advanced)
 > [!WARNING]
 > **DO NOT use "Full Chip Erase"** in STM32CubeProgrammer!
 > Doing a full chip erase will wipe out the emulation OTP structures, flash partition tables, and calibration settings. If these are wiped, the firmware will freeze early during boot (leading to a blank screen and USB connection loss).
 > 
 > *   Set the Erase option to **"Sector Erase"** (only erase sectors occupied by the firmware).
-> *   If you did a full chip erase by mistake, run **qFlipper Recovery** (Option A) to rebuild the device partitions first.
+> *   If you did a full chip erase by mistake, follow **Method A (First-Time Setup)** to rebuild the device partitions first.
 
 ---
 
