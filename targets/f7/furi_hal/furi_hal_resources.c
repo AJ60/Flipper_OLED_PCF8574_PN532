@@ -31,6 +31,9 @@ const GpioPin gpio_nfc_cs = {.port = NFC_CS_GPIO_Port, .pin = NFC_CS_Pin};
 const GpioPin gpio_nfc_miso = {.port = GPIOB, .pin = LL_GPIO_PIN_4};
 const GpioPin gpio_nfc_irq = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 const GpioPin gpio_nfc_irq_rfid_pull = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
+const GpioPin gpio_rfid_carrier_out = {.port = GPIOA, .pin = LL_GPIO_PIN_5};
+const GpioPin gpio_rfid_data_in = {.port = GPIOB, .pin = LL_GPIO_PIN_2};
+const GpioPin gpio_rfid_carrier = {.port = GPIOA, .pin = LL_GPIO_PIN_5};
 
 // MCU button GpioPin definitions removed — board uses MCP23017 for inputs.
 
