@@ -163,7 +163,7 @@ To compile the firmware for the OLED hardware target, use the Flipper Build Tool
 1. Put the board in DFU mode (hold `BOOT0`, connect USB, release `BOOT0`).
 2. Open the **qFlipper** desktop application.
 3. qFlipper will detect the board as **"Corrupted"** or in **"DFU mode"**.
-4. Click the **"Recover"** button. qFlipper will automatically restore the bootloader and rebuild the flash partitions.
+4. Click the **"REPAIR"** button. qFlipper will automatically restore the bootloader and rebuild the flash partitions.
 5. Once Recovery is complete, the screen might remain blank (since official firmware lacks OLED drivers), but the device will now connect to qFlipper.
 6. Now, click **"Install from file"** in qFlipper, select the custom update package (the **`.tgz`** archive — you can download pre-built release packages from [GitHub Releases](https://github.com/artema0g/oled_flipper/releases), or compile it yourself as explained in the [Build from Source](#1-build-from-source) section below), and flash it. 
 
