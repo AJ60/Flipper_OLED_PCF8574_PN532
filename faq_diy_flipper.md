@@ -16,7 +16,7 @@ Welcome to the frequently asked questions and troubleshooting guide for the DIY 
 3. Plug the USB cable back into the PC (while holding the button).
 4. Release the **BOOT0** button. The board is now in DFU mode.
 5. Launch **qFlipper** — it will detect the board in recovery mode.
-6. Click the **"Recover"** button. This writes the official Flipper bootloader.
+6. Click the **"REPAIR"** button. This writes the official Flipper bootloader.
 7. Once finished, click **"Install from file"** on the main screen and choose our custom `.dfu` or `.tgz` firmware.
 
 ---
