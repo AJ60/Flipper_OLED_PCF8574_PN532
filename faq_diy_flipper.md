@@ -21,7 +21,17 @@ Welcome to the frequently asked questions and troubleshooting guide for the DIY 
 
 ---
 
-### **Q2: During the `.tgz` update, my screen went completely black. Is it bricked?**
+### **Q2: The firmware successfully flashes, but the device is frozen/unresponsive (blank screen, and qFlipper throws an "RPC Session/Protobuf Timeout" error). How to fix?**
+> [!IMPORTANT]
+> The custom firmware (v2.0+) features an active I2C bus recovery loop. If the I2C1 bus has no hardware pull-up resistors or is floating, the firmware gets stuck in an infinite boot loop trying to recover the bus, which freezes the USB connection.
+
+**Solution:**
+1.  **Connect your OLED screen:** Standard I2C OLED screens (SSD1306/SH1106) have built-in **4.7 kΩ pull-up resistors** on their SDA/SCL lines. If you try to boot the board *without* the display plugged in, the I2C bus floats and halts the boot process.
+2.  **Solder physical I2C pull-ups:** Solder physical **2.2 kΩ or 3.3 kΩ resistors** between the SDA (`PB9`) -> 3.3V rail and SCL (`PA9`) -> 3.3V rail on the WeAct board. This stabilizes the MCP23017 keyboard, provides strong hardware pull-ups, and prevents boot loops.
+
+---
+
+### **Q3: During the `.tgz` update, my screen went completely black. Is it bricked?**
 > [!WARNING]
 > **This is expected behavior!** The built-in firmware updater runs outside the main OS and only supports the original SPI screen. Since our DIY board uses an I2C OLED display, the screen will go black during the update.
 
@@ -32,7 +42,7 @@ Welcome to the frequently asked questions and troubleshooting guide for the DIY 
 
 ---
 
-### **Q3: How and where can I view and enable Debug Logs on the DIY Flipper?**
+### **Q4: How and where can I view and enable Debug Logs on the DIY Flipper?**
 **Solution:**
 By default, the Flipper Zero filters out low-priority debug messages to save CPU cycles. There are two steps to enable and view real-time **Debug** logs:
 
@@ -56,14 +66,14 @@ By default, the Flipper Zero filters out low-priority debug messages to save CPU
 
 ---
 
-### **Q4: Can I reboot into DFU mode using the Flipper settings menu?**
+### **Q5: Can I reboot into DFU mode using the Flipper settings menu?**
 **Solution:**
 *   **No.** Due to the custom keyboard interface via the MCP23017 I2C expander, software-triggered DFU reboot is not supported by the bootloader.
 *   Use the hardware method instead (hold BOOT0 while plugging in the USB cable).
 
 ---
 
-### **Q5: Why is the CC1101 PPM calibration set to +100 PPM?**
+### **Q6: Why is the CC1101 PPM calibration set to +100 PPM?**
 > [!TIP]
 > Cheap CC1101 modules often use low-tolerance crystals that drift from the target frequency.
 
@@ -75,7 +85,7 @@ By default, the Flipper Zero filters out low-priority debug messages to save CPU
 
 ## 🔌 Hardware Troubleshooting
 
-### **Q6: Keyboard buttons freeze or stop responding periodically. Why?**
+### **Q7: Keyboard buttons freeze or stop responding periodically. Why?**
 > [!CAUTION]
 > Sub-GHz transmission or NFC activity generates strong RF noise that couples into the I2C1 bus, freezing the MCP23017 IO expander.
 
@@ -86,7 +96,7 @@ By default, the Flipper Zero filters out low-priority debug messages to save CPU
 
 ---
 
-### **Q7: What are the recommendations for power filtering (capacitors) on the board?**
+### **Q8: What are the recommendations for power filtering (capacitors) on the board?**
 **Solution:**
 To suppress voltage transients during high-current operations (vibration motor clicks, NFC scans):
 *   **Decoupling:** Solder **0.1 µF** ceramic capacitors close to the VCC/GND pins of each chip (MCP23017, OLED, INA219, NFC, CC1101).
@@ -94,7 +104,7 @@ To suppress voltage transients during high-current operations (vibration motor c
 
 ---
 
-### **Q8: Why does the vibration motor cause the board to reset or freeze?**
+### **Q9: Why does the vibration motor cause the board to reset or freeze?**
 > [!CAUTION]
 > **Never connect the vibration motor directly to the MCP23017 pins!** The motor's start-up current (60-100 mA) exceeds the expander's 25 mA limit. This will damage the pin or cause MCU resets.
 
@@ -104,7 +114,7 @@ To suppress voltage transients during high-current operations (vibration motor c
 
 ---
 
-### **Q9: My SD card disconnects immediately when I plug in the NFC module (e.g. SCLK to PB3), or I get SD read errors. How do I fix this?**
+### **Q10: My SD card disconnects immediately when I plug in the NFC module (e.g. SCLK to PB3), or I get SD read errors. How do I fix this?**
 > [!IMPORTANT]
 > The SD card and NFC module share the SPI1 SCK/MOSI lines, but **they must use separate MISO pins** because the ST25R3916 chip does not release the MISO line (doesn't go High-Z) when deactivated.
 
@@ -114,28 +124,28 @@ To suppress voltage transients during high-current operations (vibration motor c
 
 ---
 
-### **Q10: Dallas iButton keys (1-Wire, DS1990) are not reading on pin PA3.**
+### **Q11: Dallas iButton keys (1-Wire, DS1990) are not reading on pin PA3.**
 **Solution:**
 *   The 1-Wire protocol requires a pull-up resistor. 
 *   Solder a **2.2 kΩ** or **4.7 kΩ** resistor between the iButton data line (`PA3`) and the **3.3V** rail.
 
 ---
 
-### **Q11: Can I connect a speaker directly to pin PB8?**
+### **Q12: Can I connect a speaker directly to pin PB8?**
 **Solution:**
 *   **No**, if it is a standard low-impedance dynamic speaker (8-32Ω). Direct connection will burn out the MCU pin.
 *   Only connect **passive piezo buzzers** directly to `PB8`. For dynamic speakers, use a transistor switch circuit (like `BC847` or `2N7002`).
 
 ---
 
-### **Q12: Short IR range or poor NFC read performance on battery power.**
+### **Q13: Short IR range or poor NFC read performance on battery power.**
 **Solution:**
 *   The IR LEDs and the ST25R3916 NFC module operate at peak performance when powered by **5V**. On battery, the 5V rail is inactive.
 *   **Solution:** Install a tiny 5V boost converter (e.g., based on the `MT3608` chip) to feed the IR and NFC circuits when running on battery.
 
 ---
 
-### **Q13: The INA219 battery monitor reports incorrect current or battery percentage.**
+### **Q14: The INA219 battery monitor reports incorrect current or battery percentage.**
 **Solution:**
 *   The firmware is calibrated for a **0.1 Ω** current shunt resistor (marked `R100`).
 *   Ensure the shunt resistor installed on your board is exactly 0.1 Ω (1% tolerance).
