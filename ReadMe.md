@@ -167,18 +167,20 @@ Choose the appropriate method depending on whether you are setting up the board 
 3. qFlipper will detect the board and display **"RECOVERY MODE"** (or **"Update & Recovery Mode DFU started"**).
 4. Click the **"REPAIR"** button. qFlipper will automatically restore the official bootloader and partition the internal Flash.
 5. Once the recovery is complete, the screen might remain blank (since the official firmware lacks OLED drivers), but the device will now connect to qFlipper.
-6. Now, click **"Install from file"** in qFlipper.
-7. Select the custom update package (the **`.tgz`** archive — you can download pre-built release packages from [GitHub Releases](https://github.com/artema0g/oled_flipper/releases), or compile it yourself as explained in the [Build from Source](#1-build-from-source) section below), and flash it.
+6. Click **"Install from file"** in qFlipper.
+7. Select our custom firmware **`.dfu`** file (download it from [GitHub Releases](https://github.com/artema0g/oled_flipper/releases)) and flash it. **Your OLED screen will now turn on!**
+8. Now that the custom firmware is running and the screen is active, click **"Install from file"** again.
+9. Select the **resource package (the `.zip` or `.tgz` archive)** from the Releases page. qFlipper will automatically unpack and upload all the graphics, fonts, and animations directly to your microSD card.
 
 ---
 
 #### Method B: Regular Firmware Updates
-*Use this method to update an already working DIY Flipper without losing your settings.*
+*Use this method to update an already working DIY Flipper.*
 
 1. Connect your DIY Flipper to the PC via USB and open **qFlipper**.
 2. Click **"Install from file"** on the main screen.
-3. Select the custom update package (the **`.tgz`** archive from the [Releases](https://github.com/artema0g/oled_flipper/releases) page or your local build output) and click **Install**.
-4. qFlipper will automatically flash the MCU and update the resource files on the SD card.
+3. Select the updated **`.dfu`** firmware file and flash it.
+4. If there is a new resource package, click **"Install from file"** again, select the updated resources **`.zip` / `.tgz`** archive, and install it to update the SD card files.
 
 ---
 
