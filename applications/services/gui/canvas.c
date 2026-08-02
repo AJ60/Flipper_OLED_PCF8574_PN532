@@ -71,19 +71,14 @@ void canvas_reset(Canvas* canvas) {
 
 void canvas_commit(Canvas* canvas) {
     furi_check(canvas);
-    static uint32_t last_reinit_tick = 0;
 
     // Send buffer to physical OLED display only if display is active
     if(!display_is_sleeping) {
         if(display_needs_reinit) {
-            uint32_t now = furi_get_tick();
-            if(now - last_reinit_tick > 1000) {
-                last_reinit_tick = now;
-                display_needs_reinit = false;
-                u8g2_InitDisplay(&canvas->fb);
-                u8g2_SetPowerSave(&canvas->fb, 0);
-                u8g2_SendBuffer(&canvas->fb);
-            }
+            display_needs_reinit = false;
+            u8g2_InitDisplay(&canvas->fb);
+            u8g2_SetPowerSave(&canvas->fb, 0);
+            u8g2_SendBuffer(&canvas->fb);
         } else {
             u8g2_SendBuffer(&canvas->fb);
         }

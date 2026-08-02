@@ -120,20 +120,26 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
         // Send accumulated buffer via hardware I2C as ONE transaction
         if(buf_idx > 0) {
             bool success = false;
-            for(int retry = 0; retry < 2; retry++) {
+            static uint8_t consec_failures = 0;
+            for(int retry = 0; retry < 3; retry++) {
                 success = furi_hal_i2c_tx(
                     &furi_hal_i2c_handle_power,
                     u8x8_GetI2CAddress(u8x8),
                     buffer,
                     buf_idx,
-                    6);
+                    50);
                 if(success) {
+                    consec_failures = 0;
                     break;
                 }
-                furi_delay_ms(1);
+                furi_delay_ms(2);
             }
             if(!success) {
-                display_needs_reinit = true;
+                consec_failures++;
+                if(consec_failures >= 3) {
+                    display_needs_reinit = true;
+                    consec_failures = 0;
+                }
                 furi_hal_i2c_release(&furi_hal_i2c_handle_power);
                 return 0;
             }
