@@ -205,9 +205,24 @@ A complete wiring schematic is available in the repository:
 
 ![DIY Flipper Schematic](misc/schematic.png)
 
-### 📻 LF-RFID (125 kHz) Circuit Details:
-- **Carrier Driver (TX)**: Pin `PA5` generates a 125 kHz PWM square wave (`TIM2_CH1`) driving a PNP transistor (e.g. BC327 / 2N3906) to excite the 125 kHz LC resonant tank coil (~345 µH coil + 10-15 nF capacitor).
-- **Demodulator & Envelope Detector (RX)**: Pin `PA1` captures amplitude-demodulated signals via a High-Speed Schottky diode (e.g. BAT54S / 1N4148) + RC low-pass filter to decode 125 kHz keyfob and card data pulses.
+### 📻 LF-RFID (125 kHz) Circuit Details & Schematic:
+- 📄 **Schematic PDF**: [Download 125kHz LF-RFID Subsystem Schematic (PDF)](misc/rfid_lf.pdf)
+
+#### Component Bill of Materials (BOM) from KiCad Schematic:
+| Stage | Component | Value / Part | Description |
+|---|---|---|---|
+| **Transmitter Driver [1]** | `PA5` (PWM) | MCU `TIM2_CH1` | 125 kHz Carrier PWM Drive |
+| | `Q1` | BC337 / S8050 / 2N2222 | NPN Push-Pull Transistor |
+| | `Q2` | BC327 / S8550 / 2N2907 | PNP Push-Pull Transistor |
+| | `C1` | 2.2 nF | Drive Coupling Capacitor |
+| **Resonant Tank [2]** | `L1` | 1.2 mH / 95T | Antenna Coil |
+| | `PA2` (Emulate) | MCU `TIM2_CH3` | Emulation Pulse Driver (`R2` 1k, `R8` 10k) |
+| | `Q3` | 2N2222 | Emulation Switch Transistor (`R1` 100 Ohm) |
+| **Demodulator [3]** | `D1` | 1N4148 / BAT54S | Envelope Schottky Diode |
+| | `C3`, `R3` | 1 nF, 10 kOhm | RC Low-Pass Filter |
+| | `C4`, `R4` | 22 nF, 10 kOhm | AC Coupling Stage |
+| | `U1` | LM2904 / LM358 / MCP6002 | Op-Amp Signal Amplifier (`R5`-`R7` 100k, `R9` 50k) |
+| | `PA1` (Data In) | MCU `TIM1_CH1` | Demodulated RX Envelope Input |
 
 ```text
                +5V / VCC
