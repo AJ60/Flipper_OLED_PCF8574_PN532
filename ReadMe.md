@@ -224,29 +224,6 @@ A complete wiring schematic is available in the repository:
 | | `U1` | LM2904 / LM358 / MCP6002 | Op-Amp Signal Amplifier (`R5`-`R7` 100k, `R9` 50k) |
 | | `PA1` (Data In) | MCU `TIM1_CH1` | Demodulated RX Envelope Input |
 
-```text
-               +5V / VCC
-                |
-               [R1 100 Ohm]
-                |
-   PA5 (PWM) ---+---[Base] PNP Transistor (BC327)
-                            | (Collector)
-                            +-----------------------+--------------> Antenna Coil Node
-                            |                       |
-                           [Capacitor 10nF-15nF]   [Inductor 345uH Coil]
-                            |                       |
-                           GND                     GND
-
-               Demodulator Circuit (Rx):
-               Antenna Node
-                |
-               [Schottky Diode BAT54S / 1N4148]
-                |
-                +---+---[RC Filter: Resistor 10k + Capacitor 1nF to GND]
-                |
-   PA1 (TIM2_CH3) <--- Envelope Data Input to MCU
-```
-
 ---
 
 ## <a id="credits-and-support"></a>🤝 Credits and Support
