@@ -42,11 +42,12 @@ Here is the physical DIY board in action:
 This project implements a custom target for a DIY Flipper-style board based on the **WeAct STM32WB55CGU6** board. It integrates the following components:
 
 *   **Display**: I2C OLED display (SH1106 / SSD1306)
-*   **Sensors**: INA219 battery monitor (I2C)
+*   **Sensors**: INA219 / INA226 power & battery monitor (I2C) with hardware Alert (PB1)
 *   **I/O Expander**: MCP23017 (handles buttons, RGB LED, and vibration motor)
 *   **Storage**: microSD slot (SPI)
 *   **Radio**: CC1101 sub-GHz module (SPI)
 *   **NFC**: ST25R3916 Elechouse module (SPI)
+*   **LF-RFID (125 kHz)**: Antenna coil driver & envelope detector (PA5 Carrier TX / PA1 Data RX)
 *   **Peripherals**: Speaker/buzzer, IR transmitter/receiver, vibration motor
 
 ---
@@ -65,7 +66,7 @@ graph TD
 
     %% I2C Bus Devices
     I2C1 --> OLED[OLED Display <br> SH1106 / SSD1306]
-    I2C1 --> INA[INA219 <br> Battery Monitor]
+    I2C1 --> INA[INA219 / INA226 <br> Battery Monitor]
     I2C1 --> MCP[MCP23017 <br> I/O Expander]
 
     %% MCP23017 Expanders
@@ -83,14 +84,18 @@ graph TD
     GPIO --> IR_TX[IR Transmitter PA8]
     GPIO --> Speaker[Speaker PB8]
     GPIO --> OneWire[1-Wire iButton PA3]
+    GPIO --> RFID_TX[LF-RFID TX PA5]
+    GPIO --> RFID_RX[LF-RFID RX PA1]
 ```
 
 ---
 
 ## <a id="what-works-and-limitations"></a>✅ What Works and Limitations
 *   **Core Systems**: All official Flipper firmware features compile and function.
-*   **I2C Devices**: OLED, INA219, and MCP23017 are multiplexed onto the primary I2C1 bus to preserve SPI resources.
+*   **I2C Devices**: OLED, INA219 / INA226, and MCP23017 are multiplexed onto the primary I2C1 bus to preserve SPI resources.
+*   **Power Monitoring**: Automatic dual INA219 / INA226 detection with hardware overcurrent/undervoltage Alert interrupt on PB1.
 *   **NFC Support**: Verified working with Elechouse ST25R3916 modules.
+*   **LF-RFID (125 kHz)**: Reading, writing, and emulation verified for EM4100, HID Generic, Indala26, Keri, NexWatch, Noralsy, Viking, and IDTeck.
 *   **Sub-GHz**: CC1101 module tested and fully functional.
 
 ---
@@ -107,6 +112,7 @@ graph TD
 | **NFC** | SPI | CS: PE4, MISO: PB4, IRQ: PA2 | Elechouse ST25R3916 reader (Uses dedicated MISO) |
 | **MCP23017 Interrupt** | GPIO | INT: PB0 | Signals button state changes |
 | **IR** | GPIO | RX: PA0, TX: PA8 | Safe IR transmitter & receiver |
+| **LF-RFID (125 kHz)** | PWM / Timer | TX Carrier: PA5 (TIM2_CH1), RX Data: PA1 | 125 kHz coil driver transistor + envelope demodulator |
 | **Speaker** | PWM | PB8 (TIM16) | Sound buzzer |
 | **iButton** | 1-Wire | PA3 | Dallas 1-Wire keys |
 
@@ -193,11 +199,15 @@ Choose the appropriate method depending on whether you are setting up the board 
 
 ---
 
-## <a id="schematic"></a>🔌 Schematic
+## <a id="schematic"></a>🔌 Schematic & Hardware Circuit
 
-A complete wiring schematic is available in the repository. Refer to the image below for physical connections:
+A complete wiring schematic is available in the repository:
 
 ![DIY Flipper Schematic](misc/schematic.png)
+
+### 📻 LF-RFID (125 kHz) Circuit Details:
+- **Carrier Driver (TX)**: Pin `PA5` generates a 125 kHz PWM square wave (`TIM2_CH1`) driving a PNP transistor (e.g. BC327 / 2N3906) to excite the 125 kHz LC resonant tank coil (~345 µH coil + 10-15 nF capacitor).
+- **Demodulator & Envelope Detector (RX)**: Pin `PA1` captures amplitude-demodulated signals via a High-Speed Schottky diode (e.g. BAT54S / 1N4148) + RC low-pass filter to decode 125 kHz keyfob and card data pulses.
 
 ---
 
