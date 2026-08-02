@@ -209,6 +209,29 @@ A complete wiring schematic is available in the repository:
 - **Carrier Driver (TX)**: Pin `PA5` generates a 125 kHz PWM square wave (`TIM2_CH1`) driving a PNP transistor (e.g. BC327 / 2N3906) to excite the 125 kHz LC resonant tank coil (~345 µH coil + 10-15 nF capacitor).
 - **Demodulator & Envelope Detector (RX)**: Pin `PA1` captures amplitude-demodulated signals via a High-Speed Schottky diode (e.g. BAT54S / 1N4148) + RC low-pass filter to decode 125 kHz keyfob and card data pulses.
 
+```text
+               +5V / VCC
+                |
+               [R1 100 Ohm]
+                |
+   PA5 (PWM) ---+---[Base] PNP Transistor (BC327)
+                            | (Collector)
+                            +-----------------------+--------------> Antenna Coil Node
+                            |                       |
+                           [Capacitor 10nF-15nF]   [Inductor 345uH Coil]
+                            |                       |
+                           GND                     GND
+
+               Demodulator Circuit (Rx):
+               Antenna Node
+                |
+               [Schottky Diode BAT54S / 1N4148]
+                |
+                +---+---[RC Filter: Resistor 10k + Capacitor 1nF to GND]
+                |
+   PA1 (TIM2_CH3) <--- Envelope Data Input to MCU
+```
+
 ---
 
 ## <a id="credits-and-support"></a>🤝 Credits and Support
