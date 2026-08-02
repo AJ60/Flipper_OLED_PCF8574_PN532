@@ -1,7 +1,7 @@
 App(
     appid="u2f",
     name="U2F",
-    apptype=FlipperAppType.MENUEXTERNAL,
+    apptype=DIYAppType.MENUEXTERNAL,
     entry_point="u2f_app",
     stack_size=2 * 1024,
     icon="A_U2F_14",

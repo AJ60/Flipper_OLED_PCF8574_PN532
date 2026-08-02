@@ -1,7 +1,7 @@
 App(
     appid="chess",
     name="Chess",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="flipchess_app",
     requires=[
         "gui",

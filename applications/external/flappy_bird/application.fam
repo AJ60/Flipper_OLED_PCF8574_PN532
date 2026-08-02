@@ -1,7 +1,7 @@
 App(
     appid="flappy_bird",
     name="Flappy Bird",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="flappy_game_app",
     requires=["gui"],
     stack_size=4 * 1024,

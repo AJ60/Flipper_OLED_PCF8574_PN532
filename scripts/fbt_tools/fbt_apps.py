@@ -3,7 +3,7 @@ from fbt.appmanifest import (
     AppManager,
     AppBuildset,
     FlipperApplication,
-    FlipperAppType,
+    DIYAppType,
     FlipperManifestException,
 )
 from SCons.Action import Action
@@ -19,22 +19,22 @@ from SCons.Warnings import WarningOnByDefault, warn
 
 class ApplicationsCGenerator:
     APP_TYPE_MAP = {
-        FlipperAppType.SERVICE: ("FlipperInternalApplication", "FLIPPER_SERVICES"),
-        FlipperAppType.SYSTEM: ("FlipperInternalApplication", "FLIPPER_SYSTEM_APPS"),
-        FlipperAppType.APP: ("FlipperInternalApplication", "FLIPPER_APPS"),
-        FlipperAppType.DEBUG: ("FlipperInternalApplication", "FLIPPER_DEBUG_APPS"),
-        FlipperAppType.STARTUP: (
+        DIYAppType.SERVICE: ("FlipperInternalApplication", "FLIPPER_SERVICES"),
+        DIYAppType.SYSTEM: ("FlipperInternalApplication", "FLIPPER_SYSTEM_APPS"),
+        DIYAppType.APP: ("FlipperInternalApplication", "FLIPPER_APPS"),
+        DIYAppType.DEBUG: ("FlipperInternalApplication", "FLIPPER_DEBUG_APPS"),
+        DIYAppType.STARTUP: (
             "FlipperInternalOnStartHook",
             "FLIPPER_ON_SYSTEM_START",
         ),
     }
 
     EXTERNAL_TYPE_MAP = {
-        FlipperAppType.MENUEXTERNAL: (
+        DIYAppType.MENUEXTERNAL: (
             "FlipperExternalApplication",
             "FLIPPER_EXTERNAL_APPS",
         ),
-        FlipperAppType.SETTINGS: (
+        DIYAppType.SETTINGS: (
             "FlipperExternalApplication",
             "FLIPPER_SETTINGS_APPS",
         ),
@@ -45,12 +45,12 @@ class ApplicationsCGenerator:
         self.autorun = autorun_app
 
     def get_app_ep_forward(self, app: FlipperApplication):
-        if app.apptype == FlipperAppType.STARTUP:
+        if app.apptype == DIYAppType.STARTUP:
             return f"extern void {app.entry_point}(void);"
         return f"extern int32_t {app.entry_point}(void* p);"
 
     def get_app_descr(self, app: FlipperApplication):
-        if app.apptype == FlipperAppType.STARTUP:
+        if app.apptype == DIYAppType.STARTUP:
             return app.entry_point
         return f"""
     {{.app = {app.entry_point},
@@ -93,7 +93,7 @@ class ApplicationsCGenerator:
                 f"const size_t {entry_block}_COUNT = COUNT_OF({entry_block});"
             )
 
-        archive_app = self.buildset.get_apps_of_type(FlipperAppType.ARCHIVE)
+        archive_app = self.buildset.get_apps_of_type(DIYAppType.ARCHIVE)
         if archive_app:
             contents.extend(
                 [
@@ -154,7 +154,7 @@ def PrepareApplicationsBuild(env):
 def DumpApplicationConfig(target, source, env):
     print(f"Loaded {len(env['APPMGR'].known_apps)} app definitions.")
     print(fg.boldgreen("Firmware modules configuration:"))
-    for apptype in FlipperAppType:
+    for apptype in DIYAppType:
         app_sublist = env["APPBUILD"].get_apps_of_type(apptype)
         # Print a warning if any apps in the list have same .order value
         unique_order_values = set(app.order for app in app_sublist)

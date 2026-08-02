@@ -3,7 +3,7 @@
 App(
     appid="passy",  # Must be unique
     name="Passport Reader",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="passy_app",
     stack_size=2 * 1024,
     fap_category="NFC",

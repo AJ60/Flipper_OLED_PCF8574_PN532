@@ -1,7 +1,7 @@
 App(
     appid="debug_apps",
     name="Basic debug apps bundle",
-    apptype=FlipperAppType.METAPACKAGE,
+    apptype=DIYAppType.METAPACKAGE,
     provides=[
         "blink_test",
         "vibro_test",

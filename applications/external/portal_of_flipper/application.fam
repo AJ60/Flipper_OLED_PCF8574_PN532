@@ -3,7 +3,7 @@
 App(
     appid="portal_of_flipper",  # Must be unique
     name="Portal Of Flipper",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="portal_of_flipper_app",
     stack_size=5 * 1024,
     fap_category="USB",

@@ -1,7 +1,7 @@
 App(
     appid="locale",
     name="LocaleSrv",
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="locale_on_system_start",
     cdefines=["SRV_LOCALE"],
     order=70,

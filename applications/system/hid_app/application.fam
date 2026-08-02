@@ -1,7 +1,7 @@
 App(
     appid="hid_usb",
     name="USB Remote",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="hid_usb_app",
     stack_size=2 * 1024,
     sources=["*.c", "!transport_ble.c"],
@@ -18,7 +18,7 @@ App(
 App(
     appid="hid_ble",
     name="Bluetooth Remote",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="hid_ble_app",
     stack_size=2 * 1024,
     sources=["*.c", "!transport_usb.c"],

@@ -1,7 +1,7 @@
 App(
     appid="pokemon",
     name="[GB] Pokemon Trading",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="pokemon_app",
     requires=["gui"],
     stack_size=2 * 1024,

@@ -1,7 +1,7 @@
 App(
     appid="region",
     name="RegionSrv",
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     targets=["f7"],
     entry_point="region_on_system_start",
     cdefines=["SRV_REGION"],

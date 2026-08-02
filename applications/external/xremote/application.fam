@@ -1,7 +1,7 @@
 App(
     appid="flipper_xremote",
     name="XRemote",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="xremote_main",
     requires=["gui", "dialogs", "infrared"],
     stack_size=3 * 1024,

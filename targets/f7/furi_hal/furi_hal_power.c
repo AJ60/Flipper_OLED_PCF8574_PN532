@@ -71,17 +71,24 @@ float curr_soc_percent = 100.0f;
 const float R_INTERNAL = 0.25f;
 #endif
 
+static void furi_hal_power_ina_alert_isr(void* ctx) {
+    UNUSED(ctx);
+    FURI_LOG_E(TAG, "INA226 ALERT Triggered on PB1! Emergency overcurrent event");
+}
+
 void furi_hal_power_init(void) {
 #ifdef USE_INA219
-    FURI_LOG_I(TAG, "Initializing INA219 power sensor");
-    // Initialize our INA219 wrapper; detection result stored internally
+    FURI_LOG_I(TAG, "Initializing INA219/INA226 power sensor");
     furi_hal_ina219_init();
-    FURI_LOG_I(TAG, "INA219 initialization complete");
+    if(furi_hal_ina219_is_ready()) {
+        furi_hal_ina226_set_overcurrent_limit(2.0f);
+        furi_hal_ina226_enable_alert_interrupt(furi_hal_power_ina_alert_isr, NULL);
+    }
+    FURI_LOG_I(TAG, "INA219/INA226 initialization complete");
 #else
-    // INA219 not used, do nothing
-FURI_LOG_I(TAG, "INA219 support not enabled at build time");
+    FURI_LOG_I(TAG, "INA219 support not enabled at build time");
 #endif
-// Initialize ADC so fallback path is ready
+    // Initialize ADC so fallback path is ready
     furi_hal_adc_init();
 }
 
@@ -452,29 +459,15 @@ FURI_NORETURN void furi_hal_power_reset(void) {
 }
 
 bool furi_hal_power_enable_otg(void) {
-    // furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-    // bq25896_set_boost_lim(&furi_hal_i2c_handle_power, BoostLim_2150);
-    // bq25896_enable_otg(&furi_hal_i2c_handle_power);
-    // furi_delay_ms(30);
-    // bool ret = bq25896_is_otg_enabled(&furi_hal_i2c_handle_power);
-    // bq25896_set_boost_lim(&furi_hal_i2c_handle_power, BoostLim_1400);
-    // furi_hal_i2c_release(&furi_hal_i2c_handle_power);
-    bool ret = false; // Always return false as OTG is not used
-    return ret;
+    return false; // OTG is not supported on DIY board
 }
 
 void furi_hal_power_disable_otg(void) {
-    // furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-    // bq25896_disable_otg(&furi_hal_i2c_handle_power);
-    // furi_hal_i2c_release(&furi_hal_i2c_handle_power);
+    // OTG is not supported on DIY board
 }
 
 bool furi_hal_power_is_otg_enabled(void) {
-    // furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-    // bool ret = bq25896_is_otg_enabled(&furi_hal_i2c_handle_power);
-    // furi_hal_i2c_release(&furi_hal_i2c_handle_power);
-    bool ret = false; // Always return false as OTG is not used
-    return ret;
+    return false; // OTG is not supported on DIY board
 }
 
 static float furi_hal_power_battery_charge_voltage_limit = 4.208f;

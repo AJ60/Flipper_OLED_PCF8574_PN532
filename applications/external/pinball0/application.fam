@@ -3,7 +3,7 @@
 App(
     appid="pinball0",
     name="Pinball0",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="pinball0_app",
     stack_size=2 * 1024,  # neede?
     fap_category="Games",

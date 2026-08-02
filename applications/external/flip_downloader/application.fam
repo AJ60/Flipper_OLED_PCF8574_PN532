@@ -1,7 +1,7 @@
 App(
     appid="flip_downloader",
     name="FlipDownloader",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="main_flip_downloader",
     stack_size=4 * 1024,
     fap_icon="app.png",

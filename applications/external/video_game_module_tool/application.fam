@@ -1,7 +1,7 @@
 App(
     appid="video_game_module_tool",
     name="[VGM] Video Game Module Tool",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="vgm_tool_app",
     requires=[
         "gui",

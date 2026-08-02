@@ -14,6 +14,7 @@
 #define SSD1306_I2C_ADDRESS 0x3C
 
 volatile bool display_needs_reinit = false;
+volatile bool display_is_sleeping = false;
 
 uint8_t u8g2_gpio_and_delay_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
     UNUSED(u8x8);
@@ -59,30 +60,6 @@ uint8_t u8g2_gpio_and_delay_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, vo
 
     return 1;
 }
-
-// uint8_t u8x8_hw_spi_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
-//     UNUSED(u8x8);
-//     switch(msg) {
-//     case U8X8_MSG_BYTE_SEND:
-//         furi_hal_spi_bus_tx(&furi_hal_spi_bus_handle_display, (uint8_t*)arg_ptr, arg_int, 10000);
-//         break;
-//     case U8X8_MSG_BYTE_SET_DC:
-//         furi_hal_gpio_write(&gpio_display_di, arg_int);
-//         break;
-//     case U8X8_MSG_BYTE_INIT:
-//         break;
-//     case U8X8_MSG_BYTE_START_TRANSFER:
-//         furi_hal_spi_acquire(&furi_hal_spi_bus_handle_display);
-//         break;
-//     case U8X8_MSG_BYTE_END_TRANSFER:
-//         furi_hal_spi_release(&furi_hal_spi_bus_handle_display);
-//         break;
-//     default:
-//         return 0;
-//     }
-
-//     return 1;
-// }
 
 /**
  * Hardware I2C byte callback for u8g2 library with SSD1306 OLED
@@ -143,17 +120,17 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
         // Send accumulated buffer via hardware I2C as ONE transaction
         if(buf_idx > 0) {
             bool success = false;
-            for(int retry = 0; retry < 8; retry++) {
+            for(int retry = 0; retry < 2; retry++) {
                 success = furi_hal_i2c_tx(
                     &furi_hal_i2c_handle_power,
                     u8x8_GetI2CAddress(u8x8),
                     buffer,
                     buf_idx,
-                    10);
+                    6);
                 if(success) {
                     break;
                 }
-                furi_delay_ms(2);
+                furi_delay_ms(1);
             }
             if(!success) {
                 display_needs_reinit = true;
@@ -183,31 +160,43 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
 #define ST756X_CMD_R_M_W            0b11100000 /**< 0:0 Enter Read Modify Write mode: read+0, write+1 */
 #define ST756X_CMD_END              0b11101110 /**< 0:0 Exit Read Modify Write mode */
 #define ST756X_CMD_RESET            0b11100010 /**< 0:0 Software Reset */
-#define ST756X_CMD_COM_DIRECTION    0b11000000 /**< 0:0 Com direction reverse: +0b1000 */
-#define ST756X_CMD_POWER_CONTROL    0b00101000 /**< 0:0 Power control: last 3 bits VB:VR:VF */
-#define ST756X_CMD_REGULATION_RATIO 0b00100000 /**< 0:0 Regulation resistor ration: last 3bits */
-#define ST756X_CMD_SET_EV           0b10000001 /**< 0:0 Set electronic volume: 5 bits in next byte */
-#define ST756X_CMD_SET_BOOSTER \
+#define SSD1306_CMD_ON_OFF           0b10101110 /**< 0:0 Switch Display ON/OFF: last bit */
+#define SSD1306_CMD_SET_LINE         0b01000000 /**< 0:0 Set Start Line: last 6 bits  */
+#define SSD1306_CMD_SET_PAGE         0b10110000 /**< 0:0 Set Page address: last 4 bits */
+#define SSD1306_CMD_SET_COLUMN_MSB   0b00010000 /**< 0:0 Set Column MSB: last 4 bits */
+#define SSD1306_CMD_SET_COLUMN_LSB   0b00000000 /**< 0:0 Set Column LSB: last 4 bits */
+#define SSD1306_CMD_SEG_DIRECTION    0b10100000 /**< 0:0 Reverse scan direction of SEG: last bit */
+#define SSD1306_CMD_INVERSE_DISPLAY  0b10100110 /**< 0:0 Invert display: last bit */
+#define SSD1306_CMD_ALL_PIXEL_ON     0b10100100 /**< 0:0 Set all pixel on: last bit */
+#define SSD1306_CMD_BIAS_SELECT      0b10100010 /**< 0:0 Select 1/9(0) or 1/7(1) bias: last bit */
+#define SSD1306_CMD_R_M_W            0b11100000 /**< 0:0 Enter Read Modify Write mode: read+0, write+1 */
+#define SSD1306_CMD_END              0b11101110 /**< 0:0 Exit Read Modify Write mode */
+#define SSD1306_CMD_RESET            0b11100010 /**< 0:0 Software Reset */
+#define SSD1306_CMD_COM_DIRECTION    0b11000000 /**< 0:0 Com direction reverse: +0b1000 */
+#define SSD1306_CMD_POWER_CONTROL    0b00101000 /**< 0:0 Power control: last 3 bits VB:VR:VF */
+#define SSD1306_CMD_REGULATION_RATIO 0b00100000 /**< 0:0 Regulation resistor ration: last 3bits */
+#define SSD1306_CMD_SET_EV           0b10000001 /**< 0:0 Set electronic volume: 5 bits in next byte */
+#define SSD1306_CMD_SET_BOOSTER \
     0b11111000 /**< 0:0 Set Booster level, 4X(0) or 5X(1): last bit in next byte */
-#define ST756X_CMD_NOP 0b11100011 /**< 0:0 No operation */
+#define SSD1306_CMD_NOP 0b11100011 /**< 0:0 No operation */
 
-static const uint8_t u8x8_d_st756x_powersave0_seq[] = {
-    U8X8_START_TRANSFER(), /* enable chip, delay is part of the transfer start */
-    U8X8_C(ST756X_CMD_ALL_PIXEL_ON | 0b0), /* all pixel off */
-    U8X8_C(ST756X_CMD_ON_OFF | 0b1), /* display on */
+static const uint8_t u8x8_d_ssd1306_powersave0_seq[] = {
+    U8X8_START_TRANSFER(), /* enable chip */
+    U8X8_C(0xA4), /* Entire Display ON: OFF (Normal Display) */
+    U8X8_C(0xAF), /* Display ON */
     U8X8_END_TRANSFER(), /* disable chip */
     U8X8_END() /* end of sequence */
 };
 
-static const uint8_t u8x8_d_st756x_powersave1_seq[] = {
-    U8X8_START_TRANSFER(), /* enable chip, delay is part of the transfer start */
-    U8X8_C(ST756X_CMD_ON_OFF | 0b0), /* display off */
-    U8X8_C(ST756X_CMD_ALL_PIXEL_ON | 0b1), /* all pixel on */
+static const uint8_t u8x8_d_ssd1306_powersave1_seq[] = {
+    U8X8_START_TRANSFER(), /* enable chip */
+    U8X8_C(0xAE), /* Display OFF */
+    U8X8_C(0xA4), /* Entire Display ON: OFF (Normal Display) */
     U8X8_END_TRANSFER(), /* disable chip */
     U8X8_END() /* end of sequence */
 };
 
-static const uint8_t u8x8_d_st756x_flip0_seq[] = {
+static const uint8_t u8x8_d_ssd1306_flip0_seq[] = {
     U8X8_START_TRANSFER(), /* enable chip, delay is part of the transfer start */
     U8X8_C(0x0a1), /* segment remap a0/a1*/
     U8X8_C(0x0c0), /* c0: scan dir normal, c8: reverse */
@@ -215,7 +204,7 @@ static const uint8_t u8x8_d_st756x_flip0_seq[] = {
     U8X8_END() /* end of sequence */
 };
 
-static const uint8_t u8x8_d_st756x_flip1_seq[] = {
+static const uint8_t u8x8_d_ssd1306_flip1_seq[] = {
     U8X8_START_TRANSFER(), /* enable chip, delay is part of the transfer start */
     U8X8_C(0x0a0), /* segment remap a0/a1*/
     U8X8_C(0x0c8), /* c0: scan dir normal, c8: reverse */
@@ -223,7 +212,7 @@ static const uint8_t u8x8_d_st756x_flip1_seq[] = {
     U8X8_END() /* end of sequence */
 };
 
-static const u8x8_display_info_t u8x8_st756x_128x64_display_info = {
+static const u8x8_display_info_t u8x8_ssd1306_128x64_display_info = {
     .chip_enable_level = 0,
     .chip_disable_level = 1,
     .post_chip_enable_wait_ns = 150, /* st7565 datasheet, table 26, tcsh */
@@ -276,7 +265,7 @@ static uint8_t u8g2_get_oled_driver(void) {
     return driver;
 }
 
-uint8_t u8x8_d_st756x_common(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
+uint8_t u8x8_d_ssd1306_common(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
     uint8_t x, c;
     uint8_t* ptr;
 
@@ -314,14 +303,14 @@ uint8_t u8x8_d_st756x_common(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* a
         break;
     case U8X8_MSG_DISPLAY_SET_POWER_SAVE:
         if(arg_int == 0)
-            u8x8_cad_SendSequence(u8x8, u8x8_d_st756x_powersave0_seq);
+            u8x8_cad_SendSequence(u8x8, u8x8_d_ssd1306_powersave0_seq);
         else
-            u8x8_cad_SendSequence(u8x8, u8x8_d_st756x_powersave1_seq);
+            u8x8_cad_SendSequence(u8x8, u8x8_d_ssd1306_powersave1_seq);
         break;
 #ifdef U8X8_WITH_SET_CONTRAST
     case U8X8_MSG_DISPLAY_SET_CONTRAST:
         u8x8_cad_StartTransfer(u8x8);
-        u8x8_cad_SendCmd(u8x8, ST756X_CMD_SET_EV);
+        u8x8_cad_SendCmd(u8x8, SSD1306_CMD_SET_EV);
         u8x8_cad_SendArg(u8x8, arg_int >> 2); /* st7565 has range from 0 to 63 */
         u8x8_cad_EndTransfer(u8x8);
         break;
@@ -332,50 +321,63 @@ uint8_t u8x8_d_st756x_common(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* a
     return 1;
 }
 
-void u8x8_d_st756x_init(u8x8_t* u8x8, uint8_t contrast, uint8_t regulation_ratio, bool bias) {
+void u8x8_d_ssd1306_init(u8x8_t* u8x8, uint8_t contrast, uint8_t regulation_ratio, bool bias) {
     contrast = contrast & 0b00111111;
     regulation_ratio = regulation_ratio & 0b111;
 
     u8x8_cad_StartTransfer(u8x8);
     // Reset
-    u8x8_cad_SendCmd(u8x8, ST756X_CMD_RESET);
+    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_RESET);
     // Bias: 1/7(0b1) or 1/9(0b0)
-    u8x8_cad_SendCmd(u8x8, ST756X_CMD_BIAS_SELECT | bias);
+    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_BIAS_SELECT | bias);
     // Page, Line and Segment config
-    u8x8_cad_SendCmd(u8x8, ST756X_CMD_SEG_DIRECTION);
-    u8x8_cad_SendCmd(u8x8, ST756X_CMD_COM_DIRECTION | 0b1000);
-    u8x8_cad_SendCmd(u8x8, ST756X_CMD_SET_LINE);
+    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_SEG_DIRECTION);
+    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_COM_DIRECTION | 0b1000);
+    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_SET_LINE);
     // Set Regulation Ratio
-    u8x8_cad_SendCmd(u8x8, ST756X_CMD_REGULATION_RATIO | regulation_ratio);
+    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_REGULATION_RATIO | regulation_ratio);
     // Set EV
-    u8x8_cad_SendCmd(u8x8, ST756X_CMD_SET_EV);
+    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_SET_EV);
     u8x8_cad_SendArg(u8x8, contrast);
     // Enable power
-    u8x8_cad_SendCmd(u8x8, ST756X_CMD_POWER_CONTROL | 0b111);
+    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_POWER_CONTROL | 0b111);
 
     u8x8_cad_EndTransfer(u8x8);
 }
 
-void u8x8_d_st756x_set_contrast(u8x8_t* u8x8, int8_t contrast_offset) {
-    uint8_t contrast = (furi_hal_version_get_hw_display() == FuriHalVersionDisplayMgg) ?
-                           CONTRAST_MGG :
-                           CONTRAST_ERC;
-    contrast += contrast_offset;
-    contrast = contrast & 0b00111111;
+void u8x8_d_ssd1306_set_contrast(u8x8_t* u8x8, int32_t contrast_val) {
+    uint8_t contrast;
+    if(contrast_val > 0 && contrast_val <= 255) {
+        contrast = (uint8_t)contrast_val;
+    } else {
+        uint8_t base_contrast = (furi_hal_version_get_hw_display() == FuriHalVersionDisplayMgg) ?
+                               CONTRAST_MGG :
+                               CONTRAST_ERC;
+        int32_t c = (int32_t)base_contrast + contrast_val;
+        if(c < 1) c = 1;
+        if(c > 255) c = 255;
+        contrast = (uint8_t)c;
+    }
 
     u8x8_cad_StartTransfer(u8x8);
-    u8x8_cad_SendCmd(u8x8, ST756X_CMD_SET_EV);
+    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_SET_EV);
     u8x8_cad_SendArg(u8x8, contrast);
     u8x8_cad_EndTransfer(u8x8);
 }
 
-uint8_t u8x8_d_st756x_flipper(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
+void u8x8_d_ssd1306_set_invert(u8x8_t* u8x8, bool invert) {
+    u8x8_cad_StartTransfer(u8x8);
+    u8x8_cad_SendCmd(u8x8, invert ? 0xA7 : 0xA6);
+    u8x8_cad_EndTransfer(u8x8);
+}
+
+uint8_t u8x8_d_ssd1306_flipper(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
     /* call common procedure first and handle messages there */
-    if(u8x8_d_st756x_common(u8x8, msg, arg_int, arg_ptr) == 0) {
+    if(u8x8_d_ssd1306_common(u8x8, msg, arg_int, arg_ptr) == 0) {
         /* msg not handled, then try here */
         switch(msg) {
         case U8X8_MSG_DISPLAY_SETUP_MEMORY:
-            u8x8_d_helper_display_setup_memory(u8x8, &u8x8_st756x_128x64_display_info);
+            u8x8_d_helper_display_setup_memory(u8x8, &u8x8_ssd1306_128x64_display_info);
             break;
         case U8X8_MSG_DISPLAY_INIT:
             u8x8_d_helper_display_init(u8x8);
@@ -387,7 +389,7 @@ uint8_t u8x8_d_st756x_flipper(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* 
                  * RR = 10 / ((1 - (63 - 32) / 162) * 2.1) ~= 5.88 is 6 (0b110)
                  * Bias = 1/9 (false)
                  */
-                u8x8_d_st756x_init(u8x8, CONTRAST_MGG, 0b110, false);
+                u8x8_d_ssd1306_init(u8x8, CONTRAST_MGG, 0b110, false);
             } else {
                 /* ERC v1(ST7565) and v2(ST7567)
                  * EV = 33
@@ -395,15 +397,15 @@ uint8_t u8x8_d_st756x_flipper(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* 
                  * RR = 9.3 / ((1 - (63 - 32) / 162) * 2.1) ~= 5.47 is 5.5 (0b101)
                  * Bias = 1/9 (false)
                  */
-                u8x8_d_st756x_init(u8x8, CONTRAST_ERC, 0b101, false);
+                u8x8_d_ssd1306_init(u8x8, CONTRAST_ERC, 0b101, false);
             }
             break;
         case U8X8_MSG_DISPLAY_SET_FLIP_MODE:
             if(arg_int == 0) {
-                u8x8_cad_SendSequence(u8x8, u8x8_d_st756x_flip1_seq);
+                u8x8_cad_SendSequence(u8x8, u8x8_d_ssd1306_flip1_seq);
                 u8x8->x_offset = u8x8->display_info->default_x_offset;
             } else {
-                u8x8_cad_SendSequence(u8x8, u8x8_d_st756x_flip0_seq);
+                u8x8_cad_SendSequence(u8x8, u8x8_d_ssd1306_flip0_seq);
                 u8x8->x_offset = u8x8->display_info->flipmode_x_offset;
             }
             break;
@@ -415,7 +417,7 @@ uint8_t u8x8_d_st756x_flipper(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* 
     return 1;
 }
 
-void u8g2_Setup_st756x_flipper(
+void u8g2_Setup_ssd1306_flipper(
     u8g2_t* u8g2,
     const u8g2_cb_t* rotation,
     u8x8_msg_cb byte_cb,

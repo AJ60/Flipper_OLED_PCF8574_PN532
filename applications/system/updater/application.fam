@@ -1,7 +1,7 @@
 App(
     appid="updater",
     name="UpdaterSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     cdefines=["SRV_UPDATER"],
     requires=[
         "gui",
@@ -16,7 +16,7 @@ App(
 App(
     appid="updater_app",
     name="UpdaterApp",
-    apptype=FlipperAppType.SYSTEM,
+    apptype=DIYAppType.SYSTEM,
     cdefines=["APP_UPDATER"],
     requires=[
         "gui",
@@ -32,7 +32,7 @@ App(
 
 App(
     appid="updater_start",
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="updater_on_system_start",
     requires=["updater_app"],
     order=90,

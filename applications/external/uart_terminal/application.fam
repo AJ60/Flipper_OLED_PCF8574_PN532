@@ -1,7 +1,7 @@
 App(
     appid="uart_terminal",
     name="[UART] UART Terminal",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="uart_terminal_app",
     requires=["gui"],
     stack_size=1 * 1024,

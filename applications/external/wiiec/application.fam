@@ -5,7 +5,7 @@ App(
     appid="wii_ec_anal",
     name="[WII] EC Analyser",
     # --- Entry point
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="wii_ec_anal",
     # --- Interaction
     cdefines=["APP_WII_EC_ANAL"],

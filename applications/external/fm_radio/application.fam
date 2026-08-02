@@ -1,7 +1,7 @@
 App(
     appid="fm_radio",
     name="[TEA5767] FM Radio",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="my_fm_radio",
     stack_size=1 * 1024,
     fap_category="GPIO",

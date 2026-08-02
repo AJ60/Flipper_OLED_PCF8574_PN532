@@ -947,7 +947,7 @@ FuriStatus furi_hal_sd_init(bool power_reset) {
         sd_spi_write_byte(SD_DUMMY_BYTE);
     }
 
-    for(uint8_t i = 0; i < 128; i++) {
+    for(uint8_t i = 0; i < 3; i++) {
         status = sd_spi_init_spi_mode();
         if(status == FuriStatusOk) {
             // SD initialized and init to SPI mode properly

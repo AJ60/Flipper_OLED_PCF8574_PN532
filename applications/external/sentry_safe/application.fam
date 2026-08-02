@@ -1,7 +1,7 @@
 App(
     appid="gpio_sentry_safe",
     name="[GPIO] Sentry Safe",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="sentry_safe_app",
     requires=["gui"],
     stack_size=1 * 1024,

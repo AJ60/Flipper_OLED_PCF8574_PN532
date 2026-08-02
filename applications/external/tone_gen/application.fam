@@ -3,7 +3,7 @@
 App(
     appid="tone_gen",  # Must be unique
     name="Tone Generator",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="tone_gen_app",
     stack_size=2 * 1024,
     fap_category="Tools",

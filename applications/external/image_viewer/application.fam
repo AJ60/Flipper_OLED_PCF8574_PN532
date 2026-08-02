@@ -1,5 +1,5 @@
 App(
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     appid="image_viewer",
     name="Image Viewer",
     fap_description="Image viewer for flipper zero!",

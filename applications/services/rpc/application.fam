@@ -1,6 +1,6 @@
 App(
     appid="rpc_start",
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="rpc_on_system_start",
     cdefines=["SRV_RPC"],
     requires=["cli"],

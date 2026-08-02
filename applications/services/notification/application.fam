@@ -1,7 +1,7 @@
 App(
     appid="notification",
     name="NotificationSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="notification_srv",
     cdefines=["SRV_NOTIFICATION"],
     requires=["input"],

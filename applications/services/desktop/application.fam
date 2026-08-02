@@ -1,7 +1,7 @@
 App(
     appid="desktop",
     name="DesktopSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="desktop_srv",
     cdefines=["SRV_DESKTOP"],
     requires=[

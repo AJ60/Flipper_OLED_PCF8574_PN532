@@ -1,7 +1,7 @@
 App(
     appid="esp8266_deauther",
     name="[ESP8266] Deauther",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="esp8266_deauth_app",
     requires=["gui"],
     stack_size=2 * 1024,

@@ -1,6 +1,6 @@
 App(
     appid="cli",
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="cli_on_system_start",
     cdefines=["SRV_CLI"],
     sources=[
@@ -18,7 +18,7 @@ App(
 App(
     appid="cli_vcp",
     name="CliVcpSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="cli_vcp_srv",
     stack_size=1024,
     order=10,
@@ -28,7 +28,7 @@ App(
 
 App(
     appid="cli_hello_world",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_hello_world_ep",
     requires=["cli"],
     sources=["commands/hello_world.c"],
@@ -36,7 +36,7 @@ App(
 
 App(
     appid="cli_neofetch",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_neofetch_ep",
     requires=["cli"],
     sources=["commands/neofetch.c"],
@@ -44,7 +44,7 @@ App(
 
 App(
     appid="cli_subshell_demo",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_subshell_demo_ep",
     requires=["cli"],
     sources=["commands/subshell_demo.c"],
@@ -52,7 +52,7 @@ App(
 
 App(
     appid="cli_buzzer",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_buzzer_ep",
     requires=["cli"],
     sources=["commands/buzzer.c"],
@@ -61,7 +61,7 @@ App(
 App(
     appid="cli_src",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_src_ep",
     requires=["cli"],
     sources=["cli_main_commands.c"],
@@ -70,7 +70,7 @@ App(
 App(
     appid="cli_uptime",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_uptime_ep",
     requires=["cli"],
     sources=["cli_main_commands.c"],
@@ -79,7 +79,7 @@ App(
 App(
     appid="cli_date",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_date_ep",
     requires=["cli"],
     sources=["cli_main_commands.c"],
@@ -88,7 +88,7 @@ App(
 App(
     appid="cli_sysctl",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_sysctl_ep",
     requires=["cli"],
     sources=["cli_main_commands.c"],
@@ -97,7 +97,7 @@ App(
 App(
     appid="cli_top",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_top_ep",
     requires=["cli"],
     sources=["cli_main_commands.c"],
@@ -106,7 +106,7 @@ App(
 App(
     appid="cli_vibro",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_vibro_ep",
     requires=["cli"],
     sources=["cli_main_commands.c"],
@@ -115,7 +115,7 @@ App(
 App(
     appid="cli_led",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_led_ep",
     requires=["cli"],
     sources=["cli_main_commands.c"],
@@ -124,7 +124,7 @@ App(
 App(
     appid="cli_gpio",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_gpio_ep",
     requires=["cli"],
     sources=["cli_main_commands.c", "cli_command_gpio.c"],
@@ -133,7 +133,7 @@ App(
 App(
     appid="cli_i2c",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_i2c_ep",
     requires=["cli"],
     sources=["cli_main_commands.c"],
@@ -142,7 +142,7 @@ App(
 App(
     appid="cli_clear",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_clear_ep",
     requires=["cli"],
     sources=["cli_main_commands.c"],

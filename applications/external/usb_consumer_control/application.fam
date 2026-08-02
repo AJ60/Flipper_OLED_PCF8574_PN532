@@ -1,7 +1,7 @@
 App(
     appid="usb_ccb",
     name="USB Consumer Control",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="usb_ccb_app",
     stack_size=1 * 1024,
     fap_author="piraija",

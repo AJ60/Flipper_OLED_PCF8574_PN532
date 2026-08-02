@@ -1,7 +1,7 @@
 App(
     appid="text_box_view_test",
     name="Text Box View Test",
-    apptype=FlipperAppType.DEBUG,
+    apptype=DIYAppType.DEBUG,
     entry_point="text_box_view_test_app",
     requires=["gui"],
     stack_size=1 * 1024,

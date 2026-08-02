@@ -1,7 +1,7 @@
 App(
     appid="nfc_playlist",
     name="NFC Playlist",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="nfc_playlist_main",
     stack_size=4 * 1024,
     fap_category="NFC",

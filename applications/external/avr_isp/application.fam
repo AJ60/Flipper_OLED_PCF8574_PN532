@@ -1,7 +1,7 @@
 App(
     appid="avr_isp",
     name="[AVR] AVR Flasher",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="avr_isp_app",
     requires=["gui"],
     stack_size=4 * 1024,

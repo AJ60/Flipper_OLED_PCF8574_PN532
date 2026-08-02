@@ -1,7 +1,7 @@
 App(
     appid="cli_gui",
     name="CLI-GUI Bridge",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="cligui_main",
     requires=["gui", "cli"],
     stack_size=8 * 1024,

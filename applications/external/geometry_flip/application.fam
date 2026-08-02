@@ -3,7 +3,7 @@
 App(
     appid="geometry_flip",  # Must be unique
     name="Geometry Flip",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="geometry_dash_app",
     stack_size=2 * 1024,
     fap_category="Games",

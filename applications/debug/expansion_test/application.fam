@@ -1,7 +1,7 @@
 App(
     appid="expansion_test",
     name="Expansion Module Test",
-    apptype=FlipperAppType.DEBUG,
+    apptype=DIYAppType.DEBUG,
     entry_point="expansion_test_app",
     requires=["expansion_start"],
     fap_libs=["assets"],

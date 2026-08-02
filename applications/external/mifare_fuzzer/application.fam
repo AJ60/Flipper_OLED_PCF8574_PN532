@@ -1,7 +1,7 @@
 App(
     appid="mifare_fuzzer",
     name="Mifare Fuzzer",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="mifare_fuzzer_app",
     requires=[
         "nfc",

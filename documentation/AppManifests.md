@@ -14,7 +14,7 @@ Only two parameters are mandatory: **appid** and **apptype**. Others are optiona
 
 - **appid**: string, app ID within the build system. It is used to specify which app to include in the build configuration and resolve dependencies and conflicts.
 
-- **apptype**: member of FlipperAppType.\* enumeration. Valid values are:
+- **apptype**: member of DIYAppType.\* enumeration. Valid values are:
 
 | Enum member | Firmware component type                                                                     |
 | ----------- | ------------------------------------------------------------------------------------------- |
@@ -117,7 +117,7 @@ The `.fam` file contains one or more app definitions. For example, here's a part
 ```python
 App(
     appid="bt_start",
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="bt_on_system_start",
     order=70,
 )
@@ -125,7 +125,7 @@ App(
 App(
     appid="bt_settings",
     name="Bluetooth",
-    apptype=FlipperAppType.SETTINGS,
+    apptype=DIYAppType.SETTINGS,
     entry_point="bt_settings_app",
     stack_size=1 * 1024,
     requires=[

@@ -3,7 +3,7 @@
 App(
     appid="chief_cooker",  # Must be unique
     name="Chief Cooker",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="chief_cooker_app",
     stack_size=2 * 1024,
     fap_category="Sub-GHz",

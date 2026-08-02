@@ -1,7 +1,7 @@
 App(
     appid="lidar_emulator",
     name="LIDAR Emulator",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="lidar_emulator_app",
     requires=["gui"],
     stack_size=4 * 1024,

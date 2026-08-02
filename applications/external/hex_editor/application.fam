@@ -1,7 +1,7 @@
 App(
     appid="hex_editor",
     name="HEX Editor",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="hex_editor_app",
     requires=[
         "gui",

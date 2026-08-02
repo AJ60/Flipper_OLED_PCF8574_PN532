@@ -1,7 +1,7 @@
 App(
     appid="text_viewer",
     name="Text Viewer",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="text_viewer",
     requires=[
         "gui",

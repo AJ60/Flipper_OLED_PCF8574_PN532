@@ -51,6 +51,7 @@ typedef struct {
     uint32_t display_off_delay_ms;
     int8_t contrast;
     bool vibro_on;
+    bool display_inverted;
 } NotificationSettings;
 
 struct NotificationApp {

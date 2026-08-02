@@ -1,7 +1,7 @@
 App(
     appid="subghz",
     name="Sub-GHz",
-    apptype=FlipperAppType.MENUEXTERNAL,
+    apptype=DIYAppType.MENUEXTERNAL,
     targets=["f7"],
     entry_point="subghz_app",
     icon="A_Sub1ghz_14",
@@ -36,7 +36,7 @@ App(
 # App(
 #     appid="subghz_fap",
 #     name="Sub-GHz",
-#     apptype=FlipperAppType.EXTERNAL,
+#     apptype=DIYAppType.EXTERNAL,
 #     entry_point="subghz_fap",
 #     stack_size=3 * 1024,
 #     sources=["subghz_fap.c"],
@@ -47,7 +47,7 @@ App(
 App(
     appid="subghz_add_manually",
     name="Sub-GHz Add Manually",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     targets=["f7"],
     entry_point="subghz_add_manually",
     stack_size=3 * 1024,
@@ -76,7 +76,7 @@ App(
 App(
     appid="subghz_gps",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="subghz_gps_plugin_ep",
     requires=["subghz_gps"],
     sources=["helpers/subghz_gps.c", "helpers/minmea.c"],
@@ -85,7 +85,7 @@ App(
 App(
     appid="cli_subghz",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_subghz_ep",
     requires=["cli"],
     sources=["subghz_cli.c", "helpers/subghz_chat.c"],
@@ -94,7 +94,7 @@ App(
 App(
     appid="subghz_load_extended_settings",
     targets=["f7"],
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="subghz_extended_freq",
     sources=["subghz_extended_freq.c"],
     order=650,

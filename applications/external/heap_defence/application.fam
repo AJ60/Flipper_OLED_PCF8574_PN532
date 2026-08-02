@@ -1,7 +1,7 @@
 App(
     appid="heap_defence",
     name="Heap Defence",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="heap_defence_app",
     requires=["gui"],
     stack_size=1 * 1024,

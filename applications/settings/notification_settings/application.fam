@@ -1,7 +1,7 @@
 App(
     appid="notification_settings",
     name="OLED and Notifications",
-    apptype=FlipperAppType.SETTINGS,
+    apptype=DIYAppType.SETTINGS,
     entry_point="notification_settings_app",
     requires=["notification"],
     flags=["InsomniaSafe"],

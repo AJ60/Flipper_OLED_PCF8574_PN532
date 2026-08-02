@@ -145,6 +145,16 @@ static Attack attacks[] = {
                     },
             },
     },
+    {
+        .title = "Xiaomi Fast Connect",
+        .text = "No cooldown, long range",
+        .protocol = &protocol_xiaomi,
+        .payload =
+            {
+                .random_mac = true,
+                .cfg = {},
+            },
+    },
 };
 
 #define ATTACKS_COUNT ((signed)COUNT_OF(attacks))

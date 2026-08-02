@@ -1,7 +1,7 @@
 App(
     appid="findmy",
     name="FindMy Flipper",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="findmy_main",
     requires=["gui"],
     stack_size=2 * 1024,
@@ -17,7 +17,7 @@ App(
 App(
     appid="findmy_startup",
     targets=["f7"],
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="findmy_startup",
     sources=["findmy_startup.c", "findmy_state.c"],
     order=1010,

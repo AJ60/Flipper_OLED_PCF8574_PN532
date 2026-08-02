@@ -1,7 +1,7 @@
 App(
     appid="bpm_tapper",
     name="BPM Tapper",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="bpm_tapper_app",
     requires=["gui"],
     stack_size=2 * 1024,

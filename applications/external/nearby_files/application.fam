@@ -1,7 +1,7 @@
 App(
     appid="nearby_files",
     name="[NMEA] Nearby Files",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="nearby_files_app",
     stack_size=4 * 1024,
     fap_icon="nearby_files_10px.png",

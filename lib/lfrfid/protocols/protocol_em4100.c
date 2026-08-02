@@ -83,21 +83,34 @@ uint32_t protocol_em4100_get_em4305_bitrate(ProtocolEM4100* proto) {
 }
 
 uint16_t protocol_em4100_get_short_time_low(ProtocolEM4100* proto) {
+    // DIY: /16 half-bits ~64us are marginal on envelope AFE — widen fixed band
+    if(proto->clock_per_bit == 16) {
+        return 30;
+    }
     return EM_READ_SHORT_TIME_BASE / protocol_em4100_get_time_divisor(proto) -
            EM_READ_JITTER_TIME_BASE / protocol_em4100_get_time_divisor(proto);
 }
 
 uint16_t protocol_em4100_get_short_time_high(ProtocolEM4100* proto) {
+    if(proto->clock_per_bit == 16) {
+        return 95;
+    }
     return EM_READ_SHORT_TIME_BASE / protocol_em4100_get_time_divisor(proto) +
            EM_READ_JITTER_TIME_BASE / protocol_em4100_get_time_divisor(proto);
 }
 
 uint16_t protocol_em4100_get_long_time_low(ProtocolEM4100* proto) {
+    if(proto->clock_per_bit == 16) {
+        return 100;
+    }
     return EM_READ_LONG_TIME_BASE / protocol_em4100_get_time_divisor(proto) -
            EM_READ_JITTER_TIME_BASE / protocol_em4100_get_time_divisor(proto);
 }
 
 uint16_t protocol_em4100_get_long_time_high(ProtocolEM4100* proto) {
+    if(proto->clock_per_bit == 16) {
+        return 220;
+    }
     return EM_READ_LONG_TIME_BASE / protocol_em4100_get_time_divisor(proto) +
            EM_READ_JITTER_TIME_BASE / protocol_em4100_get_time_divisor(proto);
 }

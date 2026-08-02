@@ -3,7 +3,7 @@
 App(
     appid="subghz_scheduler",  # Must be unique
     name="Sub-GHz Scheduler",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="scheduler_app",
     stack_size=5 * 1024,
     fap_category="Sub-GHz",

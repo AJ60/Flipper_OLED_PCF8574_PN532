@@ -1,7 +1,7 @@
 App(
     appid="lightmeter",
     name="[BH1750] Lightmeter",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="lightmeter_app",
     requires=[
         "gui",

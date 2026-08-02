@@ -3,7 +3,7 @@
 App(
     appid="seos",  # Must be unique
     name="Seos Compatible",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="seos_app",
     stack_size=10 * 1024,
     fap_category="NFC",

@@ -4,7 +4,7 @@
 App(
     appid="f0_mtp",  # Must be unique
     name="MTP",  # Displayed in UI
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="entrypoint",
     stack_size=2 * 1024,  # size of memory stack it will allocate
     # source code settings

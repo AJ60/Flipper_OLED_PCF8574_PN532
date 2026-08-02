@@ -10,7 +10,7 @@
 
 #define TAG "SubGhzProtocolRaw"
 
-#define SUBGHZ_DOWNLOAD_MAX_SIZE 512
+#define SUBGHZ_DOWNLOAD_MAX_SIZE 2048
 
 static const SubGhzBlockConst subghz_protocol_raw_const = {
     .te_short = 50,
@@ -177,10 +177,10 @@ static bool subghz_protocol_raw_save_to_file_write(SubGhzProtocolDecoderRAW* ins
             FURI_LOG_E(TAG, "Unable to add RAW_Data");
         } else {
             instance->sample_write += instance->ind_write;
-            instance->ind_write = 0;
             is_write = true;
         }
     }
+    instance->ind_write = 0;
     return is_write;
 }
 
@@ -252,7 +252,7 @@ void subghz_protocol_decoder_raw_feed(void* context, bool level, uint32_t durati
             }
         }
 
-        if(instance->ind_write == SUBGHZ_DOWNLOAD_MAX_SIZE) {
+        if(instance->ind_write >= SUBGHZ_DOWNLOAD_MAX_SIZE) {
             subghz_protocol_raw_save_to_file_write(instance);
         }
     }

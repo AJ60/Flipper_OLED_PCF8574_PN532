@@ -6,6 +6,7 @@
 #include "lovespouse.h"
 #include "nameflood.h"
 #include "swiftpair.h"
+#include "xiaomi.h"
 
 typedef enum {
     PayloadModeRandom,

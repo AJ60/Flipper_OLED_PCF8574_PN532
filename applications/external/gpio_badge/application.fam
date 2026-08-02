@@ -1,7 +1,7 @@
 App(
     appid="gpio_badge",
     name="[DIAG] GPIO Badge",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="gpio_diag_lights_app",
     requires=["gui", "subghz"],
     stack_size=2 * 1024,

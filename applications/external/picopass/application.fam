@@ -1,7 +1,7 @@
 App(
     appid="picopass",
     name="HID iClass (PicoPass)",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     targets=["f7"],
     entry_point="picopass_app",
     sources=[
@@ -34,7 +34,7 @@ App(
 
 App(
     appid="picopass_plugin_wiegand",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="plugin_wiegand_ep",
     requires=["picopass"],
     sources=["plugin/wiegand.c"],

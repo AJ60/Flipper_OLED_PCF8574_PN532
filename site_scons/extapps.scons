@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from fbt.appmanifest import FlipperAppType
+from fbt.appmanifest import DIYAppType
 
 from SCons.Node import NodeList
 from SCons.Warnings import warn, WarningOnByDefault

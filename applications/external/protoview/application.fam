@@ -1,7 +1,7 @@
 App(
     appid="protoview",
     name="ProtoView",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="protoview_app_entry",
     requires=["gui"],
     stack_size=8 * 1024,

@@ -1,7 +1,7 @@
 App(
     appid="ibutton_converter",
     name="iButton Converter",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     targets=["f7"],
     entry_point="ibutton_converter_app",
     stack_size=2 * 1024,

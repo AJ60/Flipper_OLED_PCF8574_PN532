@@ -123,7 +123,7 @@ static void furi_hal_infrared_tim_rx_isr(void* context) {
         if(READ_BIT(INFRARED_RX_TIMER->CCMR1, TIM_CCMR1_CC1S)) {
             uint32_t duration = LL_TIM_IC_GetCaptureCH1(INFRARED_RX_TIMER) - previous_captured_ch2;
             if(infrared_tim_rx.capture_callback) {
-                infrared_tim_rx.capture_callback(infrared_tim_rx.capture_context, 1, duration);
+                infrared_tim_rx.capture_callback(infrared_tim_rx.capture_context, 0, duration);
             }
         } else {
             furi_crash();
@@ -138,7 +138,7 @@ static void furi_hal_infrared_tim_rx_isr(void* context) {
             uint32_t duration = LL_TIM_IC_GetCaptureCH2(INFRARED_RX_TIMER);
             previous_captured_ch2 = duration;
             if(infrared_tim_rx.capture_callback) {
-                infrared_tim_rx.capture_callback(infrared_tim_rx.capture_context, 0, duration);
+                infrared_tim_rx.capture_callback(infrared_tim_rx.capture_context, 1, duration);
             }
         } else {
             furi_crash();

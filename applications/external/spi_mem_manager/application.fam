@@ -1,7 +1,7 @@
 App(
     appid="spi_mem_manager",
     name="[SPI] SPI Mem Manager",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="spi_mem_app",
     requires=["gui"],
     stack_size=1 * 2048,

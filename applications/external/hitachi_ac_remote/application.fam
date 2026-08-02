@@ -1,7 +1,7 @@
 App(
     appid="hitachi_ac_remote",
     name="Hitachi AC Remote",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     targets=["f7"],
     entry_point="ac_remote_app",
     cdefines=["APP_HITACHI_AC_REMOTE"],

@@ -1,7 +1,7 @@
 App(
     appid="barcode_app",
     name="Barcode",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="barcode_main",
     requires=["gui", "storage"],
     stack_size=2 * 1024,

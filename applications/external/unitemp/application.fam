@@ -1,7 +1,7 @@
 App(
     appid="unitemp",
     name="[GPIO] Unitemp",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="unitemp_app",
     requires=[
         "gui",

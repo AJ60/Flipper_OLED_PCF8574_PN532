@@ -760,6 +760,31 @@ static LoaderMessageLoaderStatusResult loader_do_start_by_name(
             furi_record_close(RECORD_STORAGE);
         }
 
+        // Fallback: If external app/FAP was not found on SD, try finding matching internal app in FLASH
+        {
+            FuriString* path_str = furi_string_alloc_set(name);
+            FuriString* clean_name = furi_string_alloc();
+            path_extract_filename(path_str, clean_name, true);
+
+            const FlipperInternalApplication* fallback_app =
+                loader_find_application_by_name(furi_string_get_cstr(clean_name));
+
+            if(fallback_app) {
+                FURI_LOG_I(
+                    TAG,
+                    "FAP '%s' not found on SD, falling back to internal app '%s'",
+                    name,
+                    fallback_app->name);
+                loader_start_internal_app(loader, fallback_app, args);
+                status.value = loader_make_success_status(error_message);
+                furi_string_free(clean_name);
+                furi_string_free(path_str);
+                break;
+            }
+            furi_string_free(clean_name);
+            furi_string_free(path_str);
+        }
+
         status.value = loader_make_status_error(
             LoaderStatusErrorUnknownApp, error_message, "Application \"%s\" not found", name);
     } while(false);

@@ -1,7 +1,7 @@
 App(
     appid="input",
     name="InputSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="input_srv",
     cdefines=["SRV_INPUT"],
     stack_size=1 * 1024,
@@ -13,7 +13,7 @@ App(
 App(
     appid="cli_input",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_input_ep",
     requires=["cli"],
     sources=["input_cli.c"],

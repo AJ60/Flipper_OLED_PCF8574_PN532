@@ -10,7 +10,7 @@ FAPs do not depend on being run on a specific firmware version. Compatibility is
 
 FAPs are created and developed the same way as internal apps that are part of the firmware.
 
-To build your app as a FAP, create a folder with your app's source code in `applications_user`, then write its code the way you'd do when creating a regular built-in app. Then configure its `application.fam` manifest, and set its `apptype` to `FlipperAppType.EXTERNAL`. See [Flipper App Manifests](AppManifests.md) for more details.
+To build your app as a FAP, create a folder with your app's source code in `applications_user`, then write its code the way you'd do when creating a regular built-in app. Then configure its `application.fam` manifest, and set its `apptype` to `DIYAppType.EXTERNAL`. See [Flipper App Manifests](AppManifests.md) for more details.
 
 - To build your app, run `./fbt fap_{APPID}`, where APPID is your app's ID in its manifest.
 - To build your app and upload it over USB to run on Flipper, use `./fbt launch APPSRC=applications_user/path/to/app`. This command is configured in the default [VS Code profile](../.vscode/ReadMe.md) as a "Launch App on Flipper" build action (Ctrl+Shift+B menu).

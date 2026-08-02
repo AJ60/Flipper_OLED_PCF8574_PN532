@@ -27,7 +27,7 @@ Canvas* canvas_init(void) {
     CanvasCallbackPairArray_init(canvas->canvas_callback_pair);
 
     // Setup u8g2 with SSD1306 I2C OLED
-    u8g2_Setup_st756x_flipper(&canvas->fb, U8G2_R0, u8x8_byte_hw_i2c_stm32, u8g2_gpio_and_delay_stm32);
+    u8g2_Setup_ssd1306_flipper(&canvas->fb, U8G2_R0, u8x8_byte_hw_i2c_stm32, u8g2_gpio_and_delay_stm32);
     canvas->orientation = CanvasOrientationHorizontal;
     // Initialize display
     u8g2_InitDisplay(&canvas->fb);
@@ -73,17 +73,20 @@ void canvas_commit(Canvas* canvas) {
     furi_check(canvas);
     static uint32_t last_reinit_tick = 0;
 
-    if(display_needs_reinit) {
-        uint32_t now = furi_get_tick();
-        if(now - last_reinit_tick > 1000) {
-            last_reinit_tick = now;
-            display_needs_reinit = false;
-            u8g2_InitDisplay(&canvas->fb);
-            u8g2_SetPowerSave(&canvas->fb, 0);
+    // Send buffer to physical OLED display only if display is active
+    if(!display_is_sleeping) {
+        if(display_needs_reinit) {
+            uint32_t now = furi_get_tick();
+            if(now - last_reinit_tick > 1000) {
+                last_reinit_tick = now;
+                display_needs_reinit = false;
+                u8g2_InitDisplay(&canvas->fb);
+                u8g2_SetPowerSave(&canvas->fb, 0);
+                u8g2_SendBuffer(&canvas->fb);
+            }
+        } else {
             u8g2_SendBuffer(&canvas->fb);
         }
-    } else {
-        u8g2_SendBuffer(&canvas->fb);
     }
 
     // Iterate over callbacks

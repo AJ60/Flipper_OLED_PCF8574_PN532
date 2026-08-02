@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 import SCons.Warnings
 from ansi.color import fg
-from fbt.appmanifest import FlipperApplication, FlipperAppType, FlipperManifestException
+from fbt.appmanifest import FlipperApplication, DIYAppType, FlipperManifestException
 from fbt.elfmanifest import assemble_manifest_data
 from fbt.fapassets import FileBundler
 from fbt.sdk.cache import SdkCache
@@ -185,7 +185,7 @@ class AppBuilder:
             and self.app_env.get("STRICT_FAP_IMPORT_CHECK"),
         )[0]
 
-        if self.app.apptype == FlipperAppType.PLUGIN:
+        if self.app.apptype == DIYAppType.PLUGIN:
             for parent_app_id in self.app.requires:
                 if self.app.fal_embedded:
                     parent_app = self.app._appmanager.get(parent_app_id)
@@ -446,7 +446,7 @@ def _embed_app_metadata_emitter(target, source, env):
     app = env["APP"]
 
     # Hack: change extension for fap libs
-    if app.apptype == FlipperAppType.PLUGIN:
+    if app.apptype == DIYAppType.PLUGIN:
         target[0].name = target[0].name.replace(".fap", ".fal")
 
     app_work_dir = AppBuilder.get_app_work_dir(env, app)
@@ -555,15 +555,15 @@ def _gather_app_components(env, appname) -> AppDeploymentComponents:
             components.add_app(env["EXT_APPS"].get(plugin.appid, None))
 
     artifacts_app_to_run = env.GetExtAppByIdOrPath(appname)
-    if artifacts_app_to_run.app.apptype == FlipperAppType.PLUGIN:
+    if artifacts_app_to_run.app.apptype == DIYAppType.PLUGIN:
         # We deploy host app instead
         host_app = env["APPMGR"].get(artifacts_app_to_run.app.requires[0])
 
         if host_app:
             if host_app.apptype in [
-                FlipperAppType.EXTERNAL,
-                FlipperAppType.MENUEXTERNAL,
-                FlipperAppType.SETTINGS,
+                DIYAppType.EXTERNAL,
+                DIYAppType.MENUEXTERNAL,
+                DIYAppType.SETTINGS,
             ]:
                 components.add_app(host_app)
             else:

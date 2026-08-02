@@ -2,10 +2,6 @@
 
 #define TAG "MagHelpers"
 
-// Dummy declarations for compilation on DIY boards (no RFID hardware)
-static const GpioPin gpio_rfid_carrier_out = { .port = GPIOA, .pin = 0 };
-static const GpioPin gpio_rfid_data_in = { .port = GPIOA, .pin = 0 };
-
 #define ZERO_PREFIX     25 // n zeros prefix
 #define ZERO_BETWEEN    53 // n zeros between tracks
 #define ZERO_SUFFIX     25 // n zeros suffix

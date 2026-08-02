@@ -1,7 +1,7 @@
 App(
     appid="zombiez",
     name="Zombiez",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="zombiez_game_app",
     requires=["gui"],
     stack_size=2 * 1024,

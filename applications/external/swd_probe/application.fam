@@ -1,7 +1,7 @@
 App(
     appid="swd_probe",
     name="[SWD] SWD Probe",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="swd_probe_app_main",
     requires=["notification", "gui", "storage", "dialogs", "cli"],
     stack_size=2 * 1024,

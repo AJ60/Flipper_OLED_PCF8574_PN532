@@ -1,7 +1,7 @@
 App(
     appid="basic_services",
     name="Basic services",
-    apptype=FlipperAppType.METAPACKAGE,
+    apptype=DIYAppType.METAPACKAGE,
     provides=[
         "cli_vcp",
         "rpc_start",

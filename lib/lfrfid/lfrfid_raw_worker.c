@@ -260,9 +260,8 @@ static int32_t lfrfid_raw_emulate_worker_thread(void* thread_context) {
             file_valid = lfrfid_raw_file_read_pair(
                 file, &data->emulate_buffer_arr[i], &data->emulate_buffer_ccr[i], NULL);
             if(!file_valid) break;
-            data->emulate_buffer_arr[i] /= 8;
+            // DIY emulate timer is 1 us/tick (stock ETR used RF cycles → /=8).
             data->emulate_buffer_arr[i] -= 1;
-            data->emulate_buffer_ccr[i] /= 8;
         }
     } while(false);
 
@@ -298,9 +297,7 @@ static int32_t lfrfid_raw_emulate_worker_thread(void* thread_context) {
                         &data->emulate_buffer_ccr[start + i],
                         NULL);
                     if(!file_valid) break;
-                    data->emulate_buffer_arr[i] /= 8;
-                    data->emulate_buffer_arr[i] -= 1;
-                    data->emulate_buffer_ccr[i] /= 8;
+                    data->emulate_buffer_arr[start + i] -= 1;
                 }
             } else if(size != 0) {
                 data->ctx.overrun_count++;

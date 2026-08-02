@@ -1,7 +1,7 @@
 App(
     appid="flipbip",
     name="FlipBIP Crypto Wallet",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="flipbip_app",
     requires=[
         "gui",

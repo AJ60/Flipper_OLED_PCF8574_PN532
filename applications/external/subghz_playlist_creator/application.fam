@@ -1,7 +1,7 @@
 App(
     appid="subghz_playlist_creator",
     name="Sub-GHz Playlist Creator",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="subghz_playlist_creator_app",
     stack_size=2 * 1024,
     fap_category="Sub-GHz",

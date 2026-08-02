@@ -2,5 +2,5 @@
 App(
     appid="drivers",
     name="Drivers device",
-    apptype=FlipperAppType.METAPACKAGE,
+    apptype=DIYAppType.METAPACKAGE,
 )

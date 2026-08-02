@@ -1,7 +1,7 @@
 App(
     appid="flipboard_simon",
     name="FlipBoard Simon",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     sources=[
         "*.c",
     ],

@@ -1,7 +1,7 @@
 App(
     appid="quadrastic",
     name="Quadrastic",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="game_app",
     stack_size=1 * 1024,
     fap_icon="icon.png",

@@ -1,7 +1,7 @@
 App(
     appid="bt",
     name="BtSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="bt_srv",
     cdefines=["SRV_BT"],
     requires=[
@@ -19,7 +19,7 @@ App(
 App(
     appid="cli_bt",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_bt_ep",
     requires=["cli"],
     sources=["bt_cli.c", "bt_service/bt_settings_api.c"],

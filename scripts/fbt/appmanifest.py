@@ -16,7 +16,7 @@ class FlipperManifestException(Exception):
     pass
 
 
-class FlipperAppType(Enum):
+class DIYAppType(Enum):
     SERVICE = "Service"
     SYSTEM = "System"
     APP = "App"
@@ -28,6 +28,9 @@ class FlipperAppType(Enum):
     MENUEXTERNAL = "MenuExternal"
     METAPACKAGE = "Package"
     PLUGIN = "Plugin"
+
+
+FlipperAppType = DIYAppType
 
 
 @dataclass
@@ -51,7 +54,7 @@ class FlipperApplication:
         cincludes: List[str] = field(default_factory=list)
 
     appid: str
-    apptype: FlipperAppType
+    apptype: DIYAppType
     name: Optional[str] = ""
     entry_point: Optional[str] = None
     flags: List[str] = field(default_factory=lambda: ["Default"])
@@ -99,14 +102,14 @@ class FlipperApplication:
 
     @property
     def is_default_deployable(self):
-        return self.apptype != FlipperAppType.DEBUG and self.fap_category != "Examples"
+        return self.apptype != DIYAppType.DEBUG and self.fap_category != "Examples"
 
     @property
     def do_strict_import_checks(self):
-        return self.apptype != FlipperAppType.PLUGIN
+        return self.apptype != DIYAppType.PLUGIN
 
     def __post_init__(self):
-        if self.apptype == FlipperAppType.PLUGIN:
+        if self.apptype == DIYAppType.PLUGIN:
             self.stack_size = 0
         if not self.APP_ID_REGEX.match(self.appid):
             raise FlipperManifestException(
@@ -143,10 +146,10 @@ class AppManager:
 
     def _validate_app_params(self, *args, **kw):
         apptype = kw.get("apptype")
-        if apptype == FlipperAppType.PLUGIN:
+        if apptype == DIYAppType.PLUGIN:
             if kw.get("stack_size"):
                 raise FlipperManifestException(
-                    f"Plugin {kw.get('appid')} cannot have stack (did you mean FlipperAppType.EXTERNAL?)"
+                    f"Plugin {kw.get('appid')} cannot have stack (did you mean DIYAppType.EXTERNAL?)"
                 )
             if not kw.get("requires"):
                 raise FlipperManifestException(
@@ -245,20 +248,20 @@ class AppBuilderException(Exception):
 
 class AppBuildset:
     BUILTIN_APP_TYPES = (
-        FlipperAppType.SERVICE,
-        FlipperAppType.SYSTEM,
-        FlipperAppType.APP,
-        FlipperAppType.DEBUG,
-        FlipperAppType.ARCHIVE,
-        FlipperAppType.STARTUP,
+        DIYAppType.SERVICE,
+        DIYAppType.SYSTEM,
+        DIYAppType.APP,
+        DIYAppType.DEBUG,
+        DIYAppType.ARCHIVE,
+        DIYAppType.STARTUP,
     )
     EXTERNAL_APP_TYPES_MAP = {
         # AppType -> bool: true if always deploy, false if obey app set
-        FlipperAppType.EXTERNAL: True,
-        FlipperAppType.PLUGIN: True,
-        FlipperAppType.DEBUG: True,
-        FlipperAppType.MENUEXTERNAL: False,
-        FlipperAppType.SETTINGS: False,
+        DIYAppType.EXTERNAL: True,
+        DIYAppType.PLUGIN: True,
+        DIYAppType.DEBUG: True,
+        DIYAppType.MENUEXTERNAL: False,
+        DIYAppType.SETTINGS: False,
     }
     DIST_APP_TYPES = list(
         # Applications that are installed on SD card
@@ -345,7 +348,7 @@ class AppBuildset:
             for app in self.get_apps_of_type(
                 apptype,
                 global_lookup
-                and not (self._skip_external and apptype is FlipperAppType.EXTERNAL),
+                and not (self._skip_external and apptype is DIYAppType.EXTERNAL),
             )
         ]
         extapps.extend(map(self.appmgr.get, self._extra_ext_appnames))
@@ -404,7 +407,7 @@ class AppBuildset:
             )
 
     def _group_plugins(self):
-        known_extensions = self.get_apps_of_type(FlipperAppType.PLUGIN, all_known=True)
+        known_extensions = self.get_apps_of_type(DIYAppType.PLUGIN, all_known=True)
         for extension_app in known_extensions:
             keep_app = False
             for parent_app_id in extension_app.requires:
@@ -452,7 +455,7 @@ class AppBuildset:
             )
         return sdk_headers
 
-    def get_apps_of_type(self, apptype: FlipperAppType, all_known: bool = False):
+    def get_apps_of_type(self, apptype: DIYAppType, all_known: bool = False):
         """Looks up apps of given type in current app set. If all_known is true,
         ignores app set and checks all loaded apps' manifests."""
         return sorted(

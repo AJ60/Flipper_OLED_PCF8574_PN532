@@ -1,7 +1,7 @@
 App(
     appid="blackhat",
     name="[A33] Flipper Blackhat",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="blackhat_app",
     cdefines=["APP_BLACKHAT"],
     requires=["gui"],

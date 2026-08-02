@@ -18,6 +18,7 @@ void momentum_app_scene_misc_screen_var_item_list_callback(void* context, uint32
     view_dispatcher_send_custom_event(app->view_dispatcher, index);
 }
 
+static void momentum_app_scene_misc_screen_dark_mode_changed(VariableItem* item) __attribute__((unused));
 static void momentum_app_scene_misc_screen_dark_mode_changed(VariableItem* item) {
     MomentumApp* app = variable_item_get_context(item);
     bool value = variable_item_get_current_value_index(item);
@@ -171,11 +172,6 @@ void momentum_app_scene_misc_screen_on_enter(void* context) {
     VariableItemList* var_item_list = app->var_item_list;
     VariableItem* item;
     uint8_t value_index;
-
-    item = variable_item_list_add(
-        var_item_list, "Dark Mode", 2, momentum_app_scene_misc_screen_dark_mode_changed, app);
-    variable_item_set_current_value_index(item, momentum_settings.dark_mode);
-    variable_item_set_current_value_text(item, momentum_settings.dark_mode ? "ON" : "OFF");
 
     item = variable_item_list_add(
         var_item_list, "Left Handed", 2, momentum_app_scene_misc_screen_hand_orient_changed, app);

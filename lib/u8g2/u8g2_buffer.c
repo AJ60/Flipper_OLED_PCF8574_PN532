@@ -35,6 +35,7 @@
 
 #include "u8g2.h"
 #include <string.h>
+#include <stdbool.h>
 
 /*============================================*/
 void u8g2_ClearBuffer(u8g2_t* u8g2) {
@@ -74,20 +75,48 @@ static void u8g2_send_tile_row(u8g2_t* u8g2, uint8_t src_tile_row, uint8_t dest_
   For most displays, this will make the content visible to the user.
   Some displays (like the SSD1606) require a u8x8_RefreshDisplay()
 */
+extern volatile bool display_needs_reinit;
+static uint8_t prev_tile_buf[1024];
+static bool prev_tile_buf_initialized = false;
+
 static void u8g2_send_buffer(u8g2_t* u8g2) U8X8_NOINLINE;
 static void u8g2_send_buffer(u8g2_t* u8g2) {
     uint8_t src_row;
     uint8_t src_max;
     uint8_t dest_row;
     uint8_t dest_max;
-
+    
     src_row = 0;
     src_max = u8g2->tile_buf_height;
     dest_row = u8g2->tile_curr_row;
     dest_max = u8g2_GetU8x8(u8g2)->display_info->tile_height;
 
+    uint8_t* curr_buf = u8g2->tile_buf_ptr;
+    size_t tile_width = u8g2_GetU8x8(u8g2)->display_info->tile_width;
+    size_t row_width = tile_width * 8;
+    
+    // Safety check: ensure buffer boundaries fit within our static 1024-byte cache
+    bool force_refresh = !prev_tile_buf_initialized || display_needs_reinit;
+    if(src_max * row_width > sizeof(prev_tile_buf)) {
+        force_refresh = true;
+    }
+
+    if(force_refresh) {
+        memset(prev_tile_buf, 0, sizeof(prev_tile_buf));
+        prev_tile_buf_initialized = true;
+    }
+
     do {
-        u8g2_send_tile_row(u8g2, src_row, dest_row);
+        size_t offset = src_row * row_width;
+        bool row_changed = force_refresh || (offset + row_width > sizeof(prev_tile_buf)) ||
+                           (memcmp(curr_buf + offset, prev_tile_buf + offset, row_width) != 0);
+
+        if(row_changed) {
+            u8g2_send_tile_row(u8g2, src_row, dest_row);
+            if(offset + row_width <= sizeof(prev_tile_buf)) {
+                memcpy(prev_tile_buf + offset, curr_buf + offset, row_width);
+            }
+        }
         src_row++;
         dest_row++;
     } while(src_row < src_max && dest_row < dest_max);

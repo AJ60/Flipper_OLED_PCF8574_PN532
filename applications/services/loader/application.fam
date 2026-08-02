@@ -1,7 +1,7 @@
 App(
     appid="loader",
     name="LoaderSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="loader_srv",
     cdefines=["SRV_LOADER"],
     requires=["gui"],
@@ -16,7 +16,7 @@ App(
 App(
     appid="cli_loader",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_loader_ep",
     requires=["cli"],
     sources=["loader_cli.c"],

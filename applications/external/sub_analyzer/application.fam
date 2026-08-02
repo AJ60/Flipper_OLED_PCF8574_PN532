@@ -1,7 +1,7 @@
 App(
     appid="sub_analyzer",
     name="Sub Analyzer",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="sub_analyzer_app",
     requires=[
         "gui",

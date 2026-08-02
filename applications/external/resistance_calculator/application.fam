@@ -3,7 +3,7 @@
 App(
     appid="resistors",  # Must be unique
     name="Resistance Calculator",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="resistors_app",
     stack_size=2 * 1024,
     fap_category="Tools",

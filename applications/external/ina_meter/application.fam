@@ -3,7 +3,7 @@
 App(
     appid="ina_meter", # Must be unique
     name="[INA2xx] INA Meter",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="app_startup",
     stack_size=3 * 1024,
     fap_category="GPIO/Debug",

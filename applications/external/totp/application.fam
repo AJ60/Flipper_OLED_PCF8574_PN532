@@ -1,7 +1,7 @@
 App(
     appid="totp",
     name="Authenticator",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="totp_app",
     cdefines=["APP_TOTP"],
     requires=["gui", "cli", "dialogs", "storage", "input", "notification", "bt"],
@@ -46,7 +46,7 @@ App(
 
 App(
     appid="totp_cli_timezone_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_timezone_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/timezone/timezone.c", "cli/cli_shared_methods.c"],
@@ -54,7 +54,7 @@ App(
 
 App(
     appid="totp_cli_version_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_version_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/version/version.c"],
@@ -62,7 +62,7 @@ App(
 
 App(
     appid="totp_cli_help_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_help_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/help/help.c"],
@@ -70,7 +70,7 @@ App(
 
 App(
     appid="totp_cli_list_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_list_plugin_ep",
     requires=["totp"],
     sources=[
@@ -83,7 +83,7 @@ App(
 
 App(
     appid="totp_cli_details_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_details_plugin_ep",
     requires=["totp"],
     sources=[
@@ -96,7 +96,7 @@ App(
 
 App(
     appid="totp_cli_add_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_add_plugin_ep",
     requires=["totp"],
     sources=[
@@ -108,7 +108,7 @@ App(
 
 App(
     appid="totp_cli_update_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_update_plugin_ep",
     requires=["totp"],
     sources=[
@@ -120,7 +120,7 @@ App(
 
 App(
     appid="totp_cli_delete_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_delete_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/delete/delete.c", "cli/cli_shared_methods.c"],
@@ -128,7 +128,7 @@ App(
 
 App(
     appid="totp_cli_move_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_move_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/move/move.c", "cli/cli_shared_methods.c"],
@@ -136,7 +136,7 @@ App(
 
 App(
     appid="totp_cli_reset_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_reset_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/reset/reset.c", "cli/cli_shared_methods.c"],
@@ -144,7 +144,7 @@ App(
 
 App(
     appid="totp_cli_pin_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_pin_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/pin/pin.c", "cli/cli_shared_methods.c"],
@@ -152,7 +152,7 @@ App(
 
 App(
     appid="totp_cli_automation_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_automation_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/automation/automation.c", "cli/cli_shared_methods.c"],
@@ -160,7 +160,7 @@ App(
 
 App(
     appid="totp_cli_notification_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_notification_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/notification/notification.c", "cli/cli_shared_methods.c"],
@@ -168,7 +168,7 @@ App(
 
 App(
     appid="totp_cli_export_plugin",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="totp_cli_export_plugin_ep",
     requires=["totp"],
     sources=["cli/plugins/export/export.c", "cli/cli_shared_methods.c"],

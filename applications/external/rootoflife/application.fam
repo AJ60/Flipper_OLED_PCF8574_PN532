@@ -1,7 +1,7 @@
 App(
     appid="roots_of_life",
     name="Roots of Life",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="roots_of_life_game_app",
     cdefines=["APP_ROOTS_OF_LIFE_GAME"],
     requires=["gui"],

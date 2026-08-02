@@ -1,7 +1,7 @@
 App(
     appid="co2_logger",
     name="[MH-Z19] CO2 Logger",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="co2_logger_app",
     stack_size=4 * 1024,
     fap_category="GPIO/Sensors",

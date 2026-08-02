@@ -1,7 +1,7 @@
 App(
     appid="4inrow",
     name="4 in a Row",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="four_in_row_app",
     requires=[
         "gui",

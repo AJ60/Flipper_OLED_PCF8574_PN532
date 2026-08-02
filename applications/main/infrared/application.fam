@@ -1,7 +1,7 @@
 App(
     appid="infrared",
     name="Infrared",
-    apptype=FlipperAppType.MENUEXTERNAL,
+    apptype=DIYAppType.MENUEXTERNAL,
     entry_point="infrared_app",
     targets=["f7"],
     icon="A_Infrared_14",
@@ -17,7 +17,7 @@ App(
 App(
     appid="cli_ir",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_ir_ep",
     requires=["cli"],
     sources=[

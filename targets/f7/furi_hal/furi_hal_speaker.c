@@ -76,7 +76,7 @@ static inline uint32_t furi_hal_speaker_calculate_autoreload(float frequency) {
 static inline uint32_t furi_hal_speaker_calculate_compare(float volume) {
     if(volume < 0) volume = 0;
     if(volume > 1) volume = 1;
-    volume = volume * volume * volume;
+    volume = volume * volume;
 
 #ifdef FURI_HAL_SPEAKER_NEW_VOLUME
     uint32_t compare_value = volume * FURI_HAL_SPEAKER_MAX_VOLUME;

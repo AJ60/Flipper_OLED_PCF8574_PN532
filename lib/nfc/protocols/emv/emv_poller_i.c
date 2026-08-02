@@ -631,7 +631,7 @@ EmvError emv_poller_read_afl(EmvPoller* instance, bool bruteforce_sfi, uint16_t*
         APDU* afl = &instance->data->emv_application.afl;
 
         if(afl->size == 0) {
-            return false;
+            return EmvErrorProtocol; // AFL is empty - no records to read
         }
 
         FURI_LOG_D(TAG, "Search PAN in SFI");

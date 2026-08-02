@@ -1,7 +1,7 @@
 App(
     appid="mfc_editor",
     name="MIFARE Classic Editor",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     targets=["f7"],
     entry_point="mfc_editor_app",
     requires=[

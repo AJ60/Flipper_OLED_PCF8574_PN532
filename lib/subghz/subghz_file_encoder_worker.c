@@ -8,7 +8,7 @@
 
 #define TAG "SubGhzFileEncoderWorker"
 
-#define SUBGHZ_FILE_ENCODER_LOAD 512
+#define SUBGHZ_FILE_ENCODER_LOAD 2048
 
 struct SubGhzFileEncoderWorker {
     FuriThread* thread;

@@ -1,7 +1,7 @@
 App(
     appid="fmatrix",
     name="Fmatrix",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="matrix_app",
     fap_category="Media",
     fap_author="misterwaztaken",

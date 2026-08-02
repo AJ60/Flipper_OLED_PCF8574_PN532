@@ -3,7 +3,7 @@
 App(
     appid="jetpack_joyride",
     name="Jetpack Joyride",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="jetpack_game_app",
     cdefines=["APP_JETPACK_GAME"],
     requires=["gui"],

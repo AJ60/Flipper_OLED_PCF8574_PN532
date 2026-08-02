@@ -1,7 +1,7 @@
 App(
     appid="ir_intervalometer",
     name="IR Intervalometer",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="flipvalo_app",
     requires=["gui"],
     stack_size=2 * 1024,

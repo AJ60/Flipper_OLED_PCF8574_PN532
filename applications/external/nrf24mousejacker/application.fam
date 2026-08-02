@@ -1,7 +1,7 @@
 App(
     appid="nrf24mousejacker",
     name="[NRF24] Mouse Jacker",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="mousejacker_app",
     requires=[
         "gui",

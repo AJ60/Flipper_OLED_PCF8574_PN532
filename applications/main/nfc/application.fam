@@ -1,7 +1,7 @@
 App(
     appid="nfc",
     name="NFC",
-    apptype=FlipperAppType.MENUEXTERNAL,
+    apptype=DIYAppType.MENUEXTERNAL,
     targets=["f7"],
     entry_point="nfc_app",
     icon="A_NFC_14",
@@ -20,7 +20,7 @@ App(
 App(
     appid="nfc_iso14443_3a",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_iso14443_3a_ep",
     requires=["nfc"],
     sources=[
@@ -32,7 +32,7 @@ App(
 App(
     appid="nfc_iso14443_3b",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_iso14443_3b_ep",
     requires=["nfc"],
     sources=[
@@ -44,7 +44,7 @@ App(
 App(
     appid="nfc_iso14443_4a",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_iso14443_4a_ep",
     requires=["nfc"],
     sources=[
@@ -57,7 +57,7 @@ App(
 App(
     appid="nfc_iso14443_4b",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_iso14443_4b_ep",
     requires=["nfc"],
     sources=[
@@ -70,7 +70,7 @@ App(
 App(
     appid="nfc_iso15693_3",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_iso15693_3_ep",
     requires=["nfc"],
     sources=[
@@ -82,7 +82,7 @@ App(
 App(
     appid="nfc_felica",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_felica_ep",
     requires=["nfc"],
     sources=[
@@ -95,7 +95,7 @@ App(
 App(
     appid="nfc_mf_ultralight",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_mf_ultralight_ep",
     requires=["nfc"],
     sources=[
@@ -110,7 +110,7 @@ App(
 App(
     appid="nfc_mf_classic",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_mf_classic_ep",
     requires=["nfc"],
     sources=[
@@ -124,7 +124,7 @@ App(
 App(
     appid="nfc_mf_plus",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_mf_plus_ep",
     requires=["nfc"],
     sources=[
@@ -138,7 +138,7 @@ App(
 App(
     appid="nfc_mf_desfire",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_mf_desfire_ep",
     requires=["nfc"],
     sources=[
@@ -152,7 +152,7 @@ App(
 App(
     appid="nfc_slix",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_slix_ep",
     requires=["nfc"],
     sources=[
@@ -165,7 +165,7 @@ App(
 App(
     appid="nfc_st25tb",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_st25tb_ep",
     requires=["nfc"],
     sources=[
@@ -178,7 +178,7 @@ App(
 App(
     appid="nfc_ntag4xx",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_ntag4xx_ep",
     requires=["nfc"],
     sources=[
@@ -191,7 +191,7 @@ App(
 App(
     appid="nfc_type_4_tag",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_type_4_tag_ep",
     requires=["nfc"],
     sources=[
@@ -205,7 +205,7 @@ App(
 App(
     appid="nfc_emv",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="nfc_emv_ep",
     requires=["nfc"],
     sources=[
@@ -218,7 +218,7 @@ App(
 
 App(
     appid="all_in_one_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="all_in_one_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -227,7 +227,7 @@ App(
 
 App(
     appid="smartrider_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="smartrider_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -236,7 +236,7 @@ App(
 
 App(
     appid="microel_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="microel_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -245,7 +245,7 @@ App(
 
 App(
     appid="mizip_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="mizip_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -254,7 +254,7 @@ App(
 
 App(
     appid="hi_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="hi_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -263,7 +263,7 @@ App(
 
 App(
     appid="opal_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="opal_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -272,7 +272,7 @@ App(
 
 App(
     appid="myki_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="myki_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -281,7 +281,7 @@ App(
 
 App(
     appid="troika_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="troika_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -290,7 +290,7 @@ App(
 
 App(
     appid="social_moscow_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="social_moscow_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -299,7 +299,7 @@ App(
 
 App(
     appid="plantain_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="plantain_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -308,7 +308,7 @@ App(
 
 App(
     appid="szppk_so_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="szppk_so_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -317,7 +317,7 @@ App(
 
 App(
     appid="sk_tk_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="sk_tk_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -326,7 +326,7 @@ App(
 
 App(
     appid="sev_tk_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="sev_tk_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -335,7 +335,7 @@ App(
 
 App(
     appid="two_cities_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="two_cities_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -344,7 +344,7 @@ App(
 
 App(
     appid="umarsh_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="umarsh_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -353,7 +353,7 @@ App(
 
 App(
     appid="metromoney_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="metromoney_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -362,7 +362,7 @@ App(
 
 App(
     appid="charliecard_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="charliecard_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -371,7 +371,7 @@ App(
 
 App(
     appid="kazan_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="kazan_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -380,7 +380,7 @@ App(
 
 App(
     appid="aime_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="aime_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -389,7 +389,7 @@ App(
 
 App(
     appid="bip_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="bip_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -398,7 +398,7 @@ App(
 
 App(
     appid="saflok_mfc_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     cdefines=[("SL_PROTO", "SL_PROTO_MFC")],
     entry_point="saflok_plugin_ep",
     targets=["f7"],
@@ -408,7 +408,7 @@ App(
 
 App(
     appid="saflok_ul_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     cdefines=[("SL_PROTO", "SL_PROTO_UL")],
     entry_point="saflok_plugin_ep",
     targets=["f7"],
@@ -418,7 +418,7 @@ App(
 
 App(
     appid="mykey_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="mykey_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -427,7 +427,7 @@ App(
 
 App(
     appid="zolotaya_korona_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="zolotaya_korona_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -436,7 +436,7 @@ App(
 
 App(
     appid="zolotaya_korona_online_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="zolotaya_korona_online_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -445,7 +445,7 @@ App(
 
 App(
     appid="gallagher_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="gallagher_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -454,7 +454,7 @@ App(
 
 App(
     appid="clipper_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="clipper_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -463,7 +463,7 @@ App(
 
 App(
     appid="hid_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="hid_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -472,7 +472,7 @@ App(
 
 App(
     appid="washcity_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="washcity_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -481,7 +481,7 @@ App(
 
 App(
     appid="emv_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="emv_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -490,7 +490,7 @@ App(
 
 App(
     appid="ndef_ul_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     cdefines=[("NDEF_PROTO", "NDEF_PROTO_UL")],
     entry_point="ndef_plugin_ep",
     targets=["f7"],
@@ -500,7 +500,7 @@ App(
 
 App(
     appid="ndef_mfc_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     cdefines=[("NDEF_PROTO", "NDEF_PROTO_MFC")],
     entry_point="ndef_plugin_ep",
     targets=["f7"],
@@ -510,7 +510,7 @@ App(
 
 App(
     appid="ndef_slix_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     cdefines=[("NDEF_PROTO", "NDEF_PROTO_SLIX")],
     entry_point="ndef_plugin_ep",
     targets=["f7"],
@@ -520,7 +520,7 @@ App(
 
 App(
     appid="ndef_t4t_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     cdefines=[("NDEF_PROTO", "NDEF_PROTO_T4T")],
     entry_point="ndef_plugin_ep",
     targets=["f7"],
@@ -530,7 +530,7 @@ App(
 
 App(
     appid="itso_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="itso_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -539,7 +539,7 @@ App(
 
 App(
     appid="skylanders_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="skylanders_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -548,7 +548,7 @@ App(
 
 App(
     appid="hworld_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="hworld_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -557,7 +557,7 @@ App(
 
 App(
     appid="trt_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="trt_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -566,7 +566,7 @@ App(
 
 App(
     appid="disney_infinity_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="disney_infinity_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -576,7 +576,7 @@ App(
 
 App(
     appid="sonicare_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="sonicare_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -585,7 +585,7 @@ App(
 
 App(
     appid="csc_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="csc_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -594,7 +594,7 @@ App(
 
 App(
     appid="ventra_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="ventra_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -604,7 +604,7 @@ App(
 App(
     appid="cli_nfc",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_nfc_ep",
     requires=["cli"],
     sources=[
@@ -653,7 +653,7 @@ App(
 
 App(
     appid="banapass_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="banapass_plugin_ep",
     targets=["f7"],
     requires=["nfc"],
@@ -662,7 +662,7 @@ App(
 
 App(
     appid="aic_parser",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="aic_plugin_ep",
     targets=["f7"],
     requires=["nfc"],

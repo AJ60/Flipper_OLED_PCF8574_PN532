@@ -20,6 +20,7 @@ const GpioPin gpio_subghz_cs = {.port = CC1101_CS_GPIO_Port, .pin = CC1101_CS_Pi
 const GpioPin gpio_cc1101_g0 = {.port = CC1101_G0_GPIO_Port, .pin = CC1101_G0_Pin};
 
 const GpioPin gpio_mcp_int = {.port = MCP_INT_GPIO_Port, .pin = MCP_INT_Pin};
+const GpioPin gpio_ina_alert = {.port = INA_ALERT_GPIO_Port, .pin = INA_ALERT_Pin};
 // RF switch pin omitted for this board
 
 // const GpioPin gpio_display_cs = {.port = DISPLAY_CS_GPIO_Port, .pin = DISPLAY_CS_Pin};
@@ -32,7 +33,7 @@ const GpioPin gpio_nfc_miso = {.port = GPIOB, .pin = LL_GPIO_PIN_4};
 const GpioPin gpio_nfc_irq = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 const GpioPin gpio_nfc_irq_rfid_pull = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 const GpioPin gpio_rfid_carrier_out = {.port = GPIOA, .pin = LL_GPIO_PIN_5};
-const GpioPin gpio_rfid_data_in = {.port = GPIOB, .pin = LL_GPIO_PIN_2};
+const GpioPin gpio_rfid_data_in = {.port = GPIOA, .pin = LL_GPIO_PIN_1};
 const GpioPin gpio_rfid_carrier = {.port = GPIOA, .pin = LL_GPIO_PIN_5};
 
 // MCU button GpioPin definitions removed — board uses MCP23017 for inputs.
@@ -274,11 +275,13 @@ void furi_hal_resources_init(void) {
 
   //  furi_hal_gpio_init(&gpio_rf_sw_0, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
 
-    NVIC_SetPriority(EXTI0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
-    NVIC_EnableIRQ(EXTI0_IRQn);
+    // EXTI0_IRQn disabled (PA0 used for COMP1_OUT debug)
+    // NVIC_SetPriority(EXTI0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
+    // NVIC_EnableIRQ(EXTI0_IRQn);
 
-    NVIC_SetPriority(EXTI1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
-    NVIC_EnableIRQ(EXTI1_IRQn);
+    // EXTI1_IRQn disabled to prevent GPIO interrupt storm on PA1 (RFID_DATA_IN)
+    // NVIC_SetPriority(EXTI1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
+    // NVIC_EnableIRQ(EXTI1_IRQn);
 
     NVIC_SetPriority(EXTI2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
     NVIC_EnableIRQ(EXTI2_IRQn);

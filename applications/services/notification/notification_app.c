@@ -141,15 +141,18 @@ static void notification_reset_notification_layer(
     if(reset_mask & reset_display_mask) {
         if(!float_is_equal(display_brightness_set, app->settings.display_brightness)) {
             int idx = (int)app->settings.contrast;
-
-            if(idx < -8) idx = -8;
-            if(idx > 8) idx = 8;
-
-            idx = idx + 8;
-
+            if(idx < 0) idx = idx + 8;
+            if(idx < 0) idx = 0;
+            if(idx > 16) idx = 16;
             notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
         }
-        furi_timer_start(app->display_timer, notification_settings_display_off_delay_ticks(app));
+        if(app->settings.display_off_delay_ms > 0) {
+            furi_timer_start(app->display_timer, notification_settings_display_off_delay_ticks(app));
+        } else {
+            if(furi_timer_is_running(app->display_timer)) {
+                furi_timer_stop(app->display_timer);
+            }
+        }
     }
 }
 
@@ -366,12 +369,9 @@ static void notification_process_notification_message(
             break;
         case NotificationMessageTypeLcdContrastUpdate: {
             int idx = (int)app->settings.contrast;
-
-            if(idx < -8) idx = -8;
-            if(idx > 8) idx = 8;
-
-            idx = idx + 8;
-
+            if(idx < 0) idx = idx + 8;
+            if(idx < 0) idx = 0;
+            if(idx > 16) idx = 16;
             notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
             break;
         }
@@ -488,7 +488,7 @@ static NotificationApp* notification_app_alloc(void) {
     app->settings.speaker_volume = 1.0f;
     app->settings.display_brightness = 1.0f;
     app->settings.led_brightness = 1.0f;
-    app->settings.display_off_delay_ms = 30000;
+    app->settings.display_off_delay_ms = 0;
     app->settings.vibro_on = true;
 	app->settings.oled_driver = NotificationOledDriverSSD1306;
 
@@ -543,13 +543,11 @@ static void notification_apply_settings(NotificationApp* app) {
     }
 
     int idx = (int)app->settings.contrast;
-
-    if(idx < -8) idx = -8;
-    if(idx > 8) idx = 8;
-
-    idx = idx + 8;
-
+    if(idx < 0) idx = idx + 8;
+    if(idx < 0) idx = 0;
+    if(idx > 16) idx = 16;
     notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
+    furi_hal_light_oled_set_invert(app->settings.display_inverted);
 }
 
 static void notification_init_settings(NotificationApp* app) {

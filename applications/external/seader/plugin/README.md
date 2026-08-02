@@ -6,7 +6,7 @@ Add to your `application.fam`
 ```
 App(
     appid="plugin_wiegand",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="plugin_wiegand_ep",
     requires=["seader"],
     sources=["plugin/wiegand.c"],

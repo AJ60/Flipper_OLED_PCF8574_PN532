@@ -2,7 +2,7 @@ App(
     appid="esp_flasher",
     name="[ESP] ESP Flasher",
     fap_version=(1, 7),
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="esp_flasher_app",
     requires=["gui"],
     stack_size=4 * 1024,

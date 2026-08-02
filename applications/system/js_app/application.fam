@@ -1,7 +1,7 @@
 App(
     appid="js_app",
     name="JS Runner",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     cdefines=["JS_RUNNER_FAP"],
     fap_icon="icon.png",
     fap_category="assets",
@@ -25,7 +25,7 @@ App(
 App(
     appid="cli_js",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_js_ep",
     requires=["cli"],
     sources=[
@@ -42,7 +42,7 @@ App(
 
 App(
     appid="js_event_loop",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_event_loop_ep",
     requires=["js_app"],
     sources=[
@@ -53,7 +53,7 @@ App(
 
 App(
     appid="js_gui",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_gui_ep",
     requires=["js_app"],
     sources=["modules/js_gui/js_gui.c", "modules/js_gui/js_gui_api_table.cpp"],
@@ -61,7 +61,7 @@ App(
 
 App(
     appid="js_gui__loading",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_loading_ep",
     requires=["js_app"],
     sources=["modules/js_gui/loading.c"],
@@ -69,7 +69,7 @@ App(
 
 App(
     appid="js_gui__empty_screen",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_empty_screen_ep",
     requires=["js_app"],
     sources=["modules/js_gui/empty_screen.c"],
@@ -77,7 +77,7 @@ App(
 
 App(
     appid="js_gui__submenu",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_submenu_ep",
     requires=["js_app"],
     sources=["modules/js_gui/submenu.c"],
@@ -85,7 +85,7 @@ App(
 
 App(
     appid="js_gui__text_input",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_text_input_ep",
     requires=["js_app"],
     sources=["modules/js_gui/text_input.c"],
@@ -93,7 +93,7 @@ App(
 
 App(
     appid="js_gui__number_input",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_number_input_ep",
     requires=["js_app"],
     sources=["modules/js_gui/number_input.c"],
@@ -101,7 +101,7 @@ App(
 
 App(
     appid="js_gui__button_panel",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_button_panel_ep",
     requires=["js_app"],
     sources=["modules/js_gui/button_panel.c"],
@@ -109,7 +109,7 @@ App(
 
 App(
     appid="js_gui__popup",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_popup_ep",
     requires=["js_app"],
     sources=["modules/js_gui/popup.c"],
@@ -117,7 +117,7 @@ App(
 
 App(
     appid="js_gui__button_menu",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_button_menu_ep",
     requires=["js_app"],
     sources=["modules/js_gui/button_menu.c"],
@@ -125,7 +125,7 @@ App(
 
 App(
     appid="js_gui__menu",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_menu_ep",
     requires=["js_app"],
     sources=["modules/js_gui/menu.c"],
@@ -133,7 +133,7 @@ App(
 
 App(
     appid="js_gui__vi_list",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_vi_list_ep",
     requires=["js_app"],
     sources=["modules/js_gui/vi_list.c"],
@@ -141,7 +141,7 @@ App(
 
 App(
     appid="js_gui__byte_input",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_byte_input_ep",
     requires=["js_app"],
     sources=["modules/js_gui/byte_input.c"],
@@ -149,7 +149,7 @@ App(
 
 App(
     appid="js_gui__text_box",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_text_box_ep",
     requires=["js_app"],
     sources=["modules/js_gui/text_box.c"],
@@ -157,7 +157,7 @@ App(
 
 App(
     appid="js_gui__dialog",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_dialog_ep",
     requires=["js_app"],
     sources=["modules/js_gui/dialog.c"],
@@ -165,7 +165,7 @@ App(
 
 App(
     appid="js_gui__file_picker",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_gui_file_picker_ep",
     requires=["js_app"],
     sources=["modules/js_gui/file_picker.c"],
@@ -174,7 +174,7 @@ App(
 
 App(
     appid="js_gui__widget",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_view_widget_ep",
     requires=["js_app"],
     sources=["modules/js_gui/widget.c"],
@@ -182,7 +182,7 @@ App(
 
 App(
     appid="js_gui__icon",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_gui_icon_ep",
     requires=["js_app"],
     sources=["modules/js_gui/icon.c"],
@@ -191,7 +191,7 @@ App(
 
 App(
     appid="js_notification",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_notification_ep",
     requires=["js_app"],
     sources=["modules/js_notification.c"],
@@ -199,7 +199,7 @@ App(
 
 App(
     appid="js_badusb",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_badusb_ep",
     requires=["js_app"],
     sources=["modules/js_badusb.c"],
@@ -207,7 +207,7 @@ App(
 
 App(
     appid="js_serial",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_serial_ep",
     requires=["js_app"],
     sources=["modules/js_serial.c"],
@@ -215,7 +215,7 @@ App(
 
 App(
     appid="js_gpio",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_gpio_ep",
     requires=["js_app"],
     sources=["modules/js_gpio.c"],
@@ -223,7 +223,7 @@ App(
 
 App(
     appid="js_math",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_math_ep",
     requires=["js_app"],
     sources=["modules/js_math.c"],
@@ -231,7 +231,7 @@ App(
 
 App(
     appid="js_storage",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_storage_ep",
     requires=["js_app"],
     sources=["modules/js_storage.c"],
@@ -239,7 +239,7 @@ App(
 
 App(
     appid="js_vgm",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_vgm_ep",
     requires=["js_app"],
     sources=["modules/js_vgm/*.c", "modules/js_vgm/ICM42688P/*.c"],
@@ -247,7 +247,7 @@ App(
 
 App(
     appid="js_subghz",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_subghz_ep",
     requires=["js_app"],
     sources=["modules/js_subghz/*.c"],
@@ -255,7 +255,7 @@ App(
 
 App(
     appid="js_blebeacon",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_blebeacon_ep",
     requires=["js_app"],
     sources=["modules/js_blebeacon.c"],
@@ -263,7 +263,7 @@ App(
 
 App(
     appid="js_usbdisk",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_usbdisk_ep",
     requires=["js_app"],
     sources=["modules/js_usbdisk/*.c"],
@@ -271,7 +271,7 @@ App(
 
 App(
     appid="js_i2c",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_i2c_ep",
     requires=["js_app"],
     sources=["modules/js_i2c.c"],
@@ -279,7 +279,7 @@ App(
 
 App(
     appid="js_spi",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="js_spi_ep",
     requires=["js_app"],
     sources=["modules/js_spi.c"],

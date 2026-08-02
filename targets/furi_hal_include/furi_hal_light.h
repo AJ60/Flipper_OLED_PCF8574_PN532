@@ -49,6 +49,12 @@ void furi_hal_light_blink_set_color(Light light);
  */
 void furi_hal_light_sequence(const char* sequence);
 
+/** Set OLED display inversion (Normal / Inverted)
+ *
+ * @param      invert  true for Inverted display mode, false for Normal mode
+ */
+void furi_hal_light_oled_set_invert(bool invert);
+
 #ifdef __cplusplus
 }
 #endif

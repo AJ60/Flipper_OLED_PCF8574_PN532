@@ -3,7 +3,7 @@
 App(
     appid="flame_rng",  # Must be unique
     name="Flame RNG",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="flame_rng",
     stack_size=2 * 1024,
     fap_category="Infrared",

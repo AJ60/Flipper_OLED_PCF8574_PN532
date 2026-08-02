@@ -1,7 +1,7 @@
 App(
     appid="cli_crypto",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_crypto_ep",
     requires=["cli"],
     sources=["crypto_cli.c"],

@@ -1,7 +1,7 @@
 App(
     appid="yatzee",
     name="Yatzee",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="yatzee_main",
     requires=["gui"],
     stack_size=4 * 1024,

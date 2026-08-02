@@ -1,7 +1,7 @@
 App(
     appid="xremote",
     name="Cross Remote",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="xremote_app",
     stack_size=3 * 1024,
     fap_icon="icons/xremote_10px.png",

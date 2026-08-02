@@ -3,7 +3,7 @@ App(
     # Still called Bad KB for historic reasons
     # Code was renamed back to Bad USB for easier update merging
     name="Bad KB",
-    apptype=FlipperAppType.MENUEXTERNAL,
+    apptype=DIYAppType.MENUEXTERNAL,
     entry_point="bad_usb_app",
     stack_size=2 * 1024,
     icon="A_BadUsb_14",

@@ -1,40 +1,50 @@
 #include "furi_hal_ina219.h"
+#include "furi_hal_resources.h"
 
 #include <furi.h>
 #include <furi_hal_i2c.h>
 #include <stdint.h>
 
-#define TAG "FuriHalINA219"
+#define TAG "FuriHalINA"
 
-#define INA219_I2C_ADDR_BASE 0x40
+#define INA_I2C_ADDR_BASE 0x40
 
-#define INA219_REG_CONFIG 0x00
-#define INA219_REG_SHUNT_VOLTAGE 0x01
-#define INA219_REG_BUS_VOLTAGE 0x02
-#define INA219_REG_POWER 0x03
-#define INA219_REG_CURRENT 0x04
-#define INA219_REG_CALIBRATION 0x05
+// Common & INA219 Registers
+#define INA_REG_CONFIG        0x00
+#define INA_REG_SHUNT_VOLTAGE 0x01
+#define INA_REG_BUS_VOLTAGE   0x02
+#define INA_REG_POWER         0x03
+#define INA_REG_CURRENT       0x04
+#define INA_REG_CALIBRATION   0x05
+
+// INA226 Unique Identification Registers
+#define INA226_REG_MANUFACTURER_ID 0xFE
+#define INA226_REG_DIE_ID          0xFF
+
+#define INA226_MANUFACTURER_ID_VAL 0x5449 // "TI"
+#define INA226_DIE_ID_VAL          0x2260
 
 #ifndef INA219_SHUNT_OHMS
 #define INA219_SHUNT_OHMS 0.1f
 #endif
 
 static bool s_detected = false;
-static uint8_t s_address = INA219_I2C_ADDR_BASE;
+static bool s_is_ina226 = false;
+static uint8_t s_address = INA_I2C_ADDR_BASE;
 
 static float s_cached_voltage_v = 0.0f;
 static float s_cached_current_a = 0.0f;
 static uint32_t s_last_read_tick = 0;
 
-#define INA219_READ_PERIOD_MS 500
+#define INA_READ_PERIOD_MS 500
 
-static bool ina219_read_reg16(uint8_t reg, uint16_t* out) {
+static bool ina_read_reg16(uint8_t reg, uint16_t* out) {
     const FuriHalI2cBusHandle* handle = &furi_hal_i2c_handle_power;
     uint8_t addr8 = (uint8_t)(s_address << 1);
     return furi_hal_i2c_read_reg_16(handle, addr8, reg, out, 20);
 }
 
-static bool ina219_write_reg16(uint8_t reg, uint16_t val) {
+static bool ina_write_reg16(uint8_t reg, uint16_t val) {
     const FuriHalI2cBusHandle* handle = &furi_hal_i2c_handle_power;
     uint8_t addr8 = (uint8_t)(s_address << 1);
     return furi_hal_i2c_write_reg_16(handle, addr8, reg, val, 20);
@@ -42,16 +52,17 @@ static bool ina219_write_reg16(uint8_t reg, uint16_t val) {
 
 bool furi_hal_ina219_init(void) {
     s_detected = false;
+    s_is_ina226 = false;
     furi_delay_ms(200);
 
     const int max_attempts = 3;
     for(int attempt = 0; attempt < max_attempts && !s_detected; ++attempt) {
         if(attempt > 0) {
-            FURI_LOG_I(TAG, "Retrying INA219 scan (%d/%d)", attempt + 1, max_attempts);
+            FURI_LOG_I(TAG, "Retrying INA scan (%d/%d)", attempt + 1, max_attempts);
             furi_delay_ms(100);
         }
 
-        for(uint8_t a = INA219_I2C_ADDR_BASE; a <= (INA219_I2C_ADDR_BASE | 0x0F); ++a) {
+        for(uint8_t a = INA_I2C_ADDR_BASE; a <= (INA_I2C_ADDR_BASE | 0x0F); ++a) {
             s_address = a;
             uint16_t cfg = 0;
 
@@ -60,36 +71,37 @@ bool furi_hal_ina219_init(void) {
             bool ok = false;
 
             if(ready) {
-                ok = ina219_read_reg16(INA219_REG_CONFIG, &cfg);
+                ok = ina_read_reg16(INA_REG_CONFIG, &cfg);
             }
-
-            furi_hal_i2c_release(&furi_hal_i2c_handle_power);
 
             if(ok) {
                 s_detected = true;
-                FURI_LOG_I(TAG, "Detected INA219 at 0x%02X (CONFIG=0x%04X)", s_address, cfg);
+                // Check if device is INA226 by reading Manufacturer ID (0xFE) and Die ID (0xFF)
+                uint16_t mfg_id = 0, die_id = 0;
+                bool is_226 = ina_read_reg16(INA226_REG_MANUFACTURER_ID, &mfg_id) &&
+                             ina_read_reg16(INA226_REG_DIE_ID, &die_id);
+                furi_hal_i2c_release(&furi_hal_i2c_handle_power);
+
+                if(is_226 && mfg_id == INA226_MANUFACTURER_ID_VAL) {
+                    s_is_ina226 = true;
+                    // Calibrate INA226 for 0.1 Ohm shunt: CAL = 512 (0x0200)
+                    furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
+                    ina_write_reg16(INA_REG_CALIBRATION, 0x0200);
+                    furi_hal_i2c_release(&furi_hal_i2c_handle_power);
+                    FURI_LOG_I(TAG, "Detected INA226 at 0x%02X (Die=0x%04X, MFG=0x%04X)", s_address, die_id, mfg_id);
+                } else {
+                    s_is_ina226 = false;
+                    FURI_LOG_I(TAG, "Detected INA219 at 0x%02X (CONFIG=0x%04X)", s_address, cfg);
+                }
                 break;
+            } else {
+                furi_hal_i2c_release(&furi_hal_i2c_handle_power);
             }
         }
     }
 
     if(!s_detected) {
-        s_address = INA219_I2C_ADDR_BASE;
-        uint16_t cfg = 0;
-
-        furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-        (void)ina219_write_reg16(INA219_REG_CALIBRATION, 4096);
-        bool ok = ina219_read_reg16(INA219_REG_CONFIG, &cfg);
-        furi_hal_i2c_release(&furi_hal_i2c_handle_power);
-
-        if(ok) {
-            s_detected = true;
-            FURI_LOG_I(TAG, "Detected INA219 at default 0x%02X after calibration write", s_address);
-        }
-    }
-
-    if(!s_detected) {
-        FURI_LOG_I(TAG, "INA219 not detected on I2C bus");
+        FURI_LOG_I(TAG, "INA219/INA226 power monitor not detected on I2C bus");
     }
 
     return s_detected;
@@ -104,7 +116,7 @@ bool furi_hal_ina219_get_voltage_current(float* voltage_v, float* current_a) {
     if(!s_detected) return false;
 
     uint32_t now = furi_get_tick();
-    uint32_t period_ticks = furi_ms_to_ticks(INA219_READ_PERIOD_MS);
+    uint32_t period_ticks = furi_ms_to_ticks(INA_READ_PERIOD_MS);
 
     if(s_last_read_tick != 0 && (now - s_last_read_tick) < period_ticks) {
         *voltage_v = s_cached_voltage_v;
@@ -116,8 +128,8 @@ bool furi_hal_ina219_get_voltage_current(float* voltage_v, float* current_a) {
     uint16_t shunt_raw = 0;
 
     furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-    bool ok1 = ina219_read_reg16(INA219_REG_BUS_VOLTAGE, &bus_raw);
-    bool ok2 = ina219_read_reg16(INA219_REG_SHUNT_VOLTAGE, &shunt_raw);
+    bool ok1 = ina_read_reg16(INA_REG_BUS_VOLTAGE, &bus_raw);
+    bool ok2 = ina_read_reg16(INA_REG_SHUNT_VOLTAGE, &shunt_raw);
     furi_hal_i2c_release(&furi_hal_i2c_handle_power);
 
     if(!ok1 && !ok2) {
@@ -131,15 +143,28 @@ bool furi_hal_ina219_get_voltage_current(float* voltage_v, float* current_a) {
 
     float voltage = s_cached_voltage_v;
     if(ok1) {
-        uint16_t v = (uint16_t)(bus_raw >> 3);
-        voltage = (float)v * 0.004f;
+        if(s_is_ina226) {
+            // INA226 Bus Voltage LSB = 1.25 mV (0.00125 V), full 16-bit register
+            voltage = (float)bus_raw * 0.00125f;
+        } else {
+            // INA219 Bus Voltage LSB = 4.0 mV (0.004 V), bits 13..3
+            uint16_t v = (uint16_t)(bus_raw >> 3);
+            voltage = (float)v * 0.004f;
+        }
     }
 
     float current = s_cached_current_a;
     if(ok2) {
         int16_t s = (int16_t)shunt_raw;
-        float shunt_v = (float)s * 10e-6f;
-        current = -(shunt_v / INA219_SHUNT_OHMS);
+        if(s_is_ina226) {
+            // INA226 Shunt Voltage LSB = 2.5 uV (2.5e-6 V)
+            float shunt_v = (float)s * 2.5e-6f;
+            current = -(shunt_v / INA219_SHUNT_OHMS);
+        } else {
+            // INA219 Shunt Voltage LSB = 10 uV (10e-6 V)
+            float shunt_v = (float)s * 10e-6f;
+            current = -(shunt_v / INA219_SHUNT_OHMS);
+        }
     }
 
     s_cached_voltage_v = voltage;
@@ -150,3 +175,81 @@ bool furi_hal_ina219_get_voltage_current(float* voltage_v, float* current_a) {
     *current_a = s_cached_current_a;
     return true;
 }
+
+const char* furi_hal_ina219_get_model_name(void) {
+    if(!s_detected) return "None";
+    return s_is_ina226 ? "INA226" : "INA219";
+}
+
+#define INA226_REG_MASK_ENABLE 0x06
+#define INA226_REG_ALERT_LIMIT 0x07
+
+static GpioExtiCallback s_ina_alert_cb = NULL;
+static void* s_ina_alert_ctx = NULL;
+
+static void furi_hal_ina226_alert_isr(void* ctx) {
+    UNUSED(ctx);
+    if(s_ina_alert_cb) {
+        s_ina_alert_cb(s_ina_alert_ctx);
+    }
+}
+
+bool furi_hal_ina226_set_overcurrent_limit(float max_current_a) {
+    if(!s_detected || !s_is_ina226) return false;
+
+    // Convert max current in Amperes to INA226 Shunt Voltage register value
+    // Shunt Voltage LSB = 2.5 uV = 2.5e-6 V
+    // V_shunt = I * R_shunt (R_shunt = 0.1 Ohm)
+    // Register Value = (I * 0.1) / 2.5e-6 = I * 40000
+    float v_shunt = max_current_a * INA219_SHUNT_OHMS;
+    uint16_t limit_val = (uint16_t)(v_shunt / 2.5e-6f);
+
+    furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
+    // Write Shunt Over-Limit threshold to ALERT_LIMIT (0x07)
+    bool ok1 = ina_write_reg16(INA226_REG_ALERT_LIMIT, limit_val);
+    // Enable SOL (Shunt Voltage Over-Limit) bit in MASK_ENABLE (0x06) -> 0x8000
+    bool ok2 = ina_write_reg16(INA226_REG_MASK_ENABLE, 0x8000);
+    furi_hal_i2c_release(&furi_hal_i2c_handle_power);
+
+    return ok1 && ok2;
+}
+
+bool furi_hal_ina226_configure_protection(float overcurrent_a, float undervoltage_v) {
+    if(!s_detected || !s_is_ina226) return false;
+
+    bool ok = true;
+    furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
+
+    if(overcurrent_a > 0.0f) {
+        // Set Shunt Over-Limit (SOL = 0x8000)
+        float v_shunt = overcurrent_a * INA219_SHUNT_OHMS;
+        uint16_t limit_val = (uint16_t)(v_shunt / 2.5e-6f);
+        ok = ok && ina_write_reg16(INA226_REG_ALERT_LIMIT, limit_val);
+        ok = ok && ina_write_reg16(INA226_REG_MASK_ENABLE, 0x8000);
+    } else if(undervoltage_v > 0.0f) {
+        // Set Bus Under-Limit (BUL = 0x1000)
+        uint16_t limit_val = (uint16_t)(undervoltage_v / 0.00125f);
+        ok = ok && ina_write_reg16(INA226_REG_ALERT_LIMIT, limit_val);
+        ok = ok && ina_write_reg16(INA226_REG_MASK_ENABLE, 0x1000);
+    }
+
+    furi_hal_i2c_release(&furi_hal_i2c_handle_power);
+    return ok;
+}
+
+void furi_hal_ina226_enable_alert_interrupt(GpioExtiCallback cb, void* ctx) {
+    s_ina_alert_cb = cb;
+    s_ina_alert_ctx = ctx;
+
+    if(!s_detected) return;
+
+    furi_hal_gpio_init_ex(
+        &gpio_ina_alert,
+        GpioModeInterruptFall,
+        GpioPullUp,
+        GpioSpeedLow,
+        GpioAltFnUnused);
+    furi_hal_gpio_add_int_callback(&gpio_ina_alert, furi_hal_ina226_alert_isr, NULL);
+    furi_hal_gpio_enable_int_callback(&gpio_ina_alert);
+}
+

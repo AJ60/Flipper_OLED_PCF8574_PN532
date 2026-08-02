@@ -3,7 +3,7 @@
 App(
     appid="tasks",  # Must be unique
     name="Tasks",   # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="tasks_app",
     stack_size=2 * 1024,
     fap_category="Tools",

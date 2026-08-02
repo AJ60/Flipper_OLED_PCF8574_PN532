@@ -1,7 +1,7 @@
 App(
     appid="power",
     name="PowerSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="power_srv",
     cdefines=["SRV_POWER"],
     requires=[
@@ -19,7 +19,7 @@ App(
 App(
     appid="cli_power",
     targets=["f7"],
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="cli_power_ep",
     requires=["cli"],
     sources=["power_cli.c"],

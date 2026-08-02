@@ -1,7 +1,7 @@
 App(
     appid="eth_troubleshooter",
     name="[W5500] Ethernet",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="eth_troubleshooter_app",
     requires=[
         "gui",

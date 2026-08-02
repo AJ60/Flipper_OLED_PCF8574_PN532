@@ -1,7 +1,7 @@
 App(
     appid="bomberduck",
     name="Bomberduck",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="bomberduck_app",
     requires=[
         "gui",

@@ -1,7 +1,7 @@
 App(
     appid="air_labyrinth",
     name="Air Labyrinth",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="game_app",
     stack_size=4 * 1024,  # Game stack, change accordingly
     fap_icon="icon.png",

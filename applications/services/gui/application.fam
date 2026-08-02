@@ -1,7 +1,7 @@
 App(
     appid="gui",
     name="GuiSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="gui_srv",
     cdefines=["SRV_GUI"],
     requires=[

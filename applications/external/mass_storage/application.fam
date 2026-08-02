@@ -1,7 +1,7 @@
 App(
     appid="mass_storage",
     name="Mass Storage",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="mass_storage_app",
     requires=[
         "gui",

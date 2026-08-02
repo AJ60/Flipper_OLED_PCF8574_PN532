@@ -1,7 +1,7 @@
 App(
     appid="dialogs",
     name="DialogsSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="dialogs_srv",
     cdefines=["SRV_DIALOGS"],
     requires=["gui"],

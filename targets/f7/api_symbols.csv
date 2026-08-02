@@ -1522,9 +1522,13 @@ Function,-,furi_hal_ibutton_init,void,
 Function,+,furi_hal_ibutton_pin_configure,void,
 Function,+,furi_hal_ibutton_pin_reset,void,
 Function,+,furi_hal_ibutton_pin_write,void,const _Bool
+Function,+,furi_hal_ina219_get_model_name,const char*,
 Function,+,furi_hal_ina219_get_voltage_current,_Bool,"float*, float*"
 Function,+,furi_hal_ina219_init,_Bool,
 Function,+,furi_hal_ina219_is_ready,_Bool,
+Function,+,furi_hal_ina226_configure_protection,_Bool,"float, float"
+Function,+,furi_hal_ina226_enable_alert_interrupt,void,"GpioExtiCallback, void*"
+Function,+,furi_hal_ina226_set_overcurrent_limit,_Bool,float
 Function,+,furi_hal_info_get,void,"PropertyValueCallback, char, void*"
 Function,+,furi_hal_info_get_api_version,void,"uint16_t*, uint16_t*"
 Function,+,furi_hal_infrared_async_rx_set_capture_isr_callback,void,"FuriHalInfraredRxCaptureCallback, void*"
@@ -1552,20 +1556,15 @@ Function,+,furi_hal_light_blink_set_color,void,Light
 Function,+,furi_hal_light_blink_start,void,"Light, uint8_t, uint16_t, uint16_t"
 Function,+,furi_hal_light_blink_stop,void,
 Function,-,furi_hal_light_init,void,
-Function,+,furi_hal_light_is_backlight_on,_Bool,
+Function,+,furi_hal_light_oled_set_invert,void,_Bool
 Function,+,furi_hal_light_sequence,void,const char*
 Function,+,furi_hal_light_set,void,"Light, uint8_t"
 Function,+,furi_hal_mcp23017_attach_int,void,"GpioExtiCallback, void*"
 Function,+,furi_hal_mcp23017_check_and_restore,_Bool,uint16_t
 Function,+,furi_hal_mcp23017_configure_interrupts,_Bool,uint16_t
-Function,+,furi_hal_mcp23017_get_address,uint8_t,
-Function,+,furi_hal_mcp23017_get_check_count,uint32_t,
-Function,+,furi_hal_mcp23017_get_fail_count,uint32_t,
-Function,+,furi_hal_mcp23017_get_restore_count,uint32_t,
 Function,+,furi_hal_mcp23017_handle_int,void,
 Function,+,furi_hal_mcp23017_init,_Bool,
 Function,+,furi_hal_mcp23017_init_ex,_Bool,uint8_t
-Function,+,furi_hal_mcp23017_is_present,_Bool,
 Function,+,furi_hal_mcp23017_led_init,_Bool,
 Function,+,furi_hal_mcp23017_led_off,_Bool,
 Function,+,furi_hal_mcp23017_led_set,_Bool,"uint8_t, uint8_t, uint8_t"
@@ -4415,6 +4414,7 @@ Variable,+,gpio_ibutton,const GpioPin,
 Variable,+,gpio_infrared_rx,const GpioPin,
 Variable,+,gpio_infrared_tx,const GpioPin,
 Variable,+,gpio_mcp_int,const GpioPin,
+Variable,+,gpio_ina_alert,const GpioPin,
 Variable,+,gpio_nfc_cs,const GpioPin,
 Variable,+,gpio_nfc_irq,const GpioPin,
 Variable,+,gpio_nfc_irq_rfid_pull,const GpioPin,

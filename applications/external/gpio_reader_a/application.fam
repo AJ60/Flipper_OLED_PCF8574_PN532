@@ -1,7 +1,7 @@
 App(
     appid="gpio_reader_a",
     name="[GPIO] Reader (aureli1c)",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="GPIO_reader_app",
     requires=["gui"],
     stack_size=1 * 1024,

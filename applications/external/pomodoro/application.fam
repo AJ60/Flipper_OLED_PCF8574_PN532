@@ -1,7 +1,7 @@
 App(
     appid="flipp_pomodoro",
     name="Pomodoro Timer",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="flipp_pomodoro_app",
     requires=["gui", "notification", "dolphin"],
     stack_size=1 * 1024,

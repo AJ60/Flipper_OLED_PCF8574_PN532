@@ -3,6 +3,8 @@
 #include <gui/modules/variable_item_list.h>
 #include <gui/view_dispatcher.h>
 #include <lib/toolbox/value_index.h>
+#include <u8g2_glue.h>
+#include <gui/gui_i.h>
 
 #define MAX_NOTIFICATION_SETTINGS 5
 
@@ -26,44 +28,27 @@ const char* const oled_driver_text[OLED_DRIVER_COUNT] = {
     "SH1106",
 };
 
-#define CONTRAST_COUNT 17
+#define CONTRAST_COUNT 16
 const char* const contrast_text[CONTRAST_COUNT] = {
-    "-8",
-    "-7",
-    "-6",
-    "-5",
-    "-4",
-    "-3",
-    "-2",
-    "-1",
-    "0",
-    "+1",
-    "+2",
-    "+3",
-    "+4",
-    "+5",
-    "+6",
-    "+7",
-    "+8",
+    "1% (Night)",
+    "5%",
+    "10%",
+    "15%",
+    "20%",
+    "25%",
+    "30%",
+    "40%",
+    "50%",
+    "60%",
+    "70%",
+    "80%",
+    "85%",
+    "90%",
+    "95%",
+    "100% (Max)",
 };
 const int32_t contrast_value[CONTRAST_COUNT] = {
-    -8,
-    -7,
-    -6,
-    -5,
-    -4,
-    -3,
-    -2,
-    -1,
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 };
 
 #define VOLUME_COUNT 21
@@ -119,6 +104,22 @@ static void contrast_changed(VariableItem* item) {
     notification_message(app->notification, &sequence_lcd_contrast_update);
 }
 
+#define DISPLAY_MODE_COUNT 2
+const char* const display_mode_text[DISPLAY_MODE_COUNT] = {
+    "Normal",
+    "Inverted",
+};
+
+static void display_mode_changed(VariableItem* item) {
+    NotificationAppSettings* app = variable_item_get_context(item);
+    uint8_t index = variable_item_get_current_value_index(item);
+
+    variable_item_set_current_value_text(item, display_mode_text[index]);
+
+    app->notification->settings.display_inverted = (index == 1);
+    furi_hal_light_oled_set_invert(index == 1);
+}
+
 const NotificationMessage apply_message = {
     .type = NotificationMessageTypeLedBrightnessSettingApply,
 };
@@ -145,6 +146,34 @@ static void vibro_changed(VariableItem* item) {
     notification_message(app->notification, &sequence_single_vibro);
 }
 
+#define DELAY_COUNT 12
+const char* const delay_text[DELAY_COUNT] = {
+    "Always ON",
+    "1s",
+    "5s",
+    "10s",
+    "15s",
+    "30s",
+    "60s",
+    "90s",
+    "120s",
+    "5min",
+    "10min",
+    "30min",
+};
+const uint32_t delay_value[DELAY_COUNT] = {
+    0, 1000, 5000, 10000, 15000, 30000, 60000, 90000, 120000, 300000, 600000, 1800000
+};
+
+static void screen_changed(VariableItem* item) {
+    NotificationAppSettings* app = variable_item_get_context(item);
+    uint8_t index = variable_item_get_current_value_index(item);
+
+    variable_item_set_current_value_text(item, delay_text[index]);
+    app->notification->settings.display_off_delay_ms = delay_value[index];
+    notification_message(app->notification, &sequence_display_backlight_on);
+}
+
 static uint32_t notification_app_settings_exit(void* context) {
     UNUSED(context);
     return VIEW_NONE;
@@ -169,6 +198,12 @@ static NotificationAppSettings* alloc_settings(void) {
     variable_item_set_current_value_index(item, value_index);
     variable_item_set_current_value_text(item, contrast_text[value_index]);
 
+    item = variable_item_list_add(
+        app->variable_item_list, "Display Mode", DISPLAY_MODE_COUNT, display_mode_changed, app);
+    value_index = app->notification->settings.display_inverted ? 1 : 0;
+    variable_item_set_current_value_index(item, value_index);
+    variable_item_set_current_value_text(item, display_mode_text[value_index]);
+
 
 item = variable_item_list_add(
     app->variable_item_list, "OLED Driver", OLED_DRIVER_COUNT, oled_driver_changed, app);
@@ -189,12 +224,12 @@ variable_item_set_current_value_text(item, oled_driver_text[value_index]);
     // variable_item_set_current_value_index(item, value_index);
     // variable_item_set_current_value_text(item, backlight_text[value_index]);
 
-    // item = variable_item_list_add(
-    //     app->variable_item_list, "Backlight Time", DELAY_COUNT, screen_changed, app);
-    // value_index = value_index_uint32(
-    //     app->notification->settings.display_off_delay_ms, delay_value, DELAY_COUNT);
-    // variable_item_set_current_value_index(item, value_index);
-    // variable_item_set_current_value_text(item, delay_text[value_index]);
+    item = variable_item_list_add(
+        app->variable_item_list, "OLED Sleep", DELAY_COUNT, screen_changed, app);
+    value_index = value_index_uint32(
+        app->notification->settings.display_off_delay_ms, delay_value, DELAY_COUNT);
+    variable_item_set_current_value_index(item, value_index);
+    variable_item_set_current_value_text(item, delay_text[value_index]);
 
     // item = variable_item_list_add(
     //     app->variable_item_list, "LED Brightness", BACKLIGHT_COUNT, led_changed, app);

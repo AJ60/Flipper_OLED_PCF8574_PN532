@@ -1,7 +1,7 @@
 App(
     appid="ccid_test",
     name="CCID Debug",
-    apptype=FlipperAppType.DEBUG,
+    apptype=DIYAppType.DEBUG,
     entry_point="ccid_test_app",
     requires=[
         "gui",

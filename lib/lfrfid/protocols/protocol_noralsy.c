@@ -59,15 +59,12 @@ static void protocol_noralsy_decode(ProtocolNoralsy* protocol) {
 }
 
 static bool protocol_noralsy_can_be_decoded(ProtocolNoralsy* protocol) {
-    // check 12 bits preamble
-    // If necessary, use 0xBB0214FF for 32 bit preamble check
-    // However, it is not confirmed the 13-16 bit are static.
-    if(bit_lib_get_bits_16(protocol->encoded_data, 0, 12) != 0b101110110000) return false;
-    uint8_t calc1 = noralsy_chksum(&protocol->encoded_data[4], 40);
+    if(bit_lib_get_bits(protocol->encoded_data, 0, 8) != 0xBB) return false;
+    uint8_t calc1 = noralsy_chksum(&protocol->encoded_data[0], 40);
     uint8_t calc2 = noralsy_chksum(&protocol->encoded_data[0], 76);
     uint8_t chk1 = bit_lib_get_bits(protocol->encoded_data, 72, 4);
     uint8_t chk2 = bit_lib_get_bits(protocol->encoded_data, 76, 4);
-    if(calc1 != chk1 || calc2 != chk2) return false;
+    if(calc1 != chk1 && calc2 != chk2) return false;
 
     return true;
 }
@@ -200,7 +197,7 @@ const ProtocolBase protocol_noralsy = {
     .manufacturer = "Noralsy",
     .data_size = NORALSY_DECODED_DATA_SIZE,
     .features = LFRFIDFeatureASK,
-    .validate_count = 3,
+    .validate_count = 2,
     .alloc = (ProtocolAlloc)protocol_noralsy_alloc,
     .free = (ProtocolFree)protocol_noralsy_free,
     .get_data = (ProtocolGetData)protocol_noralsy_get_data,

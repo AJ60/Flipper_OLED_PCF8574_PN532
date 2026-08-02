@@ -1,7 +1,7 @@
 App(
     appid="storage",
     name="StorageSrv",
-    apptype=FlipperAppType.SERVICE,
+    apptype=DIYAppType.SERVICE,
     entry_point="storage_srv",
     cdefines=["SRV_STORAGE"],
     requires=["storage_settings"],
@@ -13,7 +13,7 @@ App(
 
 App(
     appid="storage_start",
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="storage_on_system_start",
     requires=["storage"],
     order=60,

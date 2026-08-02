@@ -2,9 +2,14 @@
 #include <furi_hal_resources.h>
 #include <furi_hal_light.h>
 #include <furi_hal_mcp23017.h>
+#include <furi_hal_i2c.h>
+#include <furi_hal_i2c_config.h>
 #include <stdint.h>
 #include <momentum/momentum.h>
 #include <rgb_backlight.h>
+#include <u8g2_glue.h>
+#include <gui/gui.h>
+#include <gui/gui_i.h>
 
 #define LED_CURRENT_RED   (50u)
 #define LED_CURRENT_GREEN (50u)
@@ -30,10 +35,18 @@ void furi_hal_light_set(Light light, uint8_t value) {
         furi_hal_mcp23017_led_set_blue(on);
     }
     if(light & LightBacklight) {
+        display_is_sleeping = !on;
+        if(furi_record_exists(RECORD_GUI)) {
+            Gui* gui = furi_record_open(RECORD_GUI);
+            u8g2_SetPowerSave(&gui->canvas->fb, on ? 0 : 1);
+            furi_record_close(RECORD_GUI);
+        }
+        if(on) {
+            display_needs_reinit = true;
+        }
         if(momentum_settings.rgb_backlight) {
             rgb_backlight_update(value, false);
         }
-        // Note: Backlight is separate from RGB LED on MCP23017
     }
 }
 
@@ -97,4 +110,12 @@ void furi_hal_light_sequence(const char* sequence) {
         }
         sequence++;
     } while(*sequence != 0);
+}
+
+void furi_hal_light_oled_set_invert(bool invert) {
+    if(furi_record_exists(RECORD_GUI)) {
+        Gui* gui = furi_record_open(RECORD_GUI);
+        u8x8_d_ssd1306_set_invert(&gui->canvas->fb.u8x8, invert);
+        furi_record_close(RECORD_GUI);
+    }
 }

@@ -1,7 +1,7 @@
 App(
     appid="morse_code",
     name="Morse Code",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="morse_code_app",
     requires=[
         "gui",

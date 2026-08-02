@@ -1,7 +1,7 @@
 App(
     appid="clock_settings",
     name="Clock & Alarm",
-    apptype=FlipperAppType.SETTINGS,
+    apptype=DIYAppType.SETTINGS,
     entry_point="clock_settings",
     requires=["gui"],
     provides=["clock_settings_start"],
@@ -12,7 +12,7 @@ App(
 
 App(
     appid="clock_settings_start",
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="clock_settings_start",
     order=1000,
 )

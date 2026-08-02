@@ -1,7 +1,7 @@
 App(
     appid="fmf_to_sub",
     name="Music to Sub-GHz Radio",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="fmf_to_sub_app",
     stack_size=4 * 1024,
     requires=[

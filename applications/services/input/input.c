@@ -11,6 +11,7 @@
 #ifdef USE_MCP23017
 #include <furi_hal_mcp23017.h>
 #endif
+#include <u8g2_glue.h>
 #include <furi_hal_vibro.h>
 #include <toolbox/cli/cli_command.h>
 #include <cli/cli_main_commands.h>
@@ -199,9 +200,9 @@ int32_t input_srv(void* p) {
         mcp_int_mask |= input_mcp_mask_for_index(i);
     }
 
-    // Initialize MCP23017 and configure the mapped inputs as interrupt-driven inputs.
-    if(!furi_hal_mcp23017_init()) {
-        FURI_LOG_E(TAG, "MCP23017 init failed");
+    bool mcp_available = furi_hal_mcp23017_init();
+    if(!mcp_available) {
+        FURI_LOG_I(TAG, "MCP23017 expander not present on I2C1 bus - disabling expander polling");
     } else {
         FURI_LOG_I(TAG, "MCP interrupt mask: 0x%04X", mcp_int_mask);
         furi_hal_mcp23017_configure_interrupts(mcp_int_mask);
@@ -215,28 +216,11 @@ int32_t input_srv(void* p) {
             for(size_t j = 0; j < input_pins_count; j++) {
                 pin_states[j].state = GPIO_Read_MCP_BY_IDX(j);
                 pin_states[j].debounce = INPUT_DEBOUNCE_TICKS;
-
-                FURI_LOG_I(
-                    TAG,
-                    "Seed: idx=%u key=%s state=%u",
-                    (unsigned)j,
-                    input_pins[j].name,
-                    (unsigned)pin_states[j].state);
             }
-        } else {
-            FURI_LOG_W(TAG, "Failed to read initial MCP state");
         }
 
-        // Attach MCP interrupt to the input thread.
+        // Attach MCP interrupt on PB0 to the input thread.
         furi_hal_mcp23017_attach_int(input_isr, (void*)thread_id);
-        furi_hal_gpio_init(&gpio_mcp_int, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedLow);
-        furi_hal_gpio_add_int_callback(
-            &gpio_mcp_int,
-            (GpioExtiCallback)furi_hal_mcp23017_handle_int,
-            NULL);
-        furi_hal_gpio_enable_int_callback(&gpio_mcp_int);
-
-        FURI_LOG_I(TAG, "MCP interrupt callback attached");
     }
 #endif
 
@@ -248,20 +232,15 @@ int32_t input_srv(void* p) {
         bool is_changing = false;
 
 #ifdef USE_MCP23017
-        // Read MCP state once per loop and update the cached value.
-        uint8_t new_state = 0;
-        if(furi_hal_mcp23017_read_port(0, &new_state)) {
-            uint16_t cached_val = (uint16_t)new_state | 0xFF00;
-            if(g_mcp_gpio_state != cached_val) {
-                FURI_LOG_D(
-                    TAG,
-                    "MCP state changed: 0x%02X -> 0x%02X",
-                    (unsigned)(uint8_t)g_mcp_gpio_state,
-                    (unsigned)new_state);
+        // Read MCP state once per loop only if expander chip is physically present
+        if(mcp_available) {
+            uint8_t new_state = 0;
+            if(furi_hal_mcp23017_read_port(0, &new_state)) {
+                uint16_t cached_val = (uint16_t)new_state | 0xFF00;
+                g_mcp_gpio_state = cached_val;
+            } else {
+                g_mcp_gpio_state = 0xFFFF;
             }
-            g_mcp_gpio_state = cached_val;
-        } else {
-            FURI_LOG_W(TAG, "Failed to read MCP state");
         }
 #endif
 
@@ -372,7 +351,8 @@ int32_t input_srv(void* p) {
 
 #ifdef USE_MCP23017
             uint32_t now = furi_get_tick();
-            if((now - last_restore_tick) >= INPUT_MCP_RESTORE_PERIOD_MS) {
+            uint32_t restore_period = display_is_sleeping ? 30000 : INPUT_MCP_RESTORE_PERIOD_MS;
+            if(mcp_available && (now - last_restore_tick) >= restore_period) {
                 last_restore_tick = now;
                 furi_hal_mcp23017_check_and_restore(mcp_int_mask);
             }

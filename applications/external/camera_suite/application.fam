@@ -1,6 +1,6 @@
 App(
     appid="camera_suite",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     cdefines=["APP_CAMERA_SUITE"],
     entry_point="camera_suite_app",
     fap_author="@CodyTolene @Z4urce @leedave @rnadyrshin",

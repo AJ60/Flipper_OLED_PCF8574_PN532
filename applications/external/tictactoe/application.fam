@@ -1,7 +1,7 @@
 App(
     appid="tictactoe",
     name="Tic Tac Toe",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="tictactoe_game_app",
     requires=["gui"],
     stack_size=1 * 1024,

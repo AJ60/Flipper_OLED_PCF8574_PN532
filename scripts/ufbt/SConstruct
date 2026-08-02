@@ -43,7 +43,7 @@ core_env.Append(CPPDEFINES=GetOption("extra_defines"))
 
 # Now we can import stuff bundled with SDK - it was added to sys.path by ufbt_state
 
-from fbt.appmanifest import FlipperApplication, FlipperAppType
+from fbt.appmanifest import FlipperApplication, DIYAppType, FlipperAppType
 from fbt.sdk.cache import SdkCache
 from fbt.util import (
     FORWARDED_ENV_VARIABLES,
@@ -246,10 +246,10 @@ appenv.PrepareApplicationsBuild()
 apps_artifacts = appenv["EXT_APPS"]
 
 apps_to_build_as_faps = [
-    FlipperAppType.PLUGIN,
-    FlipperAppType.EXTERNAL,
-    FlipperAppType.MENUEXTERNAL,
-    FlipperAppType.SETTINGS,
+    DIYAppType.PLUGIN,
+    DIYAppType.EXTERNAL,
+    DIYAppType.MENUEXTERNAL,
+    DIYAppType.SETTINGS,
 ]
 
 known_extapps = [
@@ -306,7 +306,7 @@ Alias("cdb", app_cdb)
 
 
 # launch handler
-runnable_apps = appenv["APPBUILD"].get_apps_of_type(FlipperAppType.EXTERNAL, True)
+runnable_apps = appenv["APPBUILD"].get_apps_of_type(DIYAppType.EXTERNAL, True)
 
 app_to_launch = None
 if len(runnable_apps) == 1:

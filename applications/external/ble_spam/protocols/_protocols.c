@@ -7,6 +7,7 @@ const Protocol* protocols[] = {
     &protocol_lovespouse,
     &protocol_nameflood,
     &protocol_swiftpair,
+    &protocol_xiaomi,
 };
 
 const size_t protocols_count = COUNT_OF(protocols);

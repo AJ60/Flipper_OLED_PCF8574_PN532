@@ -1,7 +1,7 @@
 App(
     appid="flipboard_blinky",
     name="FlipBoard Blinky",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     sources=[
         "*.c",
     ],

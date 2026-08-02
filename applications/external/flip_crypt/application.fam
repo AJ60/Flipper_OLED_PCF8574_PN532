@@ -1,7 +1,7 @@
 App(
     appid="flip_crypt",
     name="FlipCrypt",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="flip_crypt_app",
     stack_size=4 * 1024,
     fap_category="Tools",

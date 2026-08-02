@@ -1,7 +1,7 @@
 App(
     appid="cyborg_detector",
     name="Cyborg Detector",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="cyborg_detector_app",
     cdefines=["APP_CYBORG_DETECTOR"],
     fap_category="NFC",

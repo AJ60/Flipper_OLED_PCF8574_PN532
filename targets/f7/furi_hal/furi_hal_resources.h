@@ -11,8 +11,6 @@ extern "C" {
 /* Input Related Constants */
 #define INPUT_DEBOUNCE_TICKS 24
 
-//const GpioPin gpio_button_sr_latch = {.port = GPIOH, .pin = LL_GPIO_PIN_3};
-
 
 // volne A3, A4, A5, 
 
@@ -61,19 +59,14 @@ extern const size_t gpio_pins_count;
 extern const GpioPin gpio_swdio;
 extern const GpioPin gpio_swclk;
 
-//extern const GpioPin gpio_vibro;
 extern const GpioPin gpio_ibutton;
 
 extern const GpioPin gpio_cc1101_g0;
 extern const GpioPin gpio_mcp_int;
-//extern const GpioPin gpio_rf_sw_0;
+extern const GpioPin gpio_ina_alert;
 
 extern const GpioPin gpio_subghz_cs;
-// extern const GpioPin gpio_display_cs;
-// extern const GpioPin gpio_display_rst_n;
-// extern const GpioPin gpio_display_di;
 extern const GpioPin gpio_sdcard_cs;
-//extern const GpioPin gpio_sdcard_cd;
 extern const GpioPin gpio_nfc_cs;
 extern const GpioPin gpio_nfc_miso;
 
@@ -88,7 +81,6 @@ extern const GpioPin gpio_button_back;
 extern const GpioPin gpio_spi_miso;
 extern const GpioPin gpio_spi_mosi;
 extern const GpioPin gpio_spi_r_mosi;
-// extern const GpioPin gpio_spi_mosi1;
 extern const GpioPin gpio_spi_sck;
 
 extern const GpioPin gpio_ext_pc0;
@@ -221,6 +213,10 @@ GND - GND
 // MCP23017 interrupt default pin
 #define MCP_INT_GPIO_Port GPIOB
 #define MCP_INT_Pin       LL_GPIO_PIN_0
+
+// INA226 Alert pin (PB1, WeAct Pin 23)
+#define INA_ALERT_GPIO_Port GPIOB
+#define INA_ALERT_Pin       LL_GPIO_PIN_1
 
 #define SPEAKER_GPIO_Port GPIOB
 #define SPEAKER_Pin       LL_GPIO_PIN_8

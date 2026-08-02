@@ -1,7 +1,7 @@
 App(
     appid="metronome",
     name="Metronome",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="metronome_app",
     requires=[
         "gui",

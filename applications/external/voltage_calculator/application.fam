@@ -3,7 +3,7 @@ App(
     appid="voltcalc_app",
     # name will be show on the Flip.x0 browser
     name="Voltage Calculator",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     # Main function (entry point) of the application
     entry_point="voltcalc_app",
     stack_size=2 * 1024,

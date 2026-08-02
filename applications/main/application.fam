@@ -1,7 +1,7 @@
 App(
     appid="main_apps",
     name="Basic applications for main menu",
-    apptype=FlipperAppType.METAPACKAGE,
+    apptype=DIYAppType.METAPACKAGE,
     provides=[
         "gpio",
         "ibutton",
@@ -20,7 +20,7 @@ App(
 App(
     appid="main_apps_on_start",
     name="On start hooks",
-    apptype=FlipperAppType.METAPACKAGE,
+    apptype=DIYAppType.METAPACKAGE,
     provides=[
         "cli",
         "subghz_load_extended_settings",

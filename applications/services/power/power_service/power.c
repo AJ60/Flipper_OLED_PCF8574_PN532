@@ -3,6 +3,7 @@
 #include <furi.h>
 #include <furi_hal.h>
 #include <momentum/momentum.h>
+#include <u8g2_glue.h>
 
 #include <update_util/update_operation.h>
 #include <notification/notification_messages.h>
@@ -577,6 +578,10 @@ static void power_charge_supress(Power* power) {
 static void power_tick_callback(void* context) {
     furi_assert(context);
     Power* power = context;
+
+    // Adjust polling interval when display is sleeping (15s vs 1s)
+    uint32_t current_tick_ms = display_is_sleeping ? 15000UL : 1000UL;
+    furi_event_loop_tick_set(power->event_loop, current_tick_ms, power_tick_callback, power);
 
     // Update data from gauge and charger
     const bool need_refresh = power_update_info(power);

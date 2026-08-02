@@ -1,7 +1,7 @@
 App(
     appid="free_roam",
     name="Free Roam",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="free_roam_main",
     stack_size=4 * 1024,
     fap_icon="app.png",

@@ -3,7 +3,7 @@
 App(
     appid="fzspground",  # Must be unique
     name="Space Playground",  # Displayed in menus
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="fzspground_app",
     stack_size=2 * 1024,
     fap_category="Media",  # Category for the app

@@ -1,7 +1,7 @@
 App(
     appid="simon_says",  # Must be unique
     name="Simon Says",  # Displayed in UI
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="simon_says_app_entry",
     stack_size=2 * 1024,
     fap_category="Games",

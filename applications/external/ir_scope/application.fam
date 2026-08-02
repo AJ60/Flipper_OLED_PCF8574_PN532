@@ -1,7 +1,7 @@
 App(
     appid="ir_scope",
     name="IR Scope",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="ir_scope_app",
     requires=["gui"],
     stack_size=2 * 1024,

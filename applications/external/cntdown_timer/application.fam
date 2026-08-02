@@ -1,7 +1,7 @@
 App(
     appid="cntdown_tim",
     name="Count Down Timer",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="app_main",
     cdefines=["APP_COUNT_DOWN_TIMER"],
     requires=[

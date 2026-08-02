@@ -1,7 +1,7 @@
 App(
     appid="fuzzer_ibtn",
     name="iButton Fuzzer",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="fuzzer_start_ibtn",
     requires=[
         "gui",
@@ -32,7 +32,7 @@ App(
 App(
     appid="fuzzer_rfid",
     name="RFID Fuzzer",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="fuzzer_start_rfid",
     requires=[
         "gui",

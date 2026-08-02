@@ -1,7 +1,7 @@
 App(
     appid="rolling_flaws",
     name="Rolling Flaws",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="rolling_flaws_app",
     requires=["gui", "subghz"],
     stack_size=2 * 1024,

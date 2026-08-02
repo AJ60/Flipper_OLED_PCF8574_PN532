@@ -3,7 +3,7 @@
 App(
     appid="seader",
     name="Seader",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="seader_app",
     cdefines=["APP_SEADER"],
     requires=[
@@ -45,7 +45,7 @@ App(
 
 App(
     appid="seader_plugin_wiegand",
-    apptype=FlipperAppType.PLUGIN,
+    apptype=DIYAppType.PLUGIN,
     entry_point="plugin_wiegand_ep",
     requires=["seader"],
     sources=["plugin/wiegand.c"],

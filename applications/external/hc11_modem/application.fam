@@ -1,7 +1,7 @@
 App(
     appid = "hc11_modem",
     name = "HC-11 Modem",
-    apptype = FlipperAppType.EXTERNAL,
+    apptype = DIYAppType.EXTERNAL,
     entry_point = "hc11_modem_app_entry",
     stack_size = 4 * 1024,
     requires = ["gui"],

@@ -23,10 +23,10 @@
 #endif
 
 #define LFRFID_WORKER_READ_AVERAGE_COUNT 64
-#define LFRFID_WORKER_READ_MIN_TIME_US   16
+#define LFRFID_WORKER_READ_MIN_TIME_US   8
 
 #define LFRFID_WORKER_READ_DROP_TIME_MS      50
-#define LFRFID_WORKER_READ_STABILIZE_TIME_MS 450
+#define LFRFID_WORKER_READ_STABILIZE_TIME_MS 100
 #define LFRFID_WORKER_READ_SWITCH_TIME_MS    2000
 
 #define LFRFID_WORKER_WRITE_VERIFY_TIME_MS   2000
@@ -119,7 +119,7 @@ static LFRFIDWorkerReadState lfrfid_worker_read_internal(
             worker->read_cb(LFRFIDWorkerReadStartASK, PROTOCOL_NO, worker->cb_ctx);
         }
     } else {
-        furi_hal_rfid_tim_read_start(62500, 0.25);
+        furi_hal_rfid_tim_read_start(125000, 0.5);
         FURI_LOG_D(TAG, "Start PSK");
         if(worker->read_cb) {
             worker->read_cb(LFRFIDWorkerReadStartPSK, PROTOCOL_NO, worker->cb_ctx);
@@ -153,6 +153,7 @@ static LFRFIDWorkerReadState lfrfid_worker_read_internal(
     size_t last_read_count = 0;
 
     uint32_t switch_os_tick_last = furi_get_tick();
+    const uint32_t feature_os_tick_start = switch_os_tick_last;
 
     uint32_t average_duration = 0;
     uint32_t average_pulse = 0;
@@ -164,6 +165,16 @@ static LFRFIDWorkerReadState lfrfid_worker_read_internal(
         if(lfrfid_worker_check_for_stop(worker)) {
             state = LFRFIDWorkerReadExit;
             break;
+        }
+
+        // DIY: always honor dwell timeout — overrun/empty paths used to `continue`
+        // and skip the check below, so PSK carrier flood stuck Auto on 62.5 kHz.
+        if(timeout != UINT32_MAX) {
+            uint32_t now = furi_get_tick();
+            if((now - switch_os_tick_last) > timeout || (now - feature_os_tick_start) > timeout) {
+                state = LFRFIDWorkerReadTimeout;
+                break;
+            }
         }
 
         Buffer* buffer = buffer_stream_receive(ctx.stream, 100);
@@ -239,9 +250,6 @@ static LFRFIDWorkerReadState lfrfid_worker_read_internal(
                 }
 
                 if(protocol != PROTOCOL_NO) {
-                    // reset switch timer
-                    switch_os_tick_last = furi_get_tick();
-
                     size_t protocol_data_size =
                         protocol_dict_get_data_size(worker->protocols, protocol);
                     protocol_dict_get_data(
@@ -303,11 +311,6 @@ static LFRFIDWorkerReadState lfrfid_worker_read_internal(
 #endif
 
         if(*result_protocol != PROTOCOL_NO) {
-            break;
-        }
-
-        if((furi_get_tick() - switch_os_tick_last) > timeout) {
-            state = LFRFIDWorkerReadTimeout;
             break;
         }
     }
@@ -434,8 +437,9 @@ static void lfrfid_worker_mode_emulate_process(LFRFIDWorker* worker) {
         }
         uint32_t duration, pulse;
         pulse_glue_pop(pulse_glue, &duration, &pulse);
-        buffer->duration[i] = duration - 1;
-        buffer->pulse[i] = pulse;
+        // DIY: HAL emulate timer is 1 us/tick (no ETR). Encoder yields RF cycles @125 kHz → *8.
+        buffer->duration[i] = duration * 8 - 1;
+        buffer->pulse[i] = pulse * 8;
     }
 
 #ifdef LFRFID_WORKER_READ_DEBUG_GPIO
@@ -478,8 +482,8 @@ static void lfrfid_worker_mode_emulate_process(LFRFIDWorker* worker) {
                 }
                 uint32_t duration, pulse;
                 pulse_glue_pop(pulse_glue, &duration, &pulse);
-                buffer->duration[start + i] = duration - 1;
-                buffer->pulse[start + i] = pulse;
+                buffer->duration[start + i] = duration * 8 - 1;
+                buffer->pulse[start + i] = pulse * 8;
             }
         }
 

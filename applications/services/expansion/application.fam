@@ -1,6 +1,6 @@
 App(
     appid="expansion_start",
-    apptype=FlipperAppType.STARTUP,
+    apptype=DIYAppType.STARTUP,
     entry_point="expansion_on_system_start",
     cdefines=["SRV_EXPANSION"],
     sdk_headers=[

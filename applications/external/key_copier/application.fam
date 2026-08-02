@@ -1,7 +1,7 @@
 App(
     appid="key_copier",
     name="Key Copier",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="main_key_copier_app",
     stack_size=4 * 1024,
     requires=[

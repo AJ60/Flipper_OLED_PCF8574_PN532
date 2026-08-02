@@ -1,7 +1,7 @@
 App(
     appid="flip_weather",
     name="FlipWeather",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="flip_weather_app",
     stack_size=4 * 1024,
     fap_icon="app.png",

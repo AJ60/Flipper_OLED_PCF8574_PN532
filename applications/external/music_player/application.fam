@@ -1,7 +1,7 @@
 App(
     appid="music_player",
     name="Music Player",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="music_player_app",
     requires=[
         "gui",

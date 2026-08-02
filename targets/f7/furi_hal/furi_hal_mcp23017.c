@@ -1,6 +1,7 @@
 #include "furi_hal_mcp23017.h"
 #include "furi_hal_i2c.h"
 #include "furi_hal_gpio.h"
+#include "furi_hal_resources.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -43,6 +44,7 @@ static uint8_t mcp_i2c_addr(void) {
 static const FuriHalI2cBusHandle* mcp_i2c_handle = &furi_hal_i2c_handle_power;
 static GpioExtiCallback exti_cb = NULL;
 static void* exti_ctx = NULL;
+static bool mcp_is_present = false;
 
 static bool mcp_read_reg(uint8_t reg, uint8_t* val);
 static bool mcp_write_reg_locked(uint8_t reg, uint8_t val);
@@ -57,6 +59,8 @@ void furi_hal_mcp23017_set_i2c_bus(const FuriHalI2cBusHandle* bus_handle) {
 
 // Internal implementation that accepts explicit I2C address
 bool furi_hal_mcp23017_init_ex(uint8_t i2c_addr) {
+    mcp_is_present = false;
+
     // Wait for the power rail and chip to fully stabilize
     furi_delay_ms(100);
 
@@ -135,6 +139,7 @@ bool furi_hal_mcp23017_init_ex(uint8_t i2c_addr) {
         return false;
     }
 
+    mcp_is_present = true;
     FURI_LOG_I(TAG, "MCP23017 initialized");
 
     return true;
@@ -219,6 +224,8 @@ bool furi_hal_mcp23017_configure_interrupts(uint16_t gpios_to_input_mask) {
     // Perform all writes under one bus lock.
     furi_hal_i2c_acquire(mcp_i2c_handle);
 
+    // Enable MIRROR=1 (INTA/INTB connected) and ODR=1 (Open-Drain)
+    ok = ok && mcp_write_reg_locked(MCP_IOCON, 0x44);
     ok = ok && mcp_write_reg_locked(MCP_IODIRA, mask_a);
     ok = ok && mcp_write_reg_locked(MCP_IODIRB, mask_b);
     ok = ok && mcp_write_reg_locked(MCP_GPINTENA, mask_a);
@@ -306,9 +313,33 @@ bool furi_hal_mcp23017_check_and_restore(uint16_t expected_mask) {
     return furi_hal_mcp23017_configure_interrupts(expected_mask);
 }
 
+static void furi_hal_mcp23017_gpio_isr(void* ctx) {
+    UNUSED(ctx);
+    if(exti_cb) exti_cb(exti_ctx);
+}
+
 void furi_hal_mcp23017_attach_int(GpioExtiCallback cb, void* ctx) {
     exti_cb = cb;
     exti_ctx = ctx;
+
+    if(!mcp_is_present) {
+        FURI_LOG_I(TAG, "MCP23017 not present: skipping PB0 EXTI interrupt initialization");
+        return;
+    }
+
+    // Clear any pending interrupt on MCP chip before enabling EXTI on MCU
+    uint16_t dummy = 0;
+    furi_hal_mcp23017_read_gpio(&dummy);
+
+    FURI_LOG_I(TAG, "MCP23017 present: enabling PB0 EXTI interrupt");
+    furi_hal_gpio_init_ex(
+        &gpio_mcp_int,
+        GpioModeInterruptFall,
+        GpioPullUp,
+        GpioSpeedLow,
+        GpioAltFnUnused);
+    furi_hal_gpio_add_int_callback(&gpio_mcp_int, furi_hal_mcp23017_gpio_isr, NULL);
+    furi_hal_gpio_enable_int_callback(&gpio_mcp_int);
 }
 
 // This function should be called by the board-specific EXTI ISR when the INT pin fires.

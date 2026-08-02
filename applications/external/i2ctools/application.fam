@@ -1,7 +1,7 @@
 App(
     appid="i2ctools",
     name="[I2C] i2c Tools",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="i2ctools_app",
     requires=["gui"],
     stack_size=2 * 1024,

@@ -1,7 +1,7 @@
 App(
     appid="esubghz_chat",
     name="Enhanced Sub-Ghz Chat",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="esubghz_chat",
     requires=[
         "gui",

@@ -1,7 +1,7 @@
 App(
     appid="tetris",
     name="Tetris",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="tetris_game_app",
     requires=["gui"],
     stack_size=2 * 1024,

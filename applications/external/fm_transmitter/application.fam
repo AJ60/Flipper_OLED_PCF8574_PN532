@@ -1,7 +1,7 @@
 App(
     appid="fmtx_app",
     name="[KT0803] FM Transmitter",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="fmtx_i2c_init_app",
     requires=["gui"],
     stack_size=1 * 1024,

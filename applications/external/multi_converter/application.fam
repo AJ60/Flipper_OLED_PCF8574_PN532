@@ -1,7 +1,7 @@
 App(
     appid="multi_converter",
     name="Multi Converter",
-    apptype=FlipperAppType.EXTERNAL,
+    apptype=DIYAppType.EXTERNAL,
     entry_point="multi_converter_app",
     requires=["gui"],
     stack_size=1 * 1024,
