@@ -35,13 +35,14 @@ void furi_hal_light_set(Light light, uint8_t value) {
         furi_hal_mcp23017_led_set_blue(on);
     }
     if(light & LightBacklight) {
+        bool was_sleeping = display_is_sleeping;
         display_is_sleeping = !on;
         if(furi_record_exists(RECORD_GUI)) {
             Gui* gui = furi_record_open(RECORD_GUI);
             u8g2_SetPowerSave(&gui->canvas->fb, on ? 0 : 1);
             furi_record_close(RECORD_GUI);
         }
-        if(on) {
+        if(was_sleeping && on) {
             display_needs_reinit = true;
         }
         if(momentum_settings.rgb_backlight) {
