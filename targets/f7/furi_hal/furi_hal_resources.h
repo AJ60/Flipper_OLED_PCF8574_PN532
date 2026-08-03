@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 /* Input Related Constants */
-#define INPUT_DEBOUNCE_TICKS 24
+#define INPUT_DEBOUNCE_TICKS 2
 
 
 // volne A3, A4, A5, 

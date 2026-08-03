@@ -22,10 +22,9 @@
 #define INPUT_LONG_PRESS_COUNTS 5
 #define INPUT_THREAD_FLAG_ISR 0x00000001
 
-// Wake the input thread at least this often even without an interrupt. This lets
-// us poll the MCP and recover from a silent reset that would otherwise leave the
-// buttons dead because no further INT edge ever arrives.
-#define INPUT_IDLE_WAIT_TICKS 500
+// Wake the input thread frequently even without an interrupt. This ensures button presses
+// work with zero noticeable lag even on boards without the PB0 interrupt pin connected.
+#define INPUT_IDLE_WAIT_TICKS 20
 // How often to verify/restore MCP configuration while idle. Kept long because
 // the probe touches the shared power I2C bus; doing it too often starves other
 // consumers (battery monitor) and hurts responsiveness under heavy SPI load.
@@ -215,7 +214,7 @@ int32_t input_srv(void* p) {
 
             for(size_t j = 0; j < input_pins_count; j++) {
                 pin_states[j].state = GPIO_Read_MCP_BY_IDX(j);
-                pin_states[j].debounce = INPUT_DEBOUNCE_TICKS;
+                pin_states[j].debounce = pin_states[j].state ? INPUT_DEBOUNCE_TICKS : 0;
             }
         }
 
@@ -238,9 +237,8 @@ int32_t input_srv(void* p) {
             if(furi_hal_mcp23017_read_port(0, &new_state)) {
                 uint16_t cached_val = (uint16_t)new_state | 0xFF00;
                 g_mcp_gpio_state = cached_val;
-            } else {
-                g_mcp_gpio_state = 0xFFFF;
             }
+            // On read failure, preserve previous cached g_mcp_gpio_state to prevent dropping button presses
         }
 #endif
 
