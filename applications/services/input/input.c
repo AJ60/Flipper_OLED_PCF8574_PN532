@@ -74,7 +74,6 @@ static uint16_t input_mcp_mask_for_index(size_t idx) {
 static void input_vibro_notify(InputSettings* settings, InputType type) {
     if(settings->vibro_touch_level &&
        ((1 << type) & settings->vibro_touch_trigger_mask)) {
-        furi_delay_tick(1);
         furi_hal_vibro_on(true);
         furi_delay_tick(settings->vibro_touch_level * 10);
         furi_hal_vibro_on(false);
