@@ -55,19 +55,20 @@ bool furi_hal_ina219_init(void) {
     s_is_ina226 = false;
     furi_delay_ms(200);
 
-    const int max_attempts = 3;
+    const int max_attempts = 1;
     for(int attempt = 0; attempt < max_attempts && !s_detected; ++attempt) {
         if(attempt > 0) {
             FURI_LOG_I(TAG, "Retrying INA scan (%d/%d)", attempt + 1, max_attempts);
             furi_delay_ms(100);
         }
 
-        for(uint8_t a = INA_I2C_ADDR_BASE; a <= (INA_I2C_ADDR_BASE | 0x0F); ++a) {
-            s_address = a;
+        uint8_t probe_addrs[] = {0x40, 0x41, 0x44, 0x45};
+        for(size_t i = 0; i < sizeof(probe_addrs) / sizeof(probe_addrs[0]); i++) {
+            s_address = probe_addrs[i];
             uint16_t cfg = 0;
 
             furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-            bool ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, s_address << 1, 100);
+            bool ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, s_address << 1, 10);
             bool ok = false;
 
             if(ready) {

@@ -337,7 +337,7 @@ int32_t input_srv(void* p) {
         }
 
         if(is_changing) {
-            furi_delay_tick(1);
+            furi_delay_ms(1);
         } else {
             // Wait for an interrupt, but wake periodically so we can self-heal a
             // silently reset MCP that would otherwise never raise INT again.
