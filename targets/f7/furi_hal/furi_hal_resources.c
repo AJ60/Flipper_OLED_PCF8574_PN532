@@ -17,9 +17,13 @@ const GpioPin gpio_swclk = {.port = GPIOA, .pin = LL_GPIO_PIN_14};
 const GpioPin gpio_ibutton = {.port = iBTN_GPIO_Port, .pin = iBTN_Pin};
 
 const GpioPin gpio_subghz_cs = {.port = CC1101_CS_GPIO_Port, .pin = CC1101_CS_Pin};
+// WARNING: gpio_cc1101_g0 and gpio_rfid_data_in are BOTH wired to PA1.
+// Sub-GHz CC1101 GDO0 and the LF-RFID 125kHz data input share one pin; the
+// LF-RFID HAL reconfigures PA1 at runtime, so the two subsystems must not be
+// used simultaneously.
 const GpioPin gpio_cc1101_g0 = {.port = CC1101_G0_GPIO_Port, .pin = CC1101_G0_Pin};
 
-const GpioPin gpio_mcp_int = {.port = MCP_INT_GPIO_Port, .pin = MCP_INT_Pin};
+const GpioPin gpio_pcf_int = {.port = PCF_INT_GPIO_Port, .pin = PCF_INT_Pin};
 const GpioPin gpio_ina_alert = {.port = INA_ALERT_GPIO_Port, .pin = INA_ALERT_Pin};
 // RF switch pin omitted for this board
 
@@ -31,12 +35,18 @@ const GpioPin gpio_sdcard_cs = {.port = SD_CS_GPIO_Port, .pin = SD_CS_Pin};
 const GpioPin gpio_nfc_cs = {.port = NFC_CS_GPIO_Port, .pin = NFC_CS_Pin};
 const GpioPin gpio_nfc_miso = {.port = GPIOB, .pin = LL_GPIO_PIN_4};
 const GpioPin gpio_nfc_irq = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
+// WARNING: gpio_nfc_irq_rfid_pull is aliased to the same physical pin as gpio_nfc_irq (PA2).
+// The RFID HAL drives it as OutputPushPull during LFRFID — this CONFLICTS with NFC IRQ mode.
+// NFC and RFID cannot be used simultaneously without additional mutual exclusion on PA2.
 const GpioPin gpio_nfc_irq_rfid_pull = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 const GpioPin gpio_rfid_carrier_out = {.port = GPIOA, .pin = LL_GPIO_PIN_5};
+// WARNING: gpio_rfid_data_in (PA1) is aliased to gpio_cc1101_g0 (CC1101 GDO0).
 const GpioPin gpio_rfid_data_in = {.port = GPIOA, .pin = LL_GPIO_PIN_1};
+// WARNING: gpio_rfid_carrier aliases gpio_rfid_carrier_out (both = PA5).
+// The RFID HAL switches PA5 between OutputPushPull and AltFn TIM2 using these two handles.
 const GpioPin gpio_rfid_carrier = {.port = GPIOA, .pin = LL_GPIO_PIN_5};
 
-// MCU button GpioPin definitions removed — board uses MCP23017 for inputs.
+// MCU button GpioPin definitions removed — board uses PCF8574 for inputs.
 
 const GpioPin gpio_spi_miso = {.port = SPI_MISO_GPIO_Port, .pin = SPI_MISO_Pin};
 const GpioPin gpio_spi_mosi = {.port = SPI_MOSI_GPIO_Port, .pin = SPI_MOSI_Pin};
@@ -51,9 +61,12 @@ const GpioPin gpio_ext_pb2 = {.port = PB2_GPIO_Port, .pin = PB2_Pin};
 const GpioPin gpio_ext_pb3 = {.port = PB3_GPIO_Port, .pin = PB3_Pin};
 const GpioPin gpio_ext_pa4 = {.port = PA4_GPIO_Port, .pin = PA4_Pin};
 const GpioPin gpio_ext_pa6 = {.port = PA6_GPIO_Port, .pin = PA6_Pin};
-// WARNING: On this DIY board, gpio_ext_pa7 is physically mapped to PB5 (SPI1 MOSI).
-// PA7 MCU pin is used for I2C3 SCL and is NOT available as GPIO.
-// gpio_ext_pa7 keeps its original logical name for app compatibility.
+// WARNING: On this DIY board the header pin labelled "PA7" is physically wired
+// to MCU PB5 = SPI1 MOSI (shared with SD/NFC/Sub-GHz). The logical name
+// "PA7"/gpio_ext_pa7 is kept for app compatibility, but PB5 has no ADC input
+// and no timer output, and it must NOT be driven as a plain GPIO while SPI1 is
+// in use. The physical PA7 MCU pin is exposed on the header as "C0"
+// (gpio_ext_pc0): it is I2C3 SCL and also carries the PWM channel (TIM17_CH1).
 const GpioPin gpio_ext_pa7 = {.port = PA7_GPIO_Port, .pin = PA7_Pin};
 
 const GpioPin gpio_button_up;
@@ -75,7 +88,6 @@ const GpioPin gpio_i2c_1_scl = {.port = I2C_1_SCL_GPIO_Port, .pin = I2C_1_SCL_Pi
 const GpioPin gpio_i2c_3_sda = {.port = I2C_3_SDA_GPIO_Port, .pin = I2C_3_SDA_Pin};
 const GpioPin gpio_i2c_3_scl = {.port = I2C_3_SCL_GPIO_Port, .pin = I2C_3_SCL_Pin};
 
-
 const GpioPin gpio_speaker = {.port = SPEAKER_GPIO_Port, .pin = SPEAKER_Pin};
 
 // peripheral power control not present on this board
@@ -87,38 +99,51 @@ const GpioPin gpio_usb_dp = {.port = GPIOA, .pin = LL_GPIO_PIN_12};
 
 const GpioPinRecord gpio_pins[] = {
     // 5V: 1
+    // Header "PA7" is wired to MCU PB5 = SPI1 MOSI (shared with SD/NFC/Sub-GHz).
+    // PB5 has no ADC input and no timer output -> hidden from the GPIO app and
+    // JS; the SPI HAL owns this pin. Logical "PA7" name kept for compatibility.
     {.pin = &gpio_ext_pa7,
      .name = "PA7",
-     .channel = FuriHalAdcChannel12,
-     .pwm_output = FuriHalPwmOutputIdTim1PA7,
+     .channel = FuriHalAdcChannelNone,
      .number = 2,
-     .debug = false},
+     .debug = true},
+    // Header "PA6" is wired to MCU PA6 = SPI1 MISO (shared with SD/NFC/Sub-GHz).
+    // MCU PA6 = ADC_IN11 (STM32WB55 map: PA_n = IN_(n+5), NOT the L4 layout).
+    // The pin belongs to the SPI bus -> hidden from the GPIO app.
     {.pin = &gpio_ext_pa6,
      .name = "PA6",
      .channel = FuriHalAdcChannel11,
      .number = 3,
-     .debug = false},
+     .debug = true},
+    // Header "PA4" is wired to MCU PA4 = ADC_IN9 + LPTIM2_OUT (AF14). Free pin.
+    // (Stock Flipper uses Ch9 for PA4 on the same MCU.)
     {.pin = &gpio_ext_pa4,
      .name = "PA4",
      .channel = FuriHalAdcChannel9,
      .pwm_output = FuriHalPwmOutputIdLptim2PA4,
      .number = 4,
      .debug = false},
+    // Header "PB3" is wired to MCU PB3 = SPI1 SCK (shared with SD/NFC/Sub-GHz)
+    // and doubles as TIM2_CH2 (Sub-GHz input capture) -> not GPIO safe.
     {.pin = &gpio_ext_pb3,
      .name = "PB3",
      .channel = FuriHalAdcChannelNone,
      .number = 5,
-     .debug = false},
+     .debug = true},
+    // Header "PB2" is wired to MCU PB2 = ADC_IN15. No timer output. Free pin.
     {.pin = &gpio_ext_pb2,
      .name = "PB2",
-     .channel = FuriHalAdcChannelNone,
+     .channel = FuriHalAdcChannel15,
      .number = 6,
      .debug = false},
+    // Header "PC3" is wired to MCU PA5 = LF-RFID 125kHz carrier (TIM2_CH1);
+    // MCU PA5 = ADC_IN10, but it belongs to the RFID HAL -> hidden from the
+    // GPIO app.
     {.pin = &gpio_ext_pc3,
      .name = "PC3",
-     .channel = FuriHalAdcChannel4,
+     .channel = FuriHalAdcChannel10,
      .number = 7,
-     .debug = false},
+     .debug = true},
     // GND: 8
     // Space
     // 3v3: 9
@@ -143,14 +168,21 @@ const GpioPinRecord gpio_pins[] = {
      .channel = FuriHalAdcChannelNone,
      .number = 14,
      .debug = true},
+    // Header "PC1" is wired to MCU PB4 = ST25R3916 NFC MISO (also I2C3 SDA).
+    // Not GPIO-safe while NFC/SPI is in use -> hidden from the GPIO app.
     {.pin = &gpio_ext_pc1,
      .name = "PC1",
-     .channel = FuriHalAdcChannel2,
+     .channel = FuriHalAdcChannelNone,
      .number = 15,
-     .debug = false},
+     .debug = true},
+    // Header "PC0" is wired to MCU PA7. I2C3 SCL (used by the I2C scanner / JS
+    // i2c / CLI) and PWM-capable via TIM17_CH1 (AF14); MCU PA7 = ADC_IN12
+    // (stock Flipper uses Ch12 for PA7 on the same MCU). One function at a
+    // time: PWM while I2C3 is in use will corrupt the bus.
     {.pin = &gpio_ext_pc0,
      .name = "PC0",
-     .channel = FuriHalAdcChannel1,
+     .channel = FuriHalAdcChannel12,
+     .pwm_output = FuriHalPwmOutputIdTim1PA7,
      .number = 16,
      .debug = false},
     {.pin = &gpio_ibutton,
@@ -175,7 +207,7 @@ const GpioPinRecord gpio_pins[] = {
 
 const size_t gpio_pins_count = COUNT_OF(gpio_pins);
 
-// Old MCU-driven input pin array removed — input is handled via MCP23017 on this board.
+// Old MCU-driven input pin array removed — input is handled via PCF8574 on this board.
 
 const InputPin input_pins[] = {
     {.gpio = NULL, .key = InputKeyUp, .inverted = true, .name = "Up"},
@@ -185,7 +217,6 @@ const InputPin input_pins[] = {
     {.gpio = NULL, .key = InputKeyOk, .inverted = true, .name = "OK"},
     {.gpio = NULL, .key = InputKeyBack, .inverted = true, .name = "Back"},
 };
-
 
 const size_t input_pins_count = COUNT_OF(input_pins);
 
@@ -266,37 +297,41 @@ void furi_hal_resources_deinit_early(void) {
 }
 
 void furi_hal_resources_init(void) {
+    furi_hal_gpio_init(&gpio_ibutton, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
 
-    
-   furi_hal_gpio_init(&gpio_ibutton, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
-
-   //furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedLow);
+    //furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedLow);
     // FURI_LOG_T(TAG, "IRQ4");
 
-  //  furi_hal_gpio_init(&gpio_rf_sw_0, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
+    //  furi_hal_gpio_init(&gpio_rf_sw_0, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
 
-    // EXTI0_IRQn disabled (PA0 used for COMP1_OUT debug)
-    // NVIC_SetPriority(EXTI0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
-    // NVIC_EnableIRQ(EXTI0_IRQn);
+    // EXTI0: PB0 = gpio_pcf_int (PCF8574 INT). NVIC is enabled by
+    //         furi_hal_pcf8574_attach_int() when the input service starts.
+    //         NOTE: IR RX (PA0) does NOT use EXTI0 — the IR HAL uses TIM2
+    //         input capture (GpioAltFn1TIM2), so the EXTI0 line is free.
+    // EXTI1: PB1 = gpio_ina_alert (INA226 ALERT). NVIC is enabled by
+    //         furi_hal_ina226_enable_alert_interrupt() in power init.
+    //         No other device uses EXTI line 1: RFID data-in (PA1) is routed
+    //         through the analog comparator (EXTI lines 20/21), not EXTI1.
 
-    // EXTI1_IRQn disabled to prevent GPIO interrupt storm on PA1 (RFID_DATA_IN)
-    // NVIC_SetPriority(EXTI1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
-    // NVIC_EnableIRQ(EXTI1_IRQn);
-
+    // EXTI2: PA2 = gpio_nfc_irq. Enabled — NFC HAL expects this.
     NVIC_SetPriority(EXTI2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
     NVIC_EnableIRQ(EXTI2_IRQn);
 
-    NVIC_SetPriority(EXTI3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
-    NVIC_EnableIRQ(EXTI3_IRQn);
+    // EXTI3: PA3 = gpio_ibutton, initialized as GpioModeAnalog above.
+    //         Do NOT enable EXTI3 — analog input cannot trigger EXTI and
+    //         an uninitialized interrupt handler would fire spuriously.
 
-    NVIC_SetPriority(EXTI4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
-    NVIC_EnableIRQ(EXTI4_IRQn);
+    // EXTI4: PB4 = gpio_nfc_miso (SPI). Not an interrupt source.
+    //         PA4 = gpio_ext_pa4. Not configured as interrupt.
+    //         Do NOT enable EXTI4 here.
 
-    // EXTI6 not used in this board configuration (MCP23017 INT line is routed elsewhere)
-
+    // EXTI9_5: Used by NFC CS and other SPI signals. NFC HAL and SPI configure as needed.
     NVIC_SetPriority(EXTI9_5_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
     NVIC_EnableIRQ(EXTI9_5_IRQn);
 
+    // EXTI15_10: covers header/other pins 10-15 (none used as GPIO interrupts
+    // on this board). It does NOT cover PB0 — that is EXTI0, enabled by the
+    // PCF8574 driver. Kept enabled for the GPIO app / JS interrupts.
     NVIC_SetPriority(EXTI15_10_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
     NVIC_EnableIRQ(EXTI15_10_IRQn);
 

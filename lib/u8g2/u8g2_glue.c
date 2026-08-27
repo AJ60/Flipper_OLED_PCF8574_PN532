@@ -7,8 +7,14 @@
 #include <storage/storage.h>
 #include <furi_hal.h>
 
-#define CONTRAST_ERC 32
-#define CONTRAST_MGG 28
+// SSD1306 "Electronic Volume" (contrast) is an 8-bit register (0x00-0xFF).
+// The old 32/28 values were ST7565-era 6-bit EV numbers; on the SSD1306 they
+// rendered at ~12.5% brightness. 0xCF matches the u8g2 library init used by
+// the GUI (u8x8_d_ssd1306_128x64_noname sends 0x81 0xCF), so the custom init
+// used by the display-test app now produces the same brightness. The MGG/ERC
+// split is kept only for history; both map to the same value on this board.
+#define CONTRAST_ERC 0xCF
+#define CONTRAST_MGG 0xCF
 
 // SSD1306 I2C address - scanner detected at 0x3C
 #define SSD1306_I2C_ADDRESS 0x3C
@@ -91,9 +97,10 @@ uint8_t u8g2_gpio_and_delay_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, vo
  * Performance: ~4x faster than software I2C bit-banging
  */
 uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
-    static uint8_t buffer[256];  // Increased buffer to 256 bytes to prevent truncation of full-row draws (128 bytes + command headers)
+    static uint8_t buffer
+        [256]; // Increased buffer to 256 bytes to prevent truncation of full-row draws (128 bytes + command headers)
     static uint16_t buf_idx = 0;
-    
+
     switch(msg) {
     case U8X8_MSG_BYTE_SEND: {
         uint8_t* data = (uint8_t*)arg_ptr;
@@ -122,11 +129,7 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
             bool success = false;
             for(int retry = 0; retry < 3; retry++) {
                 success = furi_hal_i2c_tx(
-                    &furi_hal_i2c_handle_power,
-                    u8x8_GetI2CAddress(u8x8),
-                    buffer,
-                    buf_idx,
-                    100);
+                    &furi_hal_i2c_handle_power, u8x8_GetI2CAddress(u8x8), buffer, buf_idx, 100);
                 if(success) {
                     break;
                 }
@@ -148,18 +151,18 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
     return 1;
 }
 
-#define ST756X_CMD_ON_OFF           0b10101110 /**< 0:0 Switch Display ON/OFF: last bit */
-#define ST756X_CMD_SET_LINE         0b01000000 /**< 0:0 Set Start Line: last 6 bits  */
-#define ST756X_CMD_SET_PAGE         0b10110000 /**< 0:0 Set Page address: last 4 bits */
-#define ST756X_CMD_SET_COLUMN_MSB   0b00010000 /**< 0:0 Set Column MSB: last 4 bits */
-#define ST756X_CMD_SET_COLUMN_LSB   0b00000000 /**< 0:0 Set Column LSB: last 4 bits */
-#define ST756X_CMD_SEG_DIRECTION    0b10100000 /**< 0:0 Reverse scan direction of SEG: last bit */
-#define ST756X_CMD_INVERSE_DISPLAY  0b10100110 /**< 0:0 Invert display: last bit */
-#define ST756X_CMD_ALL_PIXEL_ON     0b10100100 /**< 0:0 Set all pixel on: last bit */
-#define ST756X_CMD_BIAS_SELECT      0b10100010 /**< 0:0 Select 1/9(0) or 1/7(1) bias: last bit */
-#define ST756X_CMD_R_M_W            0b11100000 /**< 0:0 Enter Read Modify Write mode: read+0, write+1 */
-#define ST756X_CMD_END              0b11101110 /**< 0:0 Exit Read Modify Write mode */
-#define ST756X_CMD_RESET            0b11100010 /**< 0:0 Software Reset */
+#define ST756X_CMD_ON_OFF            0b10101110 /**< 0:0 Switch Display ON/OFF: last bit */
+#define ST756X_CMD_SET_LINE          0b01000000 /**< 0:0 Set Start Line: last 6 bits  */
+#define ST756X_CMD_SET_PAGE          0b10110000 /**< 0:0 Set Page address: last 4 bits */
+#define ST756X_CMD_SET_COLUMN_MSB    0b00010000 /**< 0:0 Set Column MSB: last 4 bits */
+#define ST756X_CMD_SET_COLUMN_LSB    0b00000000 /**< 0:0 Set Column LSB: last 4 bits */
+#define ST756X_CMD_SEG_DIRECTION     0b10100000 /**< 0:0 Reverse scan direction of SEG: last bit */
+#define ST756X_CMD_INVERSE_DISPLAY   0b10100110 /**< 0:0 Invert display: last bit */
+#define ST756X_CMD_ALL_PIXEL_ON      0b10100100 /**< 0:0 Set all pixel on: last bit */
+#define ST756X_CMD_BIAS_SELECT       0b10100010 /**< 0:0 Select 1/9(0) or 1/7(1) bias: last bit */
+#define ST756X_CMD_R_M_W             0b11100000 /**< 0:0 Enter Read Modify Write mode: read+0, write+1 */
+#define ST756X_CMD_END               0b11101110 /**< 0:0 Exit Read Modify Write mode */
+#define ST756X_CMD_RESET             0b11100010 /**< 0:0 Software Reset */
 #define SSD1306_CMD_ON_OFF           0b10101110 /**< 0:0 Switch Display ON/OFF: last bit */
 #define SSD1306_CMD_SET_LINE         0b01000000 /**< 0:0 Set Start Line: last 6 bits  */
 #define SSD1306_CMD_SET_PAGE         0b10110000 /**< 0:0 Set Page address: last 4 bits */
@@ -175,7 +178,8 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
 #define SSD1306_CMD_COM_DIRECTION    0b11000000 /**< 0:0 Com direction reverse: +0b1000 */
 #define SSD1306_CMD_POWER_CONTROL    0b00101000 /**< 0:0 Power control: last 3 bits VB:VR:VF */
 #define SSD1306_CMD_REGULATION_RATIO 0b00100000 /**< 0:0 Regulation resistor ration: last 3bits */
-#define SSD1306_CMD_SET_EV           0b10000001 /**< 0:0 Set electronic volume: 5 bits in next byte */
+#define SSD1306_CMD_SET_EV \
+    0b10000001 /**< 0:0 Set electronic volume: 8 bits in next byte (SSD1306) */
 #define SSD1306_CMD_SET_BOOSTER \
     0b11111000 /**< 0:0 Set Booster level, 4X(0) or 5X(1): last bit in next byte */
 #define SSD1306_CMD_NOP 0b11100011 /**< 0:0 No operation */
@@ -234,7 +238,7 @@ static const u8x8_display_info_t u8x8_ssd1306_128x64_display_info = {
     .flipmode_x_offset = 4,
     .pixel_width = 128,
     .pixel_height = 64};
-	
+
 static uint8_t u8g2_get_oled_driver(void) {
     // Safe default for boot
     uint8_t driver = NotificationOledDriverSSD1306;
@@ -311,7 +315,7 @@ uint8_t u8x8_d_ssd1306_common(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* 
     case U8X8_MSG_DISPLAY_SET_CONTRAST:
         u8x8_cad_StartTransfer(u8x8);
         u8x8_cad_SendCmd(u8x8, SSD1306_CMD_SET_EV);
-        u8x8_cad_SendArg(u8x8, arg_int >> 2); /* st7565 has range from 0 to 63 */
+        u8x8_cad_SendArg(u8x8, arg_int); /* SSD1306 EV is 8-bit (0-255), no ST7565 >> 2 */
         u8x8_cad_EndTransfer(u8x8);
         break;
 #endif
@@ -322,7 +326,10 @@ uint8_t u8x8_d_ssd1306_common(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* 
 }
 
 void u8x8_d_ssd1306_init(u8x8_t* u8x8, uint8_t contrast, uint8_t regulation_ratio, bool bias) {
-    contrast = contrast & 0b00111111;
+    // Contrast passes through unmasked: the SSD1306 EV register is 8-bit
+    // (0x00-0xFF), unlike the ST7565's 6-bit EV. regulation_ratio / bias are
+    // ST7565-heritage parameters — the 0xA2/0xA3 and 0x20|r commands below are
+    // ignored by the SSD1306 (kept so the display-test app keeps working).
     regulation_ratio = regulation_ratio & 0b111;
 
     u8x8_cad_StartTransfer(u8x8);
@@ -351,8 +358,8 @@ void u8x8_d_ssd1306_set_contrast(u8x8_t* u8x8, int32_t contrast_val) {
         contrast = (uint8_t)contrast_val;
     } else {
         uint8_t base_contrast = (furi_hal_version_get_hw_display() == FuriHalVersionDisplayMgg) ?
-                               CONTRAST_MGG :
-                               CONTRAST_ERC;
+                                    CONTRAST_MGG :
+                                    CONTRAST_ERC;
         int32_t c = (int32_t)base_contrast + contrast_val;
         if(c < 1) c = 1;
         if(c > 255) c = 255;
@@ -383,20 +390,13 @@ uint8_t u8x8_d_ssd1306_flipper(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
             u8x8_d_helper_display_init(u8x8);
             FuriHalVersionDisplay display = furi_hal_version_get_hw_display();
             if(display == FuriHalVersionDisplayMgg) {
-                /* MGG v0+(ST7567)
-                 * EV = 32
-                 * RR = V0 / ((1 - (63 - EV) / 162) * 2.1)
-                 * RR = 10 / ((1 - (63 - 32) / 162) * 2.1) ~= 5.88 is 6 (0b110)
-                 * Bias = 1/9 (false)
-                 */
+                /* Legacy MGG branch — this board runs SSD1306/SH1106 only.
+                 * Contrast is the 8-bit SSD1306 EV (CONTRAST_MGG = 0xCF);
+                 * bias/regulation_ratio are no-ops retained for display-test. */
                 u8x8_d_ssd1306_init(u8x8, CONTRAST_MGG, 0b110, false);
             } else {
-                /* ERC v1(ST7565) and v2(ST7567)
-                 * EV = 33
-                 * RR = V0 / ((1 - (63 - EV) / 162) * 2.1)
-                 * RR = 9.3 / ((1 - (63 - 32) / 162) * 2.1) ~= 5.47 is 5.5 (0b101)
-                 * Bias = 1/9 (false)
-                 */
+                /* Default branch: SSD1306/SH1106 on this board. 8-bit EV
+                 * contrast CONTRAST_ERC = 0xCF. */
                 u8x8_d_ssd1306_init(u8x8, CONTRAST_ERC, 0b101, false);
             }
             break;
@@ -432,11 +432,7 @@ void u8g2_Setup_ssd1306_flipper(
                                        u8x8_d_ssd1306_128x64_noname;
 
     u8g2_SetupDisplay(
-        u8g2,
-        display_cb,
-        u8x8_cad_ssd13xx_fast_i2c,
-        u8x8_byte_hw_i2c_stm32,
-        gpio_and_delay_cb);
+        u8g2, display_cb, u8x8_cad_ssd13xx_fast_i2c, u8x8_byte_hw_i2c_stm32, gpio_and_delay_cb);
     u8x8_SetI2CAddress(&u8g2->u8x8, SSD1306_I2C_ADDRESS << 1);
 
     buf = u8g2_m_16_8_f(&tile_buf_height);

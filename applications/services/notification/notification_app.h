@@ -45,7 +45,7 @@ typedef enum {
 typedef struct {
     uint8_t version;
     float display_brightness;
-	uint8_t oled_driver;
+    uint8_t oled_driver;
     float led_brightness;
     float speaker_volume;
     uint32_t display_off_delay_ms;

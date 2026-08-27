@@ -50,8 +50,6 @@ void furi_hal_spi_bus_handle_deinit(const FuriHalSpiBusHandle* handle) {
     handle->callback(handle, FuriHalSpiBusHandleEventDeinit);
 }
 
-
-
 void furi_hal_spi_acquire(const FuriHalSpiBusHandle* handle) {
     furi_check(handle);
 

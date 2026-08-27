@@ -41,13 +41,14 @@ bool nfc_scene_mf_ultralight_c_keys_add_on_event(void* context, SceneManagerEven
 
             MfUltralightC3DesAuthKey key = {};
             memcpy(key.data, instance->byte_input_store, sizeof(MfUltralightC3DesAuthKey));
-            
-            bool is_present = keys_dict_is_key_present(dict, key.data, sizeof(MfUltralightC3DesAuthKey));
+
+            bool is_present =
+                keys_dict_is_key_present(dict, key.data, sizeof(MfUltralightC3DesAuthKey));
             bool is_added = false;
             if(!is_present) {
                 is_added = keys_dict_add_key(dict, key.data, sizeof(MfUltralightC3DesAuthKey));
             }
-            
+
             keys_dict_free(dict);
 
             if(is_present) {

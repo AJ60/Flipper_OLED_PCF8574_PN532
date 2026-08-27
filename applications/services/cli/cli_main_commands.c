@@ -329,7 +329,7 @@ void cli_command_vibro(PipeSide* pipe, FuriString* args, void* context) {
     UNUSED(context);
 
     if(!furi_string_cmp(args, "0")) {
-      //  NotificationApp* notification = furi_record_open(RECORD_NOTIFICATION);
+        //  NotificationApp* notification = furi_record_open(RECORD_NOTIFICATION);
         furi_record_close(RECORD_NOTIFICATION);
     } else if(!furi_string_cmp(args, "1")) {
         if(furi_hal_rtc_is_flag_set(FuriHalRtcFlagStealthMode)) {
@@ -337,8 +337,7 @@ void cli_command_vibro(PipeSide* pipe, FuriString* args, void* context) {
             return;
         }
 
-       // NotificationApp* notification = furi_record_open(RECORD_NOTIFICATION);
-
+        // NotificationApp* notification = furi_record_open(RECORD_NOTIFICATION);
 
         furi_record_close(RECORD_NOTIFICATION);
     } else {
@@ -506,17 +505,17 @@ void cli_command_i2c(PipeSide* pipe, FuriString* args, void* context) {
     }
 
     furi_hal_i2c_acquire(handle);
-    printf("Scanning i2c on %s\r\n"
-           "Clock: 100khz, 7bit address\r\n"
-           "\r\n",
-           bus_name);
+    printf(
+        "Scanning i2c on %s\r\n"
+        "Clock: 100khz, 7bit address\r\n"
+        "\r\n",
+        bus_name);
     printf("  | 0 1 2 3 4 5 6 7 8 9 A B C D E F\r\n");
     printf("--+--------------------------------\r\n");
     for(uint8_t row = 0; row < 0x8; row++) {
         printf("%x | ", row);
         for(uint8_t column = 0; column <= 0xF; column++) {
-            bool ret = furi_hal_i2c_is_device_ready(
-                handle, ((row << 4) + column) << 1, 2);
+            bool ret = furi_hal_i2c_is_device_ready(handle, ((row << 4) + column) << 1, 2);
             printf("%c ", ret ? '#' : '-');
         }
         printf("\r\n");

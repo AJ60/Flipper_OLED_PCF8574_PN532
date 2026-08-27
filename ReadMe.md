@@ -31,7 +31,7 @@ Here is the physical DIY board in action:
 - [System Architecture](#system-architecture)
 - [What Works and Limitations](#what-works-and-limitations)
 - [Key Pins and Wiring](#key-pins-and-wiring)
-- [MCP23017 Wiring Guide](#mcp23017-wiring-guide)
+- [PCF8574 Wiring Guide](#pcf8574-wiring-guide)
 - [How to Build and Flash](#how-to-build-and-flash)
 - [Schematic](#schematic)
 - [Credits and Support](#credits-and-support)
@@ -43,7 +43,7 @@ This project implements a custom target for a DIY Flipper-style board based on t
 
 *   **Display**: I2C OLED display (SH1106 / SSD1306)
 *   **Sensors**: INA219 / INA226 power & battery monitor (I2C) with hardware Alert (PB1)
-*   **I/O Expander**: MCP23017 (handles buttons, RGB LED, and vibration motor)
+*   **I/O Expander**: PCF8574 (handles buttons and the vibration motor)
 *   **Storage**: microSD slot (SPI)
 *   **Radio**: CC1101 sub-GHz module (SPI)
 *   **NFC**: ST25R3916 Elechouse module (SPI)
@@ -67,12 +67,11 @@ graph TD
     %% I2C Bus Devices
     I2C1 --> OLED[OLED Display <br> SH1106 / SSD1306]
     I2C1 --> INA[INA219 / INA226 <br> Battery Monitor]
-    I2C1 --> MCP[MCP23017 <br> I/O Expander]
+    I2C1 --> PCF[PCF8574 <br> I/O Expander]
 
-    %% MCP23017 Expanders
-    MCP --> Buttons[6-Way Buttons + Back]
-    MCP --> RGB[RGB Status LED]
-    MCP --> Vibro[Vibration Motor]
+    %% PCF8574 Expander
+    PCF --> Buttons[6-Way Buttons + Back]
+    PCF --> Vibro[Vibration Motor]
 
     %% SPI Bus Devices
     SPI1 --> SD[MicroSD Card CS: PA10]
@@ -92,7 +91,7 @@ graph TD
 
 ## <a id="what-works-and-limitations"></a>✅ What Works and Limitations
 *   **Core Systems**: All official Flipper firmware features compile and function.
-*   **I2C Devices**: OLED, INA219 / INA226, and MCP23017 are multiplexed onto the primary I2C1 bus to preserve SPI resources.
+*   **I2C Devices**: OLED, INA219 / INA226, and PCF8574 are multiplexed onto the primary I2C1 bus to preserve SPI resources.
 *   **Power Monitoring**: Automatic dual INA219 / INA226 detection with hardware overcurrent/undervoltage Alert interrupt on PB1.
 *   **NFC Support**: Verified working with Elechouse ST25R3916 modules.
 *   **LF-RFID (125 kHz)**: Reading, writing, and emulation verified for EM4100, HID Generic, Indala26, Keri, NexWatch, Noralsy, Viking, and IDTeck.
@@ -104,13 +103,13 @@ graph TD
 
 | Component | Bus / Interface | MCU pin (macro) | Notes |
 |---|---|---|---|
-| **I2C1 (Power/Default)** | I2C | SCL: PA9, SDA: PB9 | Used by INA219, MCP23017, and OLED |
-| **I2C3 (External)** | I2C | SCL: PA7, SDA: PB4 | Reserved for external modules/sensors |
+| **I2C1 (Power/Default)** | I2C | SCL: PA9, SDA: PB9 | Used by INA219, PCF8574, and OLED |
+| **I2C3 (External)** | I2C | SCL: PC0, SDA: PC1 | Used by PN532 NFC module (firmware default) |
 | **SPI1 (Shared)** | SPI | MOSI: PB5, SCK: PB3 | Shared SCK/MOSI bus for CC1101, NFC, and SD card |
 | **CC1101** | SPI + IRQ | CS: PA15, MISO: PA6, G0: PA1 | Sub-GHz transceiver |
 | **SD card** | SPI | CS: PA10, MISO: PA6 | MicroSD module |
-| **NFC** | SPI | CS: PE4, MISO: PB4, IRQ: PA2 | Elechouse ST25R3916 reader (Uses dedicated MISO) |
-| **MCP23017 Interrupt** | GPIO | INT: PB0 | Signals button state changes |
+| **NFC (PN532 V3)** | I2C + IRQ | SCL: PC0, SDA: PC1, IRQ: PA2 | PN532 NFC module at I2C address `0x24` (7-bit). Active-low IRQ. |
+| **PCF8574 Interrupt** | GPIO | INT: PB0 | Signals button state changes |
 | **IR** | GPIO | RX: PA0, TX: PA8 | Safe IR transmitter & receiver |
 | **LF-RFID (125 kHz)** | PWM / Timer | TX Carrier: PA5 (TIM2_CH1), RX Data: PA1 | 125 kHz coil driver transistor + envelope demodulator |
 | **Speaker** | PWM | PB8 (TIM16) | Sound buzzer |
@@ -118,33 +117,61 @@ graph TD
 
 ---
 
-## <a id="mcp23017-wiring-guide"></a>🎛️ MCP23017 Wiring Guide
+## <a id="pcf8574-wiring-guide"></a>🎛️ PCF8574 Wiring Guide
 
-The MCP23017 handles all buttons, status LEDs, and haptic feedback. Connect them in an **active-low** configuration (connecting to GND when pressed/active).
+The PCF8574 I/O expander (I2C address `0x20` by default) handles all buttons and the haptic feedback motor over the I2C1 bus. Buttons are wired in an **active-low** configuration (connecting the pin to GND when pressed).
 
-*   **Port A (Button Inputs)**:
-    *   `GPA0` -> Up Button
-    *   `GPA1` -> Right Button
-    *   `GPA2` -> OK Button
-    *   `GPA3` -> Back Button
-    *   `GPA4` -> Down Button
-    *   `GPA5` -> Left Button
-*   **Port B (Outputs)**:
-    *   `GPB0` -> Haptic Vibration Motor (Use an N-channel MOSFET; do not drive directly!)
-    *   `GPB1` -> RGB Red Channel
-    *   `GPB2` -> RGB Green Channel
-    *   `GPB3` -> RGB Blue Channel
+*   **Button Inputs (active-low)**:
+    *   `P0` -> Up Button
+    *   `P1` -> Down Button
+    *   `P2` -> Left Button
+    *   `P3` -> Right Button
+    *   `P4` -> OK (Select) Button
+    *   `P5` -> Back Button
+*   **Outputs**:
+    *   `P6` -> Haptic Vibration Motor (Use an N-channel MOSFET; do not drive directly!)
+
+The `INT` output (open-drain, connect to MCU **PB0** with a pull-up) signals button state changes and wakes the input service. Note that the expander's I2C address `0x20` overlaps the INA219/INA226 monitor at `0x40` (wire address) — the driver probes the chip with a write/read-back test so the two devices are never confused.
 
 ---
 
 ## <a id="how-to-build-and-flash"></a>🛠️ How to Build and Flash
 
 ### 1. Build from Source
-To compile the firmware for the OLED hardware target, use the Flipper Build Tool:
+To compile the firmware for the OLED hardware target, use the Flipper Build Tool.
+
+> [!IMPORTANT]
+> **This fork has no `firmware` build target** — running `fbt firmware` (or `fbt.cmd firmware`) fails with a *"target not built"* error. The default target (`basic_dist`) builds the complete firmware package, so invoke `fbt` with **no arguments**:
+
+*   **Windows (Git Bash / MinGW)**: the `./fbt` shell script refuses to run under MinGW ("In MinGW shell, use fbt.cmd instead"). Use the batch launcher:
+    ```bash
+    # Build the full firmware package (default target: basic_dist)
+    cmd //c fbt.cmd
+    ```
+*   **Linux / macOS**: the POSIX launcher works directly:
+    ```bash
+    # Build the full firmware package (default target: basic_dist)
+    ./fbt
+    ```
+
+Both produce the flashable firmware (`.bin` / `.dfu` / `.hex`) under `build/f7-firmware-C/` and `dist/`.
+
+To build only a single external app (FAP), use its `fap_<appid>` target, e.g.:
 ```bash
-# Build the target DFU package
-./fbt
+cmd //c fbt.cmd fap_signal_generator
 ```
+
+**Updater & update bundle:** the standalone updater and the qFlipper update package are **not** part of the default build — they must be requested explicitly with `--with-updater`:
+
+```bash
+# Build firmware + standalone updater (build/f7-updater-C/updater.elf/.bin/.dfu)
+cmd //c fbt.cmd --with-updater
+
+# Build the full self-update bundle + qFlipper .tgz package + SDK zip
+cmd //c fbt.cmd --with-updater updater_package
+```
+
+The bundle lands in `dist/f7-C/f7-update-v2.1/` (`update.fuf` + `resources.tar.gz`) with the qFlipper installer at `dist/f7-C/flipper-z-f7-update-v2.1.tgz`.
 
 ### 2. Configure & Flash OTP (One-Time Programmable) Memory
 > [!CAUTION]

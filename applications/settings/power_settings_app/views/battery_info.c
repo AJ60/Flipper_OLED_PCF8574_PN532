@@ -26,17 +26,17 @@ static void draw_battery(Canvas* canvas, BatteryInfoModel* data, int x, int y) {
     float ina_voltage = data->gauge_voltage;
     float ina_current = data->gauge_current;
 
-	if(furi_hal_ina219_is_ready()) {
-    float v = 0.0f;
-    float i = 0.0f;
+    if(furi_hal_ina219_is_ready()) {
+        float v = 0.0f;
+        float i = 0.0f;
 
-    if(furi_hal_ina219_get_voltage_current(&v, &i)) {
-        ina_voltage = v;
-        ina_current = i;
+        if(furi_hal_ina219_get_voltage_current(&v, &i)) {
+            ina_voltage = v;
+            ina_current = i;
+        }
     }
-	}
 
-	int32_t current = (int32_t)(ina_current * 1000.0f);
+    int32_t current = (int32_t)(ina_current * 1000.0f);
 
     // Draw battery
     canvas_draw_icon(canvas, x, y, &I_BatteryBody_52x28);
@@ -57,13 +57,13 @@ static void draw_battery(Canvas* canvas, BatteryInfoModel* data, int x, int y) {
     if(current > 0) {
         snprintf(emote, sizeof(emote), "%s", "Yummy!");
         snprintf(header, sizeof(header), "%s", "Charging at");
-	snprintf(
-		value,
-		sizeof(value),
-		"%lu.%02luV %ldmA",
-		(uint32_t)ina_voltage,
-		(uint32_t)(ina_voltage * 100.0f) % 100UL,
-		(int32_t)(ina_current * 1000.0f));
+        snprintf(
+            value,
+            sizeof(value),
+            "%lu.%02luV %ldmA",
+            (uint32_t)ina_voltage,
+            (uint32_t)(ina_voltage * 100.0f) % 100UL,
+            (int32_t)(ina_current * 1000.0f));
     } else if(current < -5) {
         // 0-5ma deadband
         snprintf(
@@ -72,11 +72,7 @@ static void draw_battery(Canvas* canvas, BatteryInfoModel* data, int x, int y) {
             "%s",
             current < HIGH_DRAIN_CURRENT_THRESHOLD ? "Oh no!" : "Om-nom-nom!");
         snprintf(header, sizeof(header), "%s", "Consumption is");
-        snprintf(
-            value,
-            sizeof(value),
-            "~%ldmA",
-			ABS(current));
+        snprintf(value, sizeof(value), "~%ldmA", ABS(current));
     } else if(data->vbus_voltage > 0) {
         if(data->charge_voltage_limit < 4.2f) {
             // Non-default battery charging limit, mention it
@@ -125,27 +121,27 @@ static void battery_info_draw_callback(Canvas* canvas, void* context) {
     canvas_set_color(canvas, ColorBlack);
     draw_battery(canvas, model, 0, model->alt ? 0 : 5);
 
-char batt_level[10];
-char temperature[10];
-char voltage[10];
-char health[10];
+    char batt_level[10];
+    char temperature[10];
+    char voltage[10];
+    char health[10];
 
-float ina_voltage = model->gauge_voltage;
+    float ina_voltage = model->gauge_voltage;
 
-if(furi_hal_ina219_is_ready()) {
-    float v = 0.0f;
-    float i = 0.0f;
+    if(furi_hal_ina219_is_ready()) {
+        float v = 0.0f;
+        float i = 0.0f;
 
-    if(furi_hal_ina219_get_voltage_current(&v, &i)) {
-        ina_voltage = v;
+        if(furi_hal_ina219_get_voltage_current(&v, &i)) {
+            ina_voltage = v;
+        }
     }
-}
 
-snprintf(
-    batt_level,
-    sizeof(batt_level),
-    "%lu%%",
-    (uint32_t)furi_hal_power_get_pct());//(uint32_t)model->charge);
+    snprintf(
+        batt_level,
+        sizeof(batt_level),
+        "%lu%%",
+        (uint32_t)furi_hal_power_get_pct()); //(uint32_t)model->charge);
     if(locale_get_measurement_unit() == LocaleMeasurementUnitsMetric) {
         snprintf(temperature, sizeof(temperature), "%lu C", (uint32_t)model->gauge_temperature);
     } else {
@@ -156,12 +152,12 @@ snprintf(
             (uint32_t)locale_celsius_to_fahrenheit(model->gauge_temperature));
     }
 
-snprintf(
-    voltage,
-    sizeof(voltage),
-    "%lu.%02lu V",
-    (uint32_t)ina_voltage,
-    (uint32_t)(ina_voltage * 100) % 100UL);
+    snprintf(
+        voltage,
+        sizeof(voltage),
+        "%lu.%02lu V",
+        (uint32_t)ina_voltage,
+        (uint32_t)(ina_voltage * 100) % 100UL);
     snprintf(health, sizeof(health), "%d%%", model->health);
 
     int h = model->alt ? 28 : 42;

@@ -14,9 +14,8 @@
 #define TAG "NotificationSrv"
 
 static const uint8_t minimal_delay = 100;
-static const uint8_t lcd_contrast_map[] = {
-    3, 15, 30, 35, 45, 55, 68, 88, 112, 140, 172, 208, 220, 230, 240, 250, 255
-};
+static const uint8_t lcd_contrast_map[] =
+    {3, 15, 30, 35, 45, 55, 68, 88, 112, 140, 172, 208, 220, 230, 240, 250, 255};
 static const uint8_t led_off_values[NOTIFICATION_LED_COUNT] = {0x00, 0x00, 0x00};
 
 static const uint8_t reset_red_mask = 1 << 0;
@@ -72,8 +71,7 @@ static void notification_apply_lcd_contrast(NotificationApp* app, uint8_t contra
     tx_buf0[1] = 0x81;
     tx_buf0[2] = (uint8_t)contrast;
 
-    bool ok1 =
-        furi_hal_i2c_tx(&furi_hal_i2c_handle_power, i2c_addr, tx_buf0, sizeof(tx_buf0), 50);
+    bool ok1 = furi_hal_i2c_tx(&furi_hal_i2c_handle_power, i2c_addr, tx_buf0, sizeof(tx_buf0), 50);
     FURI_LOG_D(TAG, "Direct I2C (control=0x00) map=%d tx result: %d", (int)contrast, (int)ok1);
     furi_hal_i2c_release(&furi_hal_i2c_handle_power);
 
@@ -147,7 +145,8 @@ static void notification_reset_notification_layer(
             notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
         }
         if(app->settings.display_off_delay_ms > 0) {
-            furi_timer_start(app->display_timer, notification_settings_display_off_delay_ticks(app));
+            furi_timer_start(
+                app->display_timer, notification_settings_display_off_delay_ticks(app));
         } else {
             if(furi_timer_is_running(app->display_timer)) {
                 furi_timer_stop(app->display_timer);
@@ -490,7 +489,7 @@ static NotificationApp* notification_app_alloc(void) {
     app->settings.led_brightness = 1.0f;
     app->settings.display_off_delay_ms = 0;
     app->settings.vibro_on = true;
-	app->settings.oled_driver = NotificationOledDriverSSD1306;
+    app->settings.oled_driver = NotificationOledDriverSSD1306;
 
     app->display.value[LayerInternal] = 0x00;
     app->display.value[LayerNotification] = 0x00;

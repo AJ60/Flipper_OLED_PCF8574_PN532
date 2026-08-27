@@ -13,6 +13,15 @@ extern "C" {
 
 typedef enum {
     FuriHalPwmOutputIdNone,
+    /** TIM17_CH1 on the physical PA7 pin (header "C0", gpio_ext_pc0).
+     *
+     * On this DIY board the header pin labelled "PA7" is physically wired to
+     * PB5 (SPI1 MOSI) and has no timer output, so the legacy name
+     * FuriHalPwmOutputIdTim1PA7 is kept for API compatibility but now maps to
+     * TIM17_CH1 on PA7. CAUTION: PA7 doubles as I2C3 SCL and TIM17 doubles as
+     * the NFC HAL block-tx timer during active NFC sessions — PWM, I2C3 and
+     * NFC must not be used simultaneously.
+     */
     FuriHalPwmOutputIdTim1PA7,
     FuriHalPwmOutputIdLptim2PA4,
 } FuriHalPwmOutputId;

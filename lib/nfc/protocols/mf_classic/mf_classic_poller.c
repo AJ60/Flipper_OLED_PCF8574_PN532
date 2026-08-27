@@ -3,6 +3,7 @@
 #include <nfc/protocols/nfc_poller_base.h>
 
 #include <furi.h>
+#include <furi_hal_resources.h>
 
 #define TAG "MfClassicPoller"
 
@@ -127,10 +128,25 @@ static void mf_classic_poller_check_key_b_is_readable(
 NfcCommand mf_classic_poller_handler_detect_type(MfClassicPoller* instance) {
     NfcCommand command = NfcCommandReset;
 
+    iso14443_3a_copy(
+        instance->data->iso14443_3a_data,
+        iso14443_3a_poller_get_data(instance->iso14443_3a_poller));
+
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    uint8_t sak = instance->data->iso14443_3a_data->sak;
+    if(sak == 0x18 || sak == 0x38) {
+        instance->data->type = MfClassicType4k;
+        FURI_LOG_D(TAG, "4K detected (SAK 0x%02X)", sak);
+    } else if(sak == 0x09) {
+        instance->data->type = MfClassicTypeMini;
+        FURI_LOG_D(TAG, "Mini detected (SAK 0x%02X)", sak);
+    } else {
+        instance->data->type = MfClassicType1k;
+        FURI_LOG_D(TAG, "1K detected (SAK 0x%02X)", sak);
+    }
+    instance->state = MfClassicPollerStateStart;
+#else
     if(instance->current_type_check == MfClassicType4k) {
-        iso14443_3a_copy(
-            instance->data->iso14443_3a_data,
-            iso14443_3a_poller_get_data(instance->iso14443_3a_poller));
         MfClassicError error =
             mf_classic_poller_get_nt(instance, 254, MfClassicKeyTypeA, NULL, false);
         if(error == MfClassicErrorNone) {
@@ -154,6 +170,7 @@ NfcCommand mf_classic_poller_handler_detect_type(MfClassicPoller* instance) {
         instance->current_type_check = MfClassicType4k;
         instance->state = MfClassicPollerStateStart;
     }
+#endif
 
     return command;
 }

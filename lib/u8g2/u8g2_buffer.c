@@ -85,7 +85,7 @@ static void u8g2_send_buffer(u8g2_t* u8g2) {
     uint8_t src_max;
     uint8_t dest_row;
     uint8_t dest_max;
-    
+
     src_row = 0;
     src_max = u8g2->tile_buf_height;
     dest_row = u8g2->tile_curr_row;
@@ -94,7 +94,7 @@ static void u8g2_send_buffer(u8g2_t* u8g2) {
     uint8_t* curr_buf = u8g2->tile_buf_ptr;
     size_t tile_width = u8g2_GetU8x8(u8g2)->display_info->tile_width;
     size_t row_width = tile_width * 8;
-    
+
     // Safety check: ensure buffer boundaries fit within our static 1024-byte cache
     bool force_refresh = !prev_tile_buf_initialized || display_needs_reinit;
     if(src_max * row_width > sizeof(prev_tile_buf)) {

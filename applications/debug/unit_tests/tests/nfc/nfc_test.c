@@ -26,6 +26,11 @@
 #include <toolbox/keys_dict.h>
 #include <nfc/nfc.h>
 
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+#include <pn532.h>
+#include <pn532_reg.h>
+#endif
+
 #include "../test.h" // IWYU pragma: keep
 
 #define TAG "NfcTest"
@@ -34,6 +39,10 @@
 #define NFC_APP_MF_CLASSIC_DICT_UNIT_TEST_PATH EXT_PATH("unit_tests/mf_dict.nfc")
 
 #define NFC_TEST_FLAG_WORKER_DONE (1)
+
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+#define PN532_TEST_TAG "Pn532Test"
+#endif
 
 typedef enum {
     NfcTestMfClassicSendFrameTestStateAuth,
@@ -823,6 +832,129 @@ MU_TEST(slix_set_password_access_all_passwords_cap) {
         EXT_PATH("unit_tests/nfc/Slix_cap_accept_all_pass.nfc"), 0x12341234, false);
 }
 
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+
+static const FuriHalI2cBusHandle* pn532_test_get_bus(void) {
+    return PN532_I2C_BUS;
+}
+
+MU_TEST(pn532_driver_init) {
+    const FuriHalI2cBusHandle* bus = pn532_test_get_bus();
+    Pn532Error err = pn532_init(bus);
+    mu_assert(err == Pn532ErrorNone, "pn532_init() failed");
+}
+
+MU_TEST(pn532_firmware_version) {
+    const FuriHalI2cBusHandle* bus = pn532_test_get_bus();
+    uint8_t ic = 0, ver = 0, rev = 0, support = 0;
+    Pn532Error err = pn532_get_firmware_version(bus, &ic, &ver, &rev, &support);
+    mu_assert(err == Pn532ErrorNone, "pn532_get_firmware_version() failed");
+    mu_assert(ic == 0x32, "PN532 IC type mismatch (expected 0x32)");
+    FURI_LOG_I(PN532_TEST_TAG, "PN532 FW: IC=0x%02X Ver=%d Rev=%d Support=0x%02X", ic, ver, rev, support);
+}
+
+MU_TEST(pn532_rf_field_control) {
+    const FuriHalI2cBusHandle* bus = pn532_test_get_bus();
+    Pn532Error err = pn532_set_rf_field(bus, true);
+    mu_assert(err == Pn532ErrorNone, "pn532_set_rf_field(true) failed");
+    furi_delay_ms(100);
+    err = pn532_set_rf_field(bus, false);
+    mu_assert(err == Pn532ErrorNone, "pn532_set_rf_field(false) failed");
+}
+
+MU_TEST(pn532_sam_config) {
+    const FuriHalI2cBusHandle* bus = pn532_test_get_bus();
+    Pn532Error err = pn532_sam_config(bus, 0x01, 0x14, true);
+    mu_assert(err == Pn532ErrorNone, "pn532_sam_config() failed");
+}
+
+MU_TEST(pn532_list_passive_target_iso14443a) {
+    const FuriHalI2cBusHandle* bus = pn532_test_get_bus();
+    Pn532TargetIso14443a target = {0};
+    Pn532Error err = pn532_in_list_passive_target_iso14443a(bus, &target, 1000);
+    if(err == Pn532ErrorNone) {
+        FURI_LOG_I(
+            PN532_TEST_TAG,
+            "ISO14443A target: tg=%d, uid_len=%d, sens_res=0x%04X, sel_res=0x%02X",
+            target.tg,
+            target.uid_len,
+            target.sens_res,
+            target.sel_res);
+    } else if(err == Pn532ErrorTimeout) {
+        FURI_LOG_W(PN532_TEST_TAG, "No ISO14443A target detected (timeout)");
+    } else {
+        mu_assert(0, "pn532_in_list_passive_target_iso14443a() error");
+    }
+}
+
+MU_TEST(pn532_list_passive_target_iso14443b) {
+    const FuriHalI2cBusHandle* bus = pn532_test_get_bus();
+    Pn532TargetIso14443b target = {0};
+    Pn532Error err = pn532_in_list_passive_target_iso14443b(bus, &target, 1000);
+    if(err == Pn532ErrorNone) {
+        FURI_LOG_I(
+            PN532_TEST_TAG,
+            "ISO14443B target: tg=%d, uid_len=%d",
+            target.tg,
+            target.uid_len);
+    } else if(err == Pn532ErrorTimeout) {
+        FURI_LOG_W(PN532_TEST_TAG, "No ISO14443B target detected (timeout)");
+    } else {
+        mu_assert(0, "pn532_in_list_passive_target_iso14443b() error");
+    }
+}
+
+MU_TEST(pn532_in_data_exchange) {
+    const FuriHalI2cBusHandle* bus = pn532_test_get_bus();
+    Pn532TargetIso14443a target = {0};
+    Pn532Error err = pn532_in_list_passive_target_iso14443a(bus, &target, 1000);
+    if(err == Pn532ErrorNone) {
+        uint8_t cmd[] = {0x30, 0x00};
+        uint8_t rx_buf[32] = {0};
+        size_t rx_len = sizeof(rx_buf);
+        err = pn532_in_data_exchange(bus, target.tg, cmd, sizeof(cmd), rx_buf, &rx_len, 300);
+        mu_assert(err == Pn532ErrorNone, "pn532_in_data_exchange() failed");
+        FURI_LOG_I(PN532_TEST_TAG, "Data exchange: received %zu bytes", rx_len);
+    } else {
+        FURI_LOG_W(PN532_TEST_TAG, "Skipping data exchange (no target)");
+    }
+}
+
+MU_TEST(pn532_in_communicate_thru) {
+    const FuriHalI2cBusHandle* bus = pn532_test_get_bus();
+    Pn532TargetIso14443a target = {0};
+    Pn532Error err = pn532_in_list_passive_target_iso14443a(bus, &target, 1000);
+    if(err == Pn532ErrorNone) {
+        uint8_t cmd[] = {0x30, 0x00};
+        uint8_t rx_buf[32] = {0};
+        size_t rx_len = sizeof(rx_buf);
+        err = pn532_in_communicate_thru(bus, cmd, sizeof(cmd), rx_buf, &rx_len, 300);
+        mu_assert(err == Pn532ErrorNone, "pn532_in_communicate_thru() failed");
+        FURI_LOG_I(PN532_TEST_TAG, "CommunicateThru: received %zu bytes", rx_len);
+    } else {
+        FURI_LOG_W(PN532_TEST_TAG, "Skipping CommunicateThru (no target)");
+    }
+}
+
+MU_TEST(pn532_tg_init_as_target) {
+    const FuriHalI2cBusHandle* bus = pn532_test_get_bus();
+    uint8_t rx_cmd[64] = {0};
+    size_t rx_len = sizeof(rx_cmd);
+    Pn532Error err = pn532_tg_init_as_target(bus, NULL, 0, rx_cmd, &rx_len, 5000);
+    if(err == Pn532ErrorNone) {
+        FURI_LOG_I(PN532_TEST_TAG, "TgInitAsTarget: received %zu bytes", rx_len);
+        uint8_t resp[] = {0x90, 0x00};
+        err = pn532_tg_set_data(bus, resp, sizeof(resp), 1000);
+        mu_assert(err == Pn532ErrorNone, "pn532_tg_set_data() failed");
+    } else if(err == Pn532ErrorTimeout) {
+        FURI_LOG_W(PN532_TEST_TAG, "No initiator detected (timeout)");
+    } else {
+        mu_assert(0, "pn532_tg_init_as_target() error");
+    }
+}
+
+#endif // FURI_HAL_NFC_CHIP_PN532
+
 MU_TEST_SUITE(nfc) {
     nfc_test_alloc();
 
@@ -871,6 +1003,18 @@ MU_TEST_SUITE(nfc) {
     MU_RUN_TEST(slix_set_password_default_cap_correct_pass);
     MU_RUN_TEST(slix_set_password_default_cap_incorrect_pass);
     MU_RUN_TEST(slix_set_password_access_all_passwords_cap);
+
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    MU_RUN_TEST(pn532_driver_init);
+    MU_RUN_TEST(pn532_firmware_version);
+    MU_RUN_TEST(pn532_sam_config);
+    MU_RUN_TEST(pn532_rf_field_control);
+    MU_RUN_TEST(pn532_list_passive_target_iso14443a);
+    MU_RUN_TEST(pn532_list_passive_target_iso14443b);
+    MU_RUN_TEST(pn532_in_data_exchange);
+    MU_RUN_TEST(pn532_in_communicate_thru);
+    MU_RUN_TEST(pn532_tg_init_as_target);
+#endif
 
     nfc_test_free();
 }

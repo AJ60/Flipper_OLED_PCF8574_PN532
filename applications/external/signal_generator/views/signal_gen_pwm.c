@@ -12,7 +12,10 @@ typedef enum {
     LineIndexTotalCount
 } LineIndex;
 
-static const char* const pwm_ch_names[] = {"", "2(A7)", "4(A4)"};
+// Channel 1: the header label "A7" is physically PB5 (SPI1 MOSI) on this DIY
+// board; the PWM channel actually outputs on header pin 16 "C0" (physical
+// PA7, TIM17_CH1).
+static const char* const pwm_ch_names[] = {"", "16(C0)", "4(A4)"};
 
 struct SignalGenPwm {
     View* view;

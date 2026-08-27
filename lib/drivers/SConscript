@@ -9,6 +9,8 @@ env.Append(
         File("cc1101_regs.h"),
         File("st25r3916_reg.h"),
         File("st25r3916.h"),
+        File("pn532_reg.h"),
+        File("pn532.h"),
     ],
     LINT_SOURCES=[
         Dir("."),

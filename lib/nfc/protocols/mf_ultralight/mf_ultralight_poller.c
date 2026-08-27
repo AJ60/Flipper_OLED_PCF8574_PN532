@@ -403,7 +403,7 @@ static NfcCommand mf_ultralight_poller_handler_read_tearing_flags(MfUltralightPo
     } else {
         FURI_LOG_D(TAG, "Skip reading tearing flags");
         instance->state = MfUltralightPollerStateTryDefaultPass;
-        command = NfcCommandReset;
+        command = NfcCommandContinue;
     }
 
     return command;

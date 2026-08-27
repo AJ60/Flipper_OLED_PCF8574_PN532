@@ -54,7 +54,11 @@ def wrap_tempfile(env, command):
 def link_dir(target_path, source_path, is_windows):
     # print(f"link_dir: {target_path} -> {source_path}")
     if os.path.lexists(target_path) or os.path.exists(target_path):
-        os.unlink(target_path)
+        try:
+            os.unlink(target_path)
+        except PermissionError:
+            import shutil
+            shutil.rmtree(target_path, ignore_errors=True)
     if is_windows:
         # Crete junction
         import _winapi
@@ -63,7 +67,10 @@ def link_dir(target_path, source_path, is_windows):
             raise StopError(f"Source directory {source_path} is not a directory")
 
         if not os.path.exists(target_path):
-            _winapi.CreateJunction(source_path, target_path)
+            try:
+                _winapi.CreateJunction(source_path, target_path)
+            except Exception:
+                print(f"link_dir: failed to create junction {target_path}")
     else:
         os.symlink(source_path, target_path)
 

@@ -44,6 +44,7 @@ typedef struct {
 static FuriHalNfcIso15693Listener* furi_hal_nfc_iso15693_listener = NULL;
 static FuriHalNfcIso15693Poller* furi_hal_nfc_iso15693_poller = NULL;
 
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
 static FuriHalNfcIso15693Listener* furi_hal_nfc_iso15693_listener_alloc(void) {
     FuriHalNfcIso15693Listener* instance = malloc(sizeof(FuriHalNfcIso15693Listener));
 
@@ -62,6 +63,7 @@ static void furi_hal_nfc_iso15693_listener_free(FuriHalNfcIso15693Listener* inst
 
     free(instance);
 }
+#endif
 
 static FuriHalNfcIso15693Poller* furi_hal_nfc_iso15693_poller_alloc(void) {
     FuriHalNfcIso15693Poller* instance = malloc(sizeof(FuriHalNfcIso15693Poller));
@@ -75,6 +77,7 @@ static void furi_hal_nfc_iso15693_poller_free(FuriHalNfcIso15693Poller* instance
     free(instance);
 }
 
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
 static FuriHalNfcError furi_hal_nfc_iso15693_common_init(const FuriHalSpiBusHandle* handle) {
     // Common NFC-V settings, 26.48 kbps
 
@@ -86,10 +89,6 @@ static FuriHalNfcError furi_hal_nfc_iso15693_common_init(const FuriHalSpiBusHand
             ST25R3916_REG_RX_CONF1_lp_600khz);
 
     // Enable AGC
-    // AGC Ratio 6
-    // AGC algorithm with RESET (recommended for ISO15693)
-    // AGC operation during complete receive period
-    // Squelch automatic activation on TX end
     st25r3916_write_reg(
         handle,
         ST25R3916_REG_RX_CONF2,
@@ -102,7 +101,6 @@ static FuriHalNfcError furi_hal_nfc_iso15693_common_init(const FuriHalSpiBusHand
     st25r3916_write_reg(handle, ST25R3916_REG_RX_CONF4, 0x00);
 
     // Collision detection level 53%
-    // AM & PM summation before digitizing on
     st25r3916_write_reg(
         handle,
         ST25R3916_REG_CORR_CONF1,
@@ -112,12 +110,14 @@ static FuriHalNfcError furi_hal_nfc_iso15693_common_init(const FuriHalSpiBusHand
     st25r3916_write_reg(handle, ST25R3916_REG_CORR_CONF2, ST25R3916_REG_CORR_CONF2_corr_s8);
     return FuriHalNfcErrorNone;
 }
+#endif
 
 static FuriHalNfcError furi_hal_nfc_iso15693_poller_init(const FuriHalSpiBusHandle* handle) {
     furi_check(furi_hal_nfc_iso15693_poller == NULL);
 
     furi_hal_nfc_iso15693_poller = furi_hal_nfc_iso15693_poller_alloc();
 
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
     // Enable Subcarrier Stream mode, OOK modulation
     st25r3916_change_reg_bits(
         handle,
@@ -126,7 +126,6 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_init(const FuriHalSpiBusHand
         ST25R3916_REG_MODE_om_subcarrier_stream | ST25R3916_REG_MODE_tr_am_ook);
 
     // Subcarrier 424 kHz mode
-    // 8 sub-carrier pulses in report period
     st25r3916_write_reg(
         handle,
         ST25R3916_REG_STREAM_MODE,
@@ -140,6 +139,10 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_init(const FuriHalSpiBusHand
         ST25R3916_REG_AUX_MOD_dis_reg_am | ST25R3916_REG_AUX_MOD_res_am);
 
     return furi_hal_nfc_iso15693_common_init(handle);
+#else
+    UNUSED(handle);
+    return FuriHalNfcErrorNone;
+#endif
 }
 
 static FuriHalNfcError furi_hal_nfc_iso15693_poller_deinit(const FuriHalSpiBusHandle* handle) {
@@ -243,6 +246,7 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_tx(
     const uint8_t* tx_data,
     size_t tx_bits) {
     FuriHalNfcIso15693Poller* instance = furi_hal_nfc_iso15693_poller;
+    furi_check(instance != NULL);
     iso15693_3_poller_encode_frame(
         tx_data,
         tx_bits,
@@ -259,6 +263,7 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_rx(
     size_t* rx_bits) {
     FuriHalNfcError error = FuriHalNfcErrorNone;
     FuriHalNfcIso15693Poller* instance = furi_hal_nfc_iso15693_poller;
+    furi_check(instance != NULL);
 
     do {
         error = furi_hal_nfc_common_fifo_rx(
@@ -285,6 +290,7 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_rx(
     return error;
 }
 
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
 static void
     furi_hal_nfc_iso15693_listener_transparent_mode_enter(const FuriHalSpiBusHandle* handle) {
     st25r3916_direct_cmd(handle, ST25R3916_CMD_TRANSPARENT_MODE);
@@ -301,8 +307,14 @@ static void
 
     st25r3916_direct_cmd(handle, ST25R3916_CMD_UNMASK_RECEIVE_DATA);
 }
+#endif
 
 static FuriHalNfcError furi_hal_nfc_iso15693_listener_init(const FuriHalSpiBusHandle* handle) {
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    UNUSED(handle);
+    FURI_LOG_W(TAG, "ISO15693 listener not supported on PN532");
+    return FuriHalNfcErrorCommunication;
+#else
     furi_check(furi_hal_nfc_iso15693_listener == NULL);
 
     furi_hal_nfc_iso15693_listener = furi_hal_nfc_iso15693_listener_alloc();
@@ -329,9 +341,14 @@ static FuriHalNfcError furi_hal_nfc_iso15693_listener_init(const FuriHalSpiBusHa
     furi_hal_nfc_iso15693_listener_transparent_mode_enter(handle);
 
     return error;
+#endif
 }
 
 static FuriHalNfcError furi_hal_nfc_iso15693_listener_deinit(const FuriHalSpiBusHandle* handle) {
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    UNUSED(handle);
+    return FuriHalNfcErrorNone;
+#else
     furi_check(furi_hal_nfc_iso15693_listener);
 
     furi_hal_nfc_iso15693_listener_transparent_mode_exit(handle);
@@ -340,6 +357,7 @@ static FuriHalNfcError furi_hal_nfc_iso15693_listener_deinit(const FuriHalSpiBus
     furi_hal_nfc_iso15693_listener = NULL;
 
     return FuriHalNfcErrorNone;
+#endif
 }
 
 static FuriHalNfcError

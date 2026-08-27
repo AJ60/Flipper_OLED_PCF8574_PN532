@@ -197,7 +197,8 @@ static const NfcProtocolSupportBase*
     NfcApp* instance = context;
 
     if(!instance->cached_protocol_supports[protocol]) {
-        instance->cached_protocol_supports[protocol] = nfc_protocol_support_alloc(protocol, instance);
+        instance->cached_protocol_supports[protocol] =
+            nfc_protocol_support_alloc(protocol, instance);
     }
 
     return instance->cached_protocol_supports[protocol]->base;
@@ -534,6 +535,19 @@ static void nfc_protocol_support_scene_read_success_on_enter(NfcApp* instance) {
     popup_set_icon(instance->popup, 12, 23, &A_Loading_24);
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcViewPopup);
 
+    // nfc_supported_cards_parse() → nfc_protocol_support_alloc() performs its
+    // own release-then-reacquire of the NFC HAL to allow slow SD card plugin
+    // loading without holding the I2C/SPI bus.  On the PN532 path the mutex is
+    // the only guard: if we already hold it here, the internal release drops
+    // lock_count to 0 and then the re-acquire sees the mutex already taken by
+    // us (recursive acquire on a non-recursive FuriMutex), tripping a
+    // furi_check assertion and crashing.  Release now so the alloc path works
+    // cleanly, then restore the invariant at the end of this function.
+    if(furi_hal_nfc_is_mine()) {
+        furi_hal_nfc_release();
+        instance->nfc_hal_acquired = false;
+    }
+
     FuriString* temp_str = furi_string_alloc();
     const NfcProtocol protocol = nfc_device_get_protocol(instance->nfc_device);
     if((protocol != NfcProtocolMfClassic) &&
@@ -553,6 +567,13 @@ static void nfc_protocol_support_scene_read_success_on_enter(NfcApp* instance) {
 
     notification_message_block(instance->notifications, &sequence_set_green_255);
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcViewWidget);
+
+    // Re-acquire HAL now that plugin loading is done, restoring the GUI-thread
+    // ownership invariant expected by subsequent scenes.
+    if(!furi_hal_nfc_is_mine()) {
+        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+        instance->nfc_hal_acquired = true;
+    }
 }
 
 static bool
@@ -872,7 +893,11 @@ static void nfc_protocol_support_scene_emulate_on_enter(NfcApp* instance) {
             furi_string_cat_printf(uid_str, "%02X ", uid[i]);
         }
         furi_string_trim(uid_str);
-        FURI_LOG_I("NfcApp", "Starting emulation of %s (UID: %s)", card_name, furi_string_get_cstr(uid_str));
+        FURI_LOG_I(
+            "NfcApp",
+            "Starting emulation of %s (UID: %s)",
+            card_name,
+            furi_string_get_cstr(uid_str));
     } else {
         FURI_LOG_I("NfcApp", "Starting emulation of %s", card_name);
     }

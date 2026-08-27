@@ -83,86 +83,105 @@ static bool
     bool success = false;
 
     switch(tag) {
-    case EMV_TAG_LOG_FMT:
-        furi_check(tlen < sizeof(app->log_fmt));
-        memcpy(app->log_fmt, &buff[i], tlen);
-        app->log_fmt_len = tlen;
+    case EMV_TAG_LOG_FMT: {
+        size_t copy_len = MIN(tlen, sizeof(app->log_fmt));
+        memcpy(app->log_fmt, &buff[i], copy_len);
+        app->log_fmt_len = copy_len;
         success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_LOG_FMT %X: len %d", tag, tlen);
+        FURI_LOG_T(TAG, "found EMV_TAG_LOG_FMT %X: len %zu", tag, copy_len);
         break;
-    case EMV_TAG_GPO_FMT1:
+    }
+    case EMV_TAG_GPO_FMT1: {
         // skip AIP
         i += 2;
-        tlen -= 2;
-        furi_check(tlen < sizeof(app->afl.data));
-        memcpy(app->afl.data, &buff[i], tlen);
-        app->afl.size = tlen;
-        success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_GPO_FMT1 %X: ", tag);
+        if(tlen >= 2) {
+            tlen -= 2;
+            size_t copy_len = MIN(tlen, sizeof(app->afl.data));
+            memcpy(app->afl.data, &buff[i], copy_len);
+            app->afl.size = copy_len;
+            success = true;
+            FURI_LOG_T(TAG, "found EMV_TAG_GPO_FMT1 %X: ", tag);
+        }
         break;
-    case EMV_TAG_AID:
-        app->aid_len = tlen;
-        memcpy(app->aid, &buff[i], tlen);
+    }
+    case EMV_TAG_AID: {
+        size_t copy_len = MIN(tlen, sizeof(app->aid));
+        app->aid_len = copy_len;
+        memcpy(app->aid, &buff[i], copy_len);
         success = true;
         FURI_LOG_T(TAG, "found EMV_TAG_AID %X: ", tag);
-        for(size_t x = 0; x < tlen; x++) {
+        for(size_t x = 0; x < copy_len; x++) {
             FURI_LOG_RAW_T("%02X ", app->aid[x]);
         }
         FURI_LOG_RAW_T("\r\n");
         break;
+    }
     case EMV_TAG_PRIORITY:
-        memcpy(&app->priority, &buff[i], tlen);
-        success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_APP_PRIORITY %X: %d", tag, app->priority);
+        if(tlen >= 1) {
+            memcpy(&app->priority, &buff[i], 1);
+            success = true;
+            FURI_LOG_T(TAG, "found EMV_TAG_APP_PRIORITY %X: %d", tag, app->priority);
+        }
         break;
-    case EMV_TAG_APPL_INTERCHANGE_PROFILE:
-        furi_check(tlen == 2);
-        memcpy(app->application_interchange_profile, &buff[i], tlen);
+    case EMV_TAG_APPL_INTERCHANGE_PROFILE: {
+        size_t copy_len = MIN(tlen, sizeof(app->application_interchange_profile));
+        memcpy(app->application_interchange_profile, &buff[i], copy_len);
         success = true;
         FURI_LOG_T(TAG, "found EMV_TAG_APPL_INTERCHANGE_PROFILE %x: ", tag);
-        for(size_t x = 0; x < tlen; x++) {
+        for(size_t x = 0; x < copy_len; x++) {
             FURI_LOG_RAW_T("%02X ", app->application_interchange_profile[x]);
         }
         FURI_LOG_RAW_T("\r\n");
         break;
-    case EMV_TAG_APPL_LABEL:
-        memcpy(app->application_label, &buff[i], tlen);
-        app->application_label[tlen] = '\0';
+    }
+    case EMV_TAG_APPL_LABEL: {
+        size_t copy_len = MIN(tlen, sizeof(app->application_label) - 1);
+        memcpy(app->application_label, &buff[i], copy_len);
+        app->application_label[copy_len] = '\0';
         success = true;
         FURI_LOG_T(TAG, "found EMV_TAG_APPL_LABEL %x: %s", tag, app->application_label);
         break;
-    case EMV_TAG_APPL_NAME:
-        furi_check(tlen < sizeof(app->application_name));
-        memcpy(app->application_name, &buff[i], tlen);
-        app->application_name[tlen] = '\0';
+    }
+    case EMV_TAG_APPL_NAME: {
+        size_t copy_len = MIN(tlen, sizeof(app->application_name) - 1);
+        memcpy(app->application_name, &buff[i], copy_len);
+        app->application_name[copy_len] = '\0';
         success = true;
         FURI_LOG_T(TAG, "found EMV_TAG_APPL_NAME %x: %s", tag, app->application_name);
         break;
+    }
     case EMV_TAG_APPL_EFFECTIVE:
-        app->effective_year = buff[i];
-        app->effective_month = buff[i + 1];
-        app->effective_day = buff[i + 2];
-        success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_APPL_ISSUE %x:", tag);
+        if(tlen >= 3) {
+            app->effective_year = buff[i];
+            app->effective_month = buff[i + 1];
+            app->effective_day = buff[i + 2];
+            success = true;
+            FURI_LOG_T(TAG, "found EMV_TAG_APPL_ISSUE %x:", tag);
+        }
         break;
-    case EMV_TAG_PDOL:
-        memcpy(app->pdol.data, &buff[i], tlen);
-        app->pdol.size = tlen;
+    case EMV_TAG_PDOL: {
+        size_t copy_len = MIN(tlen, sizeof(app->pdol.data));
+        memcpy(app->pdol.data, &buff[i], copy_len);
+        app->pdol.size = copy_len;
         success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_PDOL %x (len=%d)", tag, tlen);
+        FURI_LOG_T(TAG, "found EMV_TAG_PDOL %x (len=%zu)", tag, copy_len);
         break;
-    case EMV_TAG_AFL:
-        memcpy(app->afl.data, &buff[i], tlen);
-        app->afl.size = tlen;
+    }
+    case EMV_TAG_AFL: {
+        size_t copy_len = MIN(tlen, sizeof(app->afl.data));
+        memcpy(app->afl.data, &buff[i], copy_len);
+        app->afl.size = copy_len;
         success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_AFL %x (len=%d)", tag, tlen);
+        FURI_LOG_T(TAG, "found EMV_TAG_AFL %x (len=%zu)", tag, copy_len);
         break;
+    }
     // Tracks data https://murdoch.is/papers/defcon20emvdecode.pdf
     case EMV_TAG_TRACK_1_EQUIV: {
         // Contain PAN and expire date
         char track_1_equiv[80];
-        memcpy(track_1_equiv, &buff[i], tlen);
-        track_1_equiv[tlen] = '\0';
+        size_t copy_len = MIN(tlen, sizeof(track_1_equiv) - 1);
+        memcpy(track_1_equiv, &buff[i], copy_len);
+        track_1_equiv[copy_len] = '\0';
         success = true;
         FURI_LOG_T(TAG, "found EMV_TAG_TRACK_1_EQUIV %x : %s", tag, track_1_equiv);
         break;
@@ -171,10 +190,11 @@ static bool
     case EMV_TAG_TRACK_2_EQUIV: {
         FURI_LOG_T(TAG, "found EMV_TAG_TRACK_2 %X", tag);
         // 0xD0 delimits PAN from expiry (YYMM)
-        for(int x = 1; x < tlen; x++) {
+        for(int x = 1; x < tlen - 2; x++) {
             if(buff[i + x + 1] > 0xD0) {
-                memcpy(app->pan, &buff[i], x + 1);
-                app->pan_len = x + 1;
+                size_t pan_copy_len = MIN((size_t)(x + 1), sizeof(app->pan));
+                memcpy(app->pan, &buff[i], pan_copy_len);
+                app->pan_len = pan_copy_len;
                 app->exp_year = (buff[i + x + 1] << 4) | (buff[i + x + 2] >> 4);
                 app->exp_month = (buff[i + x + 2] << 4) | (buff[i + x + 3] >> 4);
                 break;
@@ -184,14 +204,12 @@ static bool
         // Convert 4-bit to ASCII representation
         char track_2_equiv[41];
         uint8_t track_2_equiv_len = 0;
-        for(int x = 0; x < tlen; x++) {
+        for(int x = 0; x < tlen && track_2_equiv_len < sizeof(track_2_equiv) - 2; x++) {
             char top = (buff[i + x] >> 4) + '0';
             char bottom = (buff[i + x] & 0x0F) + '0';
-            track_2_equiv[x * 2] = top;
-            track_2_equiv_len++;
+            track_2_equiv[track_2_equiv_len++] = top;
             if(top == '?') break;
-            track_2_equiv[x * 2 + 1] = bottom;
-            track_2_equiv_len++;
+            track_2_equiv[track_2_equiv_len++] = bottom;
             if(bottom == '?') break;
         }
         track_2_equiv[track_2_equiv_len] = '\0';
@@ -200,90 +218,120 @@ static bool
         break;
     }
     case EMV_TAG_CARDHOLDER_NAME: {
-        if(strlen(app->cardholder_name) > tlen) break;
-        memcpy(app->cardholder_name, &buff[i], tlen);
-        app->cardholder_name[tlen] = '\0';
+        size_t copy_len = MIN(tlen, sizeof(app->cardholder_name) - 1);
+        memcpy(app->cardholder_name, &buff[i], copy_len);
+        app->cardholder_name[copy_len] = '\0';
 
         // use space char as terminator
-        for(size_t i = 0; i < tlen; i++)
-            if(app->cardholder_name[i] == 0x20) {
-                app->cardholder_name[i] = '\0';
+        for(size_t j = 0; j < copy_len; j++) {
+            if(app->cardholder_name[j] == 0x20) {
+                app->cardholder_name[j] = '\0';
                 break;
             }
+        }
 
         success = true;
         FURI_LOG_T(TAG, "found EMV_TAG_CARDHOLDER_NAME %x: %s", tag, app->cardholder_name);
         break;
     }
-    case EMV_TAG_PAN:
-        memcpy(app->pan, &buff[i], tlen);
-        app->pan_len = tlen;
+    case EMV_TAG_PAN: {
+        size_t copy_len = MIN(tlen, sizeof(app->pan));
+        memcpy(app->pan, &buff[i], copy_len);
+        app->pan_len = copy_len;
         success = true;
         FURI_LOG_T(TAG, "found EMV_TAG_PAN %x", tag);
         break;
+    }
     case EMV_TAG_EXP_DATE:
-        app->exp_year = buff[i];
-        app->exp_month = buff[i + 1];
-        app->exp_day = buff[i + 2];
-        success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_EXP_DATE %x", tag);
+        if(tlen >= 3) {
+            app->exp_year = buff[i];
+            app->exp_month = buff[i + 1];
+            app->exp_day = buff[i + 2];
+            success = true;
+            FURI_LOG_T(TAG, "found EMV_TAG_EXP_DATE %x", tag);
+        }
         break;
     case EMV_TAG_CURRENCY_CODE:
-        app->currency_code = (buff[i] << 8 | buff[i + 1]);
-        success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_CURRENCY_CODE %x", tag);
+        if(tlen >= 2) {
+            app->currency_code = (buff[i] << 8 | buff[i + 1]);
+            success = true;
+            FURI_LOG_T(TAG, "found EMV_TAG_CURRENCY_CODE %x", tag);
+        }
         break;
     case EMV_TAG_COUNTRY_CODE:
-        app->country_code = (buff[i] << 8 | buff[i + 1]);
-        success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_COUNTRY_CODE %x", tag);
+        if(tlen >= 2) {
+            app->country_code = (buff[i] << 8 | buff[i + 1]);
+            success = true;
+            FURI_LOG_T(TAG, "found EMV_TAG_COUNTRY_CODE %x", tag);
+        }
         break;
     case EMV_TAG_LOG_ENTRY:
-        app->log_sfi = buff[i];
-        app->log_records = buff[i + 1];
-        success = true;
-        FURI_LOG_T(
-            TAG,
-            "found EMV_TAG_LOG_ENTRY %x: sfi 0x%x, records %d",
-            tag,
-            app->log_sfi,
-            app->log_records);
+        if(tlen >= 2) {
+            app->log_sfi = buff[i];
+            app->log_records = buff[i + 1];
+            success = true;
+            FURI_LOG_T(
+                TAG,
+                "found EMV_TAG_LOG_ENTRY %x: sfi 0x%x, records %d",
+                tag,
+                app->log_sfi,
+                app->log_records);
+        }
         break;
     case EMV_TAG_LAST_ONLINE_ATC:
-        app->last_online_atc = (buff[i] << 8 | buff[i + 1]);
-        success = true;
+        if(tlen >= 2) {
+            app->last_online_atc = (buff[i] << 8 | buff[i + 1]);
+            success = true;
+        }
         break;
     case EMV_TAG_ATC:
-        if(app->saving_trans_list)
-            app->trans[app->active_tr].atc = (buff[i] << 8 | buff[i + 1]);
-        else
-            app->transaction_counter = (buff[i] << 8 | buff[i + 1]);
-        success = true;
+        if(tlen >= 2) {
+            if(app->saving_trans_list && app->active_tr < COUNT_OF(app->trans))
+                app->trans[app->active_tr].atc = (buff[i] << 8 | buff[i + 1]);
+            else
+                app->transaction_counter = (buff[i] << 8 | buff[i + 1]);
+            success = true;
+        }
         break;
     case EMV_TAG_LOG_AMOUNT:
-        memcpy(&app->trans[app->active_tr].amount, &buff[i], tlen);
-        success = true;
+        if(app->active_tr < COUNT_OF(app->trans)) {
+            size_t copy_len = MIN(tlen, sizeof(app->trans[app->active_tr].amount));
+            memcpy(&app->trans[app->active_tr].amount, &buff[i], copy_len);
+            success = true;
+        }
         break;
     case EMV_TAG_LOG_COUNTRY:
-        app->trans[app->active_tr].country = (buff[i] << 8 | buff[i + 1]);
-        success = true;
+        if(tlen >= 2 && app->active_tr < COUNT_OF(app->trans)) {
+            app->trans[app->active_tr].country = (buff[i] << 8 | buff[i + 1]);
+            success = true;
+        }
         break;
     case EMV_TAG_LOG_CURRENCY:
-        app->trans[app->active_tr].currency = (buff[i] << 8 | buff[i + 1]);
-        success = true;
+        if(tlen >= 2 && app->active_tr < COUNT_OF(app->trans)) {
+            app->trans[app->active_tr].currency = (buff[i] << 8 | buff[i + 1]);
+            success = true;
+        }
         break;
     case EMV_TAG_LOG_DATE:
-        memcpy(&app->trans[app->active_tr].date, &buff[i], tlen);
-        success = true;
+        if(app->active_tr < COUNT_OF(app->trans)) {
+            size_t copy_len = MIN(tlen, sizeof(app->trans[app->active_tr].date));
+            memcpy(&app->trans[app->active_tr].date, &buff[i], copy_len);
+            success = true;
+        }
         break;
     case EMV_TAG_LOG_TIME:
-        memcpy(&app->trans[app->active_tr].time, &buff[i], tlen);
-        success = true;
+        if(app->active_tr < COUNT_OF(app->trans)) {
+            size_t copy_len = MIN(tlen, sizeof(app->trans[app->active_tr].time));
+            memcpy(&app->trans[app->active_tr].time, &buff[i], copy_len);
+            success = true;
+        }
         break;
     case EMV_TAG_PIN_TRY_COUNTER:
-        app->pin_try_counter = buff[i];
-        success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_PIN_TRY_COUNTER %x: %d", tag, app->pin_try_counter);
+        if(tlen >= 1) {
+            app->pin_try_counter = buff[i];
+            success = true;
+            FURI_LOG_T(TAG, "found EMV_TAG_PIN_TRY_COUNTER %x: %d", tag, app->pin_try_counter);
+        }
         break;
     }
     return success;
@@ -418,7 +466,10 @@ static void emv_prepare_pdol(APDU* dest, APDU* src) {
             return;
         }
 
-        furi_check(dest->size + tlen < sizeof(dest->data));
+        if(dest->size + tlen > sizeof(dest->data)) {
+            FURI_LOG_W(TAG, "PDOL buffer full");
+            break;
+        }
         for(uint8_t j = 0; j < COUNT_OF(pdol_values); j++) {
             if(tag == pdol_values[j]->tag) {
                 memcpy(dest->data + dest->size, pdol_values[j]->data, tlen);
@@ -610,7 +661,12 @@ EmvError emv_poller_read_sfi_record(EmvPoller* instance, uint8_t sfi, uint8_t re
         emv_trace(instance, furi_string_get_cstr(text));
 
         if(iso14443_4a_error != Iso14443_4aErrorNone) {
-            FURI_LOG_E(TAG, "Failed to read SFI 0x%X record %d, error %d", sfi, record_num, iso14443_4a_error);
+            FURI_LOG_E(
+                TAG,
+                "Failed to read SFI 0x%X record %d, error %d",
+                sfi,
+                record_num,
+                iso14443_4a_error);
             error = emv_process_error(iso14443_4a_error);
             break;
         }
@@ -783,9 +839,10 @@ EmvError emv_poller_read_log_entry(EmvPoller* instance) {
         }
 
         instance->data->emv_application.active_tr++;
-        furi_check(
-            instance->data->emv_application.active_tr <
-            COUNT_OF(instance->data->emv_application.trans));
+        if(instance->data->emv_application.active_tr >=
+           COUNT_OF(instance->data->emv_application.trans)) {
+            break;
+        }
     }
 
     instance->data->emv_application.saving_trans_list = false;

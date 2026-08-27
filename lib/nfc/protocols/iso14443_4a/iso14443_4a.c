@@ -11,7 +11,8 @@
 #define ISO14443_4A_TC1_KEY   "TC(1)"
 #define ISO14443_4A_T1_TK_KEY "T1...Tk"
 
-#define ISO14443_4A_FDT_DEFAULT_FC (4096UL << 6) // 262144 fc = FWI=6 ~19.3ms, compatible with most bank cards
+#define ISO14443_4A_FDT_DEFAULT_FC \
+    (4096UL << 6) // 262144 fc = FWI=6 ~19.3ms, compatible with most bank cards
 
 typedef enum {
     Iso14443_4aInterfaceByteTA1,

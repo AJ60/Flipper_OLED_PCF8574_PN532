@@ -11,8 +11,7 @@ extern "C" {
 /* Input Related Constants */
 #define INPUT_DEBOUNCE_TICKS 2
 
-
-// volne A3, A4, A5, 
+// volne A3, A4, A5,
 
 /* Input Keys */
 typedef enum {
@@ -49,7 +48,6 @@ typedef struct {
     const bool debug;
 } GpioPinRecord;
 
-
 extern const InputPin input_pins[];
 extern const size_t input_pins_count;
 
@@ -62,7 +60,7 @@ extern const GpioPin gpio_swclk;
 extern const GpioPin gpio_ibutton;
 
 extern const GpioPin gpio_cc1101_g0;
-extern const GpioPin gpio_mcp_int;
+extern const GpioPin gpio_pcf_int;
 extern const GpioPin gpio_ina_alert;
 
 extern const GpioPin gpio_subghz_cs;
@@ -117,7 +115,7 @@ extern const GpioPin gpio_speaker;
 extern const GpioPin gpio_usb_dm;
 extern const GpioPin gpio_usb_dp;
 
-// gpio_button_* MCU pin definitions removed: inputs are provided via MCP23017 wiring
+// gpio_button_* MCU pin definitions removed: inputs are provided via PCF8574 wiring
 
 // extern const GpioPin gpio_button_IRQ;
 // extern const GpioPin gpio_spi_miso_BTN;
@@ -151,14 +149,14 @@ extern const GpioPin gpio_usb_dp;
 #define NFC_CS_Pin       LL_GPIO_PIN_4
 
 /*
-Header pins
+Header pins (Flipper-compatible label -> actual MCU pin on this DIY board)
 5V - 5V
-A7 - B5
-A6 - A6
-A2 - A2
-B3 - B3
-B2 - B2
-C3 - A5
+A7 - B5      (SPI1 MOSI: SD/NFC/Sub-GHz share SPI1 -> NOT GPIO safe)
+A6 - A6      (SPI1 MISO -> NOT GPIO safe)
+A2 - A2      (NFC IRQ / LF-RFID pull, internal)
+B3 - B3      (SPI1 SCK -> NOT GPIO safe)
+B2 - B2      (free GPIO; MCU PB2 = ADC_IN15)
+C3 - A5      (LF-RFID 125kHz carrier, TIM2_CH1; MCU PA5 = ADC_IN10, internal)
 GND - GND
 
 3V3 - 3V3
@@ -167,10 +165,15 @@ GND - GND
 SWD - SWD (PA13)
 TX - USART1 TX (PB6)
 RX - USART1 RX (PB7)
-C1 - B4
-C0 - A7
+C1 - B4      (ST25R3916 NFC MISO / I2C3 SDA -> NOT GPIO safe)
+C0 - A7      (I2C3 SCL + PWM TIM17_CH1 + ADC IN12; one function at a time)
 iButton - A3
 GND - GND
+
+Internal aliases / pin conflicts (not on header):
+PA1 = CC1101 GDO0 (Sub-GHz) AND LF-RFID 125kHz data input
+PA2 = NFC IRQ AND LF-RFID pull
+PA5 = LF-RFID carrier (exposed on header as "C3")
 */
 #define PA7_GPIO_Port GPIOB
 #define PA7_Pin       LL_GPIO_PIN_5
@@ -210,19 +213,21 @@ GND - GND
 #define SD_CS_GPIO_Port GPIOA
 #define SD_CS_Pin       LL_GPIO_PIN_10
 
-// MCP23017 interrupt default pin
-#define MCP_INT_GPIO_Port GPIOB
-#define MCP_INT_Pin       LL_GPIO_PIN_0
+// PCF8574 interrupt default pin
+#define PCF_INT_GPIO_Port GPIOB
+#define PCF_INT_Pin       LL_GPIO_PIN_0
 
 // INA226 Alert pin (PB1, WeAct Pin 23)
 #define INA_ALERT_GPIO_Port GPIOB
 #define INA_ALERT_Pin       LL_GPIO_PIN_1
 
+// VIBRO not present on this board revision.
+// MCU PC0 is used for SD card detect (SD_CD). The header pin labelled "PC0"
+// is wired to MCU PA7 (gpio_ext_pc0): I2C3 SCL / PWM TIM17_CH1 / ADC IN12
+// (STM32WB55 channel map: PA7 = ADC_IN12).
+
 #define SPEAKER_GPIO_Port GPIOB
 #define SPEAKER_Pin       LL_GPIO_PIN_8
-
-#define VIBRO_GPIO_Port GPIOC
-#define VIBRO_Pin       LL_GPIO_PIN_0
 
 #define iBTN_GPIO_Port GPIOA
 #define iBTN_Pin       LL_GPIO_PIN_3
@@ -242,9 +247,15 @@ GND - GND
 #define NFC_IRQ_Pin       LL_GPIO_PIN_2
 #define NFC_IRQ_GPIO_Port GPIOA
 
+// NFC Hardware Selection: PN532 over I2C vs ST25R3916 over SPI
+#define FURI_HAL_NFC_CHIP_PN532 1
+#define PN532_I2C_BUS           (&furi_hal_i2c_handle_external)
+
 // OLED I2C1 (PA9 SCL, PB9 SDA)
-#define DISPLAY_I2C (&furi_hal_i2c_handle_1)  // I2C1
-#define DISPLAY_I2C_ADDR 0x3C  // SD1306
+// NOTE: PCF8574 IO expander also shares this bus at addr 0x20-0x27.
+// Do NOT add a second I2C1 init elsewhere.
+#define DISPLAY_I2C      (&furi_hal_i2c_handle_power) // I2C1 Power Bus
+#define DISPLAY_I2C_ADDR 0x3C // SSD1306
 
 #define I2C_1_SCL_Pin       LL_GPIO_PIN_9
 #define I2C_1_SCL_GPIO_Port GPIOA
@@ -255,7 +266,6 @@ GND - GND
 #define I2C_3_SCL_Pin       LL_GPIO_PIN_7
 #define I2C_3_SDA_GPIO_Port GPIOB
 #define I2C_3_SDA_Pin       LL_GPIO_PIN_4
-
 
 void furi_hal_resources_init_early(void);
 

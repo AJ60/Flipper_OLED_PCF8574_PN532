@@ -20,7 +20,8 @@ static int32_t subghz_extended_freq_apply(void* context) {
         flipper_format_read_bool(file, "use_ext_range_at_own_risk", &is_extended_i, 1);
         flipper_format_read_bool(file, "ignore_default_tx_region", &is_bypassed, 1);
         flipper_format_file_close(file);
-        FURI_LOG_I(TAG, "Loaded extend_range: extended=%d bypassed=%d", is_extended_i, is_bypassed);
+        FURI_LOG_I(
+            TAG, "Loaded extend_range: extended=%d bypassed=%d", is_extended_i, is_bypassed);
     } else {
         FURI_LOG_E(TAG, "Failed to open extend_range.txt");
     }

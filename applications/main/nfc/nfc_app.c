@@ -444,8 +444,10 @@ bool nfc_delete(NfcApp* instance) {
         furi_string_replace_at(instance->file_path, path_len - 4, 4, NFC_APP_EXTENSION);
     }
 
-    FURI_LOG_D("NfcApp", "nfc_delete: removing file %s...", furi_string_get_cstr(instance->file_path));
-    bool result = storage_simply_remove(instance->storage, furi_string_get_cstr(instance->file_path));
+    FURI_LOG_D(
+        "NfcApp", "nfc_delete: removing file %s...", furi_string_get_cstr(instance->file_path));
+    bool result =
+        storage_simply_remove(instance->storage, furi_string_get_cstr(instance->file_path));
 
     FURI_LOG_D("NfcApp", "nfc_delete: acquiring HAL...");
     nfc_app_acquire_hal(instance);
@@ -486,11 +488,10 @@ bool nfc_load_from_file_select(NfcApp* instance) {
         nfc_app_release_hal(instance);
         // Input events and views are managed by file_browser
         bool browser_result = dialog_file_browser_show(
-               instance->dialogs, instance->file_path, instance->file_path, &browser_options);
+            instance->dialogs, instance->file_path, instance->file_path, &browser_options);
         nfc_app_acquire_hal(instance);
 
-        if(!browser_result)
-            break;
+        if(!browser_result) break;
 
         nfc_show_loading_popup(instance, true);
         nfc_supported_cards_load_cache(instance->nfc_supported_cards);

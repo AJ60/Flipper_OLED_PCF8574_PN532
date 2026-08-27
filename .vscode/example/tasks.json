@@ -16,6 +16,51 @@
             "command": "./fbt"
         },
         {
+            // This fork has no 'firmware' target: the default target (basic_dist)
+            // builds the complete firmware package. Use fbt.cmd on Windows.
+            "label": "[Windows] Build Firmware (fbt.cmd, default target)",
+            "group": "build",
+            "type": "process",
+            "command": "cmd.exe",
+            "args": [
+                "/c",
+                "fbt.cmd"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "[Windows] Build Signal Generator FAP (fbt.cmd)",
+            "group": "build",
+            "type": "process",
+            "command": "cmd.exe",
+            "args": [
+                "/c",
+                "fbt.cmd",
+                "fap_signal_generator"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            // Builds the firmware if needed, then flashes it over USB with resources.
+            "label": "[Windows] Flash (USB, with resources) (fbt.cmd)",
+            "group": "build",
+            "type": "process",
+            "command": "cmd.exe",
+            "args": [
+                "/c",
+                "fbt.cmd",
+                "FORCE=1",
+                "flash_usb_full"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
             "label": "[FBT] Format",
             "group": "build",
             "type": "shell",

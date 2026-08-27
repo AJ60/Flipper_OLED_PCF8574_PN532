@@ -8,11 +8,17 @@
 #pragma once
 
 #include <furi.h>
+#include <furi_hal_resources.h>
 #include <furi_hal_nfc.h>
 #include <furi_hal_spi.h>
 
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+#include <pn532.h>
+#include <pn532_reg.h>
+#else
 #include <drivers/st25r3916.h>
 #include <drivers/st25r3916_reg.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,10 +68,20 @@ typedef struct {
     uint32_t lock_count; /**< Recursive lock count. */
 } FuriHalNfc;
 
-/**
- * @brief NFC HAL global state object declaration.
- */
 extern FuriHalNfc furi_hal_nfc;
+
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+typedef struct {
+    Pn532TargetIso14443a target;
+    Pn532TargetIso14443b target_b;
+    bool target_detected;
+    uint8_t rx_buf[260];
+    size_t rx_len;
+    uint8_t sdd_cascade_level;
+} FuriHalPn532Ctx;
+
+extern FuriHalPn532Ctx furi_hal_pn532_ctx;
+#endif
 
 /**
  * @brief Initialise NFC HAL event system.

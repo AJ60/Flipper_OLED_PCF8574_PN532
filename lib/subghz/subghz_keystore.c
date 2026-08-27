@@ -607,8 +607,7 @@ bool subghz_keystore_raw_get_data(const char* file_name, size_t offset, uint8_t*
 
             memset(decrypted_line, 0, SUBGHZ_KEYSTORE_FILE_DECRYPTED_LINE_SIZE);
 
-            if(!furi_hal_crypto_decrypt(
-                   (uint8_t*)buffer, (uint8_t*)decrypted_line, ret / 2)) {
+            if(!furi_hal_crypto_decrypt((uint8_t*)buffer, (uint8_t*)decrypted_line, ret / 2)) {
                 decrypted = false;
                 FURI_LOG_E(TAG, "Decryption failed");
                 break;

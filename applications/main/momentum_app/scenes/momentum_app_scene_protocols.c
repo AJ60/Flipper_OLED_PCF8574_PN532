@@ -50,7 +50,13 @@ static void momentum_app_scene_protocols_subghz_calib_changed(VariableItem* item
         int32_t khz_frac = khz_val % 100000;
         if(khz_frac < 0) khz_frac = -khz_frac;
         khz_frac /= 10000;
-        snprintf(calib_str, sizeof(calib_str), "%+ld ppm (%+ld.%ld kHz)", (long)ppm, (long)khz_int, (long)khz_frac);
+        snprintf(
+            calib_str,
+            sizeof(calib_str),
+            "%+ld ppm (%+ld.%ld kHz)",
+            (long)ppm,
+            (long)khz_int,
+            (long)khz_frac);
         variable_item_set_current_value_text(item, calib_str);
         momentum_settings.subghz_calib = ppm;
         momentum_settings.subghz_autocal = false;
@@ -107,7 +113,13 @@ void momentum_app_scene_protocols_on_enter(void* context) {
         int32_t khz_frac = khz_val % 100000;
         if(khz_frac < 0) khz_frac = -khz_frac;
         khz_frac /= 10000;
-        snprintf(calib_str, sizeof(calib_str), "%+ld ppm (%+ld.%ld kHz)", (long)ppm, (long)khz_int, (long)khz_frac);
+        snprintf(
+            calib_str,
+            sizeof(calib_str),
+            "%+ld ppm (%+ld.%ld kHz)",
+            (long)ppm,
+            (long)khz_int,
+            (long)khz_frac);
         variable_item_set_current_value_text(item, calib_str);
     }
 

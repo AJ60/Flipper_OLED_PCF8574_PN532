@@ -261,8 +261,10 @@ static void furi_hal_i2c_recover_bus(const FuriHalI2cBusHandle* handle) {
     furi_hal_cortex_delay_us(5);
 
     // 5. Re-initialize pins to Alt Function Open Drain for I2C
-    furi_hal_gpio_init_ex(sda_pin, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, alt_fn);
-    furi_hal_gpio_init_ex(scl_pin, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, alt_fn);
+    furi_hal_gpio_init_ex(
+        sda_pin, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, alt_fn);
+    furi_hal_gpio_init_ex(
+        scl_pin, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, alt_fn);
 
     // 6. Enable I2C peripheral
     LL_I2C_Enable(handle->bus->i2c);

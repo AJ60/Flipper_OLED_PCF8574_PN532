@@ -2,6 +2,11 @@
 
 #include <furi.h>
 #include <furi_hal_random.h>
+#include <furi_hal_resources.h>
+
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+#include <pn532.h>
+#endif
 
 #include <nfc/helpers/iso14443_crc.h>
 
@@ -40,6 +45,17 @@ static MfClassicError mf_classic_poller_get_nt_common(
     MfClassicNt* nt,
     bool is_nested,
     bool backdoor_auth) {
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    UNUSED(instance);
+    UNUSED(block_num);
+    UNUSED(key_type);
+    UNUSED(is_nested);
+    UNUSED(backdoor_auth);
+    if(nt) {
+        furi_hal_random_fill_buf(nt->data, sizeof(MfClassicNt));
+    }
+    return MfClassicErrorNone;
+#else
     MfClassicError ret = MfClassicErrorNone;
     Iso14443_3aError error = Iso14443_3aErrorNone;
 
@@ -90,6 +106,7 @@ static MfClassicError mf_classic_poller_get_nt_common(
     } while(false);
 
     return ret;
+#endif
 }
 
 MfClassicError mf_classic_poller_get_nt(
@@ -124,6 +141,39 @@ MfClassicError mf_classic_poller_auth_common(
     bool is_nested,
     bool backdoor_auth,
     bool early_ret) {
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    UNUSED(data);
+    UNUSED(is_nested);
+    UNUSED(backdoor_auth);
+    UNUSED(early_ret);
+    MfClassicError ret = MfClassicErrorNone;
+
+    do {
+        iso14443_3a_copy(
+            instance->data->iso14443_3a_data,
+            iso14443_3a_poller_get_data(instance->iso14443_3a_poller));
+
+        const uint8_t* uid = instance->data->iso14443_3a_data->uid;
+        uint8_t uid_len = instance->data->iso14443_3a_data->uid_len;
+        uint8_t auth_cmd = (key_type == MfClassicKeyTypeB) ? PN532_MIFARE_CMD_AUTH_B :
+                                                             PN532_MIFARE_CMD_AUTH_A;
+
+        Pn532Error err = pn532_mifare_classic_auth(
+            PN532_I2C_BUS, 1, auth_cmd, block_num, key->data, uid, uid_len);
+
+        if(err == Pn532ErrorNone) {
+            instance->auth_state = MfClassicAuthStatePassed;
+            ret = MfClassicErrorNone;
+        } else {
+            // Re-select target if auth failed to restore card RF communication state
+            Pn532TargetIso14443a target;
+            pn532_in_list_passive_target_iso14443a(PN532_I2C_BUS, &target, 100);
+            ret = MfClassicErrorAuth;
+        }
+    } while(false);
+
+    return ret;
+#else
     MfClassicError ret = MfClassicErrorNone;
     Iso14443_3aError error = Iso14443_3aErrorNone;
 
@@ -189,6 +239,7 @@ MfClassicError mf_classic_poller_auth_common(
     }
 
     return ret;
+#endif
 }
 
 MfClassicError mf_classic_poller_auth(
@@ -220,7 +271,13 @@ MfClassicError mf_classic_poller_auth_nested(
 
 MfClassicError mf_classic_poller_halt(MfClassicPoller* instance) {
     furi_check(instance);
-
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    instance->auth_state = MfClassicAuthStateIdle;
+    instance->iso14443_3a_poller->state = Iso14443_3aPollerStateIdle;
+    Pn532TargetIso14443a target;
+    pn532_in_list_passive_target_iso14443a(PN532_I2C_BUS, &target, 100);
+    return MfClassicErrorNone;
+#else
     MfClassicError ret = MfClassicErrorNone;
     Iso14443_3aError error = Iso14443_3aErrorNone;
 
@@ -246,6 +303,7 @@ MfClassicError mf_classic_poller_halt(MfClassicPoller* instance) {
     } while(false);
 
     return ret;
+#endif
 }
 
 MfClassicError mf_classic_poller_read_block(
@@ -254,7 +312,17 @@ MfClassicError mf_classic_poller_read_block(
     MfClassicBlock* data) {
     furi_check(instance);
     furi_check(data);
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    size_t block_len = sizeof(MfClassicBlock);
+    Pn532Error err = pn532_mifare_read_block(
+        PN532_I2C_BUS, 1, block_num, data->data, &block_len);
 
+    if(err == Pn532ErrorNone && block_len == sizeof(MfClassicBlock)) {
+        return MfClassicErrorNone;
+    } else {
+        return MfClassicErrorProtocol;
+    }
+#else
     MfClassicError ret = MfClassicErrorNone;
     Iso14443_3aError error = Iso14443_3aErrorNone;
 
@@ -295,6 +363,7 @@ MfClassicError mf_classic_poller_read_block(
     } while(false);
 
     return ret;
+#endif
 }
 
 MfClassicError mf_classic_poller_write_block(
@@ -303,7 +372,16 @@ MfClassicError mf_classic_poller_write_block(
     MfClassicBlock* data) {
     furi_check(instance);
     furi_check(data);
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    Pn532Error err = pn532_mifare_classic_write_block(
+        PN532_I2C_BUS, 1, block_num, data->data);
 
+    if(err == Pn532ErrorNone) {
+        return MfClassicErrorNone;
+    } else {
+        return MfClassicErrorProtocol;
+    }
+#else
     MfClassicError ret = MfClassicErrorNone;
     Iso14443_3aError error = Iso14443_3aErrorNone;
 
@@ -369,6 +447,7 @@ MfClassicError mf_classic_poller_write_block(
     } while(false);
 
     return ret;
+#endif
 }
 
 MfClassicError mf_classic_poller_value_cmd(
@@ -377,7 +456,34 @@ MfClassicError mf_classic_poller_value_cmd(
     MfClassicValueCommand cmd,
     int32_t data) {
     furi_check(instance);
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    MfClassicBlock block;
+    MfClassicError ret = mf_classic_poller_read_block(instance, block_num, &block);
+    if(ret != MfClassicErrorNone) return ret;
 
+    int32_t val = (int32_t)(block.data[0] | (block.data[1] << 8) | (block.data[2] << 16) | (block.data[3] << 24));
+    if(cmd == MfClassicValueCommandDecrement) {
+        val -= data;
+    } else if(cmd == MfClassicValueCommandIncrement) {
+        val += data;
+    } else {
+        val = data;
+    }
+    block.data[0] = (uint8_t)(val & 0xFF);
+    block.data[1] = (uint8_t)((val >> 8) & 0xFF);
+    block.data[2] = (uint8_t)((val >> 16) & 0xFF);
+    block.data[3] = (uint8_t)((val >> 24) & 0xFF);
+    block.data[4] = ~block.data[0];
+    block.data[5] = ~block.data[1];
+    block.data[6] = ~block.data[2];
+    block.data[7] = ~block.data[3];
+    block.data[8] = block.data[0];
+    block.data[9] = block.data[1];
+    block.data[10] = block.data[2];
+    block.data[11] = block.data[3];
+
+    return mf_classic_poller_write_block(instance, block_num, &block);
+#else
     MfClassicError ret = MfClassicErrorNone;
     Iso14443_3aError error = Iso14443_3aErrorNone;
 
@@ -441,11 +547,15 @@ MfClassicError mf_classic_poller_value_cmd(
     } while(false);
 
     return ret;
+#endif
 }
 
 MfClassicError mf_classic_poller_value_transfer(MfClassicPoller* instance, uint8_t block_num) {
     furi_check(instance);
-
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    UNUSED(block_num);
+    return MfClassicErrorNone;
+#else
     MfClassicError ret = MfClassicErrorNone;
     Iso14443_3aError error = Iso14443_3aErrorNone;
 
@@ -483,6 +593,7 @@ MfClassicError mf_classic_poller_value_transfer(MfClassicPoller* instance, uint8
     } while(false);
 
     return ret;
+#endif
 }
 
 MfClassicError mf_classic_poller_send_standard_frame(

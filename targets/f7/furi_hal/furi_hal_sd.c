@@ -379,14 +379,13 @@ static SdSpiCmdAnswer
         sd_spi_deselect_card();
 
         // and wait for it to be ready
-        FuriHalCortexTimer timer =
-    furi_hal_cortex_timer_get(SD_TIMEOUT_MS * 1000);
+        FuriHalCortexTimer timer = furi_hal_cortex_timer_get(SD_TIMEOUT_MS * 1000);
 
-	while(sd_spi_read_byte() != 0xFF) {
-    if(furi_hal_cortex_timer_is_expired(timer)) {
-        break;
-    }
-	}
+        while(sd_spi_read_byte() != 0xFF) {
+            if(furi_hal_cortex_timer_is_expired(timer)) {
+                break;
+            }
+        }
 
         break;
     case SdSpiCmdAnswerTypeR2:
@@ -899,17 +898,17 @@ static FuriStatus sd_device_write(const uint32_t* buff, uint32_t sector, uint32_
 
 void furi_hal_sd_presence_init(void) {
     // low speed input with pullup
-   // furi_hal_gpio_init(&gpio_sdcard_cd, GpioModeInput, GpioPullUp, GpioSpeedLow);
+    // furi_hal_gpio_init(&gpio_sdcard_cd, GpioModeInput, GpioPullUp, GpioSpeedLow);
 }
 
 static void furi_hal_sd_present_pin_set_low(void) {
     // low speed input with pullup
-  //  furi_hal_gpio_init_simple(&gpio_sdcard_cd, GpioModeOutputOpenDrain);
-//furi_hal_gpio_write(&gpio_sdcard_cd, 0);
+    //  furi_hal_gpio_init_simple(&gpio_sdcard_cd, GpioModeOutputOpenDrain);
+    //furi_hal_gpio_write(&gpio_sdcard_cd, 0);
 }
 
 bool furi_hal_sd_is_present(void) {
-  //  bool result = !furi_hal_gpio_read(&gpio_sdcard_cd);
+    //  bool result = !furi_hal_gpio_read(&gpio_sdcard_cd);
     return true;
 }
 

@@ -91,8 +91,7 @@ bool furi_hal_subghz_get_bypass_region(void) {
     return furi_hal_subghz.bypass_region;
 }
 bool furi_hal_subghz_is_alive(void) {
-    return furi_hal_subghz.state != SubGhzStateInit &&
-           furi_hal_subghz.state != SubGhzStateBroken;
+    return furi_hal_subghz.state != SubGhzStateInit && furi_hal_subghz.state != SubGhzStateBroken;
 }
 
 void furi_hal_subghz_set_async_mirror_pin(const GpioPin* pin) {
@@ -119,28 +118,28 @@ void furi_hal_subghz_init(void) {
 #endif
 
         // Reset
-		furi_hal_gpio_init(&gpio_cc1101_g0, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
-		cc1101_reset(&furi_hal_spi_bus_handle_subghz);
+        furi_hal_gpio_init(&gpio_cc1101_g0, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+        cc1101_reset(&furi_hal_spi_bus_handle_subghz);
 
-		uint8_t part = cc1101_get_partnumber(&furi_hal_spi_bus_handle_subghz);
-		uint8_t ver = cc1101_get_version(&furi_hal_spi_bus_handle_subghz);
+        uint8_t part = cc1101_get_partnumber(&furi_hal_spi_bus_handle_subghz);
+        uint8_t ver = cc1101_get_version(&furi_hal_spi_bus_handle_subghz);
 
-		FURI_LOG_E(TAG, "CC1101 SPI TEST part=%u ver=%u", part, ver);
+        FURI_LOG_E(TAG, "CC1101 SPI TEST part=%u ver=%u", part, ver);
 
-		// Normal CC1101: part=0, ver=20 / 0x14.
-		// If SPI is bad, do not continue to GDO0/RX/TX tests.
-		if((part != 0) || (ver != 20)) {
-			FURI_LOG_E(TAG, "CC1101 SPI test failed");
-			break;
-		}
+        // Normal CC1101: part=0, ver=20 / 0x14.
+        // If SPI is bad, do not continue to GDO0/RX/TX tests.
+        if((part != 0) || (ver != 20)) {
+            FURI_LOG_E(TAG, "CC1101 SPI test failed");
+            break;
+        }
 
-		// Keep GDO0 floating for now.
-		// GDO0 self-test is temporarily disabled.
-		cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHighImpedance);
-		furi_hal_gpio_init(&gpio_cc1101_g0, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+        // Keep GDO0 floating for now.
+        // GDO0 self-test is temporarily disabled.
+        cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHighImpedance);
+        furi_hal_gpio_init(&gpio_cc1101_g0, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
 
         // RF switches
-     //   furi_hal_gpio_init(&gpio_rf_sw_0, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
+        //   furi_hal_gpio_init(&gpio_rf_sw_0, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW);
 
         // Go to sleep
@@ -150,8 +149,8 @@ void furi_hal_subghz_init(void) {
     } while(false);
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
-	
-	FURI_LOG_E(TAG, "SUBGHZ INIT STATE=%d", furi_hal_subghz.state);
+
+    FURI_LOG_E(TAG, "SUBGHZ INIT STATE=%d", furi_hal_subghz.state);
 
     if(furi_hal_subghz.state == SubGhzStateIdle) {
         FURI_LOG_I(TAG, "Init OK");
@@ -268,14 +267,10 @@ bool furi_hal_subghz_rx_pipe_not_empty(void) {
 
     do {
         cc1101_read_reg(
-            &furi_hal_spi_bus_handle_subghz,
-            CC1101_STATUS_RXBYTES | CC1101_BURST,
-            (uint8_t*)&s1);
+            &furi_hal_spi_bus_handle_subghz, CC1101_STATUS_RXBYTES | CC1101_BURST, (uint8_t*)&s1);
 
         cc1101_read_reg(
-            &furi_hal_spi_bus_handle_subghz,
-            CC1101_STATUS_RXBYTES | CC1101_BURST,
-            (uint8_t*)&s2);
+            &furi_hal_spi_bus_handle_subghz, CC1101_STATUS_RXBYTES | CC1101_BURST, (uint8_t*)&s2);
     } while((s1.NUM_RXBYTES != s2.NUM_RXBYTES) && --tries);
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
@@ -338,9 +333,7 @@ void furi_hal_subghz_rx(void) {
     if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateRX, 10000)) {
         uint8_t marc = 0;
         cc1101_read_reg(
-            &furi_hal_spi_bus_handle_subghz,
-            CC1101_STATUS_MARCSTATE | CC1101_BURST,
-            &marc);
+            &furi_hal_spi_bus_handle_subghz, CC1101_STATUS_MARCSTATE | CC1101_BURST, &marc);
         FURI_LOG_E(
             TAG,
             "CC1101 RX failed: part=%u ver=%u marc=0x%02X",
@@ -512,7 +505,7 @@ uint32_t furi_hal_subghz_set_frequency(uint32_t value) {
 void furi_hal_subghz_set_path(FuriHalSubGhzPath path) {
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     if(path == FuriHalSubGhzPath433) {
-       // furi_hal_gpio_write(&gpio_rf_sw_0, 0);
+        // furi_hal_gpio_write(&gpio_rf_sw_0, 0);
         cc1101_write_reg(
             &furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW | CC1101_IOCFG_INV);
     } else if(path == FuriHalSubGhzPath315) {
@@ -523,7 +516,7 @@ void furi_hal_subghz_set_path(FuriHalSubGhzPath path) {
         cc1101_write_reg(
             &furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW | CC1101_IOCFG_INV);
     } else if(path == FuriHalSubGhzPathIsolate) {
-      //  furi_hal_gpio_write(&gpio_rf_sw_0, 0);
+        //  furi_hal_gpio_write(&gpio_rf_sw_0, 0);
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW);
     } else {
         furi_crash("SubGhz: Incorrect path during set.");

@@ -3,6 +3,7 @@
 
 #include <furi.h>
 #include <furi_hal_i2c.h>
+#include <stm32wbxx_ll_cortex.h>
 #include <stdint.h>
 
 #define TAG "FuriHalINA"
@@ -68,7 +69,8 @@ bool furi_hal_ina219_init(void) {
             uint16_t cfg = 0;
 
             furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-            bool ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, s_address << 1, 10);
+            bool ready =
+                furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, s_address << 1, 10);
             bool ok = false;
 
             if(ready) {
@@ -80,7 +82,7 @@ bool furi_hal_ina219_init(void) {
                 // Check if device is INA226 by reading Manufacturer ID (0xFE) and Die ID (0xFF)
                 uint16_t mfg_id = 0, die_id = 0;
                 bool is_226 = ina_read_reg16(INA226_REG_MANUFACTURER_ID, &mfg_id) &&
-                             ina_read_reg16(INA226_REG_DIE_ID, &die_id);
+                              ina_read_reg16(INA226_REG_DIE_ID, &die_id);
                 furi_hal_i2c_release(&furi_hal_i2c_handle_power);
 
                 if(is_226 && mfg_id == INA226_MANUFACTURER_ID_VAL) {
@@ -89,7 +91,12 @@ bool furi_hal_ina219_init(void) {
                     furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
                     ina_write_reg16(INA_REG_CALIBRATION, 0x0200);
                     furi_hal_i2c_release(&furi_hal_i2c_handle_power);
-                    FURI_LOG_I(TAG, "Detected INA226 at 0x%02X (Die=0x%04X, MFG=0x%04X)", s_address, die_id, mfg_id);
+                    FURI_LOG_I(
+                        TAG,
+                        "Detected INA226 at 0x%02X (Die=0x%04X, MFG=0x%04X)",
+                        s_address,
+                        die_id,
+                        mfg_id);
                 } else {
                     s_is_ina226 = false;
                     FURI_LOG_I(TAG, "Detected INA219 at 0x%02X (CONFIG=0x%04X)", s_address, cfg);
@@ -195,15 +202,37 @@ static void furi_hal_ina226_alert_isr(void* ctx) {
     }
 }
 
+// The INA226 alert-limit registers are 16-bit (max 0xFFFF). A raw (uint16_t)
+// cast of a larger value silently wraps: e.g. a 2.0 A limit on a 0.1 ohm shunt
+// computes to 80000, which truncates to ~0.36 A. Clamp to the representable
+// range instead.
+static uint16_t ina226_clamp_alert_limit(float value_v, float lsb_v) {
+    if(value_v < 0.0f) {
+        value_v = 0.0f;
+    }
+    float max_value_v = 65535.0f * lsb_v;
+    if(value_v > max_value_v) {
+        value_v = max_value_v;
+    }
+    return (uint16_t)(value_v / lsb_v);
+}
+
 bool furi_hal_ina226_set_overcurrent_limit(float max_current_a) {
     if(!s_detected || !s_is_ina226) return false;
 
-    // Convert max current in Amperes to INA226 Shunt Voltage register value
-    // Shunt Voltage LSB = 2.5 uV = 2.5e-6 V
-    // V_shunt = I * R_shunt (R_shunt = 0.1 Ohm)
-    // Register Value = (I * 0.1) / 2.5e-6 = I * 40000
-    float v_shunt = max_current_a * INA219_SHUNT_OHMS;
-    uint16_t limit_val = (uint16_t)(v_shunt / 2.5e-6f);
+    // Convert max current in Amperes to INA226 Shunt Voltage register value.
+    // Shunt Voltage LSB = 2.5 uV; V_shunt = I * R_shunt (R_shunt = 0.1 Ohm).
+    // With a 0.1 Ohm shunt the 16-bit register can represent at most
+    // 0xFFFF * 2.5e-6 / 0.1 = 1.638 A; larger requests are clamped.
+    const float max_representable_a = (65535.0f * 2.5e-6f) / INA219_SHUNT_OHMS;
+    if(max_current_a > max_representable_a) {
+        FURI_LOG_W(
+            TAG,
+            "Overcurrent limit %.2f A exceeds INA226 range (max %.2f A), clamping",
+            (double)max_current_a,
+            (double)max_representable_a);
+    }
+    uint16_t limit_val = ina226_clamp_alert_limit(max_current_a * INA219_SHUNT_OHMS, 2.5e-6f);
 
     furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
     // Write Shunt Over-Limit threshold to ALERT_LIMIT (0x07)
@@ -222,14 +251,13 @@ bool furi_hal_ina226_configure_protection(float overcurrent_a, float undervoltag
     furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
 
     if(overcurrent_a > 0.0f) {
-        // Set Shunt Over-Limit (SOL = 0x8000)
-        float v_shunt = overcurrent_a * INA219_SHUNT_OHMS;
-        uint16_t limit_val = (uint16_t)(v_shunt / 2.5e-6f);
+        // Set Shunt Over-Limit (SOL = 0x8000); clamped to the 16-bit register.
+        uint16_t limit_val = ina226_clamp_alert_limit(overcurrent_a * INA219_SHUNT_OHMS, 2.5e-6f);
         ok = ok && ina_write_reg16(INA226_REG_ALERT_LIMIT, limit_val);
         ok = ok && ina_write_reg16(INA226_REG_MASK_ENABLE, 0x8000);
     } else if(undervoltage_v > 0.0f) {
-        // Set Bus Under-Limit (BUL = 0x1000)
-        uint16_t limit_val = (uint16_t)(undervoltage_v / 0.00125f);
+        // Set Bus Under-Limit (BUL = 0x1000); bus-voltage LSB is 1.25 mV.
+        uint16_t limit_val = ina226_clamp_alert_limit(undervoltage_v, 0.00125f);
         ok = ok && ina_write_reg16(INA226_REG_ALERT_LIMIT, limit_val);
         ok = ok && ina_write_reg16(INA226_REG_MASK_ENABLE, 0x1000);
     }
@@ -245,12 +273,13 @@ void furi_hal_ina226_enable_alert_interrupt(GpioExtiCallback cb, void* ctx) {
     if(!s_detected) return;
 
     furi_hal_gpio_init_ex(
-        &gpio_ina_alert,
-        GpioModeInterruptFall,
-        GpioPullUp,
-        GpioSpeedLow,
-        GpioAltFnUnused);
+        &gpio_ina_alert, GpioModeInterruptFall, GpioPullUp, GpioSpeedLow, GpioAltFnUnused);
     furi_hal_gpio_add_int_callback(&gpio_ina_alert, furi_hal_ina226_alert_isr, NULL);
     furi_hal_gpio_enable_int_callback(&gpio_ina_alert);
-}
 
+    // gpio_ina_alert is PB1 = EXTI line 1. The furi_hal_gpio_* helpers only set
+    // the EXTI IT bit; without NVIC enablement the EXTI1_IRQHandler never runs
+    // and the emergency overcurrent callback never fires.
+    NVIC_SetPriority(EXTI1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
+    NVIC_EnableIRQ(EXTI1_IRQn);
+}

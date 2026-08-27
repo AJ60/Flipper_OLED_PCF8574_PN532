@@ -48,6 +48,10 @@ FuriHalNfcEvent furi_hal_nfc_wait_event_common(uint32_t timeout_ms) {
     if(event_flag != (unsigned)FuriFlagErrorTimeout) {
         if(event_flag & FuriHalNfcEventInternalTypeIrq) {
             furi_thread_flags_clear(FuriHalNfcEventInternalTypeIrq);
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+            event |= FuriHalNfcEventTxEnd | FuriHalNfcEventRxStart | FuriHalNfcEventRxEnd |
+                     FuriHalNfcEventListenerActive;
+#else
             const FuriHalSpiBusHandle* handle = &furi_hal_spi_bus_handle_nfc;
             uint32_t irq = furi_hal_nfc_get_irq(handle);
             if(irq & ST25R3916_IRQ_MASK_OSC) {
@@ -80,6 +84,7 @@ FuriHalNfcEvent furi_hal_nfc_wait_event_common(uint32_t timeout_ms) {
             if(irq & ST25R3916_IRQ_MASK_WU_F) {
                 event |= FuriHalNfcEventListenerActive;
             }
+#endif
         }
         if(event_flag & FuriHalNfcEventInternalTypeTimerFwtExpired) {
             event |= FuriHalNfcEventTimerFwtExpired;

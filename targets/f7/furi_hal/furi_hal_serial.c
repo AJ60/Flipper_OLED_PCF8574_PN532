@@ -190,8 +190,7 @@ static void furi_hal_serial_usart_init_dma_rx(void) {
     furi_check(furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_ptr == NULL);
     furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_index_write = 0;
     furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_index_read = 0;
-    furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_ptr =
-    usart_dma_rx_buffer;
+    furi_hal_serial[FuriHalSerialIdUsart].buffer_rx_ptr = usart_dma_rx_buffer;
     LL_DMA_SetMemoryAddress(
         FURI_HAL_SERIAL_USART_DMA_INSTANCE,
         FURI_HAL_SERIAL_USART_DMA_CHANNEL,
@@ -391,8 +390,7 @@ static void furi_hal_serial_lpuart_init_dma_rx(void) {
     furi_check(furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_ptr == NULL);
     furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_index_write = 0;
     furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_index_read = 0;
-    furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_ptr =
-    lpuart_dma_rx_buffer;
+    furi_hal_serial[FuriHalSerialIdLpuart].buffer_rx_ptr = lpuart_dma_rx_buffer;
     LL_DMA_SetMemoryAddress(
         FURI_HAL_SERIAL_LPUART_DMA_INSTANCE,
         FURI_HAL_SERIAL_LPUART_DMA_CHANNEL,

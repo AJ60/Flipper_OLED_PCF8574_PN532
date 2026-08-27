@@ -375,9 +375,9 @@ static void hid_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx) {
     UNUSED(intf);
     FuriHalUsbHidConfig* cfg = (FuriHalUsbHidConfig*)ctx;
     if(hid_semaphore == NULL) {
-    hid_semaphore = furi_semaphore_alloc(1,1);
-    furi_check(hid_semaphore);
-	}
+        hid_semaphore = furi_semaphore_alloc(1, 1);
+        furi_check(hid_semaphore);
+    }
     usb_dev = dev;
     hid_report.keyboard.report_id = ReportIdKeyboard;
     hid_report.mouse.report_id = ReportIdMouse;
@@ -453,19 +453,13 @@ static void hid_on_suspend(usbd_device* dev) {
 }
 
 static bool hid_send_report(uint8_t report_id) {
-    if(!hid_semaphore || !hid_connected)
-        return false;
+    if(!hid_semaphore || !hid_connected) return false;
 
-    if(boot_protocol && report_id != ReportIdKeyboard)
-        return false;
+    if(boot_protocol && report_id != ReportIdKeyboard) return false;
 
-    FuriStatus status =
-        furi_semaphore_acquire(
-            hid_semaphore,
-            HID_INTERVAL * 2);
+    FuriStatus status = furi_semaphore_acquire(hid_semaphore, HID_INTERVAL * 2);
 
-    if(status == FuriStatusErrorTimeout)
-        return false;
+    if(status == FuriStatusErrorTimeout) return false;
 
     furi_check(status == FuriStatusOk);
 
@@ -476,43 +470,24 @@ static bool hid_send_report(uint8_t report_id) {
 
     if(boot_protocol) {
         usbd_ep_write(
-            usb_dev,
-            HID_EP_IN,
-            &hid_report.keyboard.boot,
-            sizeof(hid_report.keyboard.boot));
+            usb_dev, HID_EP_IN, &hid_report.keyboard.boot, sizeof(hid_report.keyboard.boot));
 
     } else {
         if(report_id == ReportIdKeyboard) {
-            usbd_ep_write(
-                usb_dev,
-                HID_EP_IN,
-                &hid_report.keyboard,
-                sizeof(hid_report.keyboard));
+            usbd_ep_write(usb_dev, HID_EP_IN, &hid_report.keyboard, sizeof(hid_report.keyboard));
 
         } else if(report_id == ReportIdMouse) {
-            usbd_ep_write(
-                usb_dev,
-                HID_EP_IN,
-                &hid_report.mouse,
-                sizeof(hid_report.mouse));
+            usbd_ep_write(usb_dev, HID_EP_IN, &hid_report.mouse, sizeof(hid_report.mouse));
 
         } else if(report_id == ReportIdConsumer) {
-            usbd_ep_write(
-                usb_dev,
-                HID_EP_IN,
-                &hid_report.consumer,
-                sizeof(hid_report.consumer));
+            usbd_ep_write(usb_dev, HID_EP_IN, &hid_report.consumer, sizeof(hid_report.consumer));
         }
     }
 
     return true;
 }
 
-static void hid_txrx_ep_callback(
-    usbd_device* dev,
-    uint8_t event,
-    uint8_t ep) {
-
+static void hid_txrx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep) {
     UNUSED(dev);
 
     if(event == usbd_evt_eptx) {
@@ -520,20 +495,12 @@ static void hid_txrx_ep_callback(
             furi_semaphore_release(hid_semaphore);
         }
     } else if(boot_protocol) {
-        usbd_ep_read(
-            usb_dev,
-            ep,
-            &led_state,
-            sizeof(led_state));
+        usbd_ep_read(usb_dev, ep, &led_state, sizeof(led_state));
 
     } else {
         struct HidReportLED leds;
 
-        usbd_ep_read(
-            usb_dev,
-            ep,
-            &leds,
-            sizeof(leds));
+        usbd_ep_read(usb_dev, ep, &leds, sizeof(leds));
 
         led_state = leds.led_state;
     }

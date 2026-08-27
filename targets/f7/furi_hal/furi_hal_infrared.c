@@ -14,10 +14,8 @@
 #define INFRARED_POLARITY_SHIFT         1
 #define INFRARED_DMA_SYNC_DELAY_US      5
 
-#define INFRARED_TX_CCMR_HIGH \
-    (TIM_CCMR1_OC1PE | LL_TIM_OCMODE_PWM2)
-#define INFRARED_TX_CCMR_LOW \
-    (TIM_CCMR1_OC1PE | LL_TIM_OCMODE_FORCED_INACTIVE)
+#define INFRARED_TX_CCMR_HIGH (TIM_CCMR1_OC1PE | LL_TIM_OCMODE_PWM2)
+#define INFRARED_TX_CCMR_LOW  (TIM_CCMR1_OC1PE | LL_TIM_OCMODE_FORCED_INACTIVE)
 
 #define INFRARED_DMA             DMA2
 #define INFRARED_DMA_CH1_CHANNEL LL_DMA_CHANNEL_1
@@ -423,7 +421,7 @@ static void furi_hal_infrared_configure_tim_cmgr2_dma_tx(void) {
 static void furi_hal_infrared_configure_tim_rcr_dma_tx(void) {
     LL_DMA_InitTypeDef dma_config = {0};
 
-    dma_config.PeriphOrM2MSrcAddress = (uint32_t)&(INFRARED_DMA_TIMER->RCR);
+    dma_config.PeriphOrM2MSrcAddress = (uint32_t) & (INFRARED_DMA_TIMER->RCR);
     dma_config.MemoryOrM2MDstAddress = (uint32_t)NULL;
     dma_config.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
     dma_config.Mode = LL_DMA_MODE_NORMAL;
@@ -503,9 +501,9 @@ static void furi_hal_infrared_tx_fill_buffer(uint8_t buf_num, uint8_t polarity_s
             }
 
             infrared_tim_tx.tx_timing_rest_duration -= buffer->data[*size];
-            buffer->polarity[polarity_counter] =
-                infrared_tim_tx.tx_timing_rest_level ? INFRARED_TX_CCMR_HIGH :
-                                                       INFRARED_TX_CCMR_LOW;
+            buffer->polarity[polarity_counter] = infrared_tim_tx.tx_timing_rest_level ?
+                                                     INFRARED_TX_CCMR_HIGH :
+                                                     INFRARED_TX_CCMR_LOW;
 
             ++(*size);
             ++polarity_counter;
@@ -529,8 +527,8 @@ static void furi_hal_infrared_tx_fill_buffer(uint8_t buf_num, uint8_t polarity_s
             infrared_tim_tx.tx_timing_rest_level = level;
             status = FuriHalInfraredTxGetDataStateOk;
         } else {
-            buffer->polarity[polarity_counter] =
-                level ? INFRARED_TX_CCMR_HIGH : INFRARED_TX_CCMR_LOW;
+            buffer->polarity[polarity_counter] = level ? INFRARED_TX_CCMR_HIGH :
+                                                         INFRARED_TX_CCMR_LOW;
             buffer->data[*size] = num_of_impulses - 1;
 
             ++(*size);
@@ -680,8 +678,7 @@ void furi_hal_infrared_async_tx_wait_termination(void) {
     furi_check(furi_hal_infrared_state >= InfraredStateAsyncTx);
     furi_check(furi_hal_infrared_state < InfraredStateMAX);
 
-    FuriStatus status =
-        furi_semaphore_acquire(infrared_tim_tx.stop_semaphore, FuriWaitForever);
+    FuriStatus status = furi_semaphore_acquire(infrared_tim_tx.stop_semaphore, FuriWaitForever);
     furi_check(status == FuriStatusOk);
 
     furi_hal_infrared_async_tx_free_resources();
@@ -718,8 +715,7 @@ void furi_hal_infrared_async_tx_set_signal_sent_isr_callback(
 }
 
 FuriHalInfraredTxPin furi_hal_infrared_detect_tx_output(void) {
-    for(FuriHalInfraredTxPin pin = FuriHalInfraredTxPinInternal + 1;
-        pin < FuriHalInfraredTxPinMax;
+    for(FuriHalInfraredTxPin pin = FuriHalInfraredTxPinInternal + 1; pin < FuriHalInfraredTxPinMax;
         ++pin) {
         const GpioPin* gpio = infrared_tx_pins[pin];
 

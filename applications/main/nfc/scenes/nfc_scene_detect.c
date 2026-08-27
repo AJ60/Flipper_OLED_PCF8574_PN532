@@ -25,7 +25,8 @@ void nfc_scene_detect_scan_callback(NfcScannerEvent event, void* context) {
 
 void nfc_scene_detect_on_enter(void* context) {
     NfcApp* instance = context;
-    scene_manager_set_scene_state(instance->scene_manager, NfcSceneDetect, NFC_SCENE_DETECT_STATE_IDLE);
+    scene_manager_set_scene_state(
+        instance->scene_manager, NfcSceneDetect, NFC_SCENE_DETECT_STATE_IDLE);
 
     // Setup view
     popup_reset(instance->popup);
@@ -74,7 +75,8 @@ bool nfc_scene_detect_on_event(void* context, SceneManagerEvent event) {
 void nfc_scene_detect_on_exit(void* context) {
     NfcApp* instance = context;
 
-    scene_manager_set_scene_state(instance->scene_manager, NfcSceneDetect, NFC_SCENE_DETECT_STATE_IDLE);
+    scene_manager_set_scene_state(
+        instance->scene_manager, NfcSceneDetect, NFC_SCENE_DETECT_STATE_IDLE);
 
     if(instance->scanner) {
         nfc_scanner_stop(instance->scanner);

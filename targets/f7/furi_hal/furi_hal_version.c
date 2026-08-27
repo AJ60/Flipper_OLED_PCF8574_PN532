@@ -195,9 +195,9 @@ void furi_hal_version_init(void) {
         furi_hal_version_load_otp_v2();
         break;
     default:
-    FURI_LOG_E(TAG, "Unknown OTP version");
-    furi_hal_version_load_otp_default();
-    break;
+        FURI_LOG_E(TAG, "Unknown OTP version");
+        furi_hal_version_load_otp_default();
+        break;
     }
 
     furi_hal_rtc_set_register(FuriHalRtcRegisterVersion, (uint32_t)version_get());
@@ -206,32 +206,21 @@ void furi_hal_version_init(void) {
 }
 
 FuriHalVersionOtpVersion furi_hal_version_get_otp_version(void) {
-    if(*(uint64_t*)FURI_HAL_VERSION_OTP_ADDRESS ==
-       0xFFFFFFFFFFFFFFFFULL) {
-
+    if(*(uint64_t*)FURI_HAL_VERSION_OTP_ADDRESS == 0xFFFFFFFFFFFFFFFFULL) {
         return FuriHalVersionOtpVersionEmpty;
 
     } else {
         if(((FuriHalVersionOTPv1*)FURI_HAL_VERSION_OTP_ADDRESS)->header_magic ==
            FURI_HAL_VERSION_OTP_HEADER_MAGIC) {
+            uint8_t version = ((FuriHalVersionOTPv1*)FURI_HAL_VERSION_OTP_ADDRESS)->header_version;
 
-            uint8_t version =
-                ((FuriHalVersionOTPv1*)FURI_HAL_VERSION_OTP_ADDRESS)
-                    ->header_version;
-
-            if(
-                version >= FuriHalVersionOtpVersion1 &&
-                version <= FuriHalVersionOtpVersion2) {
-
+            if(version >= FuriHalVersionOtpVersion1 && version <= FuriHalVersionOtpVersion2) {
                 return version;
             } else {
                 return FuriHalVersionOtpVersionUnknown;
             }
 
-        } else if(
-            ((FuriHalVersionOTPv0*)FURI_HAL_VERSION_OTP_ADDRESS)
-                ->board_version <= 10) {
-
+        } else if(((FuriHalVersionOTPv0*)FURI_HAL_VERSION_OTP_ADDRESS)->board_version <= 10) {
             return FuriHalVersionOtpVersion0;
 
         } else {

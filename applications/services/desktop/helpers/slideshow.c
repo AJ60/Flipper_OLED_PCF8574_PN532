@@ -5,7 +5,7 @@
 #include <gui/icon.h>
 #include <core/dangerous_defines.h>
 
-#define TAG "Slideshow"
+#define TAG                             "Slideshow"
 #define SLIDESHOW_MAGIC                 0x72676468
 #define SLIDESHOW_MAX_SUPPORTED_VERSION 1
 
@@ -61,14 +61,27 @@ bool slideshow_load(Slideshow* slideshow, const char* fspath) {
             break;
         }
         if(header.magic != SLIDESHOW_MAGIC) {
-            FURI_LOG_E(TAG, "Invalid magic number: 0x%08lX (expected 0x%08lX)", (uint32_t)header.magic, (uint32_t)SLIDESHOW_MAGIC);
+            FURI_LOG_E(
+                TAG,
+                "Invalid magic number: 0x%08lX (expected 0x%08lX)",
+                (uint32_t)header.magic,
+                (uint32_t)SLIDESHOW_MAGIC);
             break;
         }
         if(header.version > SLIDESHOW_MAX_SUPPORTED_VERSION) {
-            FURI_LOG_E(TAG, "Unsupported version: %d (max %d)", header.version, SLIDESHOW_MAX_SUPPORTED_VERSION);
+            FURI_LOG_E(
+                TAG,
+                "Unsupported version: %d (max %d)",
+                header.version,
+                SLIDESHOW_MAX_SUPPORTED_VERSION);
             break;
         }
-        FURI_LOG_I(TAG, "Slideshow header: w=%d, h=%d, frames=%d", header.width, header.height, header.frame_count);
+        FURI_LOG_I(
+            TAG,
+            "Slideshow header: w=%d, h=%d, frames=%d",
+            header.width,
+            header.height,
+            header.frame_count);
         Icon* icon = &slideshow->icon;
         FURI_CONST_ASSIGN(icon->frame_count, header.frame_count);
         FURI_CONST_ASSIGN(icon->width, header.width);
@@ -85,7 +98,11 @@ bool slideshow_load(Slideshow* slideshow, const char* fspath) {
             uint8_t* frame_data = (uint8_t*)icon->frames[frame_idx];
             if(storage_file_read(slideshow_file, frame_data, frame_header.size) !=
                frame_header.size) {
-                FURI_LOG_E(TAG, "Failed to read frame %d data (expected size %d)", frame_idx, frame_header.size);
+                FURI_LOG_E(
+                    TAG,
+                    "Failed to read frame %d data (expected size %d)",
+                    frame_idx,
+                    frame_header.size);
                 break;
             }
             slideshow->loaded = (frame_idx + 1) == header.frame_count;

@@ -120,7 +120,8 @@ void nfc_render_emv_transactions(const EmvApplication* apl, FuriString* str) {
             }
 
             bool is_bcd = false;
-            uint64_t amount = bit_lib_bytes_to_num_bcd(&amount_bytes[start_offset], 6 - start_offset, &is_bcd);
+            uint64_t amount =
+                bit_lib_bytes_to_num_bcd(&amount_bytes[start_offset], 6 - start_offset, &is_bcd);
             if(!is_bcd) {
                 amount = apl->trans[i].amount;
             }

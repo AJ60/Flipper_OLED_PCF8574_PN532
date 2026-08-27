@@ -18,7 +18,8 @@ void momentum_app_scene_misc_screen_var_item_list_callback(void* context, uint32
     view_dispatcher_send_custom_event(app->view_dispatcher, index);
 }
 
-static void momentum_app_scene_misc_screen_dark_mode_changed(VariableItem* item) __attribute__((unused));
+static void momentum_app_scene_misc_screen_dark_mode_changed(VariableItem* item)
+    __attribute__((unused));
 static void momentum_app_scene_misc_screen_dark_mode_changed(VariableItem* item) {
     MomentumApp* app = variable_item_get_context(item);
     bool value = variable_item_get_current_value_index(item);

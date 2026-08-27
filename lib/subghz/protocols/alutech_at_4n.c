@@ -227,7 +227,7 @@ static uint64_t subghz_protocol_alutech_at_4n_decrypt(uint64_t data, const char*
         i += magic_data[3];
         data1 =
             data1 - ((magic_data[4] + (data2 << 4)) ^ ((magic_data[5] + (data2 >> 5)) ^ data3));
-        if (++limit > 1000) {
+        if(++limit > 1000) {
             FURI_LOG_E("Alutech", "Infinite decryption loop detected!");
             break;
         }
@@ -277,7 +277,7 @@ static uint64_t subghz_protocol_alutech_at_4n_encrypt(uint64_t data, const char*
                          ((magic_data[2] + (data3 >> 5)) ^ (data1 + data3)));
         data3 = data3 + ((magic_data[3] + (data2 << 4)) ^
                          ((magic_data[4] + (data2 >> 5)) ^ (data1 + data2)));
-        if (++limit > 1000) {
+        if(++limit > 1000) {
             FURI_LOG_E("Alutech", "Infinite encryption loop detected!");
             break;
         }

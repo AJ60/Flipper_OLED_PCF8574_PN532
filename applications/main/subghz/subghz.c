@@ -482,8 +482,7 @@ int32_t subghz_app(char* p) {
             scene_manager_set_scene_state(
                 subghz->scene_manager, SubGhzSceneShowError, SubGhzCustomEventManagerSet);
             furi_string_set(
-                subghz->error_str,
-                "No CC1101 module\nconnected.\nPlease attach\nradio module.");
+                subghz->error_str, "No CC1101 module\nconnected.\nPlease attach\nradio module.");
             scene_manager_next_scene(subghz->scene_manager, SubGhzSceneShowError);
         } else if(subghz_txrx_is_database_loaded(subghz->txrx)) {
             scene_manager_next_scene(subghz->scene_manager, SubGhzSceneStart);

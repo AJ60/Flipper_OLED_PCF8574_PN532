@@ -52,6 +52,8 @@ Header,+,lib/datetime/datetime.h,,
 Header,+,lib/digital_signal/digital_sequence.h,,
 Header,+,lib/digital_signal/digital_signal.h,,
 Header,+,lib/drivers/cc1101_regs.h,,
+Header,+,lib/drivers/pn532.h,,
+Header,+,lib/drivers/pn532_reg.h,,
 Header,+,lib/drivers/rgb_backlight.h,,
 Header,+,lib/drivers/st25r3916.h,,
 Header,+,lib/drivers/st25r3916_reg.h,,
@@ -293,8 +295,8 @@ Header,+,targets/f7/furi_hal/furi_hal_ibutton.h,,
 Header,+,targets/f7/furi_hal/furi_hal_idle_timer.h,,
 Header,+,targets/f7/furi_hal/furi_hal_ina219.h,,
 Header,+,targets/f7/furi_hal/furi_hal_interrupt.h,,
-Header,+,targets/f7/furi_hal/furi_hal_mcp23017.h,,
 Header,+,targets/f7/furi_hal/furi_hal_os.h,,
+Header,+,targets/f7/furi_hal/furi_hal_pcf8574.h,,
 Header,+,targets/f7/furi_hal/furi_hal_pwm.h,,
 Header,+,targets/f7/furi_hal/furi_hal_resources.h,,
 Header,+,targets/f7/furi_hal/furi_hal_rfid.h,,
@@ -1559,25 +1561,6 @@ Function,-,furi_hal_light_init,void,
 Function,+,furi_hal_light_oled_set_invert,void,_Bool
 Function,+,furi_hal_light_sequence,void,const char*
 Function,+,furi_hal_light_set,void,"Light, uint8_t"
-Function,+,furi_hal_mcp23017_attach_int,void,"GpioExtiCallback, void*"
-Function,+,furi_hal_mcp23017_check_and_restore,_Bool,uint16_t
-Function,+,furi_hal_mcp23017_configure_interrupts,_Bool,uint16_t
-Function,+,furi_hal_mcp23017_handle_int,void,
-Function,+,furi_hal_mcp23017_init,_Bool,
-Function,+,furi_hal_mcp23017_init_ex,_Bool,uint8_t
-Function,+,furi_hal_mcp23017_led_init,_Bool,
-Function,+,furi_hal_mcp23017_led_off,_Bool,
-Function,+,furi_hal_mcp23017_led_set,_Bool,"uint8_t, uint8_t, uint8_t"
-Function,+,furi_hal_mcp23017_led_set_blue,_Bool,_Bool
-Function,+,furi_hal_mcp23017_led_set_color,_Bool,"_Bool, _Bool, _Bool"
-Function,+,furi_hal_mcp23017_led_set_green,_Bool,_Bool
-Function,+,furi_hal_mcp23017_led_set_red,_Bool,_Bool
-Function,+,furi_hal_mcp23017_read_gpio,_Bool,uint16_t*
-Function,+,furi_hal_mcp23017_read_port,_Bool,"uint8_t, uint8_t*"
-Function,+,furi_hal_mcp23017_set_i2c_bus,void,const FuriHalI2cBusHandle*
-Function,+,furi_hal_mcp23017_set_pin_direction,_Bool,"uint8_t, _Bool"
-Function,+,furi_hal_mcp23017_write_gpio,_Bool,uint16_t
-Function,+,furi_hal_mcp23017_write_pin,_Bool,"uint8_t, _Bool"
 Function,+,furi_hal_memory_alloc,void*,size_t
 Function,+,furi_hal_memory_get_free,size_t,
 Function,+,furi_hal_memory_init,void,
@@ -1630,6 +1613,23 @@ Function,+,furi_hal_nfc_timer_fwt_stop,void,
 Function,+,furi_hal_nfc_trx_reset,FuriHalNfcError,
 Function,-,furi_hal_os_init,void,
 Function,+,furi_hal_os_tick,void,
+Function,+,furi_hal_pcf8574_attach_int,void,"GpioExtiCallback, void*"
+Function,+,furi_hal_pcf8574_check_and_restore,_Bool,uint8_t
+Function,+,furi_hal_pcf8574_configure_interrupts,_Bool,uint8_t
+Function,+,furi_hal_pcf8574_handle_int,void,
+Function,+,furi_hal_pcf8574_init,_Bool,
+Function,+,furi_hal_pcf8574_init_ex,_Bool,uint8_t
+Function,+,furi_hal_pcf8574_led_init,_Bool,
+Function,+,furi_hal_pcf8574_led_off,_Bool,
+Function,+,furi_hal_pcf8574_led_set,_Bool,"uint8_t, uint8_t, uint8_t"
+Function,+,furi_hal_pcf8574_led_set_blue,_Bool,_Bool
+Function,+,furi_hal_pcf8574_led_set_color,_Bool,"_Bool, _Bool, _Bool"
+Function,+,furi_hal_pcf8574_led_set_green,_Bool,_Bool
+Function,+,furi_hal_pcf8574_led_set_red,_Bool,_Bool
+Function,+,furi_hal_pcf8574_read_port,_Bool,uint8_t*
+Function,+,furi_hal_pcf8574_set_i2c_bus,void,const FuriHalI2cBusHandle*
+Function,+,furi_hal_pcf8574_write_pin,_Bool,"uint8_t, _Bool"
+Function,+,furi_hal_pcf8574_write_port,_Bool,uint8_t
 Function,+,furi_hal_power_check_otg_fault,_Bool,
 Function,+,furi_hal_power_check_otg_status,void,
 Function,+,furi_hal_power_debug_get,void,"PropertyValueCallback, void*"
@@ -3174,6 +3174,24 @@ Function,+,plugin_manager_get_count,uint32_t,PluginManager*
 Function,+,plugin_manager_get_ep,const void*,"PluginManager*, uint32_t"
 Function,+,plugin_manager_load_all,PluginManagerError,"PluginManager*, const char*"
 Function,+,plugin_manager_load_single,PluginManagerError,"PluginManager*, const char*"
+Function,+,pn532_get_firmware_version,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t*, uint8_t*, uint8_t*, uint8_t*"
+Function,+,pn532_in_data_exchange,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t, const uint8_t*, size_t, uint8_t*, size_t*, uint32_t"
+Function,+,pn532_in_list_passive_target_iso14443a,Pn532Error,"const FuriHalI2cBusHandle*, Pn532TargetIso14443a*, uint32_t"
+Function,+,pn532_in_release,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t"
+Function,+,pn532_init,Pn532Error,const FuriHalI2cBusHandle*
+Function,+,pn532_mifare_classic_auth,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t, uint8_t, uint8_t, const uint8_t*, const uint8_t*, uint8_t"
+Function,+,pn532_mifare_classic_write_block,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t, uint8_t, const uint8_t*"
+Function,+,pn532_mifare_read_block,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t, uint8_t, uint8_t*, size_t*"
+Function,+,pn532_mifare_ultralight_write_page,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t, uint8_t, const uint8_t*"
+Function,+,pn532_sam_config,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t, uint8_t, _Bool"
+Function,+,pn532_set_passive_activation_retries,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t"
+Function,+,pn532_set_rf_field,Pn532Error,"const FuriHalI2cBusHandle*, _Bool"
+Function,+,pn532_tg_get_data,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t*, size_t*, uint32_t"
+Function,+,pn532_tg_init_as_target,Pn532Error,"const FuriHalI2cBusHandle*, const uint8_t*, size_t, uint8_t*, size_t*, uint32_t"
+Function,+,pn532_tg_set_data,Pn532Error,"const FuriHalI2cBusHandle*, const uint8_t*, size_t, uint32_t"
+Function,+,pn532_wake_up,Pn532Error,const FuriHalI2cBusHandle*
+Function,+,pn532_in_list_passive_target_iso14443b,Pn532Error,"const FuriHalI2cBusHandle*, Pn532TargetIso14443b*, uint32_t"
+Function,+,pn532_in_communicate_thru,Pn532Error,"const FuriHalI2cBusHandle*, const uint8_t*, size_t, uint8_t*, size_t*, uint32_t"
 Function,-,popen,FILE*,"const char*, const char*"
 Function,+,popup_alloc,Popup*,
 Function,+,popup_disable_timeout,void,Popup*
@@ -4411,14 +4429,14 @@ Variable,+,gpio_i2c_1_sda,const GpioPin,
 Variable,+,gpio_i2c_3_scl,const GpioPin,
 Variable,+,gpio_i2c_3_sda,const GpioPin,
 Variable,+,gpio_ibutton,const GpioPin,
+Variable,+,gpio_ina_alert,const GpioPin,
 Variable,+,gpio_infrared_rx,const GpioPin,
 Variable,+,gpio_infrared_tx,const GpioPin,
-Variable,+,gpio_mcp_int,const GpioPin,
-Variable,+,gpio_ina_alert,const GpioPin,
 Variable,+,gpio_nfc_cs,const GpioPin,
 Variable,+,gpio_nfc_irq,const GpioPin,
 Variable,+,gpio_nfc_irq_rfid_pull,const GpioPin,
 Variable,+,gpio_nfc_miso,const GpioPin,
+Variable,+,gpio_pcf_int,const GpioPin,
 Variable,+,gpio_pins,const GpioPinRecord[],
 Variable,+,gpio_pins_count,const size_t,
 Variable,+,gpio_rfid_carrier,const GpioPin,

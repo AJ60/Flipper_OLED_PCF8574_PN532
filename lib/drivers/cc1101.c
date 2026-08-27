@@ -131,10 +131,12 @@ CC1101Status cc1101_flush_tx(const FuriHalSpiBusHandle* handle) {
 uint32_t cc1101_set_frequency(const FuriHalSpiBusHandle* handle, uint32_t value) {
     // Calibrate frequency using user setting (in PPM) using pure integer math
     int32_t calib = momentum_settings.subghz_calib;
-    int32_t offset = (int32_t)(value / 1000000) * calib + (int32_t)(((value % 1000000) * calib) / 1000000);
+    int32_t offset =
+        (int32_t)(value / 1000000) * calib + (int32_t)(((value % 1000000) * calib) / 1000000);
     uint32_t calibrated_value = value + offset;
 
-    FURI_LOG_I(TAG, "val: %lu, cal: %ld, off: %ld, cal_val: %lu", value, calib, offset, calibrated_value);
+    FURI_LOG_I(
+        TAG, "val: %lu, cal: %ld, off: %ld, cal_val: %lu", value, calib, offset, calibrated_value);
 
     uint64_t real_value = (uint64_t)calibrated_value * CC1101_FDIV / CC1101_QUARTZ;
 

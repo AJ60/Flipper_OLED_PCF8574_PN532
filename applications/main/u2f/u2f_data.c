@@ -45,9 +45,10 @@ static const uint8_t u2f_fallback_cert[495] = {
 };
 
 // Fallback U2F attestation private key (32 bytes)
-static const uint8_t u2f_fallback_key[32] = {
-    0xbc, 0x6e, 0x81, 0xa3, 0xae, 0x3e, 0xb6, 0xa5, 0xe6, 0xbb, 0x26, 0x70, 0x0e, 0x20, 0x1b, 0xee, 0x98, 0xa7, 0x6f, 0xf6, 0x81, 0x82, 0xc2, 0x0a, 0xda, 0xda, 0xa8, 0xae, 0xf7, 0xe7, 0x2b, 0x14
-};
+static const uint8_t u2f_fallback_key[32] = {0xbc, 0x6e, 0x81, 0xa3, 0xae, 0x3e, 0xb6, 0xa5,
+                                             0xe6, 0xbb, 0x26, 0x70, 0x0e, 0x20, 0x1b, 0xee,
+                                             0x98, 0xa7, 0x6f, 0xf6, 0x81, 0x82, 0xc2, 0x0a,
+                                             0xda, 0xda, 0xa8, 0xae, 0xf7, 0xe7, 0x2b, 0x14};
 
 static void u2f_data_derive_key(uint8_t* key_out) {
     const uint8_t* uid = furi_hal_version_uid();
@@ -62,7 +63,11 @@ static void u2f_data_derive_key(uint8_t* key_out) {
     mbedtls_sha256_free(&sha_ctx);
 }
 
-static bool u2f_data_sw_encrypt(const uint8_t* plaintext, uint8_t* ciphertext, size_t size, const uint8_t* iv) {
+static bool u2f_data_sw_encrypt(
+    const uint8_t* plaintext,
+    uint8_t* ciphertext,
+    size_t size,
+    const uint8_t* iv) {
     uint8_t key[32];
     u2f_data_derive_key(key);
     if(!furi_hal_crypto_load_key(key, iv)) {
@@ -73,7 +78,11 @@ static bool u2f_data_sw_encrypt(const uint8_t* plaintext, uint8_t* ciphertext, s
     return result;
 }
 
-static bool u2f_data_sw_decrypt(const uint8_t* ciphertext, uint8_t* plaintext, size_t size, const uint8_t* iv) {
+static bool u2f_data_sw_decrypt(
+    const uint8_t* ciphertext,
+    uint8_t* plaintext,
+    size_t size,
+    const uint8_t* iv) {
     uint8_t key[32];
     u2f_data_derive_key(key);
     if(!furi_hal_crypto_load_key(key, iv)) {
@@ -216,9 +225,7 @@ static bool u2f_data_cert_key_encrypt(uint8_t* cert_key) {
     // Generate random IV
     furi_hal_random_fill_buf(iv, 16);
 
-    if(!furi_hal_crypto_enclave_load_key(
-           U2F_DATA_FILE_ENCRYPTION_KEY_SLOT_UNIQUE,
-           iv)) {
+    if(!furi_hal_crypto_enclave_load_key(U2F_DATA_FILE_ENCRYPTION_KEY_SLOT_UNIQUE, iv)) {
         FURI_LOG_W(TAG, "Enclave load key failed, using SW encryption");
         if(!u2f_data_sw_encrypt(cert_key, key, 32, iv)) {
             FURI_LOG_E(TAG, "SW encryption failed");

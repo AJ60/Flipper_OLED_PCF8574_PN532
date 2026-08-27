@@ -1,6 +1,6 @@
 # ❓ DIY Flipper Zero — FAQ & Troubleshooting Guide 🐬
 
-Welcome to the frequently asked questions and troubleshooting guide for the DIY Flipper Zero (SSD1306 OLED & MCP23017 Keyboard edition). 
+Welcome to the frequently asked questions and troubleshooting guide for the DIY Flipper Zero (SSD1306 OLED & PCF8574 Keyboard edition). 
 
 ---
 
@@ -27,7 +27,7 @@ Welcome to the frequently asked questions and troubleshooting guide for the DIY 
 
 **Solution:**
 1.  **Connect your OLED screen:** Standard I2C OLED screens (SSD1306/SH1106) have built-in **4.7 kΩ pull-up resistors** on their SDA/SCL lines. If you try to boot the board *without* the display plugged in, the I2C bus floats and halts the boot process.
-2.  **Solder physical I2C pull-ups:** Solder physical **2.2 kΩ or 3.3 kΩ resistors** between the SDA (`PB9`) -> 3.3V rail and SCL (`PA9`) -> 3.3V rail on the WeAct board. This stabilizes the MCP23017 keyboard, provides strong hardware pull-ups, and prevents boot loops.
+2.  **Solder physical I2C pull-ups:** Solder physical **2.2 kΩ or 3.3 kΩ resistors** between the SDA (`PB9`) -> 3.3V rail and SCL (`PA9`) -> 3.3V rail on the WeAct board. This stabilizes the PCF8574 keyboard, provides strong hardware pull-ups, and prevents boot loops.
 
 ---
 
@@ -68,7 +68,7 @@ By default, the Flipper Zero filters out low-priority debug messages to save CPU
 
 ### **Q5: Can I reboot into DFU mode using the Flipper settings menu?**
 **Solution:**
-*   **No.** Due to the custom keyboard interface via the MCP23017 I2C expander, software-triggered DFU reboot is not supported by the bootloader.
+*   **No.** Due to the custom keyboard interface via the PCF8574 I2C expander, software-triggered DFU reboot is not supported by the bootloader.
 *   Use the hardware method instead (hold BOOT0 while plugging in the USB cable).
 
 ---
@@ -87,26 +87,26 @@ By default, the Flipper Zero filters out low-priority debug messages to save CPU
 
 ### **Q7: Keyboard buttons freeze or stop responding periodically. Why?**
 > [!CAUTION]
-> Sub-GHz transmission or NFC activity generates strong RF noise that couples into the I2C1 bus, freezing the MCP23017 IO expander.
+> Sub-GHz transmission or NFC activity generates strong RF noise that couples into the I2C1 bus, freezing the PCF8574 IO expander.
 
 **Solution:**
 1.  **Check physical Pull-up resistors:** Solder **2.2 kΩ** or **3.3 kΩ** resistors between the I2C1 SDA/SCL lines and the 3.3V rail.
 2.  **Avoid internal pull-ups:** The MCU's internal pull-ups are too weak (~40 kΩ) to protect the bus against RF noise.
-3.  **Add a capacitor:** Solder a **0.1 µF (100 nF)** ceramic capacitor as close as possible to the VCC/GND pins of the MCP23017.
+3.  **Add a capacitor:** Solder a **0.1 µF (100 nF)** ceramic capacitor as close as possible to the VCC/GND pins of the PCF8574.
 
 ---
 
 ### **Q8: What are the recommendations for power filtering (capacitors) on the board?**
 **Solution:**
 To suppress voltage transients during high-current operations (vibration motor clicks, NFC scans):
-*   **Decoupling:** Solder **0.1 µF** ceramic capacitors close to the VCC/GND pins of each chip (MCP23017, OLED, INA219, NFC, CC1101).
+*   **Decoupling:** Solder **0.1 µF** ceramic capacitors close to the VCC/GND pins of each chip (PCF8574, OLED, INA219, NFC, CC1101).
 *   **Bulk Filtering:** Solder a **10–47 µF** tantalum or electrolytic capacitor on the main 3.3V rail near the OLED screen.
 
 ---
 
 ### **Q9: Why does the vibration motor cause the board to reset or freeze?**
 > [!CAUTION]
-> **Never connect the vibration motor directly to the MCP23017 pins!** The motor's start-up current (60-100 mA) exceeds the expander's 25 mA limit. This will damage the pin or cause MCU resets.
+> **Never connect the vibration motor directly to the PCF8574 pins!** The motor's start-up current (60-100 mA) exceeds the expander's 25 mA limit. This will damage the pin or cause MCU resets.
 
 **Solution:**
 1.  Drive the motor using an **N-channel MOSFET** (e.g., `2N7002` or `AO3400`) as a switch.
@@ -142,6 +142,76 @@ To suppress voltage transients during high-current operations (vibration motor c
 **Solution:**
 *   The IR LEDs and the ST25R3916 NFC module operate at peak performance when powered by **5V**. On battery, the 5V rail is inactive.
 *   **Solution:** Install a tiny 5V boost converter (e.g., based on the `MT3608` chip) to feed the IR and NFC circuits when running on battery.
+
+---
+
+## 🔌 PN532 V3 NFC Troubleshooting (I2C)
+
+### **Q15: NFC is not working after flashing firmware. The app shows "NFC not found" or similar errors.**
+> [!IMPORTANT]
+> This firmware uses a **PN532 V3 module over I2C** (not the ST25R3916 SPI module). Ensure your wiring matches the table below.
+
+**Solution:**
+1. **Check I2C wiring:**
+   | PN532 Pin | WeAct Pin | Function |
+   |-----------|-----------|----------|
+   | SCL       | PA7 (I2C3_SCL) | I2C Clock |
+   | SDA       | PB4 (I2C3_SDA) | I2C Data |
+   | VCC       | 3.3V | Power (3.3V, NOT 5V) |
+   | GND       | GND | Ground |
+   | IRQ       | PA2 | Interrupt (active-low) |
+
+2. **Verify I2C address:** The PN532 uses address `0x24` (7-bit). Some modules have a different address — check your module's documentation.
+3. **Check pull-up resistors:** The PN532 module typically includes 10 kΩ pull-ups to 3.3V on SDA/SCL. If not, add 4.7 kΩ pull-ups to 3.3V on both lines.
+4. **Check IRQ connection:** The IRQ pin (PA2) must be connected for card detection to work. Without it, the firmware will timeout waiting for interrupts.
+
+---
+
+### **Q16: NFC reads are intermittent or fail randomly.**
+> [!CAUTION]
+> I2C bus noise from RF activity can cause communication errors with the PN532.
+
+**Solution:**
+1. **Add I2C pull-ups:** Ensure 4.7 kΩ pull-ups are present on SDA/SCL (PA7/PB4). The PN532's internal pull-ups may be insufficient.
+2. **Shorten wiring:** Keep I2C wires as short as possible (< 10 cm). Long wires act as antennas for RF noise.
+3. **Add decoupling:** Solder a 0.1 µF ceramic capacitor close to the PN532's VCC/GND pins.
+4. **Check ground:** Ensure a solid ground connection between the PN532 and the WeAct board. Ground loops cause intermittent failures.
+
+---
+
+### **Q17: Can I use both the PN532 and the OLED screen at the same time?**
+> [!TIP]
+> The PN532 uses I2C3 (PA7/PB4) while the OLED uses I2C1 (PA9/PB9). They are on separate buses and do not conflict.
+
+**Solution:**
+*   **Yes.** The two devices are on different I2C buses and can operate simultaneously without issues.
+*   The PCF8574 keyboard is also on I2C1, sharing the bus with the OLED. This is normal and supported.
+
+---
+
+### **Q18: Does the PN532 support card emulation (reader acts as a card)?**
+**Solution:**
+*   **Yes.** The PN532 supports `TgInitAsTarget` for card emulation. The firmware implements this via `pn532_tg_init_as_target`.
+*   The PN532 emulates a MIFARE Classic 1K target by default. Other card types may require additional configuration.
+
+---
+
+### **Q19: Which NFC card types are supported with the PN532?**
+> [!TIP]
+> The PN532 supports fewer protocols than the ST25R3916 in this firmware build.
+
+**Supported:**
+*   ISO14443A (MIFARE Classic, MIFARE Ultralight, NTAG)
+*   ISO14443B (card detection only)
+*   ISO15693 (card detection only)
+*   FeliCa (card detection only)
+*   Card emulation (MIFARE Classic 1K target)
+
+**Not supported (PN532 limitation):**
+*   ISO15693 listener (card emulation)
+*   FeliCa listener (card emulation)
+*   ST25TB (tight timing requirements not met by PN532's `InDataExchange`)
+*   ISO14443A listener with full transparent mode (uses `TgInitAsTarget` instead)
 
 ---
 

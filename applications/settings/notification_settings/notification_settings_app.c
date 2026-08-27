@@ -47,9 +47,8 @@ const char* const contrast_text[CONTRAST_COUNT] = {
     "95%",
     "100% (Max)",
 };
-const int32_t contrast_value[CONTRAST_COUNT] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-};
+const int32_t contrast_value[CONTRAST_COUNT] =
+    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
 #define VOLUME_COUNT 21
 const char* const volume_text[VOLUME_COUNT] = {
@@ -76,18 +75,15 @@ static void oled_driver_changed(VariableItem* item) {
 
     switch(index) {
     case 0:
-        app->notification->settings.oled_driver =
-            NotificationOledDriverSSD1306;
+        app->notification->settings.oled_driver = NotificationOledDriverSSD1306;
         break;
 
     case 1:
-        app->notification->settings.oled_driver =
-            NotificationOledDriverSH1106;
+        app->notification->settings.oled_driver = NotificationOledDriverSH1106;
         break;
 
     default:
-        app->notification->settings.oled_driver =
-            NotificationOledDriverSSD1306;
+        app->notification->settings.oled_driver = NotificationOledDriverSSD1306;
         break;
     }
 
@@ -161,9 +157,8 @@ const char* const delay_text[DELAY_COUNT] = {
     "10min",
     "30min",
 };
-const uint32_t delay_value[DELAY_COUNT] = {
-    0, 1000, 5000, 10000, 15000, 30000, 60000, 90000, 120000, 300000, 600000, 1800000
-};
+const uint32_t delay_value[DELAY_COUNT] =
+    {0, 1000, 5000, 10000, 15000, 30000, 60000, 90000, 120000, 300000, 600000, 1800000};
 
 static void screen_changed(VariableItem* item) {
     NotificationAppSettings* app = variable_item_get_context(item);
@@ -204,18 +199,17 @@ static NotificationAppSettings* alloc_settings(void) {
     variable_item_set_current_value_index(item, value_index);
     variable_item_set_current_value_text(item, display_mode_text[value_index]);
 
+    item = variable_item_list_add(
+        app->variable_item_list, "OLED Driver", OLED_DRIVER_COUNT, oled_driver_changed, app);
 
-item = variable_item_list_add(
-    app->variable_item_list, "OLED Driver", OLED_DRIVER_COUNT, oled_driver_changed, app);
+    value_index = app->notification->settings.oled_driver;
 
-value_index = app->notification->settings.oled_driver;
+    if(value_index >= OLED_DRIVER_COUNT) {
+        value_index = 0;
+    }
 
-if(value_index >= OLED_DRIVER_COUNT) {
-    value_index = 0;
-}
-
-variable_item_set_current_value_index(item, value_index);
-variable_item_set_current_value_text(item, oled_driver_text[value_index]);
+    variable_item_set_current_value_index(item, value_index);
+    variable_item_set_current_value_text(item, oled_driver_text[value_index]);
 
     // item = variable_item_list_add(
     //     app->variable_item_list, "LCD Backlight", BACKLIGHT_COUNT, backlight_changed, app);

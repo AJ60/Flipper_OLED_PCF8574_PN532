@@ -269,7 +269,8 @@ Iso14443_4LayerResult iso14443_4_layer_decode_command(
             instance->can_pps = false;
             if(bit_buffer_get_size_bytes(input_data) > 1) {
                 uint8_t pps0 = bit_buffer_get_byte(input_data, 1);
-                if((pps0 & ISO14443_4_BLOCK_PPS_0_HAS_PPS1) && (bit_buffer_get_size_bytes(input_data) > 2)) {
+                if((pps0 & ISO14443_4_BLOCK_PPS_0_HAS_PPS1) &&
+                   (bit_buffer_get_size_bytes(input_data) > 2)) {
                     uint8_t pps1 = bit_buffer_get_byte(input_data, 2);
                     uint8_t dsi = pps1 & ISO14443_4_BLOCK_PPS_1_DSI_MASK;
                     uint8_t dri = pps1 & ISO14443_4_BLOCK_PPS_1_DRI_MASK;

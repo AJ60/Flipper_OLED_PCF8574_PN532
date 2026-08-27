@@ -314,8 +314,7 @@ bool nfc_supported_cards_read(NfcSupportedCards* instance, NfcDevice* device, Nf
     bool card_read = false;
     NfcProtocol protocol = nfc_device_get_protocol(device);
 
-    if(!nfc_supported_cards_protocol_has_feature(
-           protocol, NfcSupportedCardsPluginFeatureHasRead)) {
+    if(!nfc_supported_cards_protocol_has_feature(protocol, NfcSupportedCardsPluginFeatureHasRead)) {
         return false;
     }
 

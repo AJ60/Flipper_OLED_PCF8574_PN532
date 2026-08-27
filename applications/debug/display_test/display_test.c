@@ -144,7 +144,7 @@ DisplayTest* display_test_alloc(void) {
     // Configuration items
     VariableItem* item;
     instance->config_bias = false;
-    instance->config_contrast = 32;
+    instance->config_contrast = 0xCF; // SSD1306 EV default used by the GUI init
     instance->config_regulation_ratio = 0b101;
     // Bias
     item = variable_item_list_add(
@@ -164,11 +164,11 @@ DisplayTest* display_test_alloc(void) {
         instance);
     variable_item_set_current_value_index(item, 5);
     variable_item_set_current_value_text(item, config_regulation_ratio_text[5]);
-    // Contrast
+    // Contrast (SSD1306 EV 8-bit range; values_count is uint8_t, so 255 steps = 0-254)
     item = variable_item_list_add(
-        instance->variable_item_list, "Contrast:", 64, display_config_set_contrast, instance);
-    variable_item_set_current_value_index(item, 32);
-    variable_item_set_current_value_text(item, "32");
+        instance->variable_item_list, "Contrast:", 255, display_config_set_contrast, instance);
+    variable_item_set_current_value_index(item, 0xCF);
+    variable_item_set_current_value_text(item, "207");
 
     // Menu
     instance->submenu = submenu_alloc();

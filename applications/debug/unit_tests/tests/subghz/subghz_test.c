@@ -143,7 +143,10 @@ static bool subghz_decode_random_test(const char* path) {
     } else if(subghz_test_decoder_count == TEST_RANDOM_COUNT_PARSE) {
         return true;
     } else {
-        printf("Random test ERROR: expected %d, got %d\r\n", TEST_RANDOM_COUNT_PARSE, subghz_test_decoder_count);
+        printf(
+            "Random test ERROR: expected %d, got %d\r\n",
+            TEST_RANDOM_COUNT_PARSE,
+            subghz_test_decoder_count);
         return false;
     }
 }
@@ -235,7 +238,8 @@ static bool subghz_encoder_test(const char* path) {
                     fed_count);
             }
         } else {
-            printf("Encoder test debug: %s, DECODER NOT FOUND!\r\n", furi_string_get_cstr(temp_str));
+            printf(
+                "Encoder test debug: %s, DECODER NOT FOUND!\r\n", furi_string_get_cstr(temp_str));
         }
         subghz_transmitter_free(transmitter);
     } else {

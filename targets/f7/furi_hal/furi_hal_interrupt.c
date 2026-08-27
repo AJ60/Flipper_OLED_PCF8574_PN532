@@ -87,7 +87,7 @@ const IRQn_Type furi_hal_interrupt_irqn[FuriHalInterruptIdMax] = {
 
 FURI_ALWAYS_INLINE static void furi_hal_interrupt_call(FuriHalInterruptId index) {
     const FuriHalInterruptISRPair* isr_descr = &furi_hal_interrupt.isr[index];
-	//FURI_LOG_D(TAG, "interrupt_call index=%d isr=%p ctx=%p", index, isr_descr->isr, isr_descr->context);
+    //FURI_LOG_D(TAG, "interrupt_call index=%d isr=%p ctx=%p", index, isr_descr->isr, isr_descr->context);
     furi_check(isr_descr->isr);
 
     FURI_HAL_INTERRUPT_ACCOUNT_START();
@@ -107,10 +107,8 @@ FURI_ALWAYS_INLINE static void furi_hal_interrupt_clear_pending(FuriHalInterrupt
     NVIC_ClearPendingIRQ(furi_hal_interrupt_irqn[index]);
 }
 
-FURI_ALWAYS_INLINE static bool furi_hal_interrupt_get_pending(
-    FuriHalInterruptId index) {
-    return NVIC_GetPendingIRQ(
-        furi_hal_interrupt_irqn[index]);
+FURI_ALWAYS_INLINE static bool furi_hal_interrupt_get_pending(FuriHalInterruptId index) {
+    return NVIC_GetPendingIRQ(furi_hal_interrupt_irqn[index]);
 }
 
 FURI_ALWAYS_INLINE static void furi_hal_interrupt_set_pending(FuriHalInterruptId index) {

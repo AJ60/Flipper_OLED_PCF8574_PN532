@@ -50,7 +50,8 @@ Iso14443_4aError
                 error = Iso14443_4aErrorProtocol;
             }
         } else {
-            FURI_LOG_W(TAG, "ATS request failed on attempt %d: %d", attempt + 1, iso14443_3a_error);
+            FURI_LOG_W(
+                TAG, "ATS request failed on attempt %d: %d", attempt + 1, iso14443_3a_error);
             error = iso14443_4a_process_error(iso14443_3a_error);
         }
 

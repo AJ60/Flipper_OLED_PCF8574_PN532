@@ -21,8 +21,6 @@ extern const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_low_16m;
 /** Preset for SdCard in slow mode */
 extern const LL_SPI_InitTypeDef furi_hal_spi_preset_1edge_low_2m;
 
-
-
 /** Furi Hal Spi Bus for all peripherals on SPI1 */
 extern FuriHalSpiBus furi_hal_spi_bus;
 
@@ -57,10 +55,8 @@ extern const FuriHalSpiBusHandle furi_hal_spi_bus_handle_sd_fast;
 /** SdCard in slow mode on `furi_hal_spi_bus_d` */
 extern const FuriHalSpiBusHandle furi_hal_spi_bus_handle_sd_slow;
 
-
-
 /** Extra external on `furi_hal_spi_bus` */
-//extern const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external_extra;										   
+//extern const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external_extra;
 
 #ifdef __cplusplus
 }
