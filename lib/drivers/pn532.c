@@ -415,17 +415,30 @@ Pn532Error pn532_in_data_exchange(
     cmd[1] = tg;
     memcpy(&cmd[2], tx_data, tx_len);
 
-    Pn532Error err = pn532_write_command(handle, cmd, 2 + tx_len);
-    if(err != Pn532ErrorNone) {
-        FURI_LOG_D(TAG, "InDataExchange write failed: %d", err);
-        return err;
-    }
-
     uint8_t resp[260];
     size_t resp_sz = sizeof(resp);
-    err = pn532_read_response(handle, PN532_CMD_INDATAEXCHANGE, resp, &resp_sz, timeout_ms);
+    Pn532Error err = Pn532ErrorInternal;
+
+    for(int retry = 0; retry < 3; retry++) {
+        if(retry > 0) {
+            FURI_LOG_D(TAG, "InDataExchange retry %d", retry);
+            furi_delay_ms(3);
+        }
+        err = pn532_write_command(handle, cmd, 2 + tx_len);
+        if(err != Pn532ErrorNone) {
+            FURI_LOG_D(TAG, "InDataExchange write failed: %d", err);
+            return err;
+        }
+        resp_sz = sizeof(resp);
+        err = pn532_read_response(handle, PN532_CMD_INDATAEXCHANGE, resp, &resp_sz, timeout_ms);
+        if(err == Pn532ErrorNone) break;
+        if(err != Pn532ErrorChecksum) {
+            FURI_LOG_D(TAG, "InDataExchange read failed: %d", err);
+            return err;
+        }
+    }
     if(err != Pn532ErrorNone) {
-        FURI_LOG_D(TAG, "InDataExchange read failed: %d", err);
+        FURI_LOG_D(TAG, "InDataExchange read failed after retries: %d", err);
         return err;
     }
 

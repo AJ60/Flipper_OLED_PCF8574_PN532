@@ -27,6 +27,12 @@ const uint16_t valid_sums[] =
 
 typedef NfcCommand (*MfClassicPollerReadHandler)(MfClassicPoller* instance);
 
+#define MF_CLASSIC_CHECKSUM_FAILURE_THRESHOLD 10
+
+static bool mf_classic_poller_should_abort_on_checksum(const MfClassicPoller* instance) {
+    return instance->consecutive_checksum_failures >= MF_CLASSIC_CHECKSUM_FAILURE_THRESHOLD;
+}
+
 MfClassicPoller* mf_classic_poller_alloc(Iso14443_3aPoller* iso14443_3a_poller) {
     furi_assert(iso14443_3a_poller);
 
@@ -40,6 +46,7 @@ MfClassicPoller* mf_classic_poller_alloc(Iso14443_3aPoller* iso14443_3a_poller) 
     instance->rx_encrypted_buffer = bit_buffer_alloc(MF_CLASSIC_MAX_BUFF_SIZE);
     instance->current_type_check = MfClassicType4k;
     instance->card_state = MfClassicCardStateLost;
+    instance->consecutive_checksum_failures = 0;
 
     instance->mfc_event.data = &instance->mfc_event_data;
 
@@ -774,6 +781,10 @@ NfcCommand mf_classic_poller_handler_auth_a(MfClassicPoller* instance) {
             dict_attack_ctx->current_block = block;
             dict_attack_ctx->auth_passed = true;
             instance->state = MfClassicPollerStateReadSector;
+        } else if(mf_classic_poller_should_abort_on_checksum(instance)) {
+            FURI_LOG_W(TAG, "Too many checksum failures, skipping sector %d", dict_attack_ctx->current_sector);
+            mf_classic_poller_halt(instance);
+            instance->state = MfClassicPollerStateNextSector;
         } else {
             mf_classic_poller_halt(instance);
             // In CUID mode, skip directly to RequestKey since we test keys by specific type
@@ -822,6 +833,10 @@ NfcCommand mf_classic_poller_handler_auth_b(MfClassicPoller* instance) {
 
             dict_attack_ctx->auth_passed = true;
             instance->state = MfClassicPollerStateReadSector;
+        } else if(mf_classic_poller_should_abort_on_checksum(instance)) {
+            FURI_LOG_W(TAG, "Too many checksum failures, skipping sector %d", dict_attack_ctx->current_sector);
+            mf_classic_poller_halt(instance);
+            instance->state = MfClassicPollerStateNextSector;
         } else {
             mf_classic_poller_halt(instance);
             instance->state = MfClassicPollerStateRequestKey;
@@ -838,7 +853,12 @@ NfcCommand mf_classic_poller_handler_next_sector(MfClassicPoller* instance) {
     dict_attack_ctx->current_sector++;
 
     if(dict_attack_ctx->current_sector == instance->sectors_total) {
-        instance->state = MfClassicPollerStateSuccess;
+        if(mf_classic_poller_should_abort_on_checksum(instance)) {
+            FURI_LOG_W(TAG, "All sectors skipped due to persistent communication errors");
+            instance->state = MfClassicPollerStateFail;
+        } else {
+            instance->state = MfClassicPollerStateSuccess;
+        }
     } else {
         instance->mfc_event.type = MfClassicPollerEventTypeNextSector;
         instance->mfc_event_data.next_sector_data.current_sector = dict_attack_ctx->current_sector;
@@ -1001,6 +1021,11 @@ NfcCommand mf_classic_poller_handler_key_reuse_auth_key_a(MfClassicPoller* insta
             dict_attack_ctx->current_block = block;
             dict_attack_ctx->auth_passed = true;
             instance->state = MfClassicPollerStateKeyReuseReadSector;
+        } else if(mf_classic_poller_should_abort_on_checksum(instance)) {
+            FURI_LOG_W(TAG, "Too many checksum failures, aborting key reuse");
+            mf_classic_poller_halt(instance);
+            dict_attack_ctx->auth_passed = false;
+            instance->state = MfClassicPollerStateKeyReuseStart;
         } else {
             mf_classic_poller_halt(instance);
             dict_attack_ctx->auth_passed = false;
@@ -1038,6 +1063,11 @@ NfcCommand mf_classic_poller_handler_key_reuse_auth_key_b(MfClassicPoller* insta
 
             dict_attack_ctx->auth_passed = true;
             instance->state = MfClassicPollerStateKeyReuseReadSector;
+        } else if(mf_classic_poller_should_abort_on_checksum(instance)) {
+            FURI_LOG_W(TAG, "Too many checksum failures, aborting key reuse");
+            mf_classic_poller_halt(instance);
+            dict_attack_ctx->auth_passed = false;
+            instance->state = MfClassicPollerStateKeyReuseStart;
         } else {
             mf_classic_poller_halt(instance);
             dict_attack_ctx->auth_passed = false;

@@ -185,6 +185,7 @@ struct MfClassicPoller {
     uint8_t sectors_total;
     MfClassicPollerMode mode;
     MfClassicPollerModeContext mode_ctx;
+    uint8_t consecutive_checksum_failures;
 
     Crypto1* crypto;
     BitBuffer* tx_plain_buffer;

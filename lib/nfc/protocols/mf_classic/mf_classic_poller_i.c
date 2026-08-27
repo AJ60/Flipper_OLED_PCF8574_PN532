@@ -163,9 +163,20 @@ MfClassicError mf_classic_poller_auth_common(
 
         if(err == Pn532ErrorNone) {
             instance->auth_state = MfClassicAuthStatePassed;
+            instance->consecutive_checksum_failures = 0;
             ret = MfClassicErrorNone;
         } else {
-            // Re-select target if auth failed to restore card RF communication state
+            if(err == Pn532ErrorChecksum) {
+                instance->consecutive_checksum_failures++;
+                if(instance->consecutive_checksum_failures == 5) {
+                    FURI_LOG_W(
+                        TAG,
+                        "PN532 checksum errors, re-initializing");
+                    pn532_init(PN532_I2C_BUS);
+                }
+            } else {
+                instance->consecutive_checksum_failures = 0;
+            }
             Pn532TargetIso14443a target;
             pn532_in_list_passive_target_iso14443a(PN532_I2C_BUS, &target, 100);
             ret = MfClassicErrorAuth;
