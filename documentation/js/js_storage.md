@@ -1,5 +1,12 @@
 # Storage module {#js_storage}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 The module allows you to access files and directories on the Flipper Zero filesystems. Call the `require` function to load the module before first using its methods:
 
 ```js

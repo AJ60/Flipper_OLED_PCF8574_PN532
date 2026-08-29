@@ -1,5 +1,12 @@
 # Music Player
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 This is a simple music player that can play music using the Flipper Zero's speaker.
 
 The music player supports the Flipper Music Format (FMF), which is similar to RTTL. You can find a sample song in the /apps_data/music_player folder on your SD card. It is a text file that you can open using any text editor on your computer. You can also find more songs on our [Community Forum](https://forum.flipper.net/t/music-player-songs/2715/35).

@@ -1,4 +1,11 @@
 # Yappy Invaders
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 Yappy Invaders is a space invaders clone designed specifically for the [Flipper Zero](https://flipperzero.one/) device. It combines the classic gameplay of space invaders with the unique hardware capabilities of Flipper Zero, creating an engaging experience for users.
 
 ## Features

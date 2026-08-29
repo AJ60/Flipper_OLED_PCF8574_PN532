@@ -1,5 +1,12 @@
 # About
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 App for reading CO2 ppm from MH-Z19 sensor and saving to a local csv file. 
 
 ## Credits

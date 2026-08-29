@@ -1,5 +1,12 @@
 # 🔐 Seader
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 A [Flipper Zero](https://flipperzero.one/) application (aka "fap") 
 that read credential from HID: iClass, iClass SE, Desfire EV1/EV2, and Seos using a HID SAM and UART adapter.  Latest release on the [App Catalog](https://lab.flipper.net/apps/seader).
 

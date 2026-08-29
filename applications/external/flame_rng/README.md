@@ -1,6 +1,13 @@
 
 # Flame-RNG
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Inspired by [this repo](https://github.com/dipdowel/flipper-fire-rng) I have implemented a similar functionality entirely in the flipper zero
 
 

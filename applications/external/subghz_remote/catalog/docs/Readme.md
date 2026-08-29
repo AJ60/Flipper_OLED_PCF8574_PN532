@@ -3,6 +3,13 @@ With this application, you can combine up to 5 .sub files into one remote, and u
 "Map" is short for mapping
 A Map Files is a .txt files that the application uses to store information about remotes
 # How to use
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 ## First screen 
 After launching the application, you will see the MAP file selection screen (file browser).
 - Select map file or press "back" to go Main menu

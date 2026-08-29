@@ -1,5 +1,12 @@
 # How to use Flipper as a new SubGHz remote (not clone of original remote)
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Many rolling codes support, and this guide, comes from [Unleashed Firmware](https://github.com/DarkFlippers/unleashed-firmware). Go show them some love and maybe donate to them too!
 
 ### If your system is not added here that doesn't mean flipper don't support it! Look into add manually menu, and search for your manufacturers inscturctions!

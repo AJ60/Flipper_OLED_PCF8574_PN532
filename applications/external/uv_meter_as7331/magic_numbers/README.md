@@ -1,5 +1,12 @@
 # Magic Numbers Explained
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 In the source code, within the [`uv_meter_data_calculate_effective_results()`](../views/uv_meter_data.cpp#L668) function, you'll see some seemingly arbitrary ("magic") numbers. They’re essential for converting raw UV sensor values into what's called "Effective Irradiance", which is then used to calculate the maximum daily exposure duration shown in the application:
 
 ```cpp

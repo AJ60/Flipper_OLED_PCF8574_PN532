@@ -1,4 +1,11 @@
 # TPMS application for [Flipper Zero](https://flipperzero.one/)
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 [![FlipC.org](https://flipc.org/wosk/flipperzero-tpms/badge)](https://flipc.org/wosk/flipperzero-tpms)
 
 ## Features
@@ -23,4 +30,4 @@ Pressing OK displays temperature and pressure.
 
 Feel free to contribute via PR or report issue
 
-Code based on [weather station app](https://github.com/flipperdevices/flipperzero-good-faps/tree/dev/weather_station)
+Code based on [weather station app](https://github.com/flipperdevices/flipperzero-good-faps/tree/main/weather_station)

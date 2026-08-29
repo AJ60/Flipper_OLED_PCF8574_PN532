@@ -1,5 +1,12 @@
 # Flipper module {#js_flipper}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 The module contains methods and values to query device information and properties. Call the `require` function to load the module before first using its methods:
 
 ```js

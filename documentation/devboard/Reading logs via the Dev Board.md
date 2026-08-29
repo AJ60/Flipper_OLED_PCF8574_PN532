@@ -1,5 +1,12 @@
 # Reading logs via the Devboard {#dev_board_reading_logs}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 The Developer Board allows you to read Flipper Zero logs via UART. Unlike reading logs via the command-line interface (CLI), the Developer Board enables you to collect logs from the device directly to a serial console independently from the operating system of Flipper Zero. It allows you to see the device's logs when it's loading, updating, or crashing. It's useful for debugging and troubleshooting during software development.
 
 > **NOTE:**  Flipper Zero logs can only be viewed when the developer board is connected via USB. The option to view logs over Wi-Fi will be added in future updates.

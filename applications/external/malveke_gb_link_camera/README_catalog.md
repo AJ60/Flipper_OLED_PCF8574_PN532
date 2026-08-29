@@ -1,5 +1,12 @@
 # MALVEKE **GAME BOY** Link Camera
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Introduction
 MALVEKE app, this application allows you to extract your GAME BOY Camera pictures via WIFI for easy sharing with your phone, tablet, or PC. It's user-friendly; simply connect it to your GAME BOY and print as usual. The device will store the images and share them on a web server via WIFI. You will need a printer cable or Gameboy Color link cable for this.
 

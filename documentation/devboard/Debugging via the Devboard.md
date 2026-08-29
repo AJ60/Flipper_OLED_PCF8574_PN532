@@ -1,5 +1,12 @@
 # Debugging via the Devboard {#dev_board_debugging_guide}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 On this page, you'll learn about how debugging via the Wi-Fi Developer Board works. To illustrate this process, we'll start a debug session for Flipper Zero's firmware in VS Code using the native Flipper Build Tool.
 
 ***
@@ -35,7 +42,7 @@ Before starting debugging, you need to clone and build Flipper Zero firmware:
 2. Clone the firmware repository:
 
     ```
-    git clone --recursive https://github.com/flipperdevices/flipperzero-firmware.git
+    git clone --recursive https://github.com/AJ60/Oled_PCF8574_PN532.git
     cd flipperzero-firmware
     ```
 

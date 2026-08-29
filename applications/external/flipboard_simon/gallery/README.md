@@ -1,5 +1,12 @@
 # FlipSimon
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Overview
 The FlipSimon application turns your Flipper Zero and FlipBoard into a memory game.  FlipSimon was originally written as a [step-by-step tutorial](https://github.com/jamisonderek/flipboard/tree/main/simon-tutorial#readme) to teach C, Flipper Zero Code, and FlipBoard common code - so you can create your own FlipBoard applications.  Based on community feedback, this version of the application was improved to make the application similar to the other released FlipBoard applications.
 

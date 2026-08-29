@@ -1,5 +1,12 @@
 # Ghost ESP App Confirmation View Guide
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Overview
 The Confirmation View is a UI component that provides a modal dialog for confirming user actions. It features a header, message text, and OK/Cancel functionality with callbacks.
 

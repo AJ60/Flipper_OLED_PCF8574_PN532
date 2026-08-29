@@ -1,5 +1,12 @@
 # Code of Conduct
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Be Respectful
 
 Please treat everyone with respect. Discrimination, harassment, or hateful behavior will not be tolerated.

@@ -1,5 +1,12 @@
 # ARM SWD (Single Wire Debug) Probe
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Modern microcontrollers have support for the two wire debug interface SWD, which makes wiring a lot simpler.
 When reverse engineering, finding these two pins is a los easier than with JTAG, where you had to wire up twice or more pins. However, finding  the two pins is still a bit of work, which gets simplified even more with this application.
 

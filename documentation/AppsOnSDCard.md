@@ -1,5 +1,12 @@
 # FAP (Flipper App Package) {#apps_on_sd_card}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 [fbt](./fbt.md) supports building apps as FAP files. FAPs are essentially `.elf` executables with extra metadata and resources bundled in.
 
 FAPs are built with the `faps` target. They can also be deployed to the `dist` folder with the `fap_dist` target.

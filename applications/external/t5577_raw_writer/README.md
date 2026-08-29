@@ -1,4 +1,11 @@
 # T5577 Raw Writer App
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 An easy to use T5577 raw writer app for Flipper Zero. [Discord project page.](https://discord.com/channels/1211622338198765599/1267190551783018659)
 ## Instruction
 Configure the modulation, RF Clock, number of blocks, and block data in the 'Config' menu. 

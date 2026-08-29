@@ -1,5 +1,12 @@
 # FindMy Flipper - AirTag and SmartTag Emulator
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 This app extends the functionality of the FlipperZero's bluetooth capabilities, enabling it to act as an Apple AirTag, Samsung SmartTag, or a Tile Tracker. It utilizes the FlipperZero's BLE beacon to broadcast a SmartTag signal to be picked up by the FindMy Network. I made this to serve as a versatile tool for tracking purposes, offering the ability to clone existing tags, generate OpenHaystack key pairs for integration with Apple's FindMy network, and always know where your FlipperZero is.
 
 ## Features

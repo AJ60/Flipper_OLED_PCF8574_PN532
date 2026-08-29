@@ -1,5 +1,12 @@
 # Changelog
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## v0.4
 - Added quick character switching for smoother gameplay.
 - Fixed a bug preventing upgraded vehicles from being saved.

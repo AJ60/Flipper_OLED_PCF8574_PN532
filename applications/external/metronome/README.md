@@ -1,5 +1,12 @@
 # Metronome
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 [![FAP Build](https://github.com/ezod/flipperzero-metronome/actions/workflows/build.yml/badge.svg)](https://github.com/ezod/flipperzero-metronome/actions/workflows/build.yml)
 
 A metronome for the Flipper Zero.

@@ -1,5 +1,12 @@
 # Flipper Zero Umpire Indicator
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 A baseball umpire indicator app for the Flipper Zero device. This app simulates a traditional baseball umpire's counter, tracking balls, strikes, and outs with a classic scoreboard-style interface.
 
 ## Features

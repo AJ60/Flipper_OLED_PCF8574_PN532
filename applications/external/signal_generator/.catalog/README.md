@@ -1,5 +1,12 @@
 # Signal Generator
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 This is a simple signal generator that can be used to generate a signal with a given frequency. There are two modes: PWM and Clock.
 
 ## PWM Mode

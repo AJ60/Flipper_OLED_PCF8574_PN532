@@ -1,5 +1,12 @@
 # Wi-Fi connection to the Devboard {#dev_board_wifi_connection}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 You can connect to the Developer Board wirelessly in two ways:
 
 - **Wi-Fi access point mode (default):** The Devboard creates its own Wi-Fi network, which you can connect to in order to access its web interface and debug via Wi-Fi. The downside is that you will need to disconnect from your current Wi-Fi network, resulting in a loss of internet connection.

@@ -1,5 +1,12 @@
 # Air Labyrinth
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ![Air Labyrinth](./.catalog/screenshots/1.png)
 
 This is a simple game where you have to navigate a ball through a maze. The game is controlled by tilting the Flipper Zero with a Video Game Module attached.  You can also play the game using the Flipper Zero's d-pad.
@@ -16,4 +23,4 @@ This is a simple game where you have to navigate a ball through a maze. The game
 
 ## Other
 
-This game was made based on the [air_arkanoid](https://github.com/flipperdevices/flipperzero-good-faps/tree/dev/air_arkanoid) and [flipperzero-game-engine-example](https://github.com/flipperdevices/flipperzero-game-engine-example) projects. Thanks to the authors of these projects for the inspiration and the code.
+This game was made based on the [air_arkanoid](https://github.com/flipperdevices/flipperzero-good-faps/tree/main/air_arkanoid) and [flipperzero-game-engine-example](https://github.com/flipperdevices/flipperzero-game-engine-example) projects. Thanks to the authors of these projects for the inspiration and the code.

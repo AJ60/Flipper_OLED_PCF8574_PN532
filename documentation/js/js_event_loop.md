@@ -1,5 +1,12 @@
 # Event Loop module {#js_event_loop}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 The event loop is central to event-based programming in many frameworks, and our
 JS subsystem is no exception. It is a good idea to familiarize yourself with the
 event loop first before using any of the advanced modules (e.g. GPIO and GUI).

@@ -1,5 +1,12 @@
 # Passy: Flipper Zero Passport Reader
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 **Passy** is a tool for reading electronic passports (ePassports/eMRTDs) using the Flipper Zero device. It extracts and decodes data securely stored in modern passports, designed for hobbyists, researchers, and security professionals.
 
 ---

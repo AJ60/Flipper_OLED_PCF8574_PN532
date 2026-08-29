@@ -1,5 +1,12 @@
 # Pre-included Asset Packs
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 - **`Momentum`** - Credits:
   - [Kuronons](https://github.com/Kuronons) for the [desktop animations](https://github.com/Kuronons/FZ_graphics/tree/main/Animations/Custom_Firmwares)
   - [Kuronons](https://github.com/Kuronons) for the [passport portraits](https://github.com/Kuronons/FZ_graphics/tree/main/Passport%20profile%20pictures)

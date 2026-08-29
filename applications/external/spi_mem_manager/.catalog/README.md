@@ -1,5 +1,12 @@
 # SPI Memory Manager
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 This application allows you to read, erase, and flash SPI memory chips. It can be used to backup the contents of SPI memory chips, or to restore them to their original state.
 
 ## Wiring

@@ -1,5 +1,12 @@
 # #️⃣ Hex Viewer
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Hex Viewer application for Flipper Zero!  
 The app allows you to view various files as HEX
 

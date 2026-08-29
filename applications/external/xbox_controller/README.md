@@ -1,5 +1,12 @@
 # <img src="./xbox_controller.png" height="20px" /> [Xbox Controller for Flipper Zero](https://github.com/gebeto/flipper-xbox-controller)
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 
 <img height="256px" alt="screenshot_1" src="https://github.com/user-attachments/assets/59d151fd-9d67-4715-93ab-51d44e04de54" />
 <img height="256px" alt="screenshot_2" src="https://github.com/user-attachments/assets/1d995540-ad75-4fde-bb2c-3c113311f421" />

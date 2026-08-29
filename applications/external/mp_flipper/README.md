@@ -4,6 +4,13 @@
 
 # MicroPython Flipper Zero
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Allows you to use the power of Python natively on your Flipper Zero.
 The application is available on the official [Flipper Lab](https://lab.flipper.net/apps/upython).
 For details on how to programm your Flipper with Python, check out the [documentation](https://ofabel.github.io/mp-flipper/) on GitHub pages.
@@ -17,7 +24,7 @@ Due to memory fragmentation it's possible, that the application crashes when you
 If this happens, just try again (the crash doesn't harm your device).
 
 > [!IMPORTANT]
-> This problem is already addressed to the firmware developers in [this issue](https://github.com/flipperdevices/flipperzero-firmware/issues/3927).
+> This problem is already addressed to the firmware developers in [this issue](https://github.com/AJ60/Oled_PCF8574_PN532/issues/3927).
 > Nevertheless, running the uPython application from the SD card is still a heavy task for the Flipper.
 
 _I'm thinking about publishing a fork of the original firmware with uPython bundled as a core service._

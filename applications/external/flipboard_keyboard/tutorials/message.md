@@ -1,5 +1,12 @@
 # Tutorial: Editing the Message that is typed.
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 The message is the text that gets sent to the computer when FlipBoard buttons are pressed.  This is an easy way to type a bunch of text.
 
 ## Entering a Message using the Flipper Zero

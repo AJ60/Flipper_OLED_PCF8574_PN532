@@ -1,5 +1,12 @@
 # Flipper Zero Radar Scanner
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Overview
 
 The Flipper Zero Radar Scanner is an application designed for the Flipper Zeros GPIO capabilities, utilizing the RCWL-0516 Microwave Radar module to detect the presence and movement of living beings or people. This powerful radar module is capable of detecting movement at a range of approximately 8 meters, depending on the environment, and can even detect humans through walls, ceilings, and floors up to 5-6 meters away.

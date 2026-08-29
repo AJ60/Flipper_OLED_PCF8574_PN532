@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 In this classic game, your objective is to collect the highest number of points by connecting identical numbers on the playing field.
 
 You can control the game using the Up, Down, Right, and Left buttons, which allow you to move all cells on the playing field simultaneously.

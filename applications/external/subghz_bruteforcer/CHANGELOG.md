@@ -1,5 +1,12 @@
 # Changelog
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## [v3.10.1](https://github.com/DarkFlippers/flipperzero-subbrute/tree/v3.10.1) (2023-12-19)
 
 [Full Changelog](https://github.com/DarkFlippers/flipperzero-subbrute/compare/v3.9.5...v3.10.1)

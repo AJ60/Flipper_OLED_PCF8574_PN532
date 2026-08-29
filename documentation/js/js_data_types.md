@@ -1,5 +1,12 @@
 # Data types {#js_data_types}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Here is a list of common data types used by mJS.
 - string — sequence of single byte characters, no UTF8 support
 - number

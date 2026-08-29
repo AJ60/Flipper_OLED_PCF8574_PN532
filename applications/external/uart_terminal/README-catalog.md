@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 The UART Terminal application allows you to use UART (Universal Asynchronous Receiver-Transmitter) even without a computer, only with your Flipper Zero:
 
 1. On your Flipper Zero, run the UART Terminal app.

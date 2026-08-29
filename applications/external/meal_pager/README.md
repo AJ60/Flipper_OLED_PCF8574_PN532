@@ -1,5 +1,12 @@
 # Flipper Zero Meal Pager Tool
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## What this is?
 This app triggers restaurant pagers in a brute force manner, useful to test if devices are still functional. 
 <br><br>

@@ -1,4 +1,11 @@
 # FlipSocial
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 The first social media app for Flipper Zero. Connect with other users directly on your device through WiFi.
 
 The highlight of this app is customizable pre-saves, which, as explained below, aim to address the challenges of typing with the directional pad.

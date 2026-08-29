@@ -1,5 +1,12 @@
 # GAME BOY Pokemon Trading MALVEKE
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Introduction
 
 Tool for trading Pokemon from the Flipper Zero to Generation I and II Game Boy games (Red, Blue, Yellow, Gold, Silver, and Crystal). In addition to creating and trading Pokemon to a Game Boy game, the Flipper can be used to modify an existing Pokemon traded to the Flipper and trading it back to the Game Boy!

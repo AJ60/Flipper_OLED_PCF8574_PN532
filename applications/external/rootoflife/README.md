@@ -1,5 +1,12 @@
 # Root of Life
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 A zen-puzzle game for [FlipperZero](https://flipperzero.one/) puzzle made on [GlobalGameJam'23](https://globalgamejam.org/2023/games/roots-life-9) (theme: "Roots")
 
 ![FlipperZero with the game on it](docs/device.jpeg)
@@ -29,7 +36,7 @@ Go to [Releases](https://github.com/Xorboo/root-of-life/releases), download `.fa
 
 ## Development
 
-To work on the code look into [flipperzero-firmware documentation](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/documentation/AppsOnSDCard.md#how-to-set-up-an-application-to-be-built-as-a-fap)
+To work on the code look into [flipperzero-firmware documentation](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/AppsOnSDCard.md#how-to-set-up-an-application-to-be-built-as-a-fap)
 
 ---
 

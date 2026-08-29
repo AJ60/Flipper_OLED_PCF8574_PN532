@@ -1,4 +1,11 @@
 # Flipper Zero Game Boy Pokemon Trading
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 `
 - Configure Gen 1 traded pokemon  
   - Pokemon Nickname  

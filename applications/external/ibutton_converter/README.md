@@ -1,5 +1,12 @@
 # iButton Converter
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 **iButton Converter** is a Flipper Zero application designed for converting iButton key dumps from *Metakom* or *Cyfral* formats into the *Dallas* format. The application supports multiple conversion modes for each format, including well-known and lesser-known encoding schemes.
 
 ## Features

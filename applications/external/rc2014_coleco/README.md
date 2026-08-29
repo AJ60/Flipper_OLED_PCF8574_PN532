@@ -1,5 +1,12 @@
 # RC2014 ColecoVision Controller for Flipper Zero
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 A Flipper Zero application and [RC2014] module allowing the Flipper to be used as a controller for ColecoVision games on
 the [RC2014].
 
@@ -34,5 +41,5 @@ data lines. A schematic for the GPIO board will be added to this repository soon
 [TMS9918A Video Card]: https://github.com/jblang/TMS9918A
 [SN76489 Sound Card]: https://github.com/jblang/SN76489
 [ColecoVision]: http://www.atarihq.com/danb/files/CV-Tech.txt
-[flipperzero-firmware]: https://github.com/flipperdevices/flipperzero-firmware
+[flipperzero-firmware]: https://github.com/AJ60/Oled_PCF8574_PN532
 [qFlipper]: https://flipperzero.one/update

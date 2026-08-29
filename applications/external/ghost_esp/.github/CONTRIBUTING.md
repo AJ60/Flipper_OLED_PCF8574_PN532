@@ -1,5 +1,12 @@
 # Making Contributions 
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Contributions to this repo can be made by initiating a pull request from your local fork or by opening an [issue](https://github.com/jaylikesbunda/ghost_esp_app/issues).
 
 Before submitting a new pull request please ensure that your changes act as intended and that you have been able to successfully build and test your implementations **BEFORE** submitting a PR.

@@ -1,5 +1,12 @@
 # Expansion Module Protocol {#expansion_protocol}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Terms and definitions
 
 - Expansion Module: A third-party hardware unit meant for use with Flipper Zero by connecting it to its GPIO header.

@@ -1,5 +1,12 @@
 # Space Playground
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Link to the app: https://lab.flipper.net/apps/fzspground
 
 This is a "screensaver" that simulates a space environment with planets and asteroids.

@@ -1,5 +1,12 @@
 # Rolling Flaws
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Rolling Flaws (version 1.5) by [@CodeAllNight](https://twitter.com/codeallnight).
 
 [YouTube demo](https://youtu.be/gMnGuDC9EQo?si=4HLZpkC4XWhh97uQ) of using Rolling Flaws application.  The video shows how to use the application to simulate a receiver that has a Replay attack flaw, Pairing FZ to a receiver, Cloning sequence attack, Future attack, Rollback attack & KGB attack.  The Rolling Flaws application also supports things like "ENC00" attack & window-next attacks, which are described in scenarios below but was not in video.  Rolljam is discussed in document, but discouraged to test since it is [illegal to jam signals](https://www.fcc.gov/general/jammer-enforcement) in the US.  If you have additional ideas, please let me know!
@@ -158,7 +165,7 @@ Method 2: (command-line + allows for "SN00/cfw*" and "SN bits/cfw*" features + a
 Method 3: (VS Code + allows for "SN00/cfw*" and "SN bits/cfw*" features + allows for replay feature)
 - Install [VS Code](https://code.visualstudio.com/Download)
 - Clone the firmware repository (make sure you use **Git: Clone (Recursive)**).
-  - The URL for firmware is at https://github.com/flipperdevices/flipperzero-firmware
+  - The URL for firmware is at https://github.com/AJ60/Oled_PCF8574_PN532
 - Make sure you have run ``fbt vscode_dist`` at least once, so VSCode works properly.
   - You can right click on "FBT" and then choose `Open in Integrated Terminal`.
   - Then type:  `./fbt vscode_dist`
@@ -177,7 +184,7 @@ Here is a command-line method.  Before the last two commands, you should follow 
 mkdir \repos
 cd \repos
 git clone https://github.com/jamisonderek/flipper-zero-tutorials.git
-git clone --recursive https://github.com/flipperdevices/flipperzero-firmware
+git clone --recursive https://github.com/AJ60/Oled_PCF8574_PN532
 cd flipperzero-firmware
 fbt vscode_dist
 cd applications_user

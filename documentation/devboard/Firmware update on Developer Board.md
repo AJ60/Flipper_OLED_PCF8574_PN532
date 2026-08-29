@@ -1,5 +1,12 @@
 # Firmware update on Developer Board {#dev_board_fw_update}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 It's important to regularly update your Developer Board to ensure that you have access to the latest features and bug fixes. This page will guide you through the necessary steps to update the firmware of your Developer Board.
 
 > [!note]

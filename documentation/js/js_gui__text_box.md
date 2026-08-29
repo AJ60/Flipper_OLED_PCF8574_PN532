@@ -1,5 +1,12 @@
 # Text box GUI view {#js_gui__text_box}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Displays a scrollable read-only text field.
 
 <img src="text_box.png" width="200" alt="Sample screenshot of the view" />

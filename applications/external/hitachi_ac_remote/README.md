@@ -1,5 +1,12 @@
 # Hitachi AC Remote
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Hitachi AC remote controller for Flipper Zero.
 
 Emulates the PC-LHxx series remote controller, specifically the PC-LH3 series, and also the PC-LH6Q variant that can be found on AliExpress and similar places.

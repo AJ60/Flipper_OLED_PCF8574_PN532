@@ -1,5 +1,12 @@
 # Changelog
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## v5.19.0 - May 7 2025
 
 * feat: space between groups of digits ([#259](https://github.com/akopachov/flipper-zero_authenticator/issues/259))

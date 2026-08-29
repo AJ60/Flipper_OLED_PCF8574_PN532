@@ -1,5 +1,12 @@
 # Flipper Zero Quadrastic Game
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 **Quadrastic** is a simple addicting game inspired by the [Arduboy game](https://community.arduboy.com/t/quadrastic-secure-the-point-avoid-the-enemies) of the same name. This, in turn, was based on a popular PSP homebrew game called [Squarez](https://www.gamebrew.org/wiki/Squarez_PSP). Squarez itself drew inspiration from Ball, a game created by Nicolay Edin and Axel Hammarback, which was originally inspired by Eskiv, a game developed by Jean-François Geyelin.
 
 ## Screenshots

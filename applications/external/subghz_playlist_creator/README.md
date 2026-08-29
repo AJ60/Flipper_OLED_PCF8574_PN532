@@ -1,5 +1,12 @@
 # SubGhz Playlist Creator
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 A Flipper Zero application for creating and managing playlists of .sub files.
 
 ## Features

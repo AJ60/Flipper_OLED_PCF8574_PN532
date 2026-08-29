@@ -1,4 +1,11 @@
 # flipperzero-yatzee
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 Yahtzee game for flipperzero
 
 Its not beautiful, but it works and now I can play Yahtzee on my flipper while I shit at work.

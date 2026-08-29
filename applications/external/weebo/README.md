@@ -1,5 +1,12 @@
 # Weebo
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 A powerful Flipper Zero NTAG215 parser, writer, emulator, remixer, and duplicator, designed for enthusiasts who want to unlock the full potential of their NFC experience.
 
 ![Demo Video](demo.mp4)

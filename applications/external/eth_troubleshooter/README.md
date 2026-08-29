@@ -1,5 +1,12 @@
 # Flipper Zero Ethernet Troubleshooter
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 This is a small helper that lets you connect your Flipper via RJ45 to your network
 You can then set the interface-mac and test if you can get an IP via DHCP and the ping addresses.
 

@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 #Sub-Ghz Frequencies in Momentum
 
 Officially supported frequencies: 300-350 MHz, 387-467.75 MHz, and 779-928 MHz (from [CC1101 chip docs](https://www.ti.com/product/CC1101))<br>

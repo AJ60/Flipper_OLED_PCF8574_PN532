@@ -1,4 +1,11 @@
 # Unitemp changelog
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 ## Unitemp 1.5
 - Add Cry_dolph_55x52 image (build on latest API) (Thanks jamisonderek)
 ## Unitemp 1.4

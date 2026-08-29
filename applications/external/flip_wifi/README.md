@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 FlipWiFi is the companion app for the popular FlipperHTTP firmware. It allows you to scan and save Wi-Fi networks for use across all FlipperHTTP apps, set up captive portals, and send deauthentication attacks.
 
 ## Requirements

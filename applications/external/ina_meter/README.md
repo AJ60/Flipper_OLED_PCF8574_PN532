@@ -1,5 +1,12 @@
 # INA Meter for Flipper Zero
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 INA Meter is an application for Flipper Zero that allows you to read I2C-connected current/power monitors from Texas Instruments.
 
 ## Supported Sensors:

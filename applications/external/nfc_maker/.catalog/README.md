@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 NFC Maker generates Flipper NFC (.nfc) files containing NDEF formatted data of various types.
 
 After saving in NFC Maker, you can find and emulate the file in NFC app > Saved.

@@ -2,6 +2,13 @@
 
 
 # Minesweeper Implementation for the Flipper Zero.
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 Hello!
 
 ![Mine Sweeper Example Gameplay Gif](https://github.com/squee72564/F0_Minesweeper_Fap/blob/main/img/github_images/MineSweeperGameplay.gif)
@@ -57,7 +64,7 @@ The following is the application structure with a breakdown of each folder:
 	- minesweeper.c / minesweeper.h
 		- Main Mine Sweeper App .c and .h file
 	- application.fam
-		- [Build system manifest file](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/documentation/AppManifests.md#application-definition) for the application
+		- [Build system manifest file](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/AppManifests.md#application-definition) for the application
 
 
 Right now the current structure of the application is heavily inspired from [leedave's](https://github.com/leedave/flipper-zero-fap-boilerplate) boilerplate repo.

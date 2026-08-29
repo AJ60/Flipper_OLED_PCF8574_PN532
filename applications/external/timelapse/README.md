@@ -1,6 +1,13 @@
 
 # zeitraffer
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 [![Build FAP](https://github.com/theageoflove/flipperzero-zeitraffer/actions/workflows/build.yml/badge.svg?branch=main)](https://nightly.link/theageoflove/flipperzero-zeitraffer/workflows/build/main)
 
 [![FlipC.org](https://flipc.org/theageoflove/flipperzero-zeitraffer/badge)](https://flipc.org/theageoflove/flipperzero-zeitraffer)

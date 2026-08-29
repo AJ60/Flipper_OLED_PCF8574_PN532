@@ -1,6 +1,13 @@
 A GPS-enabled file browser for Flipper Zero that displays SubGHz, NFC, and RFID files sorted by distance from your current location.
 
 # Features
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 - **GPS Integration**: Uses real GPS coordinates to calculate distances to files
 - **Multi-format Support**: Scans **.sub**, **.nfc**, and **.rfid** files from standard directories
 - **Distance-based Sorting**: Files are sorted by proximity to your current GPS location

@@ -1,5 +1,12 @@
 # Flipper Zero Lego Dimensions ToyPad Emulator
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Use your **Flipper Zero** as a **Lego Dimensions ToyPad** !
 
 This project emulates the behavior of the original USB ToyPad, allowing you to interact with Lego Dimensions using your Flipper Zero. this app can place characters, vehicles directly from your Flipper.

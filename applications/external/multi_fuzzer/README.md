@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## Multi Fuzzer
 ### Flipper Zero app for checking ibutton and RFID<sub>(125khz)</sub> readers .
 

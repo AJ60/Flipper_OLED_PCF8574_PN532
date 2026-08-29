@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## Cross Remote
 
 This app combines your IR and SubGhz commands into a playlist that can be run with one click. Pauses can be set inbetween, as IR/SubGhz devices typically are not so fast. 

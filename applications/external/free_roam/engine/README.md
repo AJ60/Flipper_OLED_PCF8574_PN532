@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## Pico Game Engine
 
 Translated from the latest version in Picoware: https://github.com/jblanked/Picoware/tree/main/src/ArduinoIDE/Picoware/src

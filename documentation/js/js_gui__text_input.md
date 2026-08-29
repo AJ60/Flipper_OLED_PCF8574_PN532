@@ -1,5 +1,12 @@
 # Text input GUI view {#js_gui__text_input}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Displays a keyboard.
 
 <img src="text_input.png" width="200" alt="Sample screenshot of the view" />

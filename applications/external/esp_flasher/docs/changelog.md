@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## v1.7
 
 Adds C5 support thanks to app changes by @Play2BReal and espressif library changes by @Dzarda7 !

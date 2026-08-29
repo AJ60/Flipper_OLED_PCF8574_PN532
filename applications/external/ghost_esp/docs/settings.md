@@ -1,5 +1,12 @@
 # Ghost ESP App Settings Guide
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Overview
 This document explains how to add new settings to the Ghost ESP application. The app uses a structured approach to handle settings with metadata, storage, and UI integration.
 

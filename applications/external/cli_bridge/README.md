@@ -1,4 +1,11 @@
 # flipperzero-cli-bridge
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 Allows CLI control from GUI, giving untethered access to sub-ghz chat, system diagnostics, and more.
 # Installation
 ## Easy way - get a .fap file from the releases page
@@ -6,7 +13,7 @@ Swing by the [releases](https://github.com/ranchordo/flipperzero-cli-bridge/rele
 ## Hard way - building from source
 The following commands will (probably) not work on Windows. If you run Windows, use wsl or a linux vm or something.
 ```sh
-git clone https://github.com/flipperdevices/flipperzero-firmware
+git clone https://github.com/AJ60/Oled_PCF8574_PN532
 cd ./flipperzero-firmware
 git clone https://github.com/ranchordo/flipperzero-cli-bridge ./applications_user/flipperzero-cli-bridge/
 ./fbt fap_dist APPSRC=applications_user/flipperzero-cli-bridge

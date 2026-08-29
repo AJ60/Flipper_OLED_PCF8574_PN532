@@ -1,5 +1,12 @@
 # MIFARE Classic Editor
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 An application for viewing and editing MIFARE Classic .nfc files without access to an external device. Supports all card types supported by the Flipper: 0.3K (Mini), 1K, and 4K - with both 4 and 7 byte UIDs.
 
 ## Features

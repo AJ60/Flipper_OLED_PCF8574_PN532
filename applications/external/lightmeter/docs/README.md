@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## Lightmeter app for photography
 
 An application that suggests settings for your manual camera based on the reading of the ambient light sensor. Can also be used in a pure lux meter mode.

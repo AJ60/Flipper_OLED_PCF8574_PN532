@@ -1,5 +1,12 @@
 # USB connection to the Devboard {#dev_board_usb_connection}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 \image html https://cdn.flipperzero.one/Flipper_Zero_WiFi_devboard_USB_connection_CDN.jpg width=700
 
 To connect to the Developer Board via USB, do the following:

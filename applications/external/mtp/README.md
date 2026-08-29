@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 <h1 align="center">Flipper Zero: MTP</h1>
 
 <a href="https://www.youtube.com/watch?v=e35w9nYTJfE">

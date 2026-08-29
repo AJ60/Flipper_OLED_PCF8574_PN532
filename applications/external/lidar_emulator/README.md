@@ -1,4 +1,11 @@
 # LIDAR Emulator
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 This app can be used to emulate infrared signals of different LIDARs.
 
 ## Instructions

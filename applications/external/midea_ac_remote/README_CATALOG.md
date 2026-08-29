@@ -1,5 +1,12 @@
 # Midea AC Remote
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Midea Electric AC remote control for Flipper Zero.
 
 Compatible with "RG10B(B)/BGEF" remote type and probably others similar: "RG10B(B1)/BGEFU1", "RG10B1(B)/BGEF", "RG10B2(B)/BGCEF",

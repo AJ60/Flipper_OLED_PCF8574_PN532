@@ -1,5 +1,12 @@
 # ComboCracker-FZ
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 **Combo Cracker** is an on-the-go combination lock cracking tool for the **Flipper Zero**, inspired by security researcher [Samy Kamkar](https://github.com/samyk)’s work on the mechanical vulnerabilities in *Master Lock* combination padlocks.
 
 Using a clever approach/exploit and feedback from the lock’s dial resistance, you can determine the combination in **just 8 attempts or less** — instead of the known issues which deduce such to 100 or so brute-force attempts.
@@ -54,4 +61,4 @@ ABOUT -> RIGHT - Brief description
 Inspired by: [Samy Kamkar’s](https://github.com/samyk) lock cracking research
 
 
-Built for: [Flipper Zero](https://github.com/flipperdevices/flipperzero-firmware)
+Built for: [Flipper Zero](https://github.com/AJ60/Oled_PCF8574_PN532)

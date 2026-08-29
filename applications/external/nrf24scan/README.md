@@ -1,5 +1,12 @@
 #  NRF24 scanner with logging and resend ability for Flipper Zero
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 An [NRF24](https://www.sparkfun.com/datasheets/Components/SMD/nRF24L01Pluss_Preliminary_Product_Specification_v1_0.pdf) driver for the [Flipper Zero](https://flipperzero.one/) device. The NRF24 is a popular line of 2.4GHz radio transceivers from Nordic Semiconductors.<br>
 NRF24L01+ Enhanced ShockBurst packet decoder example using Python: [nrf24_packet_decoder.py](https://raw.githubusercontent.com/vad7/nrf24scan/master/nrf24_packet_decoder.py)<br>
 <br>

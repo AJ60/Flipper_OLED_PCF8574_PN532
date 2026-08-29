@@ -1,5 +1,12 @@
 # FlipLibrary App for Flipper Zero  
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 The **FlipLibrary** app for Flipper Zero is a versatile and user-friendly application that offers a wide range of features to enhance your Flipper Zero experience.  
 
 The app includes a **dictionary**, **random facts**, and numerous additional functionalities, all accessible directly from your Flipper Zero device. It is designed for easy navigation and quick access to information, making it a handy companion for on-the-go learning and entertainment. Big shout out to [Derek Jamison](https://github.com/jamisonderek) for his valuable contributions!  

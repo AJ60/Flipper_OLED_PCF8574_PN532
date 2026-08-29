@@ -1,11 +1,18 @@
 # Reversi game for Flipper Zero
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ![Game screen](images/game.png)
 ![Menu screen](images/menu.png)
 ![You win](images/win.png)
 
 ## Compile
-1. Clone [firmware](https://github.com/flipperdevices/flipperzero-firmware)
+1. Clone [firmware](https://github.com/AJ60/Oled_PCF8574_PN532)
 2. Go to the `applications_user` directory
 3. Create a symlink to this repo assuming that these two repos are on the same level:
 ```sh

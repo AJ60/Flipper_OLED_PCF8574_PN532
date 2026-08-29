@@ -1,5 +1,12 @@
 # SubGHz BruteForcer Application for Flipper Zero
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ![image](https://github.com/DarkFlippers/flipperzero-subbrute/assets/31771569/0a952559-94c0-40b7-8b9c-9ee4e37c6cd6)
 
 
@@ -22,7 +29,7 @@ You can also download the [release](https://github.com/derskythe/flipperzero-sub
 > [!WARNING]
 >
 > The application has not been tested on other firmware versions other than [Unleashed Firmware](https://github.com/DarkFlippers/unleashed-firmware)
-> and [OFW](https://github.com/flipperdevices/flipperzero-firmware).
+> and [OFW](https://github.com/AJ60/Oled_PCF8574_PN532).
 
 ---
 

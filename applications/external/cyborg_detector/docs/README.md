@@ -1,5 +1,12 @@
 # Cyborg Detector
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## How it works
 
 Run the app and move the Flipper Zero over implants or other LED equipped NFC tags and the light will glow.

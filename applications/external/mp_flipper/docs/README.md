@@ -1,5 +1,12 @@
 # MicroPython
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 MicroPython is a version of the popular Python programming language, especially tailored for the hardware requirements of small microcontrollers, like the Flipper Zero.
 Instead of supporting the full standard library, only a subset is implemented, carefully selected with the requirements of a microcontroller environment in mind.
 But this should not limit your creativity and ability to create great applications at all.

@@ -1,5 +1,12 @@
 # Flipper Zero as CMSIS DAP/DAP Link
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Flipper Zero as a [Free-DAP](https://github.com/ataradov/free-dap) based SWD\JTAG debugger. Free-DAP is a free and open source firmware implementation of the [CMSIS-DAP](https://www.keil.com/pack/doc/CMSIS_Dev/DAP/html/index.html) debugger.
 
 ## Protocols

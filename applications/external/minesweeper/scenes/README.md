@@ -1,5 +1,12 @@
 # IMPORTANT INFO
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 This scene directory has 3 important files in addition to other scene specific files:
 
 1. [minesweeper_scene.c](https://github.com/squee72564/F0_Minesweeper_Fap/blob/main/scenes/minesweeper_scene.c)

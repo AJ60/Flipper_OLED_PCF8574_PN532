@@ -1,6 +1,13 @@
 # Infrared Captures
 
-**Credits go to @gsurkov, @skotopes, @knrn-ai, @DrZlo13 and @ahumeniy for making and contributing to the original `UniversalRemotes.md` Documentation located [Here](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/documentation/UniversalRemotes.md).** 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
+**Credits go to @gsurkov, @skotopes, @knrn-ai, @DrZlo13 and @ahumeniy for making and contributing to the original `UniversalRemotes.md` Documentation located [Here](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/UniversalRemotes.md).** 
 
 **slightly adapted by @amec0e**
 

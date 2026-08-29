@@ -1,5 +1,12 @@
 # Developing apps using JavaScript SDK {#js_developing_apps_using_js_sdk}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 In the [previous guide](#js_your_first_js_app), we learned how to create and run a JavaScript app on Flipper Zero. However, when debugging a script, you often need to repeatedly modify the code and test it on the device. While you can use qFlipper for this, it involves a lot of repetitive steps. Fortunately, there's a more efficient alternative — the Flipper Zero JavaScript SDK, a set of tools that simplify app development in JavaScript.
 
 Main features of the Flipper Zero JavaScript SDK:

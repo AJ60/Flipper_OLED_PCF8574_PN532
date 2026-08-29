@@ -1,5 +1,12 @@
 # Sub-GHz Remote
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Credit to [Unleashed Firmware](https://github.com/DarkFlippers/unleashed-firmware) team for documentation and the [app itself](https://github.com/DarkFlippers/SubGHz_Remote)!
 
 

@@ -5,6 +5,13 @@
 ![contributions - welcome](https://img.shields.io/badge/contributions-welcome-blue)
 # Blackjack for Flipper Zero
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 
 ![Play screen](screenshots/blackjack.gif)
 
@@ -15,7 +22,7 @@
 * Clone the repository recursively `git clone REPO_URL --recursive` into the firmware's applications_user folder
 * Navigate into the firmwares root folder
 * Make sure you can use
-  the [Fipper build tool](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/documentation/fbt.md)
+  the [Fipper build tool](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/fbt.md)
 * To build the project, type this into your console:
   #### Linux
   > ./fbt fap_{APP_NAME}

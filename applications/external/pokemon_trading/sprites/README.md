@@ -1,5 +1,12 @@
 # Sprite Assets
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 In this folder are the Pokemon sprite sources. They should all be 3 digits and numbered in the national Pokedex order.
 
 

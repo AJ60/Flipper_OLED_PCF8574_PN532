@@ -1,5 +1,12 @@
 # Sentry Safe - Flipper Zero Plugin
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Plugin exploiting vulnerability to open any **Sentry Safe** or **Master Lock** electronic safes.
 
 🔓 Based on the vulnerability described [here](https://github.com/H4ckd4ddy/bypass-sentry-safe)
@@ -53,7 +60,7 @@ If you prefer to build manually:
    ```
 4. Retrieve the `.fap` file from the `dist/` directory.
 
-For more info on the build tool, see the [official documentation](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/documentation/fbt.md).
+For more info on the build tool, see the [official documentation](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/fbt.md).
 
 ---
 

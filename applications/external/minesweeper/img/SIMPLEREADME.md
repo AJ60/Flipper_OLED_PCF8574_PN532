@@ -1,5 +1,12 @@
 # Minesweeper Implementation for the Flipper Zero.
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Added features unique to this implementation:
 -	Enable board verifier for board generation to ensure unambiguous boards!
 -	Set board width and height

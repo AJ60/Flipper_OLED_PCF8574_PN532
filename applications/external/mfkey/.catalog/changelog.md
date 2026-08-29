@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## 3.1
  - Key recovery is 20% faster, new write buffering of Static Encrypted Nested key candidates performs recovery 70x faster
 ## 3.0

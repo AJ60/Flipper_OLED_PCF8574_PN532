@@ -1,4 +1,11 @@
 # nRF24-Batch
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 Flipper Zero application for nRF24L01 external board. Sends batch commands.
 
 <b>Приложение для Flipper Zero, предназначено для отправки пакетных команд на удаленные устройства, использующие радио nRF24L01.</b><br><br>

@@ -1,4 +1,11 @@
 # flipperzero-qrcode
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 Display qrcodes on the [Flipper Zero]
 
 ![qrcode screenshot](https://github.com/bmatcuk/flipperzero-qrcode/blob/main/ss2.png?raw=true)
@@ -201,7 +208,7 @@ First, clone the [flipperzero-firmware] repo and then clone this repo in the
 `applications_user` directory:
 
 ```bash
-git clone git@github.com:flipperdevices/flipperzero-firmware.git
+git clone git@github.com:AJ60/Oled_PCF8574_PN532.git
 cd flipperzero-firmware/applications_user
 git clone git@github.com:bmatcuk/flipperzero-qrcode.git
 ```
@@ -223,8 +230,8 @@ that is in the lib directory of the flipper-firmware repo (which was originally
 included for a [now-removed demo app]), but modified slightly to fix some
 compiler errors and allow the explicit selection of the qrcode mode.
 
-[now-removed demo app]: https://github.com/flipperdevices/flipperzero-firmware/pull/160/files
-[flipperzero-firmware]: https://github.com/flipperdevices/flipperzero-firmware
+[now-removed demo app]: https://github.com/AJ60/Oled_PCF8574_PN532/pull/160/files
+[flipperzero-firmware]: https://github.com/AJ60/Oled_PCF8574_PN532
 [Flipper Zero]: https://flipperzero.one/
 [QRCode]: https://github.com/ricmoo/QRCode
 [qFlipper]: https://docs.flipperzero.one/qflipper

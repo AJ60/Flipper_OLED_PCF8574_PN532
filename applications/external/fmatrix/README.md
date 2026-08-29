@@ -1,4 +1,11 @@
 # fmatrix v0.3.5
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 fmatrix is a simple Flipper Zero app that displays the famous "matrix rain" effect.
 (suggestions appreciated and welcome!)
 

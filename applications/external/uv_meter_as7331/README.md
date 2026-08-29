@@ -1,5 +1,12 @@
 # UV Meter
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 A Flipper Zero application designed to measure ultraviolet (UV) radiation levels using the [AS7331](https://ams-osram.com/products/sensor-solutions/ambient-light-color-spectral-proximity-sensors/ams-as7331-spectral-uv-sensor) sensor. It supports individual measurements for UV-A, UV-B, and UV-C wavelengths. The easiest way to hook everything up is to use a breakout board, such as the one from [SparkFun](https://www.sparkfun.com/sparkfun-spectral-uv-sensor-as7331-qwiic.html). The application is available in the [Flipper App Catalog](https://lab.flipper.net/apps/uv_meter_as7331) and comes pre-installed on some custom firmware builds, such as the [Momentum Firmware](https://github.com/Next-Flip/Momentum-Firmware). For more behind-the-scenes info, check out the [post on my website](https://michaelbais.ch/projects/personal/uv_meter_for_flipper).
 
 <p float="left">

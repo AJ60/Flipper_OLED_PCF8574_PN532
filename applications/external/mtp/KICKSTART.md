@@ -1,5 +1,12 @@
 # Getting Started with `f0-template`
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Welcome on your path to creating Flipper Zero Application!  
 Here are the few stuff to get started!
 

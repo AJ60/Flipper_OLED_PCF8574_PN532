@@ -1,5 +1,12 @@
 # flipperzero-i2ctools
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Set of i2c tools for Flipper Zero
 
 ![Preview](i2ctools.gif)

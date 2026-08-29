@@ -1,4 +1,11 @@
 # Ghost ESP 👻
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 A Flipper Zero application for interfacing with the Ghost ESP32 firmware
 
 ## Preview

@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 <p align="center">
 	<h1 align="center">Barcode Generator</h1>  
   <p align="center">
@@ -32,7 +37,7 @@ Note: Barcode save locations have been moved from `/barcodes` to `/apps_data/bar
 9) Drag & drop the encoding txts (`code39_encodings.txt`, `code128_encodings.txt` & `codabar_encodings.txt`) into the `barcode_data` folder
 
 ## Building
-1) Clone the [flipperzero-firmware](https://github.com/flipperdevices/flipperzero-firmware) repository or a firmware of your choice
+1) Clone the [flipperzero-firmware](https://github.com/AJ60/Oled_PCF8574_PN532) repository or a firmware of your choice
 2) Clone this repository and put it in the `applications_user` folder
 3) Build this app by using the command `./fbt fap_barcode_App`
 4) Copy the `.fap` from `build\f7-firmware-D\.extapps\Barcode_App.fap` to `apps\Tools` using the qFlipper app

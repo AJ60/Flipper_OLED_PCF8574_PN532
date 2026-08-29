@@ -1,5 +1,12 @@
 # Run time checks and forced system crash {#furi_check}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 The best way to protect system integrity is to reduce amount cases that we must handle and crash the system as early as possible.
 For that purpose, we have a bunch of helpers located in Furi Core `check.h`.
 

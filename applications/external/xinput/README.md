@@ -1,4 +1,11 @@
 # USB Game Controller for Flipper Zero
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 This is an app for the Flipper Zero that emulates a game controller (specifically the Xbox 360 controller) and lets the user interact with the emulated joystick, A and B buttons.
 It also contains a full implementation of XInput for the Flipper Zero that supports every input that a regular Xbox controller does, which you may use in other applications.
 

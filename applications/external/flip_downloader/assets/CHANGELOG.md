@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## v1.3
 - Fixed the ESP32 firmware download functionality to ensure it downloads each file one-by-one (as intended)
 - Switched from "regular" text input to MasterX's (for saving WiFi credentials)

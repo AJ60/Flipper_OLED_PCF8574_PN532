@@ -1,5 +1,12 @@
 # Flipper Share - direct file transfer between flippers
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Overview
 
 Flipper Share is a wireless-enabled file sharing application for Flipper Zero.

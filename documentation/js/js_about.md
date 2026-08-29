@@ -1,5 +1,12 @@
 # About the JavaScript engine {#js_about_js_engine}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 > Developing applications for Flipper Zero is now much more accessible with the introduction of JavaScript support.
 
 Previously, building an app for Flipper Zero required C/C++ skills, setting up a development environment, and studying the code of existing applications and documentation. While embedded developers are very familiar with all of this, we wanted to make it easier for people from all backgrounds to create apps for Flipper Zero.

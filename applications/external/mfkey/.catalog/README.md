@@ -1,5 +1,12 @@
 # Flipper Zero MFKey
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 This application allows you to calculate the keys of MIFARE Classic cards using the Mfkey32 and Nested algorithms directly on your Flipper Zero. After collecting the nonces using the Extract MF Keys feature of the NFC app, they can be used to calculate the keys to the card in the MFKey app.
 
 ## Usage

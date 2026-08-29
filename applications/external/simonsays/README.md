@@ -1,4 +1,11 @@
 # FlipperZero-SimonSays
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 ## Think you can beat Simon?
 ![Image of dolphin saying Simon Says](Simon_Says_Flipper.png "Image of dolphin saying Simon Says")
 

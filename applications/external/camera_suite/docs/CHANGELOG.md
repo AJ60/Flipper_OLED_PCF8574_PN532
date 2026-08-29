@@ -1,5 +1,12 @@
 # Roadmap
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 - Store images to onboard ESP32-CAM SD card (partially completed, #24).
 - Camera preview GUI overlay (#21).
 - Full screen 90 degree and 270 degree fill (#6).

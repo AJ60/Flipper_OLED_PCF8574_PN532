@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## 0.8.3 (2025-04-24)
 - Added PVE multiplayer (up to 5 users per game).
 - Added a level requirement to play multiplayer.

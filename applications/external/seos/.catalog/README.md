@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## Keys
 
 **The app uses all zero keys by default**. It uses an ADF OID of 030107090000000000 ("0.3.1.7.9.0.0.0.0.0").

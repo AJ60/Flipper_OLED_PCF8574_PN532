@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## ESP Flasher app for Flipper Zero
 
 Flipper Zero app to flash ESP chips from the device (no computer connection needed!). Requires an ESP chip connected to the flipper's UART pins (e.g. Wi-Fi devboard). For information on how to connect, see the ESP pinout/wiring details on UberGuidoZ's GPIO section: https://github.com/UberGuidoZ/Flipper/tree/main/GPIO

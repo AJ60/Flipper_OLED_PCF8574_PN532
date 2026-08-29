@@ -1,5 +1,12 @@
 # Programmer Calculator
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 This repository contains a calculator application designed to run on Flipper Zero.
 
 
@@ -31,7 +38,7 @@ cd flipperzero-firmware-wPlugins/
 git clone --recursive --jobs 8 https://github.com/Flipper-XFW/Xtreme-Firmware.git
 cd Xtreme-Firmware/
 --or--
-git clone https://github.com/flipperdevices/flipperzero-firmware.git
+git clone https://github.com/AJ60/Oled_PCF8574_PN532.git
 cd flipperzero-firmware/
 
 # flash firmware directly to the Flipper 
@@ -75,5 +82,5 @@ Distributed under the GPL-3.0 License. See `LICENSE` for more information.
 
 ## Acknowledgements 🎉
 
-- Huge thanks to [Flipper-XFW](https://github.com/Flipper-XFW/Xtreme-Apps/tree/dev/calculator) - [@n-o-T-I-n-s-a-n-e](https://github.com/n-o-T-I-n-s-a-n-e) for being the inspiration and idea behind starting this project.
+- Huge thanks to [Flipper-XFW](https://github.com/Flipper-XFW/Xtreme-Apps/tree/main/calculator) - [@n-o-T-I-n-s-a-n-e](https://github.com/n-o-T-I-n-s-a-n-e) for being the inspiration and idea behind starting this project.
 - This project uses libraries and tools from the Flipper Universal Registry Implementation (FURI), including Furi, Furi HAL, and GUI.

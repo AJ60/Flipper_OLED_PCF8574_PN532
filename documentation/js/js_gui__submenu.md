@@ -1,5 +1,12 @@
 # Submenu GUI view {#js_gui__submenu}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Displays a scrollable list of clickable textual entries.
 
 <img src="submenu.png" width="200" alt="Sample screenshot of the view" />

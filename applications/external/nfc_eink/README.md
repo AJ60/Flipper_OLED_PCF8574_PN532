@@ -1,5 +1,12 @@
 # nfc_eink
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 - This app allows emulation and writing of NFC Eink tags from Waveshare and Goodisplay
 - Image saved as one screen type can be then loaded to screen of another type
 

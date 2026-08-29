@@ -1,5 +1,12 @@
 # SubGHz Scheduler
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 A Flipper Zero app to send SubGHz signals at a given interval. Individual `*.sub` or playlist `*.txt` files can be used. 
 
 
@@ -71,7 +78,7 @@ A Flipper Zero app to send SubGHz signals at a given interval. Individual `*.sub
 
 ## Requirements
 
-This app is tested against the current `dev` and `release` branches of the [OFW](https://github.com/flipperdevices/flipperzero-firmware):
+This app is tested against the current `dev` and `release` branches of the [OFW](https://github.com/AJ60/Oled_PCF8574_PN532):
 
 * Current OFW Version: 1.3.4
 <br>[![Compatibility status:](https://github.com/shalebridge/flipper-subghz-scheduler/actions/workflows/build.yml/badge.svg)](https://github.com/shalebridge/flipper-subghz-scheduler/actions/workflows/build.yml)

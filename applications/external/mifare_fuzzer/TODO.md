@@ -1,6 +1,13 @@
 
 # Flipperzero Mifare Fuzzer - TODO
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 - Create a list of manufacturer codes for 7byte UIDs. _(Now it's fixed to: 0x04 = NXP Semiconductors Germany)_
     - https://github.com/Proxmark/proxmark3/blob/master/client/taginfo.c
     - https://stackoverflow.com/questions/37837730/mifare-cards-distinguish-between-4-byte-and-7-byte-uids

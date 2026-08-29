@@ -1,5 +1,12 @@
 # How to change Flipper name:
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Instruction
 1. Go to Momentum -> Misc -> Spoofing Options -> Flipper Name
 2. Enter your new custom name for your flipper and click `Save`, **name will be saved on microSD card, and will stay same after firmware updates**

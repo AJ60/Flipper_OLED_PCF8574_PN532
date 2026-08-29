@@ -1,5 +1,12 @@
 # Devboard debug modes {#dev_board_debug_modes}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 The Wi-Fi Devboard for Flipper Zero supports **Black Magic** and **DAPLink** debug modes, and you can switch between them depending on your needs. Note that available modes depend on connection:
 
 - **Wi-Fi:** Only **Black Magic** mode is available.

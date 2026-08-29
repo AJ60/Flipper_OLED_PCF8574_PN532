@@ -1,5 +1,12 @@
 # Dialog GUI view {#js_gui__dialog}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Displays a dialog with up to three options.
 
 <img src="dialog.png" width="200" alt="Sample screenshot of the view" />

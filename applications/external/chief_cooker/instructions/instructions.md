@@ -1,5 +1,12 @@
 # Usage instructions
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Installation
 To install this app simply download the `.fap` file from [latest release](https://github.com/denr01/FZ-ChiefCooker/releases/latest).
 

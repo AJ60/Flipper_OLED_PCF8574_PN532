@@ -1,5 +1,12 @@
 # MALVEKE **GAME BOY** Live Camera 
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Introduction
 MALVEKE app, By inserting a GAME BOY Camera cartridge, you can use it as a camera and take snapshots from the Flipper Zero.
 

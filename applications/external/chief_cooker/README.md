@@ -1,4 +1,11 @@
 # Chief Cooker
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 Your ultimate Flipper Zero restaurant pager tool. Be a _real chief_ of all the restaurants on the food court!
 
 This app supports receiving, decoding, editing and sending restaurant pager signals. 

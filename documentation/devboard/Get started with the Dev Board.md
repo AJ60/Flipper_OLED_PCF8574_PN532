@@ -1,5 +1,12 @@
 # Get started with the Devboard {#dev_board_get_started}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 \image html https://cdn.flipperzero.one/Flipper_Zero_WiFi_developer_board_box_CDN.jpg width=700
 
 Before you start using your Devboard, you need to prepare your Flipper Zero and Devboard for debugging. In this guide, we'll walk you through all the necessary steps and provide links to explore the Devboard's capabilities further.

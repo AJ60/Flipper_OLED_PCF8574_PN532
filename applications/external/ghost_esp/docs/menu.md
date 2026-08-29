@@ -1,5 +1,12 @@
 # Ghost ESP App Menu Guide
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Overview
 This guide explains how to add new menu items and commands to the Ghost ESP application. The app uses a structured approach for menu organization, command execution, and UI feedback.
 

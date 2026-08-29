@@ -1,7 +1,14 @@
 # Flipper POCSAG Receiver plugin
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Protocol implementation made by @Shmuma + 512, 2400 speeds support by @htotoo
-Plugin based on [Weather Station](https://github.com/flipperdevices/flipperzero-firmware/tree/dev/applications/plugins/weather_station) from OFW
+Plugin based on [Weather Station](https://github.com/AJ60/Oled_PCF8574_PN532/tree/main/applications/plugins/weather_station) from OFW
 
 Icons by @Svaarich
 
@@ -14,7 +21,7 @@ Default frequency is set to DAPNET - "439987500"
 
 To add new presets and frequencies create file "yourMicroSD/pocsag/settings.txt"
 
-And put [THIS](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/subghz/resources/subghz/assets/setting_user.example) file contents into it, and edit this example for yourself, add needed frequencies
+And put [THIS](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/applications/main/subghz/resources/subghz/assets/setting_user.example) file contents into it, and edit this example for yourself, add needed frequencies
 
 Warning!!! This file is EXAMPLE! It contains frequencies that are commented with "#"
 

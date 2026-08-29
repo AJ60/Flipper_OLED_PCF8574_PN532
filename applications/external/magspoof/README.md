@@ -1,4 +1,11 @@
 # MagSpoof for the Flipper Zero
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 MagSpoof-ing, as [coined / invented by Samy Kamkar](https://github.com/samyk/magspoof), is the use of an electromagnet to emulate the data on a traditional magstripe card —  wirelessly! 
 
 This app ports the original MagSpoof project to the Flipper Zero, adding file management and emulation controls, along with [some experimental features](#skunkworks-and-experimental-features). Visit the [Wiki](https://github.com/zacharyweiss/magspoof_flipper/wiki) for information on getting started.
@@ -37,7 +44,7 @@ There exists a `Read` scene in the app courtesy of hummusec. This is untested, a
 > If using experimental internal TX — while in my testing I've seen no reason to believe this could damage the RFID (or other) hardware, this is inherently using those systems in ways they were neither designed nor intended for; I take no responsibility for fried/bricked Flippers.
 
 ## Credits
-This project interpolates work from [Samy Kamkar](https://github.com/samyk/)'s [original MagSpoof project](https://github.com/samyk/magspoof), [Alexey D. (dunaevai135)](https://github.com/dunaevai135/) & [Alexandr Yaroshevich](https://github.com/AYaro)'s [Flipper hackathon project](https://github.com/dunaevai135/flipperzero-firmware/tree/dev/applications/magspoof), and the [Flipper team](https://github.com/flipperdevices)'s [LF RFID](https://github.com/flipperdevices/flipperzero-firmware/tree/dev/applications/main/lfrfid) and [SubGhz](https://github.com/flipperdevices/flipperzero-firmware/tree/dev/applications/main/subghz) apps.  
+This project interpolates work from [Samy Kamkar](https://github.com/samyk/)'s [original MagSpoof project](https://github.com/samyk/magspoof), [Alexey D. (dunaevai135)](https://github.com/dunaevai135/) & [Alexandr Yaroshevich](https://github.com/AYaro)'s [Flipper hackathon project](https://github.com/dunaevai135/flipperzero-firmware/tree/main/applications/magspoof), and the [Flipper team](https://github.com/flipperdevices)'s [LF RFID](https://github.com/AJ60/Oled_PCF8574_PN532/tree/main/applications/main/lfrfid) and [SubGhz](https://github.com/AJ60/Oled_PCF8574_PN532/tree/main/applications/main/subghz) apps.  
 
 Many thanks to everyone who has helped in addition to those above, most notably: 
 - [arha](https://github.com/arha) for bitmapping work, skunkworks testing, and innumerable suggestions/ideas/feedback (now a collaborator!)

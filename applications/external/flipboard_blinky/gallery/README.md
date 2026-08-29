@@ -1,5 +1,12 @@
 # FlipBlinky
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Overview
 
 The FlipBlinky application turns your Flipper Zero + FlipBoard into a blinky badge for wearing at conferences.

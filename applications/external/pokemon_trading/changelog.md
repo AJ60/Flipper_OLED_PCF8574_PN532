@@ -1,5 +1,12 @@
 # Changelog - Patch Notes
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Version 2.3
 - Fix potential bug in copying incoming trade data to the live working struct
 

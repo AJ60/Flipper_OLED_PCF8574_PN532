@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## v0.7.2
 
 Thanks to @justcallmekoko for adding app support for the new features in Marauder firmware v1.1.0! See the additions and grab the firmware for your wifi board here: https://github.com/justcallmekoko/ESP32Marauder/releases/tag/v1.1.0

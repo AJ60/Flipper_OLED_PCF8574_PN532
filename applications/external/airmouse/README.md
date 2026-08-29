@@ -3,6 +3,13 @@
 
 # BMI Air Mouse
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Brief
 
 > "You can turn anything into an air mouse if you're brave enough"

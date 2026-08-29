@@ -1,5 +1,12 @@
 # Nearby Files
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 [![](https://img.shields.io/badge/install-app_catalog-orange?style=for-the-badge)](https://lab.flipper.net/apps/nearby_files)
 [![](https://img.shields.io/github/v/release/Stichoza/flipper-nearby-files?style=for-the-badge)](https://github.com/Stichoza/flipper-nearby-files/releases/latest)
 
@@ -106,4 +113,4 @@ Currently there are no apps or firmware that adds GPS data to NFC and RFID files
 
 > [!Warning]
 > If your Flipper is crashing or rebooting while running GPS related apps, try setting `Listen UART` to `None` in Flipper settings.
-> Source: https://github.com/flipperdevices/flipperzero-firmware/issues/4081#issuecomment-2631762477
+> Source: https://github.com/AJ60/Oled_PCF8574_PN532/issues/4081#issuecomment-2631762477

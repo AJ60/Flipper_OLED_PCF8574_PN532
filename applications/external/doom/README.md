@@ -1,4 +1,11 @@
 # Doom Flipper Zero edition
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
 ## Will it run Doom?
 As tradition goes, Doom is being ported to almost every possible embedded electronic device. Therefore I did an attempt to come up with something close to Doom and still compatible on the Flipper Zero's hardware. This is not the actual Doom game but a port made from yet another Doom port to the Arduino Nano - https://github.com/daveruiz/doom-nano/. This port is basically a raycasting engine, using Doom sprites.
 This version is very basic and might be improved over time.

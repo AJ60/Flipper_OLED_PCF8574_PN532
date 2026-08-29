@@ -74,6 +74,13 @@ against it, in the hope some of the decoders will make sense of the signal.
 
 # Usage
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 In the main screen, the application shows the longest coherent signal detected so far. The user can switch to other views pressing the LEFT and RIGHT keys. The BACK key will return back to the main screen. Long pressing BACK will quit the application.
 
 ## Main raw signal screen
@@ -150,7 +157,7 @@ fun to watch, resembling an old CRT TV set.
 ```
 mkdir -p ~/flipperZero/official/
 cd ~/flipperZero/official/
-git clone --recursive  https://github.com/flipperdevices/flipperzero-firmware.git  ./
+git clone --recursive  https://github.com/AJ60/Oled_PCF8574_PN532.git  ./
 ./fbt
 ```
 * Copy this application folder in `official/applications_user`.

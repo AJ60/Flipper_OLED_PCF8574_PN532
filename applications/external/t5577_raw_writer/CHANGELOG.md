@@ -1,3 +1,8 @@
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
 ## 1.2
 
 Fixed the bug where the user block number is incorrectly handled throughout the app's saving and loading functions. Also updated the wording in configuration to be more accurate.

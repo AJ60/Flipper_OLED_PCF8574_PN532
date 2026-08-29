@@ -1,5 +1,12 @@
 # AVR ISP Programmer
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 The AVR ISP Programmer application allows you to do various things with AVR microcontrollers using the ISP interface. It can autonomously Dump and Flash the microcontroller using files on the SD card. It can also act as an ISP programmer for programming from a desktop IDE via USB. It is compatible with AVR-based microcontrollers, such as the ATmega328P used in the Arduino Uno, ATTiny85, and many others.
 
 ## Wiring

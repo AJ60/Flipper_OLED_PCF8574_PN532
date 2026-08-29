@@ -1,5 +1,12 @@
 # Widget GUI view {#js_gui__widget}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Displays a combination of custom elements on one screen.
 
 <img src="widget.png" width="200" alt="Sample screenshot of the view" />

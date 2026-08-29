@@ -1,5 +1,12 @@
 # Features
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Adding Python support to the Flipper Zero platform was only possible by rigorously sorting unnecessary language features.
 So here is a detailed list of all supported and unsupported Python language features.
 

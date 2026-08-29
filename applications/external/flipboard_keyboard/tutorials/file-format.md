@@ -1,5 +1,12 @@
 # File Format
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 All of the FlipBoard applictions save their settings file in the `SD Card/apps_data/flipboard` folder.  The file `flipboard_file.h` defines the methods to load and save the model (which is all of the configuration data for the main application).  The `flipboard_file.c` file implements these methods.  It uses the name of the model to create the file name.  
 
 - The FlipKeyboard's `app_config.h` has `#define FLIPBOARD_APP_NAME "keyboard"` which defines the model name as 'keyboard', so the file is `SD Card/apps_data/flipboard/keyboard.txt`.

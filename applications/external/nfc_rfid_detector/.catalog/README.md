@@ -1,5 +1,12 @@
 # NFC&LFRFID Field Detector
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 This application allows you to detect the presence of NFC and LF RFID fields. It can be used to check what technology is used in a reader that you don't have documentation for, or to check whether a reader is working properly.
 
 ## Usage
