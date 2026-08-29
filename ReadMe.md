@@ -195,6 +195,128 @@ Compiled binaries land in `build/f7-firmware-C/` and `dist/f7-C/`.
 
 ---
 
+## 📐 Engineering Architecture & Waterfall Diagrams
+
+### 1. 🏗️ Multi-Layer System Stack
+
+```mermaid
+graph TD
+    subgraph AppLayer [Application Layer]
+        Apps[GUI Apps: NFC, Sub-GHz, RFID, BadUSB, FAPs]
+    end
+
+    subgraph ServiceLayer [Middleware & System Services]
+        GUI_Srv[GUI Service & Canvas]
+        Input_Srv[Input Service & Debounce]
+        Storage_Srv[Storage Service & SD FatFS]
+        Power_Srv[Power Service & INA219 Fuel Gauge]
+        Dolphin_Srv[Dolphin Pet Engine]
+    end
+
+    subgraph CoreLayer [Furi OS Core]
+        PubSub[FuriPubSub Event Broker]
+        Record[FuriRecord Service Locator]
+        Threads[FuriThread / FreeRTOS Kernel]
+    end
+
+    subgraph HalLayer [Furi Hardware Abstraction Layer - HAL]
+        HAL_OLED[SSD1306 / SH1106 Driver]
+        HAL_PCF[PCF8574 Keypad Driver]
+        HAL_NFC[PN532 HW Crypto1 / ST25R3916]
+        HAL_RFID[125kHz Analog Timer Demodulator]
+        HAL_SubGHz[CC1101 SPI Driver]
+    end
+
+    Apps --> GUI_Srv
+    Apps --> Storage_Srv
+    GUI_Srv --> PubSub
+    Input_Srv --> PubSub
+    PubSub --> Threads
+    Threads --> HAL_OLED
+    Threads --> HAL_PCF
+    Threads --> HAL_NFC
+    Threads --> HAL_RFID
+    Threads --> HAL_SubGHz
+```
+
+---
+
+### 2. 🌊 System Startup & Initialization Waterfall
+
+```mermaid
+graph TD
+    Reset[Power-On Reset Vector] --> Clock[Init RCC Clocks: 64 MHz PLL]
+    Clock --> OTP[Verify OTP Profile @ 0x1FFF7000]
+    OTP --> GPIO[Configure GPIO Pinmux & Pull-ups]
+    GPIO --> Buses[Initialize I2C1, I2C3, and SPI1 Buses]
+    Buses --> RTOS[Start FreeRTOS Kernel]
+    RTOS --> FuriCore[Initialize Furi Core & Record Locator]
+    FuriCore --> Probe[Probe Hardware: INA219, SSD1306, PCF8574, SD Card]
+    Probe --> Services[Spawn System Services in Dedicated Threads]
+    Services --> Desktop[Render Splash & Launch Main Desktop UI]
+```
+
+---
+
+### 3. 🔄 I2C Bus Arbitration & Rate-Limited Self-Healing Waterfall
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as Application Render Loop
+    participant Gui as GUI Service
+    participant HAL as Furi HAL I2C1 Engine
+    participant Bus as Physical I2C1 Bus
+    participant PCF as PCF8574 Keypad (0x20)
+    participant OLED as SSD1306 OLED (0x3C)
+
+    Gui->>HAL: Acquire I2C1 Mutex
+    HAL->>Bus: Flush 1024-byte Framebuffer Chunk
+    Bus-->>OLED: Display Pixels Refreshed
+    HAL->>Gui: Release I2C1 Mutex
+
+    PCF-->>HAL: Button Pressed (PB0 Low Ext Interrupt)
+    HAL->>Bus: Read Keypad Byte (0x20)
+    alt Bus Normal
+        Bus-->>HAL: Valid Key State (0xEF)
+        HAL->>App: Dispatch InputEvent (Key: OK)
+    else Bus Wedged by RF Noise
+        Bus-->>HAL: Timeout / NACK
+        HAL->>HAL: Rate-Limited Self-Heal (Check & Restore)
+        HAL->>Bus: Send 9x SCL Clock Pulses + STOP + Reconfigure
+        HAL->>App: Retain Cached Key (No Dropped Presses)
+    end
+```
+
+---
+
+### 4. ⚡ PN532 Hardware Crypto1 & ISO 14443-4 APDU Protocol Flow
+
+```mermaid
+graph TD
+    Detect[Detect Tag via InListPassiveTarget 0x4A] --> TypeCheck{Check SAK / ATQA}
+    
+    TypeCheck -->|SAK 0x08/0x18: MIFARE Classic| HW_Crypto[PN532 Hardware Crypto1 InAuth 0x40]
+    TypeCheck -->|SAK 0x28: EMV Bank Cards| ISO_Tunnel[Tunnel ISO 7816-4 APDUs via InDataExchange 0x42]
+    TypeCheck -->|SAK 0x00: Ultralight / NTAG| NTAG_Read[Direct Page Read 0x30]
+
+    HW_Crypto --> AuthCheck{Auth Success?}
+    AuthCheck -->|Yes| ReadBlock[Read Block Data via InDataExchange]
+    AuthCheck -->|Checksum Error| RetryCheck{Retry Attempt < 3?}
+    RetryCheck -->|Yes| HW_Crypto
+    RetryCheck -->|No| NextSector[Advance to Next Key / Sector]
+```
+
+---
+
+### 📚 Deep-Dive Engineering Documentation:
+* 🏛️ [**System & Firmware Architecture Guide**](documentation/ARCHITECTURE.md) — FreeRTOS task scheduling, memory maps, IPCC dual-core mailbox, and Furi OS primitives.
+* 🌊 [**Firmware Boot & System Lifecycle Guide**](documentation/BOOT_AND_LIFECYCLE.md) — Step-by-step waterfall sequence, OTP validation, bus recovery, and sleep/wake state machines.
+* ⚡ [**PN532 NFC Protocol & Hardware Acceleration Guide**](documentation/NFC_PN532_ENGINEERING.md) — Hardware Crypto1 authentication, ISO 14443-4 APDU tunneling for bank cards, and checksum error retries.
+* 📐 [**Hardware & Electrical Engineering Guide**](documentation/HARDWARE_DESIGN.md) — Schematic analysis, I2C pull-up calculations, 125kHz analog tank tuning, and power decoupling.
+
+---
+
 ## 📐 Advanced Circuit & LF-RFID Schematic
 
 Full electronic schematics are included in the repository:
@@ -222,6 +344,7 @@ Full electronic schematics are included in the repository:
 | | `PA1` (Data In) | MCU `TIM1_CH1` | Demodulated RX Envelope Input |
 
 </details>
+
 
 ---
 
