@@ -1,25 +1,22 @@
 # 🐬 DIY Flipper Zero (OLED Edition)
 
-> Build your own Flipper Zero using easy-to-find modules, a crisp I2C OLED screen, fast buttons, NFC, RFID, and sub-GHz radio!
+> Build your own DIY Flipper Zero with an I2C OLED display, PCF8574 keypad, PN532 NFC reader, and discrete sub-GHz / 125kHz RFID hardware!
 
-[![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/Oled_PCF8574_PN532)
+[![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/oled_flipper)
 [![Platform](https://img.shields.io/badge/platform-STM32WB55-orange.svg)](https://www.st.com/en/microcontrollers-microprocessors/stm32wb-series.html)
 [![Maintainer](https://img.shields.io/badge/maintainer-AJ__60-brightgreen.svg)](https://github.com/AJ60)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
-> [!TIP]
-> ❓ **New to electronics?** This guide is designed so anyone can build their own device step-by-step. If you have questions, visit **[GitHub Issues & Discussions](https://github.com/AJ60/Oled_PCF8574_PN532/issues)**!
+> [!CAUTION]
+> ⚖️ **LEGAL & EDUCATIONAL DISCLAIMER**:
+> This project and firmware are created strictly for **educational, academic research, and authorized security testing purposes only**. 
+> - **DO NOT** use this firmware or hardware for any unauthorized access, card cloning, or malicious activities.
+> - The developers and contributors assume **no liability or responsibility** for any misuse, damage to property, or illegal actions committed using this software or hardware.
 
----
-
-## 📷 What It Looks Like in Real Life
-
-Here is the assembled physical DIY board running the custom firmware:
-
-<p align="center">
-  <img src="mics/IMG_20260201_143415.JPG" width="48%" alt="DIY Flipper Front" />
-  <img src="mics/IMG_20260201_161815.JPG" width="48%" alt="DIY Flipper Angle" />
-</p>
+> [!WARNING]
+> 🚧 **DEVELOPMENT STATUS NOTICE**:
+> - **NFC Subsystem (PN532)**: **Under Active Development / Experimental.** Currently tested and verified only with **MIFARE Classic 1K tags**, **NTAG series (NTAG213/215/216/Ultralight)**, and **EMV ATM / Bank payment cards** (ISO 14443-4 APDU reading). Other NFC standards and card types may behave unpredictably.
+> - **125 kHz LF-RFID Subsystem**: **Under Active Development / Experimental.** May contain bugs due to discrete analog hardware tolerances, coil inductance variance, and signal demodulation thresholds.
 
 ---
 
@@ -34,7 +31,7 @@ Think of your DIY Flipper as a friendly little robot made of modular building bl
 | **1** | **WeAct STM32WB55** | 🧠 **The Brain** | Fast dual-core chip that runs the operating system, games, and apps. |
 | **2** | **SSD1306 0.96" OLED** | 👀 **The Eyes** | Shows animations, dolphin pet, menus, and signal frequencies. |
 | **3** | **PCF8574 Expander** | 🎮 **The Hands** | Connects 6 direction/action buttons + haptic vibration rumble. |
-| **4** | **PN532 / ST25R3916** | 💳 **Keycard Reader** | Reads and emulates 13.56 MHz NFC tags, hotel keys, and amiibos. |
+| **4** | **PN532 NFC Module** | 💳 **Keycard Reader** | Reads 13.56 MHz NFC (MIFARE Classic 1K, NTAG, Bank Cards). |
 | **5** | **CC1101 Radio** | 📻 **The Antenna** | Transmits and catches sub-GHz radio signals (gates, remotes, sensors). |
 | **6** | **MicroSD Card Module** | 💾 **The Backpack** | Stores your saved keys, remotes, scripts, games, and animations. |
 | **7** | **Passive Buzzer** | 🔊 **The Voice** | Plays fun 8-bit chimes, game sounds, and keypress clicks. |
@@ -76,8 +73,7 @@ All 3 modules share the same two clock & data pins:
 
 ---
 
-#### 2. SPI Bus Devices (SD Card, CC1101 Radio & NFC)
-These modules share the `MOSI` and `SCK` lines, with unique Chip Select (`CS`) pins:
+#### 2. SPI & External Bus Devices (SD Card, CC1101 Radio & NFC)
 
 | Module | Module Pin | Connects to MCU Pin | Purpose |
 |---|---|---|---|
@@ -101,9 +97,9 @@ These modules share the `MOSI` and `SCK` lines, with unique Chip Select (`CS`) p
 | 🔴 **IR Receiver** | `DATA` | **PA0** | 38 kHz TSOP receiver |
 | 💡 **IR Transmitter** | `LED Anode` | **PA8** | High-power IR LED (via NPN transistor) |
 | 🏷️ **1-Wire / iButton** | `Data` | **PA3** | Dallas iButton probe with 4.7k pull-up |
-| 📻 **LF-RFID (125 kHz)** | Carrier TX | **PA5** (TIM2_CH1) | Coil driver push-pull stage |
-| | Envelope RX | **PA1** (TIM1_CH1) | Demodulated envelope detector input |
-| | Emulate | **PA2** (TIM2_CH3) | Tag emulation pulse switch |
+| 📻 **LF-RFID (125 kHz)** | Carrier TX | **PA5** (TIM2_CH1) | Coil driver push-pull stage *(Experimental)* |
+| | Envelope RX | **PA1** (TIM1_CH1) | Demodulated envelope input *(Experimental)* |
+| | Emulate | **PA2** (TIM2_CH3) | Tag emulation pulse switch *(Experimental)* |
 
 ---
 
@@ -168,7 +164,7 @@ Connect your OLED screen, buttons, and MCU according to the wiring diagram.
 2. Open the official **qFlipper** application on your PC.
 3. qFlipper will show **"RECOVERY MODE"**. Click **"REPAIR"** to install the bootloader.
 4. Put the board back into **DFU mode** once more.
-5. Click **"Install from file"** in qFlipper and select our **`.tgz`** firmware package from the [Releases](https://github.com/AJ60/Oled_PCF8574_PN532/releases) page.
+5. Click **"Install from file"** in qFlipper and select our **`.tgz`** firmware package from the [Releases](https://github.com/AJ60/oled_flipper/releases) page.
 6. qFlipper will flash the firmware, turn on the OLED screen, and automatically copy all required game/app resource files to your microSD card!
 
 #### For Normal Updates:
@@ -296,9 +292,9 @@ sequenceDiagram
 graph TD
     Detect[Detect Tag via InListPassiveTarget 0x4A] --> TypeCheck{Check SAK / ATQA}
     
-    TypeCheck -->|SAK 0x08/0x18: MIFARE Classic| HW_Crypto[PN532 Hardware Crypto1 InAuth 0x40]
-    TypeCheck -->|SAK 0x28: EMV Bank Cards| ISO_Tunnel[Tunnel ISO 7816-4 APDUs via InDataExchange 0x42]
-    TypeCheck -->|SAK 0x00: Ultralight / NTAG| NTAG_Read[Direct Page Read 0x30]
+    TypeCheck -->|SAK 0x08/0x18: MIFARE Classic 1K/4K| HW_Crypto[PN532 Hardware Crypto1 InAuth 0x40]
+    TypeCheck -->|SAK 0x28: EMV ATM / Bank Cards| ISO_Tunnel[Tunnel ISO 7816-4 APDUs via InDataExchange 0x42]
+    TypeCheck -->|SAK 0x00: NTAG / Ultralight| NTAG_Read[Direct Page Read 0x30]
 
     HW_Crypto --> AuthCheck{Auth Success?}
     AuthCheck -->|Yes| ReadBlock[Read Block Data via InDataExchange]
@@ -317,13 +313,14 @@ graph TD
 
 ---
 
-## 📐 Advanced Circuit & LF-RFID Schematic
+## 📐 LF-RFID Discrete Analog Subsystem
 
-Full electronic schematics are included in the repository:
-
-![DIY Flipper Schematic](misc/schematic.png)
+The LF-RFID 125 kHz subsystem operates using discrete analog components:
 
 * 📄 **LF-RFID PDF Schematic**: [Download 125kHz Subsystem Schematic (PDF)](misc/rfid_lf.pdf)
+
+> [!WARNING]
+> The 125 kHz analog circuit is sensitive to component tolerances (coil inductance, capacitor values, and diode forward voltage). It is provided for **educational experimentation** and may require fine-tuning on breadboards.
 
 <details>
 <summary><b>🔍 View LF-RFID Component Bill of Materials (BOM)</b></summary>
@@ -344,7 +341,6 @@ Full electronic schematics are included in the repository:
 | | `PA1` (Data In) | MCU `TIM1_CH1` | Demodulated RX Envelope Input |
 
 </details>
-
 
 ---
 

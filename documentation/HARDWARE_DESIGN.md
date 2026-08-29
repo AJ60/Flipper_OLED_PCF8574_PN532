@@ -1,7 +1,12 @@
 # 📐 Hardware & Electrical Engineering Guide: DIY Flipper Zero (OLED Edition)
 
 **Target MCU**: STM32WB55CGU6 (UFQFPN48 package)  
-**Maintainer**: [**AJ_60**](https://github.com/AJ60)
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Notice**: ⚖️ *Strictly for educational and academic engineering research purposes only.*
+
+> [!WARNING]
+> 🚧 **125 kHz LF-RFID Analog Hardware Status**:
+> The discrete analog front-end for 125 kHz LF-RFID is **under active development / experimental**. Signal demodulation and card emulation reliability depend heavily on coil inductance tolerances, antenna tuning, and diode forward voltage thresholds. It may contain bugs or require component tuning on custom breadboards.
 
 ---
 

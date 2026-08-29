@@ -1,7 +1,19 @@
 # ⚡ PN532 NFC Protocol & Hardware Acceleration Engineering: DIY Flipper Zero
 
 **Component**: PN532 NFC Controller (NXP) over I2C3 (SCL: `PC0`, SDA: `PC1`, IRQ: `PA2`)  
-**Maintainer**: [**AJ_60**](https://github.com/AJ60)
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Status**: 🚧 **Under Active Development / Experimental**
+
+> [!CAUTION]
+> ⚖️ **EDUCATIONAL & RESEARCH USE ONLY**:
+> This document and the associated NFC drivers are provided strictly for educational purposes, cryptographic research, and authorized personal testing. Any unauthorized interception, card cloning, or unlawful activities are strictly prohibited. The author assumes no liability for misuse.
+
+> [!NOTE]
+> **Tested & Verified NFC Hardware Target Scope**:
+> - ✅ **MIFARE Classic 1K / 4K**: Tested with hardware Crypto1 acceleration and dictionary attack parsing.
+> - ✅ **NTAG Series (NTAG213, NTAG215, NTAG216, Ultralight)**: Tested with direct page reading and standard NDEF dumps.
+> - ✅ **Contactless EMV Bank / ATM Payment Cards**: Tested with ISO 14443-4 APDU wrapping and PPSE application selection.
+> - ⚠️ Other proprietary transponders or card types are experimental and under ongoing development.
 
 ---
 
