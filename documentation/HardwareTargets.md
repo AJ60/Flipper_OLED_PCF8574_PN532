@@ -16,7 +16,7 @@ Our DIY Flipper Zero port utilizes the **`f7`** target architecture customized f
 | **MCU** | STM32WB55CGU6 (UFQFPN48) | Dual-Core Cortex-M4 + M0+ | 64 MHz PLL, 1 MB Flash, 256 KB RAM |
 | **Display** | 0.96" SSD1306 / SH1106 OLED | I2C1 Bus (0x3C / 0x3D) | SCL: `PA9`, SDA: `PB9` |
 | **Keypad** | PCF8574 Remote 8-Bit I/O Expander | I2C1 Bus (0x20) | INT: `PB0` (Ext Interrupt) |
-| **NFC** | NXP PN532 (HW Crypto1 Accelerated) | I2C3 Bus (0x24) | SCL: `PC0`/`PA7`, SDA: `PC1`/`PB4`, IRQ: `PA2` |
+| **NFC** | NXP PN532 (HW Crypto1 Accelerated) | I2C3 Bus (0x24) | SCL: `PA7` (header "C0"), SDA: `PB4` (header "C1"), IRQ: `PA2` |
 | **Sub-GHz** | TI CC1101 Transceiver | SPI1 Bus + GDO0 IRQ | CS: `PA15`, SCK: `PB3`, MOSI: `PB5`, MISO: `PA6`, GDO0: `PA1` |
 | **MicroSD** | SPI FatFS Storage | SPI1 Bus | CS: `PA10`, SCK: `PB3`, MOSI: `PB5`, MISO: `PA6` |
 | **Power Monitor**| TI INA219 / INA226 Fuel Gauge | I2C1 Bus (0x40) | SCL: `PA9`, SDA: `PB9`, ALERT: `PB1` |

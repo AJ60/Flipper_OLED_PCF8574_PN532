@@ -9,7 +9,7 @@
 
 > Build your own DIY Flipper Zero with an I2C OLED display, PCF8574 keypad, PN532 NFC reader, and discrete sub-GHz / 125kHz RFID hardware!
 
-[![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/oled_flipper)
+[![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/Oled_PCF8574_PN532)
 [![Platform](https://img.shields.io/badge/platform-STM32WB55-orange.svg)](https://www.st.com/en/microcontrollers-microprocessors/stm32wb-series.html)
 [![Maintainer](https://img.shields.io/badge/maintainer-AJ__60-brightgreen.svg)](https://github.com/AJ60)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
@@ -89,8 +89,8 @@ graph LR
         GND["⚫ GND (Ground Rail)"]
         I2C1_SCL["🟡 PA9 (I2C1 Clock)"]
         I2C1_SDA["🔵 PB9 (I2C1 Data)"]
-        I2C3_SCL["🟡 PC0 (I2C3 Clock)"]
-        I2C3_SDA["🔵 PC1 (I2C3 Data)"]
+        I2C3_SCL["🟡 PA7 (header C0) (I2C3 Clock)"]
+        I2C3_SDA["🔵 PB4 (header C1) (I2C3 Data)"]
         SPI_SCK["🟡 PB3 (SPI Clock)"]
         SPI_MOSI["🔵 PB5 (SPI MOSI)"]
         SPI_MISO["🟡 PA6 (SPI MISO)"]
@@ -168,7 +168,7 @@ All 3 modules share the same two clock & data pins:
 | **MicroSD Card** | `CS` | **PA10** | SD Card Select |
 | **CC1101 Radio** | `CSN / CS` | **PA15** | Radio Select |
 | | `GDO0 / G0` | **PA1** | Radio IRQ Signal |
-| **PN532 NFC (I2C3)** | `SCL` / `SDA` | **PC0** / **PC1** | NFC I2C Bus 3 |
+| **PN532 NFC (I2C3)** | `SCL` / `SDA` | **PA7 (header "C0")** / **PB4 (header "C1")** | NFC I2C Bus 3 |
 | | `IRQ` | **PA2** | NFC Card Detect IRQ |
 | **ST25R3916 (SPI)** | `CS` | **PE4** | SPI NFC Select (Alternative) |
 

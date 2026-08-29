@@ -22,7 +22,7 @@ graph TD
         OTP_Load --> GPIO_Init[Initialize GPIO Pinmux & Pull-ups]
         Fallback_Profile --> GPIO_Init
         GPIO_Init --> I2C1_Init[Initialize I2C1 Bus @ 400kHz PA9/PB9]
-        I2C1_Init --> I2C3_Init[Initialize I2C3 Bus @ 100kHz PC0/PC1]
+        I2C1_Init --> I2C3_Init[Initialize I2C3 Bus @ 400kHz PA7/PB4]
         I2C3_Init --> SPI1_Init[Initialize SPI1 Bus @ 32MHz PB3/PB5]
         SPI1_Init --> Timer_Init[Initialize Hardware Timers: TIM1, TIM2, TIM16]
     end

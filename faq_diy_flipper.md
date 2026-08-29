@@ -149,8 +149,8 @@
 |---|---|---|
 | **VCC** | **3.3V** | Power Rail (3.3V only) |
 | **GND** | **GND** | Ground Rail |
-| **SCL** | **PA7 / PC0** | I2C3 Clock |
-| **SDA** | **PB4 / PC1** | I2C3 Data |
+| **SCL** | **PA7** (header "C0") | I2C3 Clock |
+| **SDA** | **PB4** (header "C1") | I2C3 Data |
 | **IRQ** | **PA2** | Card Detect Interrupt |
 
 **Checks:**

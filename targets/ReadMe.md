@@ -13,7 +13,6 @@
 |---|---|---|
 | **`f7/`** | **Flipper Zero (STM32WB55)** | Primary hardware target for the DIY Flipper (WeAct STM32WB55 + I2C OLED SSD1306/SH1106 + PCF8574 Keypad + PN532 NFC). Contains HAL drivers, pinmux configurations, startup scripts, and linker files. |
 | **`furi_hal_include/`** | **Global HAL Includes** | Hardware abstraction interfaces, driver declarations, and bus APIs common across all target platforms. |
-| **`f18/`** | Legacy target definition | Reserved legacy hardware definition. |
 
 ---
 

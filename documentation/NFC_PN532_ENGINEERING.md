@@ -1,6 +1,6 @@
 # ⚡ PN532 NFC Protocol & Hardware Acceleration Engineering: DIY Flipper Zero
 
-**Component**: PN532 NFC Controller (NXP) over I2C3 (SCL: `PC0`, SDA: `PC1`, IRQ: `PA2`)  
+**Component**: PN532 NFC Controller (NXP) over I2C3 (SCL: `PA7`, SDA: `PB4`, IRQ: `PA2`)  
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
 **Status**: 🚧 **Under Active Development / Experimental**
 

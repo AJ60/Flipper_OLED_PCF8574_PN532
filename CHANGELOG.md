@@ -1,187 +1,91 @@
 # Changelog
 
-**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
-
----
-
-
-
 ## [v2.2-OLED] — DIY Flipper Zero (OLED Edition by AJ_60)
 
-### Highlights & Enhancements:
+### Highlights & Enhancements
+
 - **NFC & PN532 Engine**:
-  - Implemented PN532 hardware Crypto1 acceleration for instantaneous MIFARE Classic authentication.
-  - Added ISO 14443-4 APDU frame wrapping and unwrapping support for EMV banking card reads and extended transaction timeouts.
-  - Implemented 3-attempt retry loop on `InDataExchange` for DCS checksum errors with PN532 re-initialization on persistent failures.
-  - SAK card type detection refinements and reliable dictionary attack state recovery.
+  - Implemented PN532 hardware Crypto1 acceleration for instantaneous MIFARE Classic authentication
+  - Added ISO 14443-4 APDU frame wrapping and unwrapping support for EMV banking card reads and extended transaction timeouts
+  - Implemented 3-attempt retry loop on `InDataExchange` for DCS checksum errors with PN532 re-initialization on persistent failures
+  - SAK card type detection refinements and reliable dictionary attack state recovery
 - **Display & Power Management**:
-  - Implemented dynamic OLED contrast control and dimming for SSD1306 displays.
-  - Eliminated display reinit flicker on keypresses and sleep/wake transitions.
-  - Accelerated INA219 / INA226 power monitor bus probing.
+  - Implemented SSD1306 I2C OLED display driver (replaces SPI display)
+  - Dynamic OLED contrast control and dimming
+  - Eliminated display reinit flicker on keypresses and sleep/wake transitions
+  - Accelerated INA219 / INA226 power monitor bus probing
 - **Input & Bus Robustness**:
-  - Reduced PCF8574 debounce threshold (`INPUT_DEBOUNCE_TICKS = 2`) for sub-millisecond tactile button response.
-  - Added rate-limited self-healing expander bus verification (`furi_hal_pcf8574_check_and_restore`) to prevent key drops during heavy RF/I2C activity.
-  - Removed artificial vibro notification delays.
+  - PCF8574 I2C keypad with hardware interrupt (PB0) and 2-tick debounce for sub-millisecond button response
+  - Rate-limited self-healing I2C bus verification (`furi_hal_pcf8574_check_and_restore`) to prevent key drops during heavy RF/I2C activity
+  - I2C1 and I2C3 buses configured for 400kHz fast mode
+  - Removed artificial vibro notification delays
+- **LF-RFID 125kHz**:
+  - Discrete analog resonant tank support (carrier: PA5, envelope RX: PA1, emulate: PA2)
+  - EM4100 fob reading and tag emulation (experimental)
+- **Build & Tooling**:
+  - FlipperOTP GUI tool for OTP profile generation and flashing
+  - diy_flasher_gui.py for automatic DFU flashing
+  - GitHub Actions CI for automated builds
 
 ---
 
-### Breaking Changes:
-- OFW: JS: SDK 1.0:
-  - Scripts using these modules will need to be updated
-  - Module `gui/submenu`:
-    - The API now takes submenu items as view children, instead of as a view prop
-    - Effort required to update scripts using `gui/submenu`: very minimal
-  - Module `gui/widget`:
-    - The `button` event now returns an object with `key` and `type`, instead of just the key name
-    - Effort required to update scripts using `gui/widget`: very minimal
+### Breaking Changes
 
-### Added:
-- Apps:
-  - Games: Geometry Flip (by @goosedev72-projects)
-  - GPIO:
-    - [GPIO] Explorer (by @EvgeniGenchev07)
-    - [KT0803] FM Transmitter (by @goosedev72-projects)
-    - [SPI] Terminal (by @janwiesemann)
-  - GPIO/Debug:
-    - [FTDI232H] FlipTDI (by @Skorpionm)
-    - [INA2xx] INA Meter (by @cepetr)
-  - GPIO/ESP: [ESP32] Ghost ESP (by @jaylikesbunda)
-  - GPIO/FlipBoard:
-    - FlipBoard Blinky (by @jamisonderek)
-    - FlipBoard Keyboard (by @jamisonderek)
-    - FlipBoard Signal (by @jamisonderek)
-    - FlipBoard Simon (by @jamisonderek)
-  - GPIO/FlipperHTTP: Free Roam (by @jblanked)
-  - GPIO/GPS: [NMEA] Nearby Files (by @Stichoza)
-  - GPIO/Sensors: [MH-Z19] CO2 Logger (by @harryob2)
-  - iButton: iButton Converter (by @Leptopt1los)
-  - Infrared:
-    - Hitachi AC Remote (by @dogtopus)
-    - LIDAR Emulator (by @regaly)
-    - Midea AC Remote (by @xakep666)
-    - Mitsubishi AC Remote (by @achistyakov)
-    - Xbox Controller (by @gebeto)
-  - Media:
-    - Fmatrix (by @misterwaztaken)
-    - Image Viewer (by @polioan)
-    - Space Playground (by @alanfortlink)
-    - Video Player (by @LTVA1)
-  - NFC: NFC-Eink (by @RebornedBrain)
-  - RFID: Simultaneous UHF RFID Reader (by @haffnerriley)
-  - Sub-GHz:
-    - Chief Cooker (by @denr01)
-    - Flipper Share (by @lomalkin)
-    - HC-11 Modem (by @Giraut)
-    - Sub Analyzer (by @RocketGod-git)
-    - Sub-GHz Scheduler (by @shalebridge, fixes by @xMasterX)
-  - Tools:
-    - FlipCrypt (by @Tyl3rA)
-    - Programmer Calculator (by @armixz)
-    - Resistance Calculator (by @instantiator)
-    - Tasks (by @MadLadSquad)
-    - Voltage Calculator (by @HappyAmos)
-  - USB:
-    - LEGO Dimensions Toy Pad (by @SegerEnd)
-    - USB-MIDI (by @kribesk, original by @DrZlo13)
-- NFC:
-  - XERO: MIFARE Ultralight C feature parity with MIFARE Classic in native NFC app (by @noproto)
-    - Dictionary attack: Uses system and user dictionaries stored under /nfc/assets/ to unlock Ultralight C tags
-    - Key management: Extra Actions → MIFARE Ultralight C Keys in the NFC app allows you to add, list, and remove Ultralight C keys from your Flipper
-    - UI: Dictionary attack scene and menu options
-  - OFW: FeliCa Service Directory Traverse + Dump All Unencrypted-Readable Services' Blocks (by @zinongli)
-  - OFW: FeliCa Emulation Handle certain Polling commands in firmware (by @dogtopus)
-  - OFW: Amusement IC Card Parser for FeliCa Lite & Lite-S (by @zinongli)
-  - OFW: MFC 1k Banapass Parser (by @zinongli)
-  - Add MIFARE Classic "Show Keys" UI (#473 by @aaronjamt)
-- SubGHz:
-  - UL: Roger (static 28 bit) with add manually support (by @xMasterX & @mishamyte)
-  - UL: V2 Phoenix full support (button switch, add manually, counter decrypt/encrypt) (by @xMasterX & @RocketGod-git, original code by @Skorpionm)
-  - UL: Add Keeloq support for - Motorline (with add manually support), Rosh, Pecinin, Rossi, Merlin, Steelmate (by @xMasterX & @RocketGod-git)
-  - UL: Nero Radio static parse and display more data (by @xMasterX)
-  - UL: Marantec protocol implement CRC verification display and add manually support (by @xMasterX & @li0ard, original code by @Skorpionm)
-  - UL: Keeloq Comunello add manually support (by @xMasterX)
-  - UL: Add variant of 'Add Manually' menu with manual editing for each value (by @MrLego8-9)
-  - UL: Add ZKTeco 430.5 MHz add manually support (by @xMasterX)
-  - UL: Add Elplast 18bit static code protocol (hello Hackcat ^_^)
-  - UL: Try to decode BFT (2 buttons remotes only) on the fly in regular Read mode (by @xMasterX)
-- RFID:
-  - Support writing Securakey, Jablotron and FDX-B to EM4305 cards (#434 by @jamisonderek)
-  - OFW: Show ISO-3166 Country Names For Pet Chips (by @zinongli)
-- BT Remote:
-  - Add Rename Option for BT Remote, simplify Bad KB BLE profile (#439 by @aaronjamt & @WillyJL)
-  - OFW: Make mouse clicker button selectable (by @LordMZTE)
-- MNTM Settings:
-  - Add Main Menu support for directories and generic files (including JS files) (#331 by @956MB & @WillyJL)
-  - Add Skip Sliding Animations option for Lockscreen (#436 by @aaronjamt)
-- CLI:
-  - OFW: NFC CLI commands (by @RebornedBrain)
-  - OFW: Buzzer command (by @ivanbarsukov)
-- JS: Added all missing GUI views for JS (by @portasynthinca3):
-  - Added `gui/button_menu`
-  - Added `gui/button_panel`
-  - Added `gui/menu`
-  - Added `gui/number_input`
-  - Added `gui/popup`
-  - Added `gui/vi_list`
-  - Changed API for `gui/submenu`, see breaking changes above
-- Desktop: Add Keybinds support for directories (#331 by @956MB & @WillyJL)
-- Input Settings: Add Vibro Trigger option (#429 by @956MB)
-- Archive: Support opening and favoriting Picopass files (by @WillyJL)
-- OFW: GUI: Add date/time input module (by @aaronjamt)
+- **Display**: I2C SSD1306 OLED replaces SPI display. OLED screen will be blank during OTA updates (updater uses SPI drivers only).
+- **Input**: PCF8574 I2C keypad replaces direct GPIO buttons. Software-triggered DFU reboot is not supported; use hardware BOOT0 button.
+- **NFC**: PN532 over I2C3 (PA7/PB4) replaces ST25R3916 over SPI. NFC IRQ shared with LF-RFID emulate function on PA2.
+- **Pin Mapping**: Header labels differ from MCU pins. See `documentation/HARDWARE_DESIGN.md` for the complete mapping matrix.
 
-### Updated:
-- Apps:
-  - XERO: MFKey: Key recovery is 20% faster, new write buffering of Static Encrypted Nested key candidates performs recovery 70x faster (by @noproto)
-  - UL: Sub-GHz Remote: Add possibility to use custom buttons (by @MrLego8-9)
-  - Asteroids: Bugfixes, title screen, Drone Buddy power-up (by @SimplyMinimal)
-  - Combo Cracker: Allow press and hold to change values, add tutorial (by @TAxelAnderson), support alphabetic combination locks (by @henrygab)
-  - ESP Flasher: Bump Marauder 1.8.4 (by @justcallmekoko), add C5 support (by @Play2BReal), more reliable bootloader mode on SWCLK (by @WillyJL)
-  - FlipDownloader: Added a new option to download GitHub repositories with dedicated keyboard, add auto updating (by @jblanked)
-  - FlipSocial: C++ rewrite, comments on feed posts, simpler logic and registration (by @jblanked)
-  - FlipWiFi: Minor bugfixes (by @jblanked)
-  - Flipper Blackhat: Add Deauth Broadcast command (by @o7-machinehum)
-  - KeyCopier: Added Weiser WR3 key format (by @lightos), added Suzuki SUZ18 key format (by @RIcePatrol)
-  - Mass Storage: Add ability to spoof USB identity values (by @xtruan)
-  - Metroflip: Fix unsupported card crash, RENFE Suma 10 support, GEG Connect AID added, Top Up log parsing and animations, 16 new rail lines, support for parsing area codes, saving function for Suica/Japan Rail IC, bugfixes (by @luu176)
-  - NFC Maker: Support making empty/blank NDEF payloads (by @WillyJL)
-  - NFC Playlist: Refactor playlist worker, new settings layout and management, loop setting, controls to move between items (by @acegoal07)
-  - NMEA GPS: Moved to GPIO/GPS subfolder (by @WillyJL)
-  - Passy: Misc memory management bugfixes, misc UI improvements (by @qistoph)
-  - Seader: Fix ATS handling (by @NVX), reset SAM on error (by @bettse)
-  - Sentry Safe: New interface, settings & help page (by @H4ckd4ddy)
-  - Seos Compatible: Add keys v2 support with per-device encryption (by @bettse)
-  - Sub-GHz Playlist: Fix crash on disallowed frequencies (by @WillyJL)
-  - Weather Station: Added support for solight TE44 (by @fersingb)
-  - Weebo: Prevent 0x88 in UID[3], add more figures to the database (by @bettse)
-  - WiFi Marauder: Support for ESP32Marauder 1.8.4 (by @justcallmekoko)
-- Sub-GHz:
-  - UL: Add 868.46 MHz to default subghz freqs list (by @xMasterX)
-  - UL: Reduce less popular freqs in default hopper preset, make it faster (by @xMasterX)
-  - UL: Tune Linear (add better EZCode support), Dickert MAHS decoders (by @xMasterX)
-- Infrared:
-  - OFW: Add an old JVC model to universal remotes (by @zgracem)
-  - OFW: Add Daikin FTXN25LV1B9 and Toyotomi KTN22-12R32 to universal remotes (by @minchogaydarov)
-- OFW: BLE: Improved pairing security (by @hedger)
-- JS: Expose button event type in `gui/widget` button callback, see breaking changes above (by @WillyJL)
-- UL: Docs: Update Sub-GHz DoorHan programming instructions (by @li0ard)
+---
 
-### Fixed:
-- CLI: Fix long delay with quick connect/disconnect, qFlipper should connect faster as expected again (by @WillyJL)
-- Storage: Dont send mount event if SD mounted at boot, fix SD card icon showing late on boot (by @WillyJL)
-- Bad KB:
-  - Fix modifier keys with HOLD/RELEASE commands (by @WillyJL)
-  - OFW: Fix demo_windows.txt for newer version of ai enabled Windows Notepad not able to keep up with default fast input text (by @ase1590)
-- Desktop: Fix lock screen hang (#438 by @aaronjamt)
-- NFC:
-  - Fix incorrect Saflok year formula (#433 by @Eltrick)
-  - Fix read crash with unexpectedly large MFC AUTH(0) response, eg with Chameleon Ultra NTAG emualtion (by @WillyJL)
-  - Fix slashes in prefilled filename (by @WillyJL)
-- FBT: Fix redundant decl for apps using an icon disabled in API (by @WillyJL)
-- UL: Sub-GHz: Fix crash in add manually menu (by @xMasterX)
-- OFW: GUI: Fix Number Input Save Icon (by @zinongli)
-- OFW: JS: Stop PWM on exit (by @portasynthinca3)
-- OFW: Sub-GHz: Fix TIM17 config not applied immediately (by @Aerosnail)
+### Added (Fork-specific)
 
-### Removed:
-- Disabled FURI_TRACE due to flash space constraints, `furi_check failed` crashes will no longer show the file path of the error for now
+- PN532 hardware Crypto1 acceleration and ISO 14443-4 APDU tunneling
+- SSD1306 I2C OLED display driver with dynamic contrast
+- PCF8574 I2C keypad driver with self-healing bus
+- INA219/INA226 battery fuel gauge support
+- LF-RFID 125kHz discrete analog subsystem
+- I2C bus arbitration and rate-limited self-healing
+- FlipperOTP GUI tool (`mics/FlipperOTP/generate_otp_gui.exe`)
+- DIY Flasher GUI (`scripts/diy_flasher_gui.py`)
+- GitHub Actions build workflow
+- Comprehensive documentation with Mermaid diagrams, hardware guides, and FAQ
+
+---
+
+### Added (Upstream Momentum/OFW base firmware)
+
+- **Sub-GHz**: Roger (static 28-bit), V2 Phoenix, Keeloq variants (Motorline, Rosh, Pecinin, Rossi, Merlin, Steelmate), Nero Radio, Marantec, ZKTeco, Elplast, BFT, Linear EZCode, Dickert MAHS, Prastel, Feron, Came Atomo, Holtek, and more
+- **NFC**: MIFARE Ultralight C dictionary attack and key management, FeliCa Service Directory Traverse, FeliCa emulation, Amusement IC parser, MFC Banapass parser, DESFire Transaction MAC, NTAG4xx detection, MIFARE Plus EV1/2 info
+- **Infrared**: Hitachi AC, Midea AC, Mitsubishi AC, Daikin FTXN25LV1B9, Toyotomi KTN22-12R32, JVC universal, LIDAR Emulator, Xbox Controller
+- **JS**: New GUI views (button_menu, button_panel, menu, number_input, popup, vi_list), widget button event type exposure
+- **Desktop**: Keybinds for directories, skip sliding animations, lock screen fixes, date/time input module
+- **CLI**: NFC commands, buzzer command
+- **BLE**: Improved pairing security
+- **Apps**: SPI Terminal, Fmatrix, CO2 Logger, INA Meter, USB-MIDI, LEGO Dimensions Toy Pad, GPIO Explorer, FlipCrypt, HC-11 Modem, Programmer Calculator, Voltage Calculator, Resistance Calculator, Image Viewer, Tasks, Space Playground, FlipTDI, iButton Converter, Sub-GHz Scheduler, Flipper Share, Video Player, FlipBoard apps, FM Transmitter, Geometry Flip, Free Roam, Chief Cooker, Ghost ESP, NFC-Eink, Nearby Files, Sub Analyzer, Combo Cracker, Weebo, Flipper Flame RNG, AS7331 UV Meter, A33 Flipper Blackhat, Seos compatible, NFC APDU Runner, Passport Reader, Portal Of Flipper, and many more
+
+---
+
+### Fixed
+
+- PN532 listener framing and ISO 14443-4 APDU unwrapping for EMV bank cards
+- PN532 InDataExchange retry on checksum errors with dictionary attack early abort
+- OLED display reinit flicker on button presses and sleep/wake transitions
+- Button lag and screen blackouts from tight I2C timeout
+- I2C bus wedging during RF noise (rate-limited self-healing)
+- INA219 battery percentage estimation and charging logic
+- Battery voltage reading below 3.2V
+- SD card SPI timing and storage settings crash
+- Input button interrupt handling
+- System fast tick and power insomnia
+- IR receiver stability and memory safety
+- U2F certificate error and NFC card emulation
+- Various upstream bug fixes (Sub-GHz protocols, NFC parsers, IR remotes, JS engine, GUI, CLI, BLE)
+
+---
+
+### Removed
+
+- SPI display driver (replaced by I2C SSD1306)
+- Direct GPIO button inputs (replaced by PCF8574 I2C keypad)
+- ST25R3916 SPI NFC driver (replaced by PN532 I2C3)

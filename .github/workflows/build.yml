@@ -6,9 +6,9 @@ permissions:
 
 on:
   push:
-    branches: [ssd1306_mcp23017, master, main]
+    branches: [main]
   pull_request:
-    branches: [ssd1306_mcp23017, master, main]
+    branches: [main]
 
 jobs:
   build:

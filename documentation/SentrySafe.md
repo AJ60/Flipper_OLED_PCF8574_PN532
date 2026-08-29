@@ -19,7 +19,7 @@
 
 ### Pin Connections:
 * `Flipper GPIO 8 / GND` ➔ **Black wire** (Safe solenoid circuit)
-* `Flipper GPIO 15 / PC1` ➔ **Green wire** (Safe data line)
+* `Flipper GPIO 15 / PB4 (header "PC1")` ➔ **Green wire** (Safe data line)
 
 ### Usage Flow:
 1. Open the **Sentry Safe** application on Flipper.
