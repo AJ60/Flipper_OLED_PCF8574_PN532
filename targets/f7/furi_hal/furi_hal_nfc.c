@@ -901,20 +901,51 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
             return FuriHalNfcErrorNone;
         }
     }
-    furi_hal_pn532_ctx.rx_len = sizeof(furi_hal_pn532_ctx.rx_buf) - 2;
-    FURI_LOG_D(TAG, "InDataExchange: tg=1, tx_data[0]=0x%02X, send_len=%zu, target_detected=%d",
-               tx_data[0], send_len, furi_hal_pn532_ctx.target_detected);
+
+    // Check if card is activated in ISO 14443-4 (ISO-DEP / T=CL) mode
+    bool is_iso_dep = ((furi_hal_pn532_ctx.target.sel_res & 0x20) != 0) ||
+                      (furi_hal_pn532_ctx.target.ats_len > 0) ||
+                      (furi_hal_nfc.tech == FuriHalNfcTechIso14443b);
+
+    const uint8_t* actual_tx = tx_data;
+    size_t actual_len = send_len;
+    bool is_iso_dep_i_block = false;
+    uint8_t iso_dep_pcb = 0;
+
+    if(is_iso_dep && send_len > 1 && ((tx_data[0] & 0xC2) == 0x02)) {
+        // ISO 14443-4 Layer I-Block from Flipper software:
+        // tx_data[0] is PCB (0x02 / 0x03). PN532 hardware generates its own PCB over RF in ISO-DEP mode.
+        // Strip the software PCB so PN532 sends the pure ISO 7816 APDU (e.g. 00 A4 04 00 ...) to the card.
+        is_iso_dep_i_block = true;
+        iso_dep_pcb = tx_data[0];
+        actual_tx = &tx_data[1];
+        actual_len = send_len - 1;
+    }
+
+    furi_hal_pn532_ctx.rx_len = sizeof(furi_hal_pn532_ctx.rx_buf) - 4;
+    FURI_LOG_D(TAG, "InDataExchange: tg=1, tx_data[0]=0x%02X, actual_len=%zu, is_iso_dep=%d, target_detected=%d",
+               actual_tx[0], actual_len, is_iso_dep_i_block, furi_hal_pn532_ctx.target_detected);
+
     Pn532Error pn_err = pn532_in_data_exchange(
         PN532_I2C_BUS,
         1,
-        tx_data,
-        send_len,
+        actual_tx,
+        actual_len,
         furi_hal_pn532_ctx.rx_buf,
         &furi_hal_pn532_ctx.rx_len,
-        150);
+        500);
 
     if(pn_err == Pn532ErrorNone) {
         size_t payload_len = furi_hal_pn532_ctx.rx_len;
+
+        if(is_iso_dep_i_block) {
+            // Re-wrap response with expected ISO 14443-4 PCB byte for Flipper's Iso14443_4Layer decoder
+            furi_check(payload_len + 3 <= sizeof(furi_hal_pn532_ctx.rx_buf));
+            memmove(&furi_hal_pn532_ctx.rx_buf[1], furi_hal_pn532_ctx.rx_buf, payload_len);
+            furi_hal_pn532_ctx.rx_buf[0] = iso_dep_pcb;
+            payload_len += 1;
+        }
+
         bool is_auth_cmd = (tx_data[0] == 0x60 || tx_data[0] == 0x61 || tx_data[0] == 0x68 ||
                             tx_data[0] == 0x69);
         bool is_mfc_crypto = (send_len == 8) || (payload_len == 1) ||
@@ -937,7 +968,6 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
         err = FuriHalNfcErrorNone;
         furi_hal_nfc_event_set(FuriHalNfcEventInternalTypeIrq);
     } else {
-        furi_hal_pn532_ctx.target_detected = false;
         if(pn_err == Pn532ErrorTimeout) {
             err = FuriHalNfcErrorCommunicationTimeout;
         } else {
