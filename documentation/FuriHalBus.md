@@ -51,16 +51,16 @@ When not using the API, these peripherals MUST be enabled by the user code and t
 
 *Table 2* — Peripherals enabled and disabled by the system
 
-| Peripheral    | API header file       |
-| :-----------: | :-------------------: |
-| RNG           | `furi_hal_random.h`   |
-| SPI1          | `furi_hal_spi.h`      |
-| SPI2          | --                    |
-| I2C1          | `furi_hal_i2c.h`      |
-| I2C3          | --                    |
-| USART1        | `furi_hal_serial.h`   |
-| LPUART1       | --                    |
-| USB           | `furi_hal_usb.h`      |
+| Peripheral    | API header file       | DIY Hardware Device Allocation |
+| :-----------: | :-------------------: | :----------------------------- |
+| RNG           | `furi_hal_random.h`   | True Random Number Generator |
+| SPI1          | `furi_hal_spi.h`      | MicroSD Card (`PA10`), CC1101 Radio (`PA15`) |
+| SPI2          | --                    | Optional expansion |
+| I2C1          | `furi_hal_i2c.h`      | SSD1306 OLED (`0x3C`), PCF8574 Keypad (`0x20`), INA219 (`0x40`) |
+| I2C3          | `furi_hal_i2c.h`      | PN532 NFC Module (`0x24` / SCL: `PC0`, SDA: `PC1`, IRQ: `PA2`) |
+| USART1        | `furi_hal_serial.h`   | Expansion UART Header |
+| LPUART1       | --                    | Low-power UART interface |
+| USB           | `furi_hal_usb.h`      | USB CDC / VCP / DFU |
 
 ### On-demand shared peripherals
 

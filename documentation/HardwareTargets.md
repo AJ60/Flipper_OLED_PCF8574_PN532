@@ -1,44 +1,51 @@
-## What a Firmware Target is {#hardware_targets}
+# 🎯 Hardware Targets & Board Definitions {#hardware_targets}
 
-Flipper's firmware is modular and supports different hardware configurations in a common code base. It encapsulates hardware-specific differences in `furi_hal`, board initialization code, linker files, SDK data and other information in a _target definition_.
+> Flipper firmware is modular and supports different hardware configurations within a unified codebase. Hardware-specific differences are encapsulated in `furi_hal`, board initialization routines, linker scripts, and target definitions.
 
-Target-specific files are placed in a single sub-folder in `targets`. It must contain a target definition file, `target.json`, and may contain other files if they are referenced by current target's definition. By default, `fbt` gathers all source files in target folder, unless they are explicitly excluded.
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
-Targets can inherit most code parts from other targets, to reduce common code duplication.
+---
 
+## 🛠️ DIY Flipper Zero (OLED Edition) Target Profile
 
-## Target Definition File
+Our DIY Flipper Zero port utilizes the **`f7`** target architecture customized for the **WeAct STM32WB55** development board:
 
-A target definition file, `target.json`, is a JSON file that can contain the following fields:
+| Subsystem | Hardware Component | Interface / Bus | Key Pinout |
+|---|---|---|---|
+| **MCU** | STM32WB55CGU6 (UFQFPN48) | Dual-Core Cortex-M4 + M0+ | 64 MHz PLL, 1 MB Flash, 256 KB RAM |
+| **Display** | 0.96" SSD1306 / SH1106 OLED | I2C1 Bus (0x3C / 0x3D) | SCL: `PA9`, SDA: `PB9` |
+| **Keypad** | PCF8574 Remote 8-Bit I/O Expander | I2C1 Bus (0x20) | INT: `PB0` (Ext Interrupt) |
+| **NFC** | NXP PN532 (HW Crypto1 Accelerated) | I2C3 Bus (0x24) | SCL: `PC0`/`PA7`, SDA: `PC1`/`PB4`, IRQ: `PA2` |
+| **Sub-GHz** | TI CC1101 Transceiver | SPI1 Bus + GDO0 IRQ | CS: `PA15`, SCK: `PB3`, MOSI: `PB5`, MISO: `PA6`, GDO0: `PA1` |
+| **MicroSD** | SPI FatFS Storage | SPI1 Bus | CS: `PA10`, SCK: `PB3`, MOSI: `PB5`, MISO: `PA6` |
+| **Power Monitor**| TI INA219 / INA226 Fuel Gauge | I2C1 Bus (0x40) | SCL: `PA9`, SDA: `PB9`, ALERT: `PB1` |
+| **LF-RFID** | Discrete Analog Tank (125 kHz) | TIM2 / TIM1 Timers | Carrier: `PA5`, Envelope RX: `PA1`, Emulate: `PA2` |
 
-* `include_paths`: list of strings, folder paths relative to current target folder to add to global C/C++ header path lookup list.
-* `sdk_header_paths`: list of strings, folder paths relative to current target folder to gather headers from for including in SDK.
-* `startup_script`: filename of a startup script, performing initial hardware initialization.
-* `linker_script_flash`: filename of a linker script for creating the main firmware image.
-* `linker_script_ram`: filename of a linker script to use in "updater" build configuration.
-* `linker_script_app`: filename of a linker script to use for linking .fap files.
-* `sdk_symbols`: filename of a .csv file containing current SDK configuration for this target.
-* `linker_dependencies`: list of libraries to link the firmware with. Note that those not in the list won't be built by `fbt`. Also several link passes might be needed, in such case you may need to specify same library name twice.
-* `inherit`: string, specifies hardware target to borrow main configuration from. Current configuration may specify additional values for parameters that are lists of strings, or override values that are not lists.
-* `excluded_sources`: list of filenames from the inherited configuration(s) NOT to be built.
-* `excluded_headers`: list of headers from the inherited configuration(s) NOT to be included in generated SDK.
-* `excluded_modules`: list of strings specifying fbt library (module) names to exclude from being used to configure build environment.
+---
 
+## 📋 Target Definition Architecture
 
-## Apps & Hardware
+Target-specific configurations reside in `targets/` sub-directories:
 
-Not all apps are available on different hardware targets. 
+* `include_paths`: Header search paths relative to the target directory.
+* `sdk_header_paths`: Target headers exposed in the generated C/C++ FAP SDK.
+* `startup_script`: System initialization script executed on power-on.
+* `linker_script_flash`: Linker script defining flash memory layout for the main firmware image.
+* `linker_script_ram`: Linker script used for standalone RAM-based updater execution.
+* `linker_script_app`: Linker script used for compiling relocatable `.fap` application binaries.
+* `sdk_symbols`: Symbol export table for dynamic linking of external applications.
 
-* For apps built into the firmware, you have to specify a compatible app set using `FIRMWARE_APP_SET=...` fbt option. See [fbt docs](./fbt.md) for details on build configurations.
+---
 
-* For apps built as external FAPs, you have to explicitly specify compatible targets in the app's manifest, `application.fam`. For example, to limit the app to a single target, add `targets=["f7"],` to the manifest. It won't be built for other targets.
+## 🚀 Compiling for the Target
 
-For details on app manifests, check out [their docs page](./AppManifests.md).
+To build the custom OLED firmware for target `f7`:
 
+```bash
+# Standard compilation
+fbt
 
-## Building Firmware for a Specific Target
-
-You have to specify TARGET_HW (and, optionally, FIRMWARE_APP_SET) for `fbt` to build firmware for a non-default target. For example, building and flashing debug firmware for f18 can be done with
-
-    ./fbt TARGET_HW=18 flash_usb_full
-
+# Build complete qFlipper update bundle (.tgz)
+fbt --with-updater updater_package
+```

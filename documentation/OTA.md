@@ -20,6 +20,10 @@ So, before taking any action on the firmware, we back up the current configurati
 
 The main firmware loads an updater image — a customized build of the main Flipper firmware — into RAM and runs it. Updater performs operations on system flash as described by an Update manifest file.
 
+> [!NOTE]
+> **DIY OLED Screen Behavior During OTA**:
+> Because the standalone RAM updater is a lightweight recovery kernel containing only stock SPI display drivers, the DIY I2C OLED screen will be **unpowered / blank** while the updater executes in RAM. This is normal. Follow the flashing progress bar in the **qFlipper** application on your PC. Once the update completes, the MCU restarts into the main OS and turns the OLED screen back on.
+
 First, if there's a Radio stack image bundled with the update, updater compares its version with the currently installed one. If they don't match, updater performs stack deinstallation followed by writing and installing a new one. The installation itself is performed by proprietary software FUS running on Core2, and leads to a series of system restarts.
 
 Then, updater validates and corrects Option Bytes — a special memory region containing low-level configuration for Flipper's MCU.

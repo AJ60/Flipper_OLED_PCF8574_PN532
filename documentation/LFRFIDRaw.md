@@ -1,23 +1,33 @@
-# Reading RAW RFID data {#lfrfid_raw}
+# 🏷️ Reading RAW 125 kHz RFID Data {#lfrfid_raw}
 
-Flipper Zero has the option to read RAW data from 125 kHz cards that allows you to record the card's data and save it, similar to how a dictaphone records sound.
+> Guide for sampling and analyzing raw analog 125 kHz RFID envelope signals for protocol debugging.
 
-To use this function, you need to activate the Debug mode on your Flipper Zero by doing the following:
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
-1. Go to **Main Menu** → **Settings** → **System**.
+---
 
-2. Set **Debug** to **ON**.
+> [!CAUTION]
+> ⚖️ **EDUCATIONAL & RESEARCH USE ONLY**:
+> This document and raw RFID sampling tools are intended strictly for educational purposes, signal analysis, and authorized transponder research. Unauthorized keycard duplication is prohibited.
 
-Once the Debug mode is activated on your Flipper Zero, you can read RAW data from 125 kHz RFID cards:
+> [!WARNING]
+> 🚧 **ANALOG HARDWARE SENSITIVITY**:
+> On DIY hardware builds, raw 125 kHz signal capture quality is dependent on analog coil tuning (~1.2 mH), resonant capacitance, and diode detector threshold. Refer to [`documentation/HARDWARE_DESIGN.md`](HARDWARE_DESIGN.md) for schematic details.
 
-1. Go to **Main Menu** → **125 kHz RFID** → **Extra Actions**.
+---
 
-2. Select **RAW RFID** data and name the raw file.
+## 🛠️ Step-by-Step Raw RFID Capture
 
-3. Read instructions and press **OK**.
+1. **Enable Debug Mode**:
+   - Go to **Main Menu** → **Settings** → **System**.
+   - Set **Debug** to **ON**.
 
-4. Apply the card to Flipper Zero's back.
+2. **Capture Raw Signals**:
+   - Go to **Main Menu** → **125 kHz RFID** → **Extra Actions**.
+   - Select **Read RAW RFID Data** and enter a name for the capture file.
+   - Hold your 125 kHz RFID tag near the DIY resonant coil.
+   - Once reading finishes, press **OK** to save.
 
-5. Once the reading is finished, press **OK**.
-
-Two files with data (with ASK and PSK modulations) will be saved in the `lfrfid` folder on the microSD card. Now, you can share it and the card's photo with developers by creating an issue on GitHub.
+3. **Output Files**:
+   - Two raw capture files (`.ask.raw` and `.psk.raw`) are stored in `/ext/lfrfid/` on the microSD card for waveform analysis.

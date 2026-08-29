@@ -1,72 +1,38 @@
-# About
+# 🛠️ Supplementary Build & Flashing Scripts
 
-This folder contains supplementary scripts that automates routine actions.
-Flashing scripts are based on cli version of [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html).
-You will need to add STM32_Programmer_CLI to your path to use them.
+> Collection of helper scripts, flashing utilities, and asset compilation tools for the DIY Flipper Zero (OLED Edition).
 
-# Flashing empty MCU/Flipper
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
-Always flash your device in the following sequence:
+---
 
-- OTP (Only on empty MCU)
-- Core1 and Core2 firmware flashing
-- Option Bytes
+## ⚡ Recommended Flashing Tools
 
-## Otp flashing
+* 🖥️ **GUI OTP Generator & Flasher**: Use [`mics/FlipperOTP/generate_otp_gui.exe`](../mics/FlipperOTP/) for generating and flashing the board's OTP profile (Board Rev `12`, Display Type `MGG`).
+* 🔌 **1-Click Flasher GUI**: Run [`scripts/diy_flasher_gui.py`](diy_flasher_gui.py) (`python scripts/diy_flasher_gui.py`) for automatic download, extraction, and DFU flashing.
+* 🐬 **qFlipper Recovery**: Use official qFlipper or [`mics/qFlipperMod/`](../mics/qFlipperMod/) to flash the bootloader and custom firmware `.tgz` package.
 
-!!! Flashing incorrect OTP may permanently brick your device !!!
+---
 
-Normally OTP data generated and flashed at the factory.
-In case if MCU was replaced you'll need correct OTP data to be able to use companion applications.
-Use `otp.py` to generate and flash OTP data.
-You will need exact main board revision to generate OTP data. It can be found on main PCB.
-Also display type, region and etc...
+## 💻 Manual CLI Flashing Scripts
 
-!!! Flashing incorrect OTP may permanently brick your device !!!
+CLI flashing scripts rely on `STM32_Programmer_CLI.exe` from [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html).
 
-## Core1 and Core2 firmware flashing
-
-Core2 goes first, then Core1.
-Never flash FUS or you will lose your job, girlfriend and keys in secure enclave.
-
-## Option Bytes
-
-!!! Setting incorrect Option Bytes may brick your MCU !!!
-
-Defaults are mostly OK, but there are couple things that we'd like to tune.
-Also, OB may be damaged, so we've made couple scripts to check and set option bytes.
-
-!!! Setting incorrect Option Bytes may brick your MCU !!!
-
-Checking option bytes:
-
+### 1. Option Bytes Verification
 ```bash
-ob.py check
+python scripts/ob.py check
+python scripts/ob.py set
 ```
 
-Setting option bytes:
-
+### 2. Assets Delivery to MicroSD
+After compiling resources, send the asset bundle directly over serial console:
 ```bash
-ob.py set
+python scripts/storage.py -p <FLIPPER_COM_PORT> send build/f7-firmware-C/resources /ext
 ```
 
-# Assets delivery
-
-Build the firmware and run in the root folder of the repo:
-
+### 3. Slideshow & Animation Generation
+Place `.png` frames inside `assets/slideshow/<SHOW_NAME>/` (e.g. `frame_00.png`, `frame_01.png`), then compile:
 ```bash
-python scripts/storage.py -p <flipper_cli_port> send build/latest/resources /ext
+python scripts/slideshow.py -i assets/slideshow/<SHOW_NAME>/ -o assets/slideshow/<SHOW_NAME>/.slideshow
 ```
-
-
-# Slideshow creation
-
-Put fullscreen slideshow frames in .png format into `assets/slideshow/my_show` folder, named frame_xx.png, where xx is zero-padded frame number, starting with #0.
-
-Then run 
-
-```bash
-python scripts/slideshow.py -i assets/slideshow/my_show/ -o assets/slideshow/my_show/.slideshow
-```
-
-Upload generated .slideshow file to Flipper's internal storage and restart it.

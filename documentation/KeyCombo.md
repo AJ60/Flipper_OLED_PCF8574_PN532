@@ -1,119 +1,61 @@
-# Key Combos {#key_combos}
+# 🎮 Key Combos & Hardware Recovery {#key_combos}
 
-There are times when your Flipper feels blue and doesn't respond to any of your commands due to a software issue. This guide will help you solve this problem.
+> Quick reference guide for button combinations, hardware reset, recovery modes, and DFU flashing on the DIY Flipper Zero (OLED Edition).
 
-## Basic combos
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
-### Hardware reset
+---
 
-- Press `LEFT` and `BACK` and hold for a couple of seconds
-- Release `LEFT` and `BACK`
+## 🛠️ DIY Flipper Zero (OLED Edition) Button Architecture
 
-This combo performs a hardware reset by pulling the MCU reset line down.
-Main components involved: Keys → DD8(NC7SZ32M5X, OR-gate) → DD1(STM32WB55, MCU).
+On this DIY hardware build, buttons are wired to a **PCF8574 remote 8-bit I/O expander** over the shared **I2C1** bus (`PA9` SCL, `PB9` SDA) with active-low logic:
 
-It won't work only in one case:
+```text
+                 ┌───────────────┐
+                 │    ▲ UP (P0)  │
+                 └───────┬───────┘
+                         │
+       ┌──────────────┐  │  ┌──────────────┐
+       │ ◄ LEFT (P2)  ├──┼──┤ RIGHT ► (P3) │
+       └──────────────┘  │  └──────────────┘
+                         │
+                 ┌───────┴───────┐
+                 │  ● OK (P4)    │
+                 ├───────────────┤
+                 │   ▼ DOWN (P1) │
+                 └───────────────┘
 
-- The MCU debug block is active and holding the reset line from inside.
+       ┌──────────────┐     ┌──────────────┐
+       │ ↩ BACK (P5)  │     │ 📳 VIBRO(P6) │
+       └──────────────┘     └──────────────┘
+```
 
-### Hardware Power Reset
+---
 
-- Disconnect the USB cable and any external power supplies
-- Disconnect the USB once again
-- Make sure you've disconnected the USB and any external power supplies
-- Press `BACK` and hold for 30 seconds (this will only work with the USB disconnected)
-- If you haven't disconnected the USB, then disconnect it and repeat the previous step
-- Release the `BACK` key
+## ⚡ Recovery & Reset Methods for DIY Hardware
 
-This combo performs a reset by switching SYS power line off and then on.
-Main components involved: Keys → DD6(bq25896, charger).
+### 1. Hardware Reboot / Reset (Physical Button)
+* **Method**: Press the physical **NRST / RESET** tactile button on the WeAct STM32WB55 development board.
+* **Effect**: Pulls the hardware `NRST` pin low, triggering an immediate power-on reset vector.
 
-It won't work only in one case:
+---
 
-- Power supply is connected to USB or 5V_ext
+### 2. Entering STM32 USB DFU Mode (Flashing & Recovery)
+* **Method**:
+  1. Unplug the USB cable from the WeAct board.
+  2. Press and **hold** the physical **BOOT0** button on the WeAct board.
+  3. Plug the USB cable into your PC (while continuing to hold BOOT0).
+  4. Release the **BOOT0** button.
+* **Effect**: Forces the internal STM32 boot ROM into USB DFU mode for 1-click bootloader repair in qFlipper or flashing via `generate_otp_gui.exe` and `STM32_Programmer_CLI`.
 
-### Software DFU
+---
 
-- Press `LEFT` on boot to enter DFU with Flipper boot-loader
+### 3. In-OS Shortcut Combos (Normal Operation)
 
-It won't work only in one case:
-
-- Flipper boot-loader is damaged or absent
-
-### Hardware DFU
-
-- Press `OK` on boot to enter DFU with ST boot-loader
-
-It won't work only in one case:
-
-- Option Bytes are damaged or set to ignore the `OK` key
-
-## DFU combos
-
-### Hardware Reset + Software DFU
-
-- Press `LEFT` and `BACK` and hold for a couple of seconds
-- Release `BACK`
-- Device will enter DFU with an indication (Blue LED + DFU Screen)
-- Release `LEFT`
-
-This combo performs a hardware reset by pulling the MCU reset line down. Then, the `LEFT` key indicates to the boot-loader that DFU mode is requested.
-
-It won't work in two cases:
-
-- The MCU debug block is active and holding the reset line from inside
-- Flipper boot-loader is damaged or absent
-
-### Hardware Reset + Hardware DFU
-
-- Press `LEFT`, `BACK` and `OK` and hold for a couple of seconds
-- Release `BACK` and `LEFT`
-- The device will enter DFU without an indication
-
-This combo performs a hardware reset by pulling the MCU reset line down. Then, the `OK` key forces MCU to load the internal boot-loader.
-
-It won't work in two cases:
-
-- The MCU debug block is active and holding the reset line from inside
-- Option Bytes are damaged or set to ignore the `OK` key
-
-### Hardware Power Reset + Software DFU
-
-- Disconnect the USB and any external power supplies
-- Press `BACK` and `LEFT` for 30 seconds
-- Release `BACK`
-- The device will enter DFU with an indication (Blue LED + DFU Screen)
-- Release `LEFT`
-- Plug in the USB
-
-This combo performs a reset by switching the SYS power line off and then on. Next, the `LEFT` key indicates to the boot-loader that DFU mode is requested.
-
-It won't work in two cases:
-
-- Power supply is connected to USB or 5V_ext
-- Flipper boot-loader is damaged or absent
-
-### Hardware Power Reset + Hardware DFU
-
-- Disconnect the USB and any external power supplies
-- Press `BACK` and `OK` and hold for 30 seconds
-- Release `BACK` and `OK`
-- The device will enter DFU without indication
-- Plug in the USB
-
-This combo performs a reset by switching the SYS power line off and then on. Next, the `OK` key forces MCU to load the internal boot-loader.
-
-It won't work in two cases:
-
-- Power supply is connected to USB or 5V_ext
-- Option Bytes are damaged or set to ignore the `OK` key
-
-# Alternative ways to recover your device
-
-If none of the described methods helped you:
-
-- Make sure the battery charged
-- Disconnect the battery and connect again (requires disassembly)
-- Try to flash the device with ST-Link or another programmer that supports SWD
-
-If you're still here and your device is not working: it's not a software issue.
+| Action | Combo | Description |
+|---|---|---|
+| **Return to Desktop** | Press `BACK` | Exits the active app and returns to the main pet screen. |
+| **Quick Action / Favorite** | Hold `OK` (on Desktop) | Opens the quick-access menu for favorite scripts/apps. |
+| **System Info** | Press `UP` (on Desktop) | Opens device info, battery state, and firmware build details. |
+| **Lock Device** | Hold `UP` (on Desktop) | Locks keypad inputs to prevent unintended presses in pocket. |
