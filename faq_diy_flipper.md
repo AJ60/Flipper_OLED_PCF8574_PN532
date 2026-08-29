@@ -1,221 +1,187 @@
-# ❓ DIY Flipper Zero — FAQ & Troubleshooting Guide 🐬
+# ❓ DIY Flipper Zero (OLED Edition) — FAQ & Troubleshooting Guide 🐬
 
-Welcome to the frequently asked questions and troubleshooting guide for the DIY Flipper Zero (SSD1306 OLED & PCF8574 Keyboard edition). 
+> Complete troubleshooting and reference guide for the DIY Flipper Zero (I2C OLED, PCF8574 Keypad, and PN532 NFC).
+
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
 ---
 
-## 💿 Flashing & OS
+> [!CAUTION]
+> ⚖️ **LEGAL & EDUCATIONAL DISCLAIMER**:
+> This project, firmware, and documentation are provided strictly for **educational, academic research, and authorized security testing purposes only**. 
+> - **DO NOT** use this firmware or hardware for any unauthorized access, card cloning, or malicious activities.
+> - The developers and contributors assume **no liability or responsibility** for any misuse, damage to property, or illegal actions.
+
+> [!WARNING]
+> 🚧 **DEVELOPMENT STATUS NOTICE**:
+> - **NFC (PN532)**: **Under Active Development / Experimental.** Currently tested and verified only with **MIFARE Classic 1K/4K tags**, **NTAG series (NTAG213/215/216/Ultralight)**, and **EMV ATM / Bank payment cards** (ISO 14443-4 APDU reading).
+> - **125 kHz LF-RFID**: **Under Active Development / Experimental.** May contain bugs due to discrete analog hardware tolerances, coil inductance variance, and signal demodulation thresholds.
+
+---
+
+## 💿 Flashing & Operating System
 
 ### **Q1: I connected my new WeAct board, but qFlipper does not detect it. What should I do?**
 > [!IMPORTANT]
-> A blank WeAct STM32WB55 board lacks the Flipper bootloader and will be detected as a generic STM32 DFU device.
+> A blank WeAct STM32WB55 board lacks the Flipper bootloader and OTP memory configuration. It will initially be detected as a generic STM32 DFU device.
 
 **Solution:**
-1. Unplug the USB cable from the WeAct board.
-2. Press and hold the physical **BOOT0** button on the WeAct board.
-3. Plug the USB cable back into the PC (while holding the button).
-4. Release the **BOOT0** button. The board is now in DFU mode.
-5. Launch **qFlipper** — it will detect the board in recovery mode.
-6. Click the **"REPAIR"** button. This writes the official Flipper bootloader.
-7. Once finished, click **"Install from file"** on the main screen and choose our custom `.dfu` or `.tgz` firmware.
+1. **Configure OTP Profile (First-time only):**
+   - Open [`mics/FlipperOTP/generate_otp_gui.exe`](mics/FlipperOTP/) on your PC.
+   - Set **Board Version: 12** and **Display Type: MGG** *(required for OLED)*.
+   - Put the board into DFU mode (hold **BOOT0**, connect USB, release **BOOT0**) and click **"2. Flash (DFU)"**.
+2. **Install Bootloader via qFlipper:**
+   - Put the board back into DFU mode.
+   - Launch official **qFlipper** — it will detect the board in **RECOVERY MODE**.
+   - Click the **"REPAIR"** button to flash the bootloader.
+3. **Install OLED Firmware:**
+   - Put the board in DFU mode once more.
+   - In qFlipper, click **"Install from file"** and choose our custom **`.tgz`** firmware package from [Releases](https://github.com/AJ60/Oled_PCF8574_PN532/releases).
 
 ---
 
-### **Q2: The firmware successfully flashes, but the device is frozen/unresponsive (blank screen, and qFlipper throws an "RPC Session/Protobuf Timeout" error). How to fix?**
+### **Q2: The firmware flashes successfully, but the device is frozen / unbootable (blank screen, and qFlipper reports "RPC Session Timeout"). How do I fix this?**
 > [!IMPORTANT]
-> The custom firmware (v2.0+) features an active I2C bus recovery loop. If the I2C1 bus has no hardware pull-up resistors or is floating, the firmware gets stuck in an infinite boot loop trying to recover the bus, which freezes the USB connection.
+> The custom firmware features an active I2C bus probe and recovery sequence. If the I2C1 bus has no hardware pull-up resistors or is floating, the firmware enters a recovery loop to avoid bus deadlock, pausing USB serial until the bus is released.
 
 **Solution:**
-1.  **Connect your OLED screen:** Standard I2C OLED screens (SSD1306/SH1106) have built-in **4.7 kΩ pull-up resistors** on their SDA/SCL lines. If you try to boot the board *without* the display plugged in, the I2C bus floats and halts the boot process.
-2.  **Solder physical I2C pull-ups:** Solder physical **2.2 kΩ or 3.3 kΩ resistors** between the SDA (`PB9`) -> 3.3V rail and SCL (`PA9`) -> 3.3V rail on the WeAct board. This stabilizes the PCF8574 keyboard, provides strong hardware pull-ups, and prevents boot loops.
+1. **Connect your OLED screen:** Standard I2C OLED screens (SSD1306/SH1106) have built-in **4.7 kΩ pull-up resistors** on their SDA/SCL lines. Booting without the display plugged in leaves the bus floating.
+2. **Solder physical I2C pull-ups:** Solder **2.2 kΩ or 3.3 kΩ resistors** between SDA (`PB9`) -> 3.3V rail and SCL (`PA9`) -> 3.3V rail. This prevents noise-induced bus locks and stabilizes button reads.
 
 ---
 
-### **Q3: During the `.tgz` update, my screen went completely black. Is it bricked?**
+### **Q3: During the `.tgz` update, my OLED screen goes completely black. Is it bricked?**
+> [!NOTE]
+> **This is expected behavior.** The standalone updater payload runs outside the main OS and only contains drivers for the original hardware SPI screen. Because our DIY board uses an I2C OLED display, the screen turns off during the flashing process.
+
+**Solution:**
+* **DO NOT unplug the USB cable.**
+* Monitor installation progress in the qFlipper desktop app.
+* Once qFlipper reports **"Update Successful!"**, the board will reboot, start the main OS, and the OLED screen will turn on with all animations and apps loaded.
+
+---
+
+### **Q4: How do I view real-time Debug Logs on the DIY Flipper?**
+
+#### 1. Enable Debug Logging:
+* **Via Settings:** Go to **Settings > System > Log Level** and set it to **`Debug`** (or **`Trace`** for maximum verbosity).
+* **Via CLI:** In a serial terminal session, run:
+  ```bash
+  log debug
+  ```
+
+#### 2. View Debug Logs:
+* **qFlipper:** Open qFlipper and click the **"Log"** icon in the bottom-left corner (`Ctrl + L` / `Cmd + L`).
+* **Serial Terminal:** Open any terminal program (PuTTY, Tera Term, minicom) connected to the Flipper virtual COM port at `115200` baud.
+
+---
+
+### **Q5: Can I reboot into DFU mode using the software settings menu?**
+* **No.** Because the keypad connects via the PCF8574 I2C expander rather than direct MCU GPIO lines, software-triggered DFU reboot is not supported by the ST bootloader.
+* Use the hardware button method (hold **BOOT0** while plugging in USB).
+
+---
+
+### **Q6: Why is CC1101 PPM calibration recommended?**
+> [!TIP]
+> Generic CC1101 modules use crystal oscillators with slight frequency drift.
+
+* Average hardware crystal offset is approximately **-32 kHz** (~ -74 PPM).
+* Adjusting the calibration to **+100 PPM** (under *Momentum / Radio Settings -> Sub-GHz -> Frequency Calibration*) aligns transmissions with standard **433.920 MHz**.
+
+---
+
+## 🔌 Hardware & Bus Troubleshooting
+
+### **Q7: Keyboard buttons freeze or drop presses during RF / Sub-GHz activity. Why?**
+> [!CAUTION]
+> High-power Sub-GHz transmission or NFC field activation can induce EMI noise into long I2C jumper wires, causing PCF8574 read timeouts.
+
+**Solution:**
+1. **Add physical 2.2 kΩ – 3.3 kΩ pull-ups** to the 3.3V rail on `PB9` (SDA) and `PA9` (SCL).
+2. **Add decoupling capacitor:** Place a **0.1 µF (100 nF)** ceramic capacitor directly across the VCC and GND pins of the PCF8574 module.
+3. **Keep wiring short:** Use short jumper wires (< 10 cm) between the MCU and the keypad board.
+
+---
+
+### **Q8: What power filtering is recommended for custom breadboard/perfboard builds?**
+* **Decoupling:** Place **0.1 µF** ceramic capacitors close to the VCC/GND pins of each peripheral module (OLED, PCF8574, PN532, CC1101, INA219).
+* **Bulk Filtering:** Place a **10 µF – 47 µF** tantalum or low-ESR electrolytic capacitor across the main 3.3V power rail near the OLED screen.
+
+---
+
+### **Q9: Can I connect a vibration rumble motor directly to PCF8574 pin P6?**
+> [!CAUTION]
+> **Never connect a vibration motor directly to the PCF8574 pin!** The motor draw (60–100 mA) exceeds the PCF8574 output rating (25 mA) and will damage the chip or cause brownout resets.
+
+**Solution:**
+* Drive the motor through an **N-channel MOSFET** (e.g. `2N7002`, `AO3400`) or NPN transistor (`2N2222`).
+* Connect a **1N4148 flyback diode** in reverse-parallel across the motor terminals (cathode to +3.3V, anode to transistor drain/collector) to clamp inductive voltage spikes.
+
+---
+
+### **Q10: Dallas iButton / 1-Wire keys (DS1990) are not reading on pin PA3.**
+* The 1-Wire protocol requires an active pull-up.
+* Solder a **2.2 kΩ or 4.7 kΩ resistor** between `PA3` and the **3.3V** rail.
+
+---
+
+### **Q11: Can I connect a speaker directly to pin PB8?**
+* **Passive piezo buzzers** can be connected directly between `PB8` and `GND`.
+* **Low-impedance dynamic speakers (8–32 Ω)** must **NOT** be connected directly; use an external transistor amplifier (e.g. `BC847`).
+
+---
+
+### **Q12: The INA219 / INA226 battery monitor reports inaccurate current or percentage.**
+* The firmware is calibrated for a **0.1 Ω** current shunt resistor (marked `R100`).
+* Ensure your INA module uses a 0.1 Ω 1% precision shunt resistor.
+
+---
+
+## ⚡ PN532 NFC Subsystem (I2C3)
+
+### **Q13: NFC is not detecting cards or shows "NFC not found".**
+> [!IMPORTANT]
+> The PN532 is interfaced over **I2C3** (SCL: `PC0`/`PA7`, SDA: `PC1`/`PB4`, IRQ: `PA2`). Ensure your wiring matches the pinout below:
+
+| PN532 Pin | MCU Pin / Header | Function |
+|---|---|---|
+| **VCC** | **3.3V** | Power Rail (3.3V only) |
+| **GND** | **GND** | Ground Rail |
+| **SCL** | **PA7 / PC0** | I2C3 Clock |
+| **SDA** | **PB4 / PC1** | I2C3 Data |
+| **IRQ** | **PA2** | Card Detect Interrupt |
+
+**Checks:**
+1. **DIP Switches / Jumper Pads:** Set the PN532 board to **I2C mode** (`I0=0`, `I1=1` or `CH1=ON`, `CH2=OFF` depending on module model).
+2. **I2C Address:** Standard I2C address is `0x24`.
+3. **IRQ Wire:** Ensure `IRQ` is firmly connected to `PA2`. The driver relies on the hardware IRQ for card detection.
+
+---
+
+### **Q14: What card types have been verified on the PN532 in this firmware?**
+* ✅ **MIFARE Classic 1K / 4K**: Fully supported with hardware Crypto1 authentication and dictionary attack key cracking.
+* ✅ **NTAG Series (NTAG213 / 215 / 216 / Ultralight)**: Direct page read and dump support.
+* ✅ **Contactless EMV Bank / ATM Cards**: ISO 14443-4 APDU frame tunneling for payment card info extraction.
+* ⚠️ **Other NFC protocols / Card Emulation**: Under active experimental development.
+
+---
+
+## 🏷️ 125 kHz LF-RFID Discrete Subsystem
+
+### **Q15: What is the status of 125 kHz RFID reading and writing?**
 > [!WARNING]
-> **This is expected behavior!** The built-in firmware updater runs outside the main OS and only supports the original SPI screen. Since our DIY board uses an I2C OLED display, the screen will go black during the update.
+> The LF-RFID subsystem uses a discrete analog resonant circuit (`TIM2_CH1` PA5 carrier, `TIM1_CH1` PA1 envelope input, `TIM2_CH3` PA2 emulation). It is provided for **educational experimentation** and is under active development.
 
-**Solution:**
-*   **DO NOT unplug the USB cable!**
-*   Monitor the installation progress in the qFlipper application on your PC.
-*   Once qFlipper reports **"Update Successful!"**, the device will automatically reboot, launch the main OS, and the OLED screen will turn back on. This takes 1-2 minutes.
-
----
-
-### **Q4: How and where can I view and enable Debug Logs on the DIY Flipper?**
-**Solution:**
-By default, the Flipper Zero filters out low-priority debug messages to save CPU cycles. There are two steps to enable and view real-time **Debug** logs:
-
-#### 1. How to Enable Debug/Trace Logging:
-*   **On the Flipper Screen:** Go to **Settings > System > Log Level** and change it from `Default`/`Info` to **`Debug`** (or **`Trace`** for maximum granularity).
-*   **Via CLI Command:** If you are connected to the serial console, you can start streaming debug-level logs directly by running:
-    ```bash
-    log debug
-    ```
-    *(To stop the log stream, press `Ctrl + C`).*
-
-#### 2. Where to View the Logs:
-*   **Via qFlipper (Desktop App):**
-    1. Open **qFlipper** and connect your Flipper.
-    2. Click the **"Log"** button in the bottom left corner (represented by a terminal/notepad icon, or press `Ctrl + L` / `Cmd + L`).
-*   **Via Serial Terminal (UART over USB):**
-    1. Connect your Flipper to the PC using a USB cable.
-    2. Open any serial terminal program (e.g., PuTTY, Tera Term, or run `screen`/`minicom` in Linux/macOS terminal).
-    3. Select your Flipper's virtual COM port. (Baud rate is virtual and can be left at `115200`).
-    4. Type `log debug` (or just `log`) and press Enter.
+* **Reading EM4100 Fobs**: Performance depends on coil inductance (recommended ~1.2 mH, 95 turns) and capacitor matching for exact 125 kHz resonance.
+* **Writing / Emulation**: Experimental; may contain timing quirks depending on discrete transistor switching speeds.
+* Refer to [`misc/rfid_lf.pdf`](misc/rfid_lf.pdf) and [`documentation/HARDWARE_DESIGN.md`](documentation/HARDWARE_DESIGN.md) for full circuit schematics and tuning formulas.
 
 ---
 
-### **Q5: Can I reboot into DFU mode using the Flipper settings menu?**
-**Solution:**
-*   **No.** Due to the custom keyboard interface via the PCF8574 I2C expander, software-triggered DFU reboot is not supported by the bootloader.
-*   Use the hardware method instead (hold BOOT0 while plugging in the USB cable).
+## 🤝 Project Links & Community
 
----
-
-### **Q6: Why is the CC1101 PPM calibration set to +100 PPM?**
-> [!TIP]
-> Cheap CC1101 modules often use low-tolerance crystals that drift from the target frequency.
-
-**Solution:**
-*   Testing showed an average hardware crystal offset of **-32 kHz** (about -74 PPM).
-*   Configuring the PPM calibration to **+100 PPM** (under *Momentum App -> Protocols -> Sub-GHz -> Calib*) shifts the frequency back to the standard **433.920 MHz**, ensuring stable decoding by other Flipper Zero units.
-
----
-
-## 🔌 Hardware Troubleshooting
-
-### **Q7: Keyboard buttons freeze or stop responding periodically. Why?**
-> [!CAUTION]
-> Sub-GHz transmission or NFC activity generates strong RF noise that couples into the I2C1 bus, freezing the PCF8574 IO expander.
-
-**Solution:**
-1.  **Check physical Pull-up resistors:** Solder **2.2 kΩ** or **3.3 kΩ** resistors between the I2C1 SDA/SCL lines and the 3.3V rail.
-2.  **Avoid internal pull-ups:** The MCU's internal pull-ups are too weak (~40 kΩ) to protect the bus against RF noise.
-3.  **Add a capacitor:** Solder a **0.1 µF (100 nF)** ceramic capacitor as close as possible to the VCC/GND pins of the PCF8574.
-
----
-
-### **Q8: What are the recommendations for power filtering (capacitors) on the board?**
-**Solution:**
-To suppress voltage transients during high-current operations (vibration motor clicks, NFC scans):
-*   **Decoupling:** Solder **0.1 µF** ceramic capacitors close to the VCC/GND pins of each chip (PCF8574, OLED, INA219, NFC, CC1101).
-*   **Bulk Filtering:** Solder a **10–47 µF** tantalum or electrolytic capacitor on the main 3.3V rail near the OLED screen.
-
----
-
-### **Q9: Why does the vibration motor cause the board to reset or freeze?**
-> [!CAUTION]
-> **Never connect the vibration motor directly to the PCF8574 pins!** The motor's start-up current (60-100 mA) exceeds the expander's 25 mA limit. This will damage the pin or cause MCU resets.
-
-**Solution:**
-1.  Drive the motor using an **N-channel MOSFET** (e.g., `2N7002` or `AO3400`) as a switch.
-2.  **Always** solder a flyback diode (such as `1N4148`) in parallel with the motor terminals (cathode to VCC, anode to the transistor) to clamp voltage spikes.
-
----
-
-### **Q10: My SD card disconnects immediately when I plug in the NFC module (e.g. SCLK to PB3), or I get SD read errors. How do I fix this?**
-> [!IMPORTANT]
-> The SD card and NFC module share the SPI1 SCK/MOSI lines, but **they must use separate MISO pins** because the ST25R3916 chip does not release the MISO line (doesn't go High-Z) when deactivated.
-
-**Solution:**
-1.  **Check MISO wiring:** Ensure **NFC MISO** is connected to **PB4** (`gpio_nfc_miso`), while the **SD Card MISO** connects to **PA6** (`gpio_spi_miso`). If they share PA6, the NFC chip will block the bus and disable the SD card.
-2.  **Pull-up resistors:** Solder external **10 kΩ** pull-up resistors to the 3.3V rail on all Chip Select (CS) lines: SD (`PA10`), NFC (`PE4`), and CC1101 (`PA15`). This prevents multiple devices from enabling simultaneously during resets.
-
----
-
-### **Q11: Dallas iButton keys (1-Wire, DS1990) are not reading on pin PA3.**
-**Solution:**
-*   The 1-Wire protocol requires a pull-up resistor. 
-*   Solder a **2.2 kΩ** or **4.7 kΩ** resistor between the iButton data line (`PA3`) and the **3.3V** rail.
-
----
-
-### **Q12: Can I connect a speaker directly to pin PB8?**
-**Solution:**
-*   **No**, if it is a standard low-impedance dynamic speaker (8-32Ω). Direct connection will burn out the MCU pin.
-*   Only connect **passive piezo buzzers** directly to `PB8`. For dynamic speakers, use a transistor switch circuit (like `BC847` or `2N7002`).
-
----
-
-### **Q13: Short IR range or poor NFC read performance on battery power.**
-**Solution:**
-*   The IR LEDs and the ST25R3916 NFC module operate at peak performance when powered by **5V**. On battery, the 5V rail is inactive.
-*   **Solution:** Install a tiny 5V boost converter (e.g., based on the `MT3608` chip) to feed the IR and NFC circuits when running on battery.
-
----
-
-## 🔌 PN532 V3 NFC Troubleshooting (I2C)
-
-### **Q15: NFC is not working after flashing firmware. The app shows "NFC not found" or similar errors.**
-> [!IMPORTANT]
-> This firmware uses a **PN532 V3 module over I2C** (not the ST25R3916 SPI module). Ensure your wiring matches the table below.
-
-**Solution:**
-1. **Check I2C wiring:**
-   | PN532 Pin | WeAct Pin | Function |
-   |-----------|-----------|----------|
-   | SCL       | PA7 (I2C3_SCL) | I2C Clock |
-   | SDA       | PB4 (I2C3_SDA) | I2C Data |
-   | VCC       | 3.3V | Power (3.3V, NOT 5V) |
-   | GND       | GND | Ground |
-   | IRQ       | PA2 | Interrupt (active-low) |
-
-2. **Verify I2C address:** The PN532 uses address `0x24` (7-bit). Some modules have a different address — check your module's documentation.
-3. **Check pull-up resistors:** The PN532 module typically includes 10 kΩ pull-ups to 3.3V on SDA/SCL. If not, add 4.7 kΩ pull-ups to 3.3V on both lines.
-4. **Check IRQ connection:** The IRQ pin (PA2) must be connected for card detection to work. Without it, the firmware will timeout waiting for interrupts.
-
----
-
-### **Q16: NFC reads are intermittent or fail randomly.**
-> [!CAUTION]
-> I2C bus noise from RF activity can cause communication errors with the PN532.
-
-**Solution:**
-1. **Add I2C pull-ups:** Ensure 4.7 kΩ pull-ups are present on SDA/SCL (PA7/PB4). The PN532's internal pull-ups may be insufficient.
-2. **Shorten wiring:** Keep I2C wires as short as possible (< 10 cm). Long wires act as antennas for RF noise.
-3. **Add decoupling:** Solder a 0.1 µF ceramic capacitor close to the PN532's VCC/GND pins.
-4. **Check ground:** Ensure a solid ground connection between the PN532 and the WeAct board. Ground loops cause intermittent failures.
-
----
-
-### **Q17: Can I use both the PN532 and the OLED screen at the same time?**
-> [!TIP]
-> The PN532 uses I2C3 (PA7/PB4) while the OLED uses I2C1 (PA9/PB9). They are on separate buses and do not conflict.
-
-**Solution:**
-*   **Yes.** The two devices are on different I2C buses and can operate simultaneously without issues.
-*   The PCF8574 keyboard is also on I2C1, sharing the bus with the OLED. This is normal and supported.
-
----
-
-### **Q18: Does the PN532 support card emulation (reader acts as a card)?**
-**Solution:**
-*   **Yes.** The PN532 supports `TgInitAsTarget` for card emulation. The firmware implements this via `pn532_tg_init_as_target`.
-*   The PN532 emulates a MIFARE Classic 1K target by default. Other card types may require additional configuration.
-
----
-
-### **Q19: Which NFC card types are supported with the PN532?**
-> [!TIP]
-> The PN532 supports fewer protocols than the ST25R3916 in this firmware build.
-
-**Supported:**
-*   ISO14443A (MIFARE Classic, MIFARE Ultralight, NTAG)
-*   ISO14443B (card detection only)
-*   ISO15693 (card detection only)
-*   FeliCa (card detection only)
-*   Card emulation (MIFARE Classic 1K target)
-
-**Not supported (PN532 limitation):**
-*   ISO15693 listener (card emulation)
-*   FeliCa listener (card emulation)
-*   ST25TB (tight timing requirements not met by PN532's `InDataExchange`)
-*   ISO14443A listener with full transparent mode (uses `TgInitAsTarget` instead)
-
----
-
-### **Q14: The INA219 battery monitor reports incorrect current or battery percentage.**
-**Solution:**
-*   The firmware is calibrated for a **0.1 Ω** current shunt resistor (marked `R100`).
-*   Ensure the shunt resistor installed on your board is exactly 0.1 Ω (1% tolerance).
+* **GitHub Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+* **Bug Reports & Discussions**: [GitHub Issues](https://github.com/AJ60/Oled_PCF8574_PN532/issues)
+* **License**: [GNU General Public License v3.0](LICENSE)
