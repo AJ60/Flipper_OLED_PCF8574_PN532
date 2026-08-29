@@ -24,6 +24,8 @@
 
 Think of your DIY Flipper as a friendly little robot made of modular building blocks:
 
+![DIY Flipper Component Guide](misc/module_overview.jpg)
+
 ```mermaid
 graph TD
     subgraph Core [The Core Hardware]
@@ -69,7 +71,9 @@ graph TD
 
 ## 🔌 Easy Visual Wiring Guide (Breadboard Style)
 
-Connecting the modules is just like snapping together color-coded blocks.
+Connecting the modules is just like snapping together color-coded blocks. Follow the wiring visual and connection map below:
+
+![DIY Flipper Breadboard Wiring Diagram](misc/wiring_diagram_easy.jpg)
 
 ```mermaid
 graph LR
