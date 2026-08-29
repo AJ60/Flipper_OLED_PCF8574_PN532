@@ -79,6 +79,7 @@ node_modules/
 
 # IDE / tool configs
 .cursor/
+.kilo/
 .cbmignore
 
 # MCP agent data
