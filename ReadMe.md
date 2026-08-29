@@ -24,7 +24,35 @@
 
 Think of your DIY Flipper as a friendly little robot made of modular building blocks:
 
-![DIY Flipper Component Guide](misc/module_overview.jpg)
+```mermaid
+graph TD
+    subgraph Core [The Core Hardware]
+        MCU["🧠 The Brain<br><b>WeAct STM32WB55</b>"]
+        OLED["👀 The Eyes<br><b>SSD1306 0.96 inch OLED</b>"]
+        KEYPAD["🎮 The Hands<br><b>PCF8574 Button Board</b>"]
+    end
+    
+    subgraph Radios [Wireless & Sensors]
+        NFC["💳 Keycard Reader<br><b>PN532 NFC Module</b>"]
+        RADIO["📻 The Antenna<br><b>CC1101 Sub-GHz</b>"]
+        RFID["🏷️ Key Fob Reader<br><b>125kHz Discrete Tank</b>"]
+    end
+    
+    subgraph StoragePower [Storage, Sound & Power]
+        SD["💾 The Backpack<br><b>MicroSD SPI Module</b>"]
+        BUZZER["🔊 The Voice<br><b>Piezo Buzzer PB8</b>"]
+        INA["🔋 Fuel Gauge<br><b>INA219 / INA226</b>"]
+    end
+
+    MCU --- OLED
+    MCU --- KEYPAD
+    MCU --- NFC
+    MCU --- RADIO
+    MCU --- RFID
+    MCU --- SD
+    MCU --- BUZZER
+    MCU --- INA
+```
 
 | # | Part | Nickname | What It Does (In Simple Words) |
 |---|---|---|---|
@@ -41,9 +69,55 @@ Think of your DIY Flipper as a friendly little robot made of modular building bl
 
 ## 🔌 Easy Visual Wiring Guide (Breadboard Style)
 
-Connecting the modules is just like snapping together color-coded blocks. Follow the wiring diagram below:
+Connecting the modules is just like snapping together color-coded blocks.
 
-![DIY Flipper Wiring Diagram](misc/wiring_diagram_easy.jpg)
+```mermaid
+graph LR
+    subgraph MCU_Pins [WeAct STM32WB55 MCU]
+        PWR["🔴 3.3V (Power Rail)"]
+        GND["⚫ GND (Ground Rail)"]
+        I2C1_SCL["🟡 PA9 (I2C1 Clock)"]
+        I2C1_SDA["🔵 PB9 (I2C1 Data)"]
+        I2C3_SCL["🟡 PC0 (I2C3 Clock)"]
+        I2C3_SDA["🔵 PC1 (I2C3 Data)"]
+        SPI_SCK["🟡 PB3 (SPI Clock)"]
+        SPI_MOSI["🔵 PB5 (SPI MOSI)"]
+        SPI_MISO["🟡 PA6 (SPI MISO)"]
+    end
+
+    subgraph I2C_Bus [Shared I2C1 Bus]
+        OLED_MOD["SSD1306 OLED (0x3C)"]
+        PCF_MOD["PCF8574 Keypad (0x20)"]
+        INA_MOD["INA219 Power Gauge (0x40)"]
+    end
+
+    subgraph SPI_Bus [Shared SPI1 Bus]
+        SD_MOD["MicroSD Card (CS: PA10)"]
+        CC_MOD["CC1101 Radio (CS: PA15)"]
+    end
+
+    subgraph NFC_Bus [NFC I2C3 Bus]
+        PN_MOD["PN532 NFC (IRQ: PA2)"]
+    end
+
+    I2C1_SCL --> OLED_MOD
+    I2C1_SCL --> PCF_MOD
+    I2C1_SCL --> INA_MOD
+
+    I2C1_SDA --> OLED_MOD
+    I2C1_SDA --> PCF_MOD
+    I2C1_SDA --> INA_MOD
+
+    SPI_SCK --> SD_MOD
+    SPI_SCK --> CC_MOD
+    SPI_MOSI --> SD_MOD
+    SPI_MOSI --> CC_MOD
+    SPI_MISO --> SD_MOD
+    SPI_MISO --> CC_MOD
+
+    I2C3_SCL --> PN_MOD
+    I2C3_SDA --> PN_MOD
+```
 
 ### 🎨 Wire Color Rule:
 * 🔴 **Red** = Power (`3.3V`)
