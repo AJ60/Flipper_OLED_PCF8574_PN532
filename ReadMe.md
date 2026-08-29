@@ -1,269 +1,232 @@
-# ⚙️ DIY Flipper Zero (OLED Edition)
-Custom firmware fork supporting standard I2C OLED screens (SSD1306 and SH1106), PCF8574 I/O keypad, PN532 NFC with Crypto1 HW acceleration, and discrete 125kHz LF-RFID on DIY Flipper hardware.
+# 🐬 DIY Flipper Zero (OLED Edition)
+
+> Build your own Flipper Zero using easy-to-find modules, a crisp I2C OLED screen, fast buttons, NFC, RFID, and sub-GHz radio!
 
 [![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/oled_flipper)
 [![Platform](https://img.shields.io/badge/platform-STM32WB55-orange.svg)](https://www.st.com/en/microcontrollers-microprocessors/stm32wb-series.html)
 [![Maintainer](https://img.shields.io/badge/maintainer-AJ__60-brightgreen.svg)](https://github.com/AJ60)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
-> [!WARNING]
-> I do not take responsibility if you damage your board or property. This guide is for educational purposes only — proceed at your own risk.
-
 > [!TIP]
-> ❓ Need help or have questions about building/flashing the DIY Flipper? 
-> Join our community Q&A and issues: **[GitHub Issues & Discussions](https://github.com/AJ60/oled_flipper/issues)**
+> ❓ **New to electronics?** This guide is designed so anyone can build their own device step-by-step. If you have questions, visit **[GitHub Issues & Discussions](https://github.com/AJ60/oled_flipper/issues)**!
 
 ---
 
-## <a id="hardware-showcase"></a>📷 Hardware Showcase
+## 📷 What It Looks Like in Real Life
 
-Here is the physical DIY board in action:
+Here is the assembled physical DIY board running the custom firmware:
 
 <p align="center">
-  <img src="mics/IMG_20260201_143415.JPG" width="45%" alt="DIY Flipper Front" />
-  <img src="mics/IMG_20260201_161815.JPG" width="45%" alt="DIY Flipper Angle" />
+  <img src="mics/IMG_20260201_143415.JPG" width="48%" alt="DIY Flipper Front" />
+  <img src="mics/IMG_20260201_161815.JPG" width="48%" alt="DIY Flipper Angle" />
 </p>
 
 ---
 
-## <a id="table-of-contents"></a>📚 Table of Contents
-- [Summary](#summary)
-- [System Architecture](#system-architecture)
-- [What Works and Limitations](#what-works-and-limitations)
-- [Key Pins and Wiring](#key-pins-and-wiring)
-- [PCF8574 Wiring Guide](#pcf8574-wiring-guide)
-- [How to Build and Flash](#how-to-build-and-flash)
-- [Schematic](#schematic)
-- [Credits and Support](#credits-and-support)
+## 🧩 The Building Blocks (Hardware Modules)
 
----
+Think of your DIY Flipper as a friendly little robot made of modular building blocks:
 
-## <a id="summary"></a>🔍 Summary
-This project implements a custom target for a DIY Flipper-style board based on the **WeAct STM32WB55CGU6** board. It integrates the following components:
+![DIY Flipper Component Guide](misc/module_overview.jpg)
 
-*   **Display**: I2C OLED display (SSD1306 / SH1106) with dynamic contrast dimming
-*   **Sensors**: INA219 / INA226 power & battery monitor (I2C) with hardware Alert (PB1)
-*   **I/O Expander**: PCF8574 (handles 6-way buttons and haptic vibration motor)
-*   **Storage**: microSD slot (SPI)
-*   **Radio**: CC1101 sub-GHz module (SPI)
-*   **NFC**: PN532 V3 module (I2C3) with hardware Crypto1 acceleration & ISO 14443-4 APDUs (or ST25R3916 on SPI1)
-*   **LF-RFID (125 kHz)**: Discrete antenna coil driver & envelope detector (PA5 Carrier TX / PA1 Data RX / PA2 Emulate)
-*   **Peripherals**: Speaker/buzzer (PB8), IR transmitter/receiver (PA8/PA0), 1-Wire iButton (PA3)
-
----
-
-## <a id="system-architecture"></a>📐 System Architecture
-
-This diagram visualizes how the different components interface with the STM32WB55 MCU over I2C, SPI, and GPIO.
-
-```mermaid
-graph TD
-    subgraph MCU [STM32WB55CGU6]
-        I2C1[I2C1 Bus PA9/PB9]
-        I2C3[I2C3 Bus PC0/PC1]
-        SPI1[SPI1 Bus PB3/PB5]
-        GPIO[Direct GPIO / Timers]
-    end
-
-    %% I2C1 Bus Devices
-    I2C1 --> OLED[SSD1306 / SH1106 <br> OLED Display]
-    I2C1 --> INA[INA219 / INA226 <br> Battery Monitor]
-    I2C1 --> PCF[PCF8574 <br> I/O Expander @ 0x20]
-
-    %% PCF8574 Expander
-    PCF --> Buttons[6-Way Buttons Active-Low]
-    PCF --> Vibro[Vibration Motor P6]
-    PCF -.->|INT Trigger| INT_PIN[MCU PB0]
-
-    %% I2C3 Bus Devices
-    I2C3 --> PN532[PN532 NFC Module <br> I2C @ 0x24 + IRQ PA2]
-
-    %% SPI Bus Devices
-    SPI1 --> SD[MicroSD Card CS: PA10]
-    SPI1 --> CC1101[CC1101 Radio CS: PA15]
-    SPI1 -.-> NFC_SPI[ST25R3916 NFC CS: PE4]
-
-    %% GPIO
-    GPIO --> IR_RX[IR Receiver PA0]
-    GPIO --> IR_TX[IR Transmitter PA8]
-    GPIO --> Speaker[Speaker PB8 TIM16]
-    GPIO --> OneWire[1-Wire iButton PA3]
-    GPIO --> RFID_TX[LF-RFID TX PA5 TIM2]
-    GPIO --> RFID_RX[LF-RFID RX PA1 TIM1]
-    GPIO --> RFID_EM[LF-RFID Emulate PA2]
-```
-
----
-
-## <a id="what-works-and-limitations"></a>✅ What Works and Limitations
-*   **Core Systems**: Full Flipper OS / Momentum features compile and function smoothly.
-*   **I2C Multiplexing**: OLED, INA219 / INA226, and PCF8574 are multiplexed onto the primary I2C1 bus with rate-limited bus self-healing and anti-flicker wake management.
-*   **Power Monitoring**: Automatic dual INA219 / INA226 detection with fast probe scanning and hardware Alert interrupt on PB1.
-*   **NFC Support**: Verified working with PN532 (I2C3) featuring hardware Crypto1 acceleration, SAK detection, ISO 14443-4 APDU handling for EMV banking cards, and ST25R3916 SPI modules.
-*   **LF-RFID (125 kHz)**: Reading, writing, and emulation verified for EM4100, HID Generic, Indala26, Keri, NexWatch, Noralsy, Viking, and IDTeck.
-*   **Sub-GHz**: CC1101 module tested and fully functional with configurable crystal PPM offset.
-
----
-
-## <a id="key-pins-and-wiring"></a>📌 Key Pins and Wiring
-
-| Component | Bus / Interface | MCU pin (macro) | Notes |
+| # | Part | Nickname | What It Does (In Simple Words) |
 |---|---|---|---|
-| **I2C1 (Power/Default)** | I2C | SCL: PA9, SDA: PB9 | Used by INA219, PCF8574, and OLED |
-| **I2C3 (External)** | I2C | SCL: PC0, SDA: PC1 | Used by PN532 NFC module (firmware default) |
-| **SPI1 (Shared)** | SPI | MOSI: PB5, SCK: PB3 | Shared SCK/MOSI bus for CC1101, NFC, and SD card |
-| **CC1101** | SPI + IRQ | CS: PA15, MISO: PA6, G0: PA1 | Sub-GHz transceiver |
-| **SD card** | SPI | CS: PA10, MISO: PA6 | MicroSD module |
-| **NFC (PN532 V3)** | I2C + IRQ | SCL: PC0, SDA: PC1, IRQ: PA2 | PN532 NFC module at I2C address `0x24` (7-bit). Active-low IRQ. |
-| **PCF8574 Interrupt** | GPIO | INT: PB0 | Signals button state changes |
-| **IR** | GPIO | RX: PA0, TX: PA8 | Safe IR transmitter & receiver |
-| **LF-RFID (125 kHz)** | PWM / Timer | TX Carrier: PA5 (TIM2_CH1), RX Data: PA1 | 125 kHz coil driver transistor + envelope demodulator |
-| **Speaker** | PWM | PB8 (TIM16) | Sound buzzer |
-| **iButton** | 1-Wire | PA3 | Dallas 1-Wire keys |
+| **1** | **WeAct STM32WB55** | 🧠 **The Brain** | Fast dual-core chip that runs the operating system, games, and apps. |
+| **2** | **SSD1306 0.96" OLED** | 👀 **The Eyes** | Shows animations, dolphin pet, menus, and signal frequencies. |
+| **3** | **PCF8574 Expander** | 🎮 **The Hands** | Connects 6 direction/action buttons + haptic vibration rumble. |
+| **4** | **PN532 / ST25R3916** | 💳 **Keycard Reader** | Reads and emulates 13.56 MHz NFC tags, hotel keys, and amiibos. |
+| **5** | **CC1101 Radio** | 📻 **The Antenna** | Transmits and catches sub-GHz radio signals (gates, remotes, sensors). |
+| **6** | **MicroSD Card Module** | 💾 **The Backpack** | Stores your saved keys, remotes, scripts, games, and animations. |
+| **7** | **Passive Buzzer** | 🔊 **The Voice** | Plays fun 8-bit chimes, game sounds, and keypress clicks. |
+| **8** | **INA219 / INA226** | 🔋 **Fuel Gauge** | Monitors battery voltage and charging percentage accurately. |
 
 ---
 
-## <a id="pcf8574-wiring-guide"></a>🎛️ PCF8574 Wiring Guide
+## 🔌 Easy Visual Wiring Guide (Breadboard Style)
 
-The PCF8574 I/O expander (I2C address `0x20` by default) handles all buttons and the haptic feedback motor over the I2C1 bus. Buttons are wired in an **active-low** configuration (connecting the pin to GND when pressed).
+Connecting the modules is just like snapping together color-coded blocks. Follow the wiring diagram below:
 
-*   **Button Inputs (active-low)**:
-    *   `P0` -> Up Button
-    *   `P1` -> Down Button
-    *   `P2` -> Left Button
-    *   `P3` -> Right Button
-    *   `P4` -> OK (Select) Button
-    *   `P5` -> Back Button
-*   **Outputs**:
-    *   `P6` -> Haptic Vibration Motor (Use an N-channel MOSFET; do not drive directly!)
+![DIY Flipper Wiring Diagram](misc/wiring_diagram_easy.jpg)
 
-The `INT` output (open-drain, connect to MCU **PB0** with a pull-up) signals button state changes and wakes the input service. Note that the expander's I2C address `0x20` overlaps the INA219/INA226 monitor at `0x40` (wire address) — the driver probes the chip with a write/read-back test so the two devices are never confused.
-
-> [!NOTE]
-> **RGB backlight color is not supported on the PCF8574 board.** All 8 expander pins are used by the 6 buttons (P0–P5) and the haptic motor (P6), leaving no pin for an RGB LED. `furi_hal_light_set(LightRed / LightGreen / LightBlue, ...)` is a no-op here; only `LightBacklight` (OLED on/off/dim) is functional.
+### 🎨 Wire Color Rule:
+* 🔴 **Red** = Power (`3.3V`)
+* ⚫ **Black** = Ground (`GND`)
+* 🔵 **Blue** = Data line (`SDA` / `MOSI`)
+* 🟡 **Yellow** = Clock line (`SCL` / `SCK` / `MISO`)
+* 🟢 **Green** = Control signal (`CS` / `INT` / `IRQ`)
 
 ---
 
-## <a id="how-to-build-and-flash"></a>🛠️ How to Build and Flash
+### 📋 Pin-to-Pin Connection Table
 
-### 1. Build from Source
-To compile the firmware for the OLED hardware target, use the Flipper Build Tool.
+#### 1. I2C Bus Devices (Screen, Keypad & Power Monitor)
+All 3 modules share the same two clock & data pins:
+
+| Module Pin | Connects to MCU Pin | Wire Color | Purpose |
+|---|---|---|---|
+| **VCC** (All 3 modules) | **3.3V** | 🔴 Red | Power |
+| **GND** (All 3 modules) | **GND** | ⚫ Black | Ground |
+| **SCL** (All 3 modules) | **PA9** | 🟡 Yellow | I2C Clock |
+| **SDA** (All 3 modules) | **PB9** | 🔵 Blue | I2C Data |
+| **PCF8574 INT** | **PB0** | 🟢 Green | Button Press Wakeup Signal |
+| **INA219/226 ALERT** | **PB1** | 🟢 Green | Low Battery / Overcurrent Alert |
 
 > [!IMPORTANT]
-> **This fork has no `firmware` build target** — running `fbt firmware` (or `fbt.cmd firmware`) fails with a *"target not built"* error. The default target (`basic_dist`) builds the complete firmware package, so invoke `fbt` with **no arguments**:
+> **I2C Pull-Up Resistors**: The OLED screen board has built-in 4.7 kΩ pull-up resistors on SDA/SCL. Keep the OLED connected so the I2C bus stays stable during boot!
 
-*   **Windows (Git Bash / MinGW)**: the `./fbt` shell script refuses to run under MinGW ("In MinGW shell, use fbt.cmd instead"). Use the batch launcher:
-    ```bash
-    # Build the full firmware package (default target: basic_dist)
-    cmd //c fbt.cmd
-    ```
-*   **Linux / macOS**: the POSIX launcher works directly:
-    ```bash
-    # Build the full firmware package (default target: basic_dist)
-    ./fbt
-    ```
+---
 
-Both produce the flashable firmware (`.bin` / `.dfu` / `.hex`) under `build/f7-firmware-C/` and `dist/`.
+#### 2. SPI Bus Devices (SD Card, CC1101 Radio & NFC)
+These modules share the `MOSI` and `SCK` lines, with unique Chip Select (`CS`) pins:
 
-To build only a single external app (FAP), use its `fap_<appid>` target, e.g.:
-```bash
-cmd //c fbt.cmd fap_signal_generator
+| Module | Module Pin | Connects to MCU Pin | Purpose |
+|---|---|---|---|
+| **Shared Clock** | `SCK` | **PB3** | SPI Clock |
+| **Shared MOSI** | `MOSI` | **PB5** | Data Out from MCU |
+| **Shared MISO** | `MISO` | **PA6** | Data In to MCU |
+| **MicroSD Card** | `CS` | **PA10** | SD Card Select |
+| **CC1101 Radio** | `CSN / CS` | **PA15** | Radio Select |
+| | `GDO0 / G0` | **PA1** | Radio IRQ Signal |
+| **PN532 NFC (I2C3)** | `SCL` / `SDA` | **PC0** / **PC1** | NFC I2C Bus 3 |
+| | `IRQ` | **PA2** | NFC Card Detect IRQ |
+| **ST25R3916 (SPI)** | `CS` | **PE4** | SPI NFC Select (Alternative) |
+
+---
+
+#### 3. Other Peripherals (Buzzer, IR & 125kHz RFID)
+
+| Feature | Component Pin | Connects to MCU Pin | Note |
+|---|---|---|---|
+| 🔊 **Speaker / Buzzer** | Positive `+` | **PB8** (TIM16) | Connect negative `-` to GND |
+| 🔴 **IR Receiver** | `DATA` | **PA0** | 38 kHz TSOP receiver |
+| 💡 **IR Transmitter** | `LED Anode` | **PA8** | High-power IR LED (via NPN transistor) |
+| 🏷️ **1-Wire / iButton** | `Data` | **PA3** | Dallas iButton probe with 4.7k pull-up |
+| 📻 **LF-RFID (125 kHz)** | Carrier TX | **PA5** (TIM2_CH1) | Coil driver push-pull stage |
+| | Envelope RX | **PA1** (TIM1_CH1) | Demodulated envelope detector input |
+| | Emulate | **PA2** (TIM2_CH3) | Tag emulation pulse switch |
+
+---
+
+## 🎮 Button Mapping Guide (PCF8574 Keypad)
+
+Buttons are wired to the PCF8574 board in an **active-low** configuration (pressing a button connects the pin to **GND**):
+
+```text
+                 ┌───────────────┐
+                 │    ▲ UP (P0)  │
+                 └───────┬───────┘
+                         │
+       ┌──────────────┐  │  ┌──────────────┐
+       │ ◄ LEFT (P2)  ├──┼──┤ RIGHT ► (P3) │
+       └──────────────┘  │  └──────────────┘
+                         │
+                 ┌───────┴───────┐
+                 │  ● OK (P4)    │
+                 ├───────────────┤
+                 │   ▼ DOWN (P1) │
+                 └───────────────┘
+
+       ┌──────────────┐     ┌──────────────┐
+       │ ↩ BACK (P5)  │     │ 📳 VIBRO(P6) │
+       └──────────────┘     └──────────────┘
 ```
 
-**Updater & update bundle:** the standalone updater and the qFlipper update package are **not** part of the default build — they must be requested explicitly with `--with-updater`:
+* **P0** ➔ Up Button
+* **P1** ➔ Down Button
+* **P2** ➔ Left Button
+* **P3** ➔ Right Button
+* **P4** ➔ OK (Select) Button
+* **P5** ➔ Back Button
+* **P6** ➔ Vibration Motor (driven through an N-channel MOSFET; do not connect motor directly to pin!)
 
-```bash
-# Build firmware + standalone updater (build/f7-updater-C/updater.elf/.bin/.dfu)
-cmd //c fbt.cmd --with-updater
+---
 
-# Build the full self-update bundle + qFlipper .tgz package + SDK zip
-cmd //c fbt.cmd --with-updater updater_package
+## 🚀 4-Step Quick Start: Flashing the Device
+
+```mermaid
+graph LR
+    A[1. Connect Hardware] --> B[2. Set OTP Profile]
+    B --> C[3. Flash in qFlipper]
+    C --> D[4. Have Fun!]
 ```
 
-The bundle lands in `dist/f7-C/f7-update-v2.1/` (`update.fuf` + `resources.tar.gz`) with the qFlipper installer at `dist/f7-C/flipper-z-f7-update-v2.1.tgz`.
+### Step 1: Connect your modules
+Connect your OLED screen, buttons, and MCU according to the wiring diagram.
 
-### 2. Configure & Flash OTP (One-Time Programmable) Memory
-> [!CAUTION]
-> OTP memory can only be written **ONCE**. It cannot be erased or changed. Proceed at your own risk.
-
-1. Open **`generate_otp_gui.exe`** (found in the [`mics/FlipperOTP/`](mics/FlipperOTP/) folder). No installation required.
-2. Set your **Device Name** (max 8 ASCII characters) and **Board Version** (`12` for WeAct STM32WB55).
-3. Select **Display Type: MGG** (Monochrome Glass Grid) — required for the SSD1306 OLED screen.
-4. Put the MCU into **DFU mode**: hold `BOOT0`, connect USB, release `BOOT0`. The app status will show **🟢 Connected**.
-5. Click **"2. Flash (DFU)"** — the tool writes OTP directly to `0x1FFF7000`.
-
-> [!TIP]
-> Alternatively, click **"1. Save .bin"** to generate the file, then flash it manually via [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html).
-
-### 3. Flash Firmware
-
-Choose the appropriate method depending on whether you are setting up the board for the first time or just updating the firmware.
+### Step 2: Configure OTP Memory (Only Once)
+1. Open **`generate_otp_gui.exe`** (in the [`mics/FlipperOTP/`](mics/FlipperOTP/) folder).
+2. Set **Device Name** (e.g. `Flipper`), **Board Version** (`12` for WeAct STM32WB55), and **Display Type: MGG** *(required for OLED)*.
+3. Put the board into **DFU mode**: hold the physical **BOOT0** button on the WeAct board, plug in the USB cable, and release BOOT0.
+4. Click **"2. Flash (DFU)"** in the app.
 
 ---
 
-#### Method A: First-Time Setup (or after a Full Flash Erase)
-*Use this method if the board is blank, has no bootloader, or was fully erased.*
+### Step 3: Flash Firmware via qFlipper (1-Click Install)
 
-1. Put the board in DFU mode (hold `BOOT0`, connect USB, release `BOOT0`).
-2. Open the **qFlipper** desktop application.
-3. qFlipper will detect the board and display **"RECOVERY MODE"** (or **"Update & Recovery Mode DFU started"**).
-4. Click the **"REPAIR"** button. qFlipper will automatically restore the official bootloader and partition the internal Flash.
-5. Once the recovery is complete, the screen might remain blank (since the official firmware lacks OLED drivers), but the device will now connect to qFlipper.
-6. Now, put the board back into **DFU mode** again (so it doesn't freeze under the official firmware).
-7. Click **"Install from file"** in qFlipper.
-8. Choose your preferred update style:
-   * **Using the `.tgz` package (Recommended):** Select the **`.tgz`** archive. qFlipper will flash the firmware (the OLED screen will turn on), reboot into normal mode, and then copy the required resource files to your SD card automatically.
-   * **Using the `.dfu` file (Manual):** Select the **`.dfu`** firmware file to flash it (OLED turns on). After it boots, you will need to manually unzip the resources package and copy the files to the root of your microSD card.
+#### For First-Time Setup:
+1. Put the board in **DFU mode** (hold `BOOT0`, plug in USB, release `BOOT0`).
+2. Open the official **qFlipper** application on your PC.
+3. qFlipper will show **"RECOVERY MODE"**. Click **"REPAIR"** to install the bootloader.
+4. Put the board back into **DFU mode** once more.
+5. Click **"Install from file"** in qFlipper and select our **`.tgz`** firmware package from the [Releases](https://github.com/AJ60/oled_flipper/releases) page.
+6. qFlipper will flash the firmware, turn on the OLED screen, and automatically copy all required game/app resource files to your microSD card!
 
----
-
-#### Method B: Regular Firmware Updates
-*Use this method to update an already working DIY Flipper.*
-
-* **Using the `.tgz` package:** Connect the Flipper to your PC via USB, open **qFlipper**, click **"Install from file"**, and select the updated **`.tgz`** archive. qFlipper will automatically flash the MCU and update all SD card files in one go.
-* **Using the `.dfu` file:** Put the board in **DFU mode**, open qFlipper, click **"Install from file"**, and select the updated **`.dfu`** firmware file.
+#### For Normal Updates:
+Connect the DIY Flipper via USB, open **qFlipper**, click **"Install from file"**, and select the updated **`.tgz`** package.
 
 ---
 
-#### Option C: Flashing via STM32CubeProgrammer / ST-Link (Advanced)
-> [!WARNING]
-> **DO NOT use "Full Chip Erase"** in STM32CubeProgrammer!
-> Doing a full chip erase will wipe out the emulation OTP structures, flash partition tables, and calibration settings. If these are wiped, the firmware will freeze early during boot (leading to a blank screen and USB connection loss).
-> 
-> *   Set the Erase option to **"Sector Erase"** (only erase sectors occupied by the firmware).
-> *   If you did a full chip erase by mistake, follow **Method A (First-Time Setup)** to rebuild the device partitions first.
+## 🛠️ How to Build from Source (For Developers)
+
+Use the built-in FBT build system to compile the firmware locally:
+
+```bash
+# Windows (Command Prompt / PowerShell)
+cmd /c fbt.cmd
+
+# Linux / macOS
+./fbt
+
+# Build the complete qFlipper .tgz installer bundle & SDK
+cmd /c fbt.cmd --with-updater updater_package
+```
+
+Compiled binaries land in `build/f7-firmware-C/` and `dist/f7-C/`.
 
 ---
 
-## <a id="schematic"></a>🔌 Schematic & Hardware Circuit
+## 📐 Advanced Circuit & LF-RFID Schematic
 
-A complete wiring schematic is available in the repository:
+Full electronic schematics are included in the repository:
 
 ![DIY Flipper Schematic](misc/schematic.png)
 
-### 📻 LF-RFID (125 kHz) Circuit Details & Schematic:
-- 📄 **Schematic PDF**: [Download 125kHz LF-RFID Subsystem Schematic (PDF)](misc/rfid_lf.pdf)
+* 📄 **LF-RFID PDF Schematic**: [Download 125kHz Subsystem Schematic (PDF)](misc/rfid_lf.pdf)
 
-#### Component Bill of Materials (BOM) from KiCad Schematic:
+<details>
+<summary><b>🔍 View LF-RFID Component Bill of Materials (BOM)</b></summary>
+
 | Stage | Component | Value / Part | Description |
 |---|---|---|---|
-| **Transmitter Driver [1]** | `PA5` (PWM) | MCU `TIM2_CH1` | 125 kHz Carrier PWM Drive |
+| **Transmitter Driver** | `PA5` (PWM) | MCU `TIM2_CH1` | 125 kHz Carrier PWM Drive |
 | | `Q1` | BC337 / S8050 / 2N2222 | NPN Push-Pull Transistor |
 | | `Q2` | BC327 / S8550 / 2N2907 | PNP Push-Pull Transistor |
 | | `C1` | 2.2 nF | Drive Coupling Capacitor |
-| **Resonant Tank [2]** | `L1` | 1.2 mH / 95T | Antenna Coil |
+| **Resonant Tank** | `L1` | 1.2 mH / 95T | Antenna Coil |
 | | `PA2` (Emulate) | MCU `TIM2_CH3` | Emulation Pulse Driver (`R2` 1k, `R8` 10k) |
 | | `Q3` | 2N2222 | Emulation Switch Transistor (`R1` 100 Ohm) |
-| **Demodulator [3]** | `D1` | 1N4148 / BAT54S | Envelope Schottky Diode |
+| **Demodulator** | `D1` | 1N4148 / BAT54S | Envelope Schottky Diode |
 | | `C3`, `R3` | 1 nF, 10 kOhm | RC Low-Pass Filter |
 | | `C4`, `R4` | 22 nF, 10 kOhm | AC Coupling Stage |
 | | `U1` | LM2904 / LM358 / MCP6002 | Op-Amp Signal Amplifier (`R5`-`R7` 100k, `R9` 50k) |
 | | `PA1` (Data In) | MCU `TIM1_CH1` | Demodulated RX Envelope Input |
 
+</details>
+
 ---
 
-## <a id="credits-and-support"></a>🤝 Credits and Maintainer
+## 🤝 Credits and Maintainer
 
 * **Maintainer & Developer**: [**AJ_60**](https://github.com/AJ60)
 * **Design & Code Contributors**: Nucleus Dark, Lamtran, artema0g, and the Flipper Zero / Momentum community.
-* **Firmware Base**: Built on the open-source Flipper Zero firmware platform under GNU General Public License v3.0.
+* **License**: Open-source under the [GNU General Public License v3.0](LICENSE).
