@@ -1,5 +1,12 @@
 # 🐬 DIY Flipper Zero (OLED Edition)
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 > Build your own DIY Flipper Zero with an I2C OLED display, PCF8574 keypad, PN532 NFC reader, and discrete sub-GHz / 125kHz RFID hardware!
 
 [![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/oled_flipper)

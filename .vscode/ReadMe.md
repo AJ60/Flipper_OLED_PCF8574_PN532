@@ -1,5 +1,12 @@
 # Visual Studio Code workspace for Flipper Zero {#vscode}
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 ## Setup
 
  * To start developing with VSCode, run `./fbt vscode_dist` in project root (on Windows use `cmd //c fbt.cmd vscode_dist` from Git Bash, or `fbt.cmd vscode_dist` from cmd/PowerShell). _That should only be done once_

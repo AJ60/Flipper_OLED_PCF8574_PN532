@@ -1,5 +1,12 @@
 # Intro
 
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+
+---
+
+
+
 Nice to see you reading this document, we really appreciate it.
 
 As all documents of this kind it's unable to cover everything.
