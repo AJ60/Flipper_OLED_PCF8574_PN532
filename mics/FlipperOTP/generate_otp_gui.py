@@ -620,7 +620,7 @@ class OTPGeneratorApp:
         # GitHub Author Link Label
         author_label = tk.Label(
             self.root,
-            text="github.com/artema0g",
+            text="github.com/AJ60",
             font=("Segoe UI", 8, "underline"),
             fg=TEXT_MUTED,
             bg=BG_COLOR,
@@ -629,7 +629,7 @@ class OTPGeneratorApp:
         author_label.pack(side="bottom", pady=(5, 0))
         
         # Link click and hover bindings
-        author_label.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/artema0g/oled_flipper"))
+        author_label.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/AJ60/oled_flipper"))
         author_label.bind("<Enter>", lambda e: author_label.config(fg=ACCENT_COLOR))
         author_label.bind("<Leave>", lambda e: author_label.config(fg=TEXT_MUTED))
 

@@ -1,9 +1,9 @@
-# ⚙️ DIY Flipper Zero (OLED Version)
-Custom firmware fork supporting standard I2C OLED screens (SH1106 and SSD1306) on DIY Flipper hardware.
+# ⚙️ DIY Flipper Zero (OLED Edition)
+Custom firmware fork supporting standard I2C OLED screens (SSD1306 and SH1106), PCF8574 I/O keypad, PN532 NFC with Crypto1 HW acceleration, and discrete 125kHz LF-RFID on DIY Flipper hardware.
 
-[![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/artema0g/oled_flipper)
+[![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/oled_flipper)
 [![Platform](https://img.shields.io/badge/platform-STM32WB55-orange.svg)](https://www.st.com/en/microcontrollers-microprocessors/stm32wb-series.html)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Me-red?style=flat&logo=kofi)](https://ko-fi.com/artema0g)
+[![Maintainer](https://img.shields.io/badge/maintainer-AJ__60-brightgreen.svg)](https://github.com/AJ60)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
 > [!WARNING]
@@ -11,7 +11,7 @@ Custom firmware fork supporting standard I2C OLED screens (SH1106 and SSD1306) o
 
 > [!TIP]
 > ❓ Need help or have questions about building/flashing the DIY Flipper? 
-> Join our community Q&A and troubleshooting discussion: **[GitHub Q&A Discussion #4](https://github.com/artema0g/oled_flipper/discussions/4)**
+> Join our community Q&A and issues: **[GitHub Issues & Discussions](https://github.com/AJ60/oled_flipper/issues)**
 
 ---
 
@@ -41,14 +41,14 @@ Here is the physical DIY board in action:
 ## <a id="summary"></a>🔍 Summary
 This project implements a custom target for a DIY Flipper-style board based on the **WeAct STM32WB55CGU6** board. It integrates the following components:
 
-*   **Display**: I2C OLED display (SH1106 / SSD1306)
+*   **Display**: I2C OLED display (SSD1306 / SH1106) with dynamic contrast dimming
 *   **Sensors**: INA219 / INA226 power & battery monitor (I2C) with hardware Alert (PB1)
-*   **I/O Expander**: PCF8574 (handles buttons and the vibration motor)
+*   **I/O Expander**: PCF8574 (handles 6-way buttons and haptic vibration motor)
 *   **Storage**: microSD slot (SPI)
 *   **Radio**: CC1101 sub-GHz module (SPI)
-*   **NFC**: ST25R3916 Elechouse module (SPI)
-*   **LF-RFID (125 kHz)**: Antenna coil driver & envelope detector (PA5 Carrier TX / PA1 Data RX)
-*   **Peripherals**: Speaker/buzzer, IR transmitter/receiver, vibration motor
+*   **NFC**: PN532 V3 module (I2C3) with hardware Crypto1 acceleration & ISO 14443-4 APDUs (or ST25R3916 on SPI1)
+*   **LF-RFID (125 kHz)**: Discrete antenna coil driver & envelope detector (PA5 Carrier TX / PA1 Data RX / PA2 Emulate)
+*   **Peripherals**: Speaker/buzzer (PB8), IR transmitter/receiver (PA8/PA0), 1-Wire iButton (PA3)
 
 ---
 
@@ -59,43 +59,49 @@ This diagram visualizes how the different components interface with the STM32WB5
 ```mermaid
 graph TD
     subgraph MCU [STM32WB55CGU6]
-        I2C1[I2C1 Bus]
-        SPI1[SPI1 Bus]
-        GPIO[Direct GPIO]
+        I2C1[I2C1 Bus PA9/PB9]
+        I2C3[I2C3 Bus PC0/PC1]
+        SPI1[SPI1 Bus PB3/PB5]
+        GPIO[Direct GPIO / Timers]
     end
 
-    %% I2C Bus Devices
-    I2C1 --> OLED[OLED Display <br> SH1106 / SSD1306]
+    %% I2C1 Bus Devices
+    I2C1 --> OLED[SSD1306 / SH1106 <br> OLED Display]
     I2C1 --> INA[INA219 / INA226 <br> Battery Monitor]
-    I2C1 --> PCF[PCF8574 <br> I/O Expander]
+    I2C1 --> PCF[PCF8574 <br> I/O Expander @ 0x20]
 
     %% PCF8574 Expander
-    PCF --> Buttons[6-Way Buttons + Back]
-    PCF --> Vibro[Vibration Motor]
+    PCF --> Buttons[6-Way Buttons Active-Low]
+    PCF --> Vibro[Vibration Motor P6]
+    PCF -.->|INT Trigger| INT_PIN[MCU PB0]
+
+    %% I2C3 Bus Devices
+    I2C3 --> PN532[PN532 NFC Module <br> I2C @ 0x24 + IRQ PA2]
 
     %% SPI Bus Devices
     SPI1 --> SD[MicroSD Card CS: PA10]
     SPI1 --> CC1101[CC1101 Radio CS: PA15]
-    SPI1 --> NFC[ST25R3916 NFC CS: PE4]
+    SPI1 -.-> NFC_SPI[ST25R3916 NFC CS: PE4]
 
     %% GPIO
     GPIO --> IR_RX[IR Receiver PA0]
     GPIO --> IR_TX[IR Transmitter PA8]
-    GPIO --> Speaker[Speaker PB8]
+    GPIO --> Speaker[Speaker PB8 TIM16]
     GPIO --> OneWire[1-Wire iButton PA3]
-    GPIO --> RFID_TX[LF-RFID TX PA5]
-    GPIO --> RFID_RX[LF-RFID RX PA1]
+    GPIO --> RFID_TX[LF-RFID TX PA5 TIM2]
+    GPIO --> RFID_RX[LF-RFID RX PA1 TIM1]
+    GPIO --> RFID_EM[LF-RFID Emulate PA2]
 ```
 
 ---
 
 ## <a id="what-works-and-limitations"></a>✅ What Works and Limitations
-*   **Core Systems**: All official Flipper firmware features compile and function.
-*   **I2C Devices**: OLED, INA219 / INA226, and PCF8574 are multiplexed onto the primary I2C1 bus to preserve SPI resources.
-*   **Power Monitoring**: Automatic dual INA219 / INA226 detection with hardware overcurrent/undervoltage Alert interrupt on PB1.
-*   **NFC Support**: Verified working with Elechouse ST25R3916 modules.
+*   **Core Systems**: Full Flipper OS / Momentum features compile and function smoothly.
+*   **I2C Multiplexing**: OLED, INA219 / INA226, and PCF8574 are multiplexed onto the primary I2C1 bus with rate-limited bus self-healing and anti-flicker wake management.
+*   **Power Monitoring**: Automatic dual INA219 / INA226 detection with fast probe scanning and hardware Alert interrupt on PB1.
+*   **NFC Support**: Verified working with PN532 (I2C3) featuring hardware Crypto1 acceleration, SAK detection, ISO 14443-4 APDU handling for EMV banking cards, and ST25R3916 SPI modules.
 *   **LF-RFID (125 kHz)**: Reading, writing, and emulation verified for EM4100, HID Generic, Indala26, Keri, NexWatch, Noralsy, Viking, and IDTeck.
-*   **Sub-GHz**: CC1101 module tested and fully functional.
+*   **Sub-GHz**: CC1101 module tested and fully functional with configurable crystal PPM offset.
 
 ---
 
@@ -132,6 +138,9 @@ The PCF8574 I/O expander (I2C address `0x20` by default) handles all buttons and
     *   `P6` -> Haptic Vibration Motor (Use an N-channel MOSFET; do not drive directly!)
 
 The `INT` output (open-drain, connect to MCU **PB0** with a pull-up) signals button state changes and wakes the input service. Note that the expander's I2C address `0x20` overlaps the INA219/INA226 monitor at `0x40` (wire address) — the driver probes the chip with a write/read-back test so the two devices are never confused.
+
+> [!NOTE]
+> **RGB backlight color is not supported on the PCF8574 board.** All 8 expander pins are used by the 6 buttons (P0–P5) and the haptic motor (P6), leaving no pin for an RGB LED. `furi_hal_light_set(LightRed / LightGreen / LightBlue, ...)` is a no-op here; only `LightBacklight` (OLED on/off/dim) is functional.
 
 ---
 
@@ -253,11 +262,8 @@ A complete wiring schematic is available in the repository:
 
 ---
 
-## <a id="credits-and-support"></a>🤝 Credits and Support
+## <a id="credits-and-support"></a>🤝 Credits and Maintainer
 
-Special thanks to:
-*   **Nucleus Dark** & **Lamtran** for their design inspiration and code contributions.
-
-### ☕ Support this Project
-If you find this project useful and would like to support its development, you can buy me a coffee here:
-*   **Ko-fi**: [Support artema0g on Ko-fi](https://ko-fi.com/artema0g)
+* **Maintainer & Developer**: [**AJ_60**](https://github.com/AJ60)
+* **Design & Code Contributors**: Nucleus Dark, Lamtran, artema0g, and the Flipper Zero / Momentum community.
+* **Firmware Base**: Built on the open-source Flipper Zero firmware platform under GNU General Public License v3.0.

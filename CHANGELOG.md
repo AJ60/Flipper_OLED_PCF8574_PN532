@@ -1,3 +1,24 @@
+# Changelog
+
+## [v2.2-OLED] — DIY Flipper Zero (OLED Edition by AJ_60)
+
+### Highlights & Enhancements:
+- **NFC & PN532 Engine**:
+  - Implemented PN532 hardware Crypto1 acceleration for instantaneous MIFARE Classic authentication.
+  - Added ISO 14443-4 APDU frame wrapping and unwrapping support for EMV banking card reads and extended transaction timeouts.
+  - Implemented 3-attempt retry loop on `InDataExchange` for DCS checksum errors with PN532 re-initialization on persistent failures.
+  - SAK card type detection refinements and reliable dictionary attack state recovery.
+- **Display & Power Management**:
+  - Implemented dynamic OLED contrast control and dimming for SSD1306 displays.
+  - Eliminated display reinit flicker on keypresses and sleep/wake transitions.
+  - Accelerated INA219 / INA226 power monitor bus probing.
+- **Input & Bus Robustness**:
+  - Reduced PCF8574 debounce threshold (`INPUT_DEBOUNCE_TICKS = 2`) for sub-millisecond tactile button response.
+  - Added rate-limited self-healing expander bus verification (`furi_hal_pcf8574_check_and_restore`) to prevent key drops during heavy RF/I2C activity.
+  - Removed artificial vibro notification delays.
+
+---
+
 ### Breaking Changes:
 - OFW: JS: SDK 1.0:
   - Scripts using these modules will need to be updated

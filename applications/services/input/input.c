@@ -243,7 +243,18 @@ int32_t input_srv(void* p) {
                 uint16_t cached_val = (uint16_t)new_state | 0xFF00;
                 g_pcf8574_gpio_state = cached_val;
             }
-            // On read failure, preserve previous cached g_pcf8574_gpio_state to prevent dropping button presses
+            // Self-heal: re-assert expander config/output state at a bounded rate.
+            // Covers (a) a transient I2C read failure and (b) a silent expander
+            // reset while the input thread is in the tight 1 ms debounce loop
+            // (which previously deferred recovery to the next idle wait).
+            // Rate-limited so a wedged bus is never hammered with writes.
+            uint32_t now = furi_get_tick();
+            uint32_t restore_period = display_is_sleeping ? 30000 :
+                                                            INPUT_PCF8574_RESTORE_PERIOD_MS;
+            if((now - last_restore_tick) >= restore_period) {
+                last_restore_tick = now;
+                furi_hal_pcf8574_check_and_restore(pcf8574_int_mask);
+            }
         }
 #endif
 
@@ -350,16 +361,6 @@ int32_t input_srv(void* p) {
             // FuriFlagWaitAny clears matched flags on return, so we must NOT
             // clear again afterwards or we could drop an INT raised in between.
             furi_thread_flags_wait(INPUT_THREAD_FLAG_ISR, FuriFlagWaitAny, INPUT_IDLE_WAIT_TICKS);
-
-#ifdef USE_PCF8574
-            uint32_t now = furi_get_tick();
-            uint32_t restore_period = display_is_sleeping ? 30000 :
-                                                            INPUT_PCF8574_RESTORE_PERIOD_MS;
-            if(pcf8574_available && (now - last_restore_tick) >= restore_period) {
-                last_restore_tick = now;
-                furi_hal_pcf8574_check_and_restore(pcf8574_int_mask);
-            }
-#endif
         }
     }
 

@@ -33,7 +33,7 @@ ACCENT_COLOR = "#ff6c00"      # Flipper Orange
 BUTTON_ACTIVE = "#ff8533"
 LOG_BG = "#03060a"
 
-GITHUB_REPO = "artema0g/oled_flipper"
+GITHUB_REPO = "AJ60/oled_flipper"
 STM32_DFU_VID = 0x0483
 STM32_DFU_PID = 0xDF11
 
