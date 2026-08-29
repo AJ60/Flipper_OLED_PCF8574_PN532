@@ -284,6 +284,7 @@ bool furi_hal_pcf8574_write_pin(uint8_t pin, bool value) {
 }
 
 void furi_hal_pcf8574_attach_int(GpioExtiCallback cb, void* ctx) {
+    furi_check(cb);
     // Store callback and configure the PCF INT GPIO (active-LOW, falling edge)
     pcf8574_int_cb = cb;
     pcf8574_int_ctx = ctx;
@@ -299,13 +300,6 @@ void furi_hal_pcf8574_attach_int(GpioExtiCallback cb, void* ctx) {
     // handler serves lines 10-15 only.
     NVIC_SetPriority(EXTI0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
     NVIC_EnableIRQ(EXTI0_IRQn);
-}
-
-void furi_hal_pcf8574_handle_int(void) {
-    // Forward to registered callback — called from EXTI ISR context
-    if(pcf8574_int_cb) {
-        pcf8574_int_cb(pcf8574_int_ctx);
-    }
 }
 
 bool furi_hal_pcf8574_configure_interrupts(uint8_t gpios_to_input_mask) {
@@ -327,9 +321,17 @@ bool furi_hal_pcf8574_configure_interrupts(uint8_t gpios_to_input_mask) {
 }
 
 bool furi_hal_pcf8574_check_and_restore(uint8_t expected_mask) {
-    // Unlike MCP23017, PCF8574 has no registers to read back config.
-    // Just write the expected mask.
-    return furi_hal_pcf8574_configure_interrupts(expected_mask);
+    // PCF8574 has no config registers to read back. After a silent reset
+    // the chip reverts to 0xFF (all quasi-bidirectional inputs). Restore
+    // the full port state: re-assert the input mask AND re-write the
+    // output shadow so output pins (vibro etc.) return to known state.
+    const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
+    furi_hal_i2c_acquire(bus);
+    pcf8574_input_mask = expected_mask; // force, not OR
+    uint8_t byte = pcf8574_compose_byte(pcf8574_current_state);
+    bool res = furi_hal_i2c_tx(bus, (uint8_t)(pcf8574_addr << 1), &byte, 1, 100);
+    furi_hal_i2c_release(bus);
+    return res;
 }
 
 // LED Stub functions - Since PCF8574 has only 8 pins, there's no room for RGB LED.

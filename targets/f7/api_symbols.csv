@@ -1616,7 +1616,6 @@ Function,+,furi_hal_os_tick,void,
 Function,+,furi_hal_pcf8574_attach_int,void,"GpioExtiCallback, void*"
 Function,+,furi_hal_pcf8574_check_and_restore,_Bool,uint8_t
 Function,+,furi_hal_pcf8574_configure_interrupts,_Bool,uint8_t
-Function,+,furi_hal_pcf8574_handle_int,void,
 Function,+,furi_hal_pcf8574_init,_Bool,
 Function,+,furi_hal_pcf8574_init_ex,_Bool,uint8_t
 Function,+,furi_hal_pcf8574_led_init,_Bool,

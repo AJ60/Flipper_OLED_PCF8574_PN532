@@ -349,22 +349,30 @@ FuriHalNfcError furi_hal_nfc_iso14443a_listener_set_col_res_data(
     if(error != FuriHalNfcErrorNone) return error;
 
 #if defined(FURI_HAL_NFC_CHIP_PN532)
-    uint8_t params[36] = {0};
+    UNUSED(uid_len);
+    uint8_t params[6] = {0};
+    // SENS_RES (ATQA) - 2 bytes
     params[0] = atqa[0];
     params[1] = atqa[1];
+    // NFCID1t (UID) - 3 bytes
     params[2] = uid[0];
     params[3] = uid[1];
     params[4] = uid[2];
-    params[5] = (uid_len > 3) ? uid[3] : 0x00;
-    params[6] = sak;
+    // SEL_RES (SAK) - 1 byte
+    params[5] = sak;
 
     uint8_t rx_cmd[64];
     size_t rx_cmd_len = sizeof(rx_cmd);
     Pn532Error pn_err =
-        pn532_tg_init_as_target(PN532_I2C_BUS, params, 7, rx_cmd, &rx_cmd_len, 500);
+        pn532_tg_init_as_target(PN532_I2C_BUS, params, sizeof(params), rx_cmd, &rx_cmd_len, 500);
     if(pn_err == Pn532ErrorNone) {
         error = FuriHalNfcErrorNone;
         if(rx_cmd_len > 0) {
+            size_t copy_len = (rx_cmd_len <= sizeof(furi_hal_pn532_ctx.rx_buf)) ?
+                                  rx_cmd_len :
+                                  sizeof(furi_hal_pn532_ctx.rx_buf);
+            memcpy(furi_hal_pn532_ctx.rx_buf, rx_cmd, copy_len);
+            furi_hal_pn532_ctx.rx_len = copy_len;
             furi_hal_nfc_event_set(FuriHalNfcEventInternalTypeIrq);
         }
     } else {

@@ -422,7 +422,7 @@ FuriHalNfcError furi_hal_nfc_acquire(void) {
 #if !defined(FURI_HAL_NFC_CHIP_PN532)
         furi_hal_spi_acquire(&furi_hal_spi_bus_handle_nfc);
 #endif
-        if(furi_mutex_acquire(furi_hal_nfc.mutex, FuriWaitForever) != FuriStatusOk) {
+        if(furi_mutex_acquire(furi_hal_nfc.mutex, 1000) != FuriStatusOk) {
 #if !defined(FURI_HAL_NFC_CHIP_PN532)
             furi_hal_spi_release(&furi_hal_spi_bus_handle_nfc);
 #endif

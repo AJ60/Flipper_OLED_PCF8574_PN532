@@ -39,7 +39,12 @@ void furi_hal_light_set(Light light, uint8_t value) {
         display_is_sleeping = !on;
         if(furi_record_exists(RECORD_GUI)) {
             Gui* gui = furi_record_open(RECORD_GUI);
-            u8g2_SetPowerSave(&gui->canvas->fb, on ? 0 : 1);
+            if(on) {
+                u8g2_SetPowerSave(&gui->canvas->fb, 0);
+                u8g2_SetContrast(&gui->canvas->fb, value);
+            } else {
+                u8g2_SetPowerSave(&gui->canvas->fb, 1);
+            }
             furi_record_close(RECORD_GUI);
         }
         if(was_sleeping && on) {

@@ -36,7 +36,6 @@ bool furi_hal_pcf8574_write_pin(uint8_t pin, bool value);
 
 // Attach callback for INT pin
 void furi_hal_pcf8574_attach_int(GpioExtiCallback cb, void* ctx);
-void furi_hal_pcf8574_handle_int(void);
 
 // Configure interrupts (for PCF8574 this just sets the pins to 1 so they can act as inputs)
 bool furi_hal_pcf8574_configure_interrupts(uint8_t gpios_to_input_mask);
