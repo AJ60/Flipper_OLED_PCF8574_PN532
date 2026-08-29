@@ -1,47 +1,40 @@
-name: "Build"
+name: FBT Build
+
+permissions:
+  contents: read
+  actions: write
 
 on:
   push:
-    branches:
-      - "**"
-    tags-ignore:
-      - "*"
+    branches: [ssd1306_mcp23017, master, main]
   pull_request:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+    branches: [ssd1306_mcp23017, master, main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
-          submodules: true
+          submodules: recursive
+          fetch-depth: 0
 
-      - name: "Install Build Dependencies"
+      - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y p7zip-full
+          sudo apt-get install -y python3-pip scons gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+          pip3 install protobuf grpcio-tools
 
-      - name: "Build Firmware and Apps"
-        run: |
-          ./fbt COMPACT=1 DEBUG=0 --with-updater updater_package fap_dist
+      - name: Build firmware (basic_dist)
+        run: ./fbt
 
-      - name: "Collect Artifacts"
-        run: |
-          mkdir -p release_artifacts
-          cp -v build/f7-firmware-C/firmware.bin release_artifacts/flipper-z-f7-firmware-oled.bin || true
-          cp -v build/f7-firmware-C/firmware.dfu release_artifacts/flipper-z-f7-firmware-oled.dfu || true
-          cp -v build/f7-firmware-C/firmware.hex release_artifacts/flipper-z-f7-firmware-oled.hex || true
-          cp -v dist/f7-C/*.tgz release_artifacts/ || true
-          cp -v dist/f7-C/*.zip release_artifacts/ || true
+      - name: Build updater package
+        run: ./fbt --with-updater updater_package
 
-      - name: "Upload Build Artifacts"
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: flipper-oled-build
-          path: release_artifacts/*
+          name: firmware-${{ github.sha }}
+          path: |
+            dist/
+            build/f7-firmware-C/
