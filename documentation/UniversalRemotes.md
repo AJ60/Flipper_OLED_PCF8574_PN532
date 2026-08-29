@@ -1,76 +1,40 @@
-# Universal Remotes {#universal_remotes}
+# 📺 Universal Remotes Guide {#universal_remotes}
 
-## Televisions
+> Guide for capturing and adding new infrared remote signals to universal remote database files.
 
-Adding your TV set to the universal remote is quite straightforward. Up to 6 signals can be recorded: `Power`, `Mute`, `Vol_up`, `Vol_dn`, `Ch_next`, and `Ch_prev`. Any of them can be omitted if not supported by your TV.
+**Maintainer**: [**AJ_60**](https://github.com/AJ60)  
+**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
-Each signal is recorded using the following algorithm:
+---
 
-1. Get the remote and point it to Flipper's IR receiver.
-2. Start learning a new remote if it's the first button or press `+` to add a new button otherwise.
-3. Press a remote button and save it under a corresponding name.
-4. Repeat steps 2-3 until all required signals are saved.
+## 1. Televisions
 
-The signal names are self-explanatory. Remember to make sure that every recorded signal does what it's supposed to.
+To add your TV set to the universal remote database:
+1. Point your remote at the DIY Flipper IR receiver (TSOP on `PA0`).
+2. Go to **Infrared** → **Learn New Remote**.
+3. Capture up to 6 buttons: `Power`, `Mute`, `Vol_up`, `Vol_dn`, `Ch_next`, and `Ch_prev`.
+4. Test and append the signals to the end of the universal TV database file: `assets/infrared/assets/tv.ir`.
 
-If everything checks out, append these signals **to the end** of the [TV universal remote file](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/infrared/resources/infrared/assets/tv.ir).
+---
 
-## Audio players
+## 2. Audio Players & Soundbars
 
-Adding your audio player to the universal remote is done in the same manner as described above. Up to 8 signals can be recorded: `Power`, `Play`, `Pause`, `Vol_up`, `Vol_dn`, `Next`, `Prev`, and `Mute`. Any of them can be omitted if not supported by the player.
+Up to 8 standard signals can be recorded:
+* `Power`, `Play`, `Pause`, `Vol_up`, `Vol_dn`, `Next`, `Prev`, `Mute`.
+* Append verified signals to `assets/infrared/assets/audio.ir`.
 
-The signal names are self-explanatory.
-On many remotes, the `Play` button doubles as `Pause`. In this case, record it as `Play` omitting the `Pause`.
-Make sure that every signal does what it's supposed to.
+---
 
-If everything checks out, append these signals **to the end** of the [audio player universal remote file](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/infrared/resources/infrared/assets/audio.ir).
+## 3. Projectors
 
-## Projectors
+Standard projector signals:
+* `Power`, `Mute`, `Vol_up`, `Vol_dn`.
+* Append verified signals to `assets/infrared/assets/projector.ir`.
 
-Adding your projector to the universal remote is really simple. Up to 4 signals can be recorded: `Power`, `Mute`, `Vol_up`, `Vol_dn`. Any of them can be omitted if not supported by your projector.
-To save time, please make sure every recording has been named accordingly.
-In case of omitting, on most projectors with the 4 following buttons, you should not have a problem.
+---
 
+## 4. Air Conditioners
 
-## Air conditioners
-
-Air conditioners differ from most other infrared-controlled devices because their state is tracked by the remote.
-The majority of A/C remotes have a small display that shows the current mode, temperature, and other settings.
-When the user presses a button, a whole set of parameters is transmitted to the device, which must be recorded and used as a whole.
-
-In order to add a particular air conditioner to the universal remote, 6 signals must be recorded: `Off`, `Dh`, `Cool_hi`, `Cool_lo`, `Heat_hi`, and `Heat_lo`.
-Each signal (except `Off`) is recorded using the following algorithm:
-
-1. Get the remote and press the **POWER** button so that the display shows that A/C is ON.
-2. Set the A/C to the corresponding mode (see table below), leaving other parameters such as fan speed or vane on **AUTO** (if applicable).
-3. Press the **POWER** button to switch the A/C off.
-4. Start learning a new remote on Flipper if it's the first button or press `+` to add a new button otherwise.
-5. Point the remote to Flipper's IR receiver as directed and press the **POWER** button once again.
-6. Save the resulting signal under the specified name.
-7. Repeat steps 2-6 for each signal from the table below.
-
-| Signal  |    Mode    | Temperature | Note                                |
-| :-----: | :--------: | :---------: | ----------------------------------- |
-|   Dh    | Dehumidify |     N/A     |                                     |
-| Cool_hi |  Cooling   |  See note   | Lowest temperature in cooling mode  |
-| Cool_lo |  Cooling   |    23°C     |                                     |
-| Heat_hi |  Heating   |  See note   | Highest temperature in heating mode |
-| Heat_lo |  Heating   |    23°C     |                                     |
-
-Finally, record the `Off` signal:
-
-1. Make sure the display shows that the A/C is ON.
-2. Start learning a new signal on Flipper and point the remote towards the IR receiver.
-3. Press the **POWER** button so that the remote shows the OFF state.
-4. Save the resulting signal under the name `Off`.
-
-The resulting remote file should now contain 6 signals. You can omit any of them, but you then won't be able to use their functionality.
-Test the file against the actual device. Make sure that every signal does what it's supposed to.
-
-If everything checks out, append these signals **to the end** of the [A/C universal remote file](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/applications/main/infrared/resources/infrared/assets/ac.ir).
-
-## Final steps
-
-The order of signals is not important, but they should be preceded by the following comment: `# Model: <Your model name>` in order to keep the library organized.
-
-When done, open a pull request containing the changed file.
+Air conditioners transmit full multi-byte state packets (Mode, Temperature, Fan Speed) on every keypress:
+* Record 6 mandatory states: `Off`, `Dh` (Dehumidify), `Cool_hi` (Lowest cool temp), `Cool_lo` (23°C cool), `Heat_hi` (Highest heat temp), `Heat_lo` (23°C heat).
+* Append verified signals to `assets/infrared/assets/ac.ir`.
