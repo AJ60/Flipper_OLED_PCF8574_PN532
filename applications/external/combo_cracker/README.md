@@ -1,7 +1,7 @@
 # ComboCracker-FZ
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -61,4 +61,4 @@ ABOUT -> RIGHT - Brief description
 Inspired by: [Samy Kamkar’s](https://github.com/samyk) lock cracking research
 
 
-Built for: [Flipper Zero](https://github.com/AJ60/Oled_PCF8574_PN532)
+Built for: [Flipper Zero](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)

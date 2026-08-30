@@ -1,7 +1,7 @@
 # flipperzero-gpioreader
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -17,7 +17,7 @@ Does not (yet) support analog reads.
 
 Installation instructions (Linux):
 
- - Clone the following repo: https://github.com/AJ60/Oled_PCF8574_PN532
+ - Clone the following repo: https://github.com/AJ60/Flipper_OLED_PCF8574_PN532
  - Clone this repo into flipperzero-firmware/applications_user
  - Plug in your FlipperZero
  - Run `./fbt launch_app APPSRC=flipperzero-gpioreader` from within the flipperzero-firmware folder

@@ -1,16 +1,16 @@
 # 🐬 DIY Flipper Zero — OTP Tool
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
-[![GitHub](https://img.shields.io/badge/GitHub-Oled__PCF8574__PN532-orange?logo=github)](https://github.com/AJ60/Oled_PCF8574_PN532)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-Oled__PCF8574__PN532-orange?logo=github)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/LICENSE)
 
 Standalone Windows application to **generate**, **flash**, and **read** the OTP (One-Time Programmable) memory profile for the DIY Flipper Zero (SSD1306 OLED & PCF8574 edition).
 
-> Part of the [**Oled_PCF8574_PN532**](https://github.com/AJ60/Oled_PCF8574_PN532) project.
+> Part of the [**Flipper_OLED_PCF8574_PN532**](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532) project.
 
 ![FlipperOTP GUI Screenshot](screen.png)
 
@@ -152,4 +152,4 @@ Maintained and developed by [**AJ_60**](https://github.com/AJ60).
 
 ## 📄 License
 
-This project is licensed under the [GNU General Public License v3.0](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/LICENSE).
+This project is licensed under the [GNU General Public License v3.0](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/LICENSE).

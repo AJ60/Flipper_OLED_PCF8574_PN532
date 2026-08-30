@@ -1,7 +1,7 @@
 # Debugging via the Devboard {#dev_board_debugging_guide}
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -42,7 +42,7 @@ Before starting debugging, you need to clone and build Flipper Zero firmware:
 2. Clone the firmware repository:
 
     ```
-    git clone --recursive https://github.com/AJ60/Oled_PCF8574_PN532.git
+    git clone --recursive https://github.com/AJ60/Flipper_OLED_PCF8574_PN532.git
     cd flipperzero-firmware
     ```
 

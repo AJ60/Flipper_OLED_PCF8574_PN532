@@ -40,7 +40,7 @@ This is a **DIY educational hardware project** for the STM32WB55 microcontroller
 
 Use GitHub's built-in **Private Vulnerability Reporting**:
 
-1. Go to the [Security tab](https://github.com/AJ60/Oled_PCF8574_PN532/security/advisories/new) of this repository
+1. Go to the [Security tab](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/security/advisories/new) of this repository
 2. Click **"Report a vulnerability"**
 3. Fill in the details — include:
    - Affected firmware version/tag

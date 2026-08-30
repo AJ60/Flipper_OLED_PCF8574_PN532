@@ -1,7 +1,7 @@
 # Sentry Safe - Flipper Zero Plugin
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -60,7 +60,7 @@ If you prefer to build manually:
    ```
 4. Retrieve the `.fap` file from the `dist/` directory.
 
-For more info on the build tool, see the [official documentation](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/fbt.md).
+For more info on the build tool, see the [official documentation](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/documentation/fbt.md).
 
 ---
 

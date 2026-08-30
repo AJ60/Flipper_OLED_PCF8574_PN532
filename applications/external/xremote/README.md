@@ -81,7 +81,7 @@ Version: 1
 # 
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -130,7 +130,7 @@ Play_pa: playpause,play,pause
     ```
 
     Do not use `-l` (link) option of you are building the project directly from the `applications_user` directory of the firmware.
-2. If you don't have the firmware or the Linux please refer to the [official documentation](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/AppsOnSDCard.md) for build instructions.
+2. If you don't have the firmware or the Linux please refer to the [official documentation](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/documentation/AppsOnSDCard.md) for build instructions.
 
 ## Progress
 

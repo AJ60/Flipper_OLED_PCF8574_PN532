@@ -1,7 +1,7 @@
 # Root of Life
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -36,7 +36,7 @@ Go to [Releases](https://github.com/Xorboo/root-of-life/releases), download `.fa
 
 ## Development
 
-To work on the code look into [flipperzero-firmware documentation](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/AppsOnSDCard.md#how-to-set-up-an-application-to-be-built-as-a-fap)
+To work on the code look into [flipperzero-firmware documentation](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/documentation/AppsOnSDCard.md#how-to-set-up-an-application-to-be-built-as-a-fap)
 
 ---
 

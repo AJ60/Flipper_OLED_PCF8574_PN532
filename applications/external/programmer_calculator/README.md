@@ -1,7 +1,7 @@
 # Programmer Calculator
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -38,7 +38,7 @@ cd flipperzero-firmware-wPlugins/
 git clone --recursive --jobs 8 https://github.com/Flipper-XFW/Xtreme-Firmware.git
 cd Xtreme-Firmware/
 --or--
-git clone https://github.com/AJ60/Oled_PCF8574_PN532.git
+git clone https://github.com/AJ60/Flipper_OLED_PCF8574_PN532.git
 cd flipperzero-firmware/
 
 # flash firmware directly to the Flipper 

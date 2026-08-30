@@ -1,7 +1,7 @@
 # An Intervalometer App For Flipper Zero
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -32,7 +32,7 @@ of images at each interval.
 
 # Building
 
-1. Download the Flipper firmware repo at: https://github.com/AJ60/Oled_PCF8574_PN532
+1. Download the Flipper firmware repo at: https://github.com/AJ60/Flipper_OLED_PCF8574_PN532
 2. Inside the Flipper fw repo, copy this repo into `./applications_user/intervalometer/`
 3. Run `./fbt fap_intervalometer`
 4. Read the output of `fbt` to find the `.fap` in `./build/`

@@ -5,7 +5,7 @@ import json
 import sys
 import os
 
-REPO_URL = "https://github.com/AJ60/Oled_PCF8574_PN532"
+REPO_URL = "https://github.com/AJ60/Flipper_OLED_PCF8574_PN532"
 REPO_NAME = "DIY Flipper Zero (OLED Edition)"
 
 

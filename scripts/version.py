@@ -84,7 +84,7 @@ class GitVersion:
         if len(origins) == 1:
             return origins
         else:
-            return set(["https://github.com/AJ60/Oled_PCF8574_PN532"])
+            return set(["https://github.com/AJ60/Flipper_OLED_PCF8574_PN532"])
 
     def _exec_git(self, args):
         cmd = ["git"]

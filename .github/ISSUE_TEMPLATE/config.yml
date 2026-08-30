@@ -1,11 +1,11 @@
 blank_issues_enabled: true
 contact_links:
   - name: 📖 Hardware Build Guide & Wiring Diagrams
-    url: https://github.com/AJ60/Oled_PCF8574_PN532#-easy-visual-wiring-guide-breadboard-style
+    url: https://github.com/AJ60/Flipper_OLED_PCF8574_PN532#-easy-visual-wiring-guide-breadboard-style
     about: Step-by-step hardware assembly, wiring diagrams, and pin mapping tables.
   - name: 🔧 Engineering Documentation
-    url: https://github.com/AJ60/Oled_PCF8574_PN532/tree/main/documentation
+    url: https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/tree/main/documentation
     about: Architecture guides, boot lifecycle, NFC protocol, and hardware design docs.
   - name: ❓ FAQ — DIY Flipper
-    url: https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/faq_diy_flipper.md
+    url: https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/faq_diy_flipper.md
     about: Frequently asked questions about the build, flashing, and hardware troubleshooting.

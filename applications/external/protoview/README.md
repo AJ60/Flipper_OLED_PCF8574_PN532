@@ -75,7 +75,7 @@ against it, in the hope some of the decoders will make sense of the signal.
 # Usage
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -157,7 +157,7 @@ fun to watch, resembling an old CRT TV set.
 ```
 mkdir -p ~/flipperZero/official/
 cd ~/flipperZero/official/
-git clone --recursive  https://github.com/AJ60/Oled_PCF8574_PN532.git  ./
+git clone --recursive  https://github.com/AJ60/Flipper_OLED_PCF8574_PN532.git  ./
 ./fbt
 ```
 * Copy this application folder in `official/applications_user`.

@@ -3,7 +3,7 @@
 > Complete troubleshooting and reference guide for the DIY Flipper Zero (I2C OLED, PCF8574 Keypad, and PN532 NFC).
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -37,7 +37,7 @@
    - Click the **"REPAIR"** button to flash the bootloader.
 3. **Install OLED Firmware:**
    - Put the board in DFU mode once more.
-   - In qFlipper, click **"Install from file"** and choose our custom **`.tgz`** firmware package from [Releases](https://github.com/AJ60/Oled_PCF8574_PN532/releases).
+   - In qFlipper, click **"Install from file"** and choose our custom **`.tgz`** firmware package from [Releases](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases).
 
 ---
 
@@ -182,6 +182,6 @@
 
 ## 🤝 Project Links & Community
 
-* **GitHub Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
-* **Bug Reports & Discussions**: [GitHub Issues](https://github.com/AJ60/Oled_PCF8574_PN532/issues)
+* **GitHub Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
+* **Bug Reports & Discussions**: [GitHub Issues](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/issues)
 * **License**: [GNU General Public License v3.0](LICENSE)

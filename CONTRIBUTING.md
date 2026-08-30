@@ -23,8 +23,8 @@ Thank you for your interest in contributing! This project is a DIY hardware firm
 
 ```bash
 # Clone with all submodules
-git clone --recurse-submodules https://github.com/AJ60/Oled_PCF8574_PN532.git
-cd Oled_PCF8574_PN532
+git clone --recurse-submodules https://github.com/AJ60/Flipper_OLED_PCF8574_PN532.git
+cd Flipper_OLED_PCF8574_PN532
 
 # Build basic firmware
 ./fbt
@@ -105,7 +105,7 @@ Use the PR checklist in the [pull request template](.github/pull_request_templat
 
 ## 🐛 Reporting Bugs
 
-Use the [Bug Report issue template](https://github.com/AJ60/Oled_PCF8574_PN532/issues/new?template=01_bug_report.yml).
+Use the [Bug Report issue template](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/issues/new?template=01_bug_report.yml).
 
 Please include:
 - Firmware version tag

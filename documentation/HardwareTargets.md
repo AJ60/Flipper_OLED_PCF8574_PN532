@@ -3,7 +3,7 @@
 > Flipper firmware is modular and supports different hardware configurations within a unified codebase. Hardware-specific differences are encapsulated in `furi_hal`, board initialization routines, linker scripts, and target definitions.
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 

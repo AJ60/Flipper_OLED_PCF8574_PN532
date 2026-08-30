@@ -4,7 +4,7 @@ import requests
 import json
 import os
 
-REPO_URL = "https://github.com/AJ60/Oled_PCF8574_PN532"
+REPO_URL = "https://github.com/AJ60/Flipper_OLED_PCF8574_PN532"
 
 base_url = f"{os.environ.get('INDEXER_URL', REPO_URL)}/builds/firmware/dev"
 artifact_tgz = f"{base_url}/{os.environ.get('ARTIFACT_TAG', 'oled-dev-update')}.tgz"

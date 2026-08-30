@@ -3,7 +3,7 @@
 > Documentation for interfacing Nordic Semi NRF24L01+ 2.4 GHz transceivers with the DIY Flipper Zero.
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 > [!NOTE]
 > **External App**: NRF24 support is provided via external applications (`.fap` files), not built-in firmware features. Install the NRF24 apps to your SD card to use them. Available apps: `nrf24scan`, `nrf24sniff`, `nrf24mousejacker`, `nrf24batch`, `nrf24channelscanner`.

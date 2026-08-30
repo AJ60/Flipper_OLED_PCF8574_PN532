@@ -3,7 +3,7 @@
 **Component**: NXP PN532 Near Field Communication Controller over Dedicated Hardware I2C3  
 **Bus / Interface**: I2C3 (SCL: `PA7`, SDA: `PB4`, IRQ: `PA2`)  
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)  
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)  
 **Status**: 🚧 **Under Active Development / Experimental**
 
 ---

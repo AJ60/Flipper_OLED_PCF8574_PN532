@@ -1,7 +1,7 @@
 # Rolling Flaws
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -165,7 +165,7 @@ Method 2: (command-line + allows for "SN00/cfw*" and "SN bits/cfw*" features + a
 Method 3: (VS Code + allows for "SN00/cfw*" and "SN bits/cfw*" features + allows for replay feature)
 - Install [VS Code](https://code.visualstudio.com/Download)
 - Clone the firmware repository (make sure you use **Git: Clone (Recursive)**).
-  - The URL for firmware is at https://github.com/AJ60/Oled_PCF8574_PN532
+  - The URL for firmware is at https://github.com/AJ60/Flipper_OLED_PCF8574_PN532
 - Make sure you have run ``fbt vscode_dist`` at least once, so VSCode works properly.
   - You can right click on "FBT" and then choose `Open in Integrated Terminal`.
   - Then type:  `./fbt vscode_dist`
@@ -184,7 +184,7 @@ Here is a command-line method.  Before the last two commands, you should follow 
 mkdir \repos
 cd \repos
 git clone https://github.com/jamisonderek/flipper-zero-tutorials.git
-git clone --recursive https://github.com/AJ60/Oled_PCF8574_PN532
+git clone --recursive https://github.com/AJ60/Flipper_OLED_PCF8574_PN532
 cd flipperzero-firmware
 fbt vscode_dist
 cd applications_user

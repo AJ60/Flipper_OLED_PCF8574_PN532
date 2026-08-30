@@ -1,19 +1,19 @@
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
 ## ⬇️ Download
 
-> ### [🐬 qFlipper Package (.tgz)](https://github.com/AJ60/Oled_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-update-{VERSION_TAG}.tgz)
+> ### [🐬 qFlipper Package (.tgz)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-update-{VERSION_TAG}.tgz)
 
-> ### [📦 Zipped Archive (.zip)](https://github.com/AJ60/Oled_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-update-{VERSION_TAG}.zip)
+> ### [📦 Zipped Archive (.zip)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-update-{VERSION_TAG}.zip)
 
-> ### [💾 Standalone Firmware (.bin)](https://github.com/AJ60/Oled_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-firmware-oled-{VERSION_TAG}.bin)
+> ### [💾 Standalone Firmware (.bin)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-firmware-oled-{VERSION_TAG}.bin)
 
-> ### [🔧 DFU Flash File (.dfu)](https://github.com/AJ60/Oled_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-firmware-oled-{VERSION_TAG}.dfu)
+> ### [🔧 DFU Flash File (.dfu)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-firmware-oled-{VERSION_TAG}.dfu)
 
-Check the [install guide](https://github.com/AJ60/Oled_PCF8574_PN532#-4-step-quick-start-flashing-the-device) in the README if you're not sure, or [open an issue](https://github.com/AJ60/Oled_PCF8574_PN532/issues) if you have questions or encounter problems!
+Check the [install guide](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532#-4-step-quick-start-flashing-the-device) in the README if you're not sure, or [open an issue](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/issues) if you have questions or encounter problems!
 
 ## 🔧 Hardware Requirements
 

@@ -1,7 +1,7 @@
 # Pokemon Trade Tool for Flipper
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -94,7 +94,7 @@ Details on the hardware interface, as well as how to create your own adapter boa
 
 This application can be installed through the [Flipper Application Catalog](https://lab.flipper.net/apps/pokemon), the [Flipper Mobile Application](https://docs.flipper.net/mobile-app), or a pre-compiled application binary can be found on the [Releases](https://github.com/KBEmbedded/Flipper-Zero-Game-Boy-Pokemon-Trading/releases) page of this repo.
 
-The application can also be built from source using [ufbt](https://github.com/flipperdevices/flipperzero-ufbt) or compiling the application against a firmware of choice using [fbt](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/AppsOnSDCard.md). This will install the application to the `apps/GPIO/` folder on the Flipper's SD card.
+The application can also be built from source using [ufbt](https://github.com/flipperdevices/flipperzero-ufbt) or compiling the application against a firmware of choice using [fbt](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/documentation/AppsOnSDCard.md). This will install the application to the `apps/GPIO/` folder on the Flipper's SD card.
 
 Manually built application can be copied to the SD card using [qFlipper](https://docs.flipper.net/qflipper).
 
@@ -499,7 +499,7 @@ The sprites for each Pokemon were hand-made for the monochrome screen of the Fli
 
 ## Links
 
-- [Flipper Zero firmware source code](https://github.com/AJ60/Oled_PCF8574_PN532)
+- [Flipper Zero firmware source code](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 - Adan Scotney's Pokemon [trade protocol specification](http://www.adanscotney.com/2014/01/spoofing-pokemon-trades-with-stellaris.html) and implementation
 - Derek Jamison - [Youtube Channel](https://www.youtube.com/@MrDerekJamison)
 - Matt Penny - [GBPlay Blog](https://blog.gbplay.io/)

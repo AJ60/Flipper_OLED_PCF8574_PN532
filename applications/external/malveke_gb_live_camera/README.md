@@ -1,7 +1,7 @@
 # ***GAME BOY*** Live Camera MALVEKE
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -35,7 +35,7 @@ https://github.com/EstebanFuentealba/MALVEKE-Flipper-Zero/assets/442927/8c11cb8a
 
 This project is intended to be overlayed on top of an existing firmware repo,  in my case the **Release 0.79.1** version.
 
-- Clone the [Flipper Zero firmware repository](https://github.com/AJ60/Oled_PCF8574_PN532). Refer to [this tutorial](https://github.com/jamisonderek/flipper-zero-tutorials/tree/main/firmware/updating/README.md) for updating the firmware.
+- Clone the [Flipper Zero firmware repository](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532). Refer to [this tutorial](https://github.com/jamisonderek/flipper-zero-tutorials/tree/main/firmware/updating/README.md) for updating the firmware.
 - Copy the "malveke_gb_live_camera" folder into the `/applications_user/malveke_gb_live_camera` folder in your firmware.
 - Run the command `ufbt launch` to run it on your Flipper Zero.
 

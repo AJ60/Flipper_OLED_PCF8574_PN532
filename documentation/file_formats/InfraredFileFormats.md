@@ -1,7 +1,7 @@
 # Infrared Flipper File Formats {#infrared_file_format}
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -80,9 +80,9 @@ Known protocols are represented in the `parsed` form, whereas non-recognized sig
 
 ### Examples
 
-- [TV Universal Library](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/applications/main/infrared/resources/infrared/assets/tv.ir)
-- [A/C Universal Library](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/applications/main/infrared/resources/infrared/assets/ac.ir)
-- [Audio Universal Library](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/applications/main/infrared/resources/infrared/assets/audio.ir)
+- [TV Universal Library](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/applications/main/infrared/resources/infrared/assets/tv.ir)
+- [A/C Universal Library](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/applications/main/infrared/resources/infrared/assets/ac.ir)
+- [Audio Universal Library](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/applications/main/infrared/resources/infrared/assets/audio.ir)
 
 ### Description
 
@@ -100,7 +100,7 @@ See [Universal Remotes](../UniversalRemotes.md) for more information.
 
 ### Examples
 
-See [Infrared Unit Tests](https://github.com/AJ60/Oled_PCF8574_PN532/tree/main/applications/debug/unit_tests/resources/unit_tests/infrared) for various examples.
+See [Infrared Unit Tests](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/tree/main/applications/debug/unit_tests/resources/unit_tests/infrared) for various examples.
 
 ### Description
 

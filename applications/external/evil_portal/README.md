@@ -1,7 +1,7 @@
 # Flipper Zero Evil Portal
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -119,7 +119,7 @@ Logs will automatically be saved when exiting the app or when the current log re
 
 ## Building for different firmware
 
-If you are not using the official flipper zero firmware or the unleashed firmware you can build the .fap file yourself by following [these instructions](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/documentation/AppsOnSDCard.md).
+If you are not using the official flipper zero firmware or the unleashed firmware you can build the .fap file yourself by following [these instructions](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/blob/main/documentation/AppsOnSDCard.md).
 
 Note that you will need to use the firmware repo that you wish to build for.
 

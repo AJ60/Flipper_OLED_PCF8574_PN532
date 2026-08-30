@@ -1,7 +1,7 @@
 # Nearby Files
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
-**Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
+**Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
@@ -113,4 +113,4 @@ Currently there are no apps or firmware that adds GPS data to NFC and RFID files
 
 > [!Warning]
 > If your Flipper is crashing or rebooting while running GPS related apps, try setting `Listen UART` to `None` in Flipper settings.
-> Source: https://github.com/AJ60/Oled_PCF8574_PN532/issues/4081#issuecomment-2631762477
+> Source: https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/issues/4081#issuecomment-2631762477
