@@ -44,7 +44,7 @@ if __name__ == "__main__":
                     commit["message"]
                     .splitlines()[0]
                     .replace("`", "")
-                    .replace("_", "\_")
+                    .replace("_", r"\_")
                 )
                 msg = msg[:50] + ("..." if len(msg) > 50 else "")
                 desc += f"\n[`{commit['id'][:8]}`]({commit['url']}): {msg} - [__{commit['author'].get('username')}__](https://github.com/{commit['author'].get('username')})"
