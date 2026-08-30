@@ -850,7 +850,8 @@ MU_TEST(pn532_firmware_version) {
     Pn532Error err = pn532_get_firmware_version(bus, &ic, &ver, &rev, &support);
     mu_assert(err == Pn532ErrorNone, "pn532_get_firmware_version() failed");
     mu_assert(ic == 0x32, "PN532 IC type mismatch (expected 0x32)");
-    FURI_LOG_I(PN532_TEST_TAG, "PN532 FW: IC=0x%02X Ver=%d Rev=%d Support=0x%02X", ic, ver, rev, support);
+    FURI_LOG_I(
+        PN532_TEST_TAG, "PN532 FW: IC=0x%02X Ver=%d Rev=%d Support=0x%02X", ic, ver, rev, support);
 }
 
 MU_TEST(pn532_rf_field_control) {
@@ -893,10 +894,7 @@ MU_TEST(pn532_list_passive_target_iso14443b) {
     Pn532Error err = pn532_in_list_passive_target_iso14443b(bus, &target, 1000);
     if(err == Pn532ErrorNone) {
         FURI_LOG_I(
-            PN532_TEST_TAG,
-            "ISO14443B target: tg=%d, uid_len=%d",
-            target.tg,
-            target.uid_len);
+            PN532_TEST_TAG, "ISO14443B target: tg=%d, uid_len=%d", target.tg, target.uid_len);
     } else if(err == Pn532ErrorTimeout) {
         FURI_LOG_W(PN532_TEST_TAG, "No ISO14443B target detected (timeout)");
     } else {

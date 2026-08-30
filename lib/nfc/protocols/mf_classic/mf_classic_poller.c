@@ -782,7 +782,10 @@ NfcCommand mf_classic_poller_handler_auth_a(MfClassicPoller* instance) {
             dict_attack_ctx->auth_passed = true;
             instance->state = MfClassicPollerStateReadSector;
         } else if(mf_classic_poller_should_abort_on_checksum(instance)) {
-            FURI_LOG_W(TAG, "Too many checksum failures, skipping sector %d", dict_attack_ctx->current_sector);
+            FURI_LOG_W(
+                TAG,
+                "Too many checksum failures, skipping sector %d",
+                dict_attack_ctx->current_sector);
             mf_classic_poller_halt(instance);
             instance->state = MfClassicPollerStateNextSector;
         } else {
@@ -834,7 +837,10 @@ NfcCommand mf_classic_poller_handler_auth_b(MfClassicPoller* instance) {
             dict_attack_ctx->auth_passed = true;
             instance->state = MfClassicPollerStateReadSector;
         } else if(mf_classic_poller_should_abort_on_checksum(instance)) {
-            FURI_LOG_W(TAG, "Too many checksum failures, skipping sector %d", dict_attack_ctx->current_sector);
+            FURI_LOG_W(
+                TAG,
+                "Too many checksum failures, skipping sector %d",
+                dict_attack_ctx->current_sector);
             mf_classic_poller_halt(instance);
             instance->state = MfClassicPollerStateNextSector;
         } else {

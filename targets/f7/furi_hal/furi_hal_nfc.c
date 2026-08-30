@@ -800,7 +800,8 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
                 furi_hal_pn532_ctx.rx_buf[0] = 0x50; // ATQB flag
                 memcpy(&furi_hal_pn532_ctx.rx_buf[1], furi_hal_pn532_ctx.target_b.uid, 4);
                 memcpy(&furi_hal_pn532_ctx.rx_buf[5], furi_hal_pn532_ctx.target_b.app_data, 4);
-                memcpy(&furi_hal_pn532_ctx.rx_buf[9], furi_hal_pn532_ctx.target_b.protocol_info, 3);
+                memcpy(
+                    &furi_hal_pn532_ctx.rx_buf[9], furi_hal_pn532_ctx.target_b.protocol_info, 3);
                 uint16_t crc = furi_hal_nfc_crc_b_calc(furi_hal_pn532_ctx.rx_buf, 12);
                 furi_hal_pn532_ctx.rx_buf[12] = (uint8_t)(crc & 0xFF);
                 furi_hal_pn532_ctx.rx_buf[13] = (uint8_t)(crc >> 8);
@@ -864,7 +865,8 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
                     memcpy(furi_hal_pn532_ctx.rx_buf, furi_hal_pn532_ctx.target.ats, ats_len);
                 } else {
                     furi_hal_pn532_ctx.rx_buf[0] = (uint8_t)ats_len;
-                    memcpy(&furi_hal_pn532_ctx.rx_buf[1], furi_hal_pn532_ctx.target.ats, ats_len - 1);
+                    memcpy(
+                        &furi_hal_pn532_ctx.rx_buf[1], furi_hal_pn532_ctx.target.ats, ats_len - 1);
                 }
             } else {
                 // Default minimal ATS (1 byte length TL = 1) for Layer 4 tags
@@ -887,8 +889,9 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
     if(send_len == 2 &&
        (tx_data[0] == 0x60 || tx_data[0] == 0x61 || tx_data[0] == 0x68 || tx_data[0] == 0x69)) {
         uint8_t sak = furi_hal_pn532_ctx.target.sel_res;
-        bool is_mfc_sak = (sak == 0x08 || sak == 0x18 || sak == 0x09 || sak == 0x28 ||
-                           sak == 0x38 || sak == 0x88 || sak == 0x10 || sak == 0x11 || sak == 0x01);
+        bool is_mfc_sak =
+            (sak == 0x08 || sak == 0x18 || sak == 0x09 || sak == 0x28 || sak == 0x38 ||
+             sak == 0x88 || sak == 0x10 || sak == 0x11 || sak == 0x01);
         if(is_mfc_sak) {
             // Synthesize 4-byte random nonce (nt) without CRC for MIFARE Classic detection / Step 1
             uint32_t rand_val = furi_hal_random_get();
@@ -923,8 +926,13 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
     }
 
     furi_hal_pn532_ctx.rx_len = sizeof(furi_hal_pn532_ctx.rx_buf) - 4;
-    FURI_LOG_D(TAG, "InDataExchange: tg=1, tx_data[0]=0x%02X, actual_len=%zu, is_iso_dep=%d, target_detected=%d",
-               actual_tx[0], actual_len, is_iso_dep_i_block, furi_hal_pn532_ctx.target_detected);
+    FURI_LOG_D(
+        TAG,
+        "InDataExchange: tg=1, tx_data[0]=0x%02X, actual_len=%zu, is_iso_dep=%d, target_detected=%d",
+        actual_tx[0],
+        actual_len,
+        is_iso_dep_i_block,
+        furi_hal_pn532_ctx.target_detected);
 
     Pn532Error pn_err = pn532_in_data_exchange(
         PN532_I2C_BUS,
@@ -946,10 +954,11 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
             payload_len += 1;
         }
 
-        bool is_auth_cmd = (tx_data[0] == 0x60 || tx_data[0] == 0x61 || tx_data[0] == 0x68 ||
-                            tx_data[0] == 0x69);
-        bool is_mfc_crypto = (send_len == 8) || (payload_len == 1) ||
-                             (furi_hal_nfc.tech == FuriHalNfcTechIso14443a && send_len == 4 && payload_len == 4);
+        bool is_auth_cmd =
+            (tx_data[0] == 0x60 || tx_data[0] == 0x61 || tx_data[0] == 0x68 || tx_data[0] == 0x69);
+        bool is_mfc_crypto =
+            (send_len == 8) || (payload_len == 1) ||
+            (furi_hal_nfc.tech == FuriHalNfcTechIso14443a && send_len == 4 && payload_len == 4);
 
         if(!is_auth_cmd && !is_mfc_crypto) {
             // Guard against buffer overflow before appending 2 CRC bytes

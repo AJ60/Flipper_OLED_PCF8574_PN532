@@ -169,9 +169,7 @@ MfClassicError mf_classic_poller_auth_common(
             if(err == Pn532ErrorChecksum) {
                 instance->consecutive_checksum_failures++;
                 if(instance->consecutive_checksum_failures == 5) {
-                    FURI_LOG_W(
-                        TAG,
-                        "PN532 checksum errors, re-initializing");
+                    FURI_LOG_W(TAG, "PN532 checksum errors, re-initializing");
                     pn532_init(PN532_I2C_BUS);
                 }
             } else {
@@ -325,8 +323,7 @@ MfClassicError mf_classic_poller_read_block(
     furi_check(data);
 #if defined(FURI_HAL_NFC_CHIP_PN532)
     size_t block_len = sizeof(MfClassicBlock);
-    Pn532Error err = pn532_mifare_read_block(
-        PN532_I2C_BUS, 1, block_num, data->data, &block_len);
+    Pn532Error err = pn532_mifare_read_block(PN532_I2C_BUS, 1, block_num, data->data, &block_len);
 
     if(err == Pn532ErrorNone && block_len == sizeof(MfClassicBlock)) {
         return MfClassicErrorNone;
@@ -384,8 +381,7 @@ MfClassicError mf_classic_poller_write_block(
     furi_check(instance);
     furi_check(data);
 #if defined(FURI_HAL_NFC_CHIP_PN532)
-    Pn532Error err = pn532_mifare_classic_write_block(
-        PN532_I2C_BUS, 1, block_num, data->data);
+    Pn532Error err = pn532_mifare_classic_write_block(PN532_I2C_BUS, 1, block_num, data->data);
 
     if(err == Pn532ErrorNone) {
         return MfClassicErrorNone;
@@ -472,7 +468,8 @@ MfClassicError mf_classic_poller_value_cmd(
     MfClassicError ret = mf_classic_poller_read_block(instance, block_num, &block);
     if(ret != MfClassicErrorNone) return ret;
 
-    int32_t val = (int32_t)(block.data[0] | (block.data[1] << 8) | (block.data[2] << 16) | (block.data[3] << 24));
+    int32_t val = (int32_t)(block.data[0] | (block.data[1] << 8) | (block.data[2] << 16) |
+                            (block.data[3] << 24));
     if(cmd == MfClassicValueCommandDecrement) {
         val -= data;
     } else if(cmd == MfClassicValueCommandIncrement) {

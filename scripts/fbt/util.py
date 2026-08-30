@@ -58,6 +58,7 @@ def link_dir(target_path, source_path, is_windows):
             os.unlink(target_path)
         except PermissionError:
             import shutil
+
             shutil.rmtree(target_path, ignore_errors=True)
     if is_windows:
         # Crete junction

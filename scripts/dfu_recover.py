@@ -10,10 +10,12 @@ from flipper.app import App
 STM32_DFU_VID = 0x0483
 STM32_DFU_PID = 0xDF11
 
+
 class DFURecover(App):
     def init(self):
         self.parser.add_argument(
-            "-f", "--file",
+            "-f",
+            "--file",
             type=str,
             default=None,
             help="Path to the full .bin or .dfu firmware file. If not specified, the script will search in dist/f7-C/",
@@ -34,9 +36,13 @@ class DFURecover(App):
             return None
 
         # Look in dist/f7-C/
-        dist_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist", "f7-C")
+        dist_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist", "f7-C"
+        )
         if not os.path.isdir(dist_dir):
-            self.logger.error(f"Build dist directory not found: {dist_dir}. Please compile the firmware first using fbt.")
+            self.logger.error(
+                f"Build dist directory not found: {dist_dir}. Please compile the firmware first using fbt."
+            )
             return None
 
         # Prefer .dfu files, fall back to .bin
@@ -48,13 +54,19 @@ class DFURecover(App):
         if bin_files:
             return bin_files[0]
 
-        self.logger.error("No full firmware binary (.dfu or .bin) found in dist/f7-C/. Run 'fbt firmware_all' first.")
+        self.logger.error(
+            "No full firmware binary (.dfu or .bin) found in dist/f7-C/. Run 'fbt firmware_all' first."
+        )
         return None
 
     def _find_cube_programmer(self):
         # 1. Check if in PATH
         try:
-            subprocess.run(["STM32_Programmer_CLI", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                ["STM32_Programmer_CLI", "--version"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             return "STM32_Programmer_CLI"
         except FileNotFoundError:
             pass
@@ -72,7 +84,11 @@ class DFURecover(App):
 
     def _find_dfu_util(self):
         try:
-            subprocess.run(["dfu-util", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                ["dfu-util", "--version"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             return "dfu-util"
         except FileNotFoundError:
             pass
@@ -81,8 +97,14 @@ class DFURecover(App):
     def _is_dfu_connected_windows(self):
         # We can run wmic or powershell to check if the USB device is present
         try:
-            cmd = ["powershell", "-Command", "Get-PnpDevice -Present | Where-Object { $_.InstanceId -like '*USB*' -and ($_.Name -like '*STM32*Bootloader*' -or $_.Name -like '*DFU*') }"]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            cmd = [
+                "powershell",
+                "-Command",
+                "Get-PnpDevice -Present | Where-Object { $_.InstanceId -like '*USB*' -and ($_.Name -like '*STM32*Bootloader*' -or $_.Name -like '*DFU*') }",
+            ]
+            result = subprocess.run(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
             if "Bootloader" in result.stdout or "DFU" in result.stdout:
                 return True
         except Exception:
@@ -105,12 +127,16 @@ class DFURecover(App):
 
         if self.args.tool == "cube":
             if not cube_path:
-                self.logger.error("STM32_Programmer_CLI not found. Please install STM32CubeProgrammer.")
+                self.logger.error(
+                    "STM32_Programmer_CLI not found. Please install STM32CubeProgrammer."
+                )
                 return 2
             tool_to_use = "cube"
         elif self.args.tool == "dfu-util":
             if not dfu_util_path:
-                self.logger.error("dfu-util not found. Please install it or make sure it is in your PATH.")
+                self.logger.error(
+                    "dfu-util not found. Please install it or make sure it is in your PATH."
+                )
                 return 2
             tool_to_use = "dfu-util"
         else:  # auto
@@ -122,14 +148,18 @@ class DFURecover(App):
                 self.logger.info("Auto-detected dfu-util.")
             else:
                 self.logger.error("No suitable DFU programmer tool found!")
-                self.logger.error("Please install STM32CubeProgrammer (recommended on Windows) or dfu-util.")
+                self.logger.error(
+                    "Please install STM32CubeProgrammer (recommended on Windows) or dfu-util."
+                )
                 return 2
 
         # 3. Prompt user to connect in DFU mode
         self.logger.warning("=" * 60)
         self.logger.warning("HOW TO ENTER USB DFU RECOVERY MODE:")
         self.logger.warning("1. Disconnect the USB cable from your Flipper Zero.")
-        self.logger.warning("2. Connect the BOOT0 pin to 3.3V (VCC) - hold the boot button if your DIY board has one.")
+        self.logger.warning(
+            "2. Connect the BOOT0 pin to 3.3V (VCC) - hold the boot button if your DIY board has one."
+        )
         self.logger.warning("3. Reconnect the USB cable to your computer.")
         self.logger.warning("4. Release the BOOT0 button (if applicable).")
         self.logger.warning("=" * 60)
@@ -142,7 +172,7 @@ class DFURecover(App):
                 connected = True
             else:
                 self.logger.warning("STM32 DFU device NOT detected yet.")
-        
+
         if not connected:
             input("Press Enter when the device is connected in DFU mode to proceed...")
 
@@ -158,11 +188,11 @@ class DFURecover(App):
                 cmd += ["-d", fw_file, "0x08000000", "-v"]
             else:
                 cmd += ["-d", fw_file, "-v"]
-            cmd += ["-s"] # reset and start executing firmware after flash
-            
+            cmd += ["-s"]  # reset and start executing firmware after flash
+
             self.logger.debug(f"Command: {' '.join(cmd)}")
             result = subprocess.run(cmd)
-            success = (result.returncode == 0)
+            success = result.returncode == 0
 
         elif tool_to_use == "dfu-util":
             self.logger.info("Running dfu-util...")
@@ -174,24 +204,33 @@ class DFURecover(App):
                 cmd += ["-D", fw_file]
             else:
                 cmd += ["-s", "0x08000000:leave", "-D", fw_file]
-            
-            self.logger.warning("Note: Windows users might need to swap the device driver to WinUSB using Zadig for dfu-util to work.")
+
+            self.logger.warning(
+                "Note: Windows users might need to swap the device driver to WinUSB using Zadig for dfu-util to work."
+            )
             self.logger.debug(f"Command: {' '.join(cmd)}")
             result = subprocess.run(cmd)
-            success = (result.returncode == 0)
+            success = result.returncode == 0
 
         if success:
             self.logger.info("=" * 60)
-            self.logger.info("RECOVERY SUCCESSFUL! Your DIY Flipper Zero should now reboot into the firmware.")
+            self.logger.info(
+                "RECOVERY SUCCESSFUL! Your DIY Flipper Zero should now reboot into the firmware."
+            )
             self.logger.info("=" * 60)
             return 0
         else:
             self.logger.error("=" * 60)
-            self.logger.error("RECOVERY FAILED! Please check the logs and ensure the device is in DFU mode.")
+            self.logger.error(
+                "RECOVERY FAILED! Please check the logs and ensure the device is in DFU mode."
+            )
             if tool_to_use == "dfu-util" and os.name == "nt":
-                self.logger.error("If you are on Windows and using dfu-util, did you run Zadig and swap the 'STM32 Bootloader' driver to WinUSB?")
+                self.logger.error(
+                    "If you are on Windows and using dfu-util, did you run Zadig and swap the 'STM32 Bootloader' driver to WinUSB?"
+                )
             self.logger.error("=" * 60)
             return 3
+
 
 if __name__ == "__main__":
     DFURecover()()
