@@ -5,8 +5,6 @@
 
 ---
 
-
-
 [![GitHub](https://img.shields.io/badge/GitHub-Oled__PCF8574__PN532-orange?logo=github)](https://github.com/AJ60/Oled_PCF8574_PN532)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/AJ60/Oled_PCF8574_PN532/blob/main/LICENSE)
 

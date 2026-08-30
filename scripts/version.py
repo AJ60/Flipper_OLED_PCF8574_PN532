@@ -41,7 +41,7 @@ class GitVersion:
             or "unknown"
         )
 
-        version = tag or "mntm-dev"
+        version = tag or "oled-dev"
 
         if "SOURCE_DATE_EPOCH" in os.environ:
             commit_date = datetime.utcfromtimestamp(
@@ -84,7 +84,7 @@ class GitVersion:
         if len(origins) == 1:
             return origins
         else:
-            return set(["https://github.com/Next-Flip/Momentum-Firmware"])
+            return set(["https://github.com/AJ60/Oled_PCF8574_PN532"])
 
     def _exec_git(self, args):
         cmd = ["git"]
