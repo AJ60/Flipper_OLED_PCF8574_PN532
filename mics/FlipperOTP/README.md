@@ -27,7 +27,7 @@ Standalone Windows application to **generate**, **flash**, and **read** the OTP 
 ## 📦 Files
 
 | File | Description |
-|---|---|
+| --- | --- |
 | `generate_otp_gui.exe` | Portable standalone GUI tool (everything bundled — just run it) |
 | `generate_otp_gui.py` | Python source code of the GUI tool |
 | `generate_otp.py` | Legacy command-line version of the generator |
@@ -38,7 +38,7 @@ Standalone Windows application to **generate**, **flash**, and **read** the OTP 
 ## 💻 System Requirements
 
 | Requirement | Details |
-|---|---|
+| --- | --- |
 | **OS** | Windows 10 / 11 (64-bit). Acrylic glass effects require Windows 11 |
 | **STM32CubeProgrammer** | **Required** — the tool uses `STM32_Programmer_CLI.exe` for flash/read operations. [Download here](https://www.st.com/en/development-tools/stm32cubeprog.html) |
 | **USB Drivers** | Installed automatically with STM32CubeProgrammer (DFU driver for STM32) |
@@ -53,12 +53,13 @@ Standalone Windows application to **generate**, **flash**, and **read** the OTP 
 ## 🚀 Quick Start
 
 ### 1. Run the tool
+
 Simply launch **`generate_otp_gui.exe`** — no installation required.
 
 ### 2. Configure your device profile
 
 | Field | Description | Constraints |
-|---|---|---|
+| --- | --- | --- |
 | **Device Name** | Unique name for your Flipper (shown in About menu & Bluetooth) | Max 8 ASCII characters |
 | **Board Version** | Hardware board revision | 0–255 (use `12` for WeAct STM32WB55) |
 | **Display Type** | Screen driver selection | **MGG** for custom SSD1306 I2C OLED *(critical!)* |
@@ -70,6 +71,7 @@ Simply launch **`generate_otp_gui.exe`** — no installation required.
 > Selecting `ERC` will result in a black screen on DIY boards.
 
 ### 3. Enter DFU mode on the WeAct board
+
 1. **Disconnect** the USB cable from the board
 2. **Press and hold** the **BOOT0** button
 3. **Connect** the USB cable to your PC
@@ -82,7 +84,7 @@ Simply launch **`generate_otp_gui.exe`** — no installation required.
 ### 4. Flash or Read
 
 | Button | Action |
-|---|---|
+| --- | --- |
 | **1. Save .bin** | Generates and saves an OTP binary file to disk (for manual flashing via STM32CubeProgrammer) |
 | **2. Flash (DFU)** | Writes the OTP profile directly to address `0x1FFF7000` via USB DFU |
 | **3. Read (DFU)** | Reads and displays the current OTP configuration from the connected device |
@@ -104,7 +106,7 @@ Simply launch **`generate_otp_gui.exe`** — no installation required.
 
 The tool writes a 32-byte OTP v2 structure:
 
-```
+```text
 Offset  Size  Field
 ------  ----  -----
 0x00    2     Header Magic (0xBABE)

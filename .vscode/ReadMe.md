@@ -7,11 +7,10 @@
 
 ## Setup
 
- * To start developing with VSCode, run `./fbt vscode_dist` in project root (on Windows use `cmd //c fbt.cmd vscode_dist` from Git Bash, or `fbt.cmd vscode_dist` from cmd/PowerShell). _That should only be done once_
- * After that, open firmware folder in VSCode: "File" > "Open folder"
+* To start developing with VSCode, run `./fbt vscode_dist` in project root (on Windows use `cmd //c fbt.cmd vscode_dist` from Git Bash, or `fbt.cmd vscode_dist` from cmd/PowerShell). _That should only be done once._
+* After that, open the firmware folder in VSCode: "File" > "Open folder".
 
- For more details on fbt, see [fbt docs](../documentation/fbt.md).
-
+For more details on fbt, see [fbt docs](../documentation/fbt.md).
 
 ## Workflow
 
@@ -19,14 +18,14 @@ Commands for building firmware are invoked through the Build menu: **Ctrl+Shift+
 
 ### Important: this fork has no `firmware` target
 
-Running `fbt firmware` (or `fbt.cmd firmware`) fails with a *"target not built"* error. The default target (`basic_dist`) builds the complete firmware package, so run `fbt` / `fbt.cmd` with **no arguments**.
+Running `fbt firmware` (or `fbt.cmd firmware`) fails with a _"target not built"_ error. The default target (`basic_dist`) builds the complete firmware package, so run `fbt` / `fbt.cmd` with **no arguments**.
 
 ### Windows tasks (this fork)
 
 Because the `./fbt` shell script refuses to run under MinGW, the tasks in `tasks.json` marked **`[Windows] ... (fbt.cmd)`** invoke the batch launcher directly (via `cmd.exe`, so they work no matter which shell VSCode uses):
 
 | Task | Command | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `[Windows] Build Firmware (fbt.cmd, default target)` | `fbt.cmd` | Build the complete firmware package (`.bin` / `.dfu` / `.hex`) |
 | `[Windows] Flash (USB, with resources) (fbt.cmd)` | `fbt.cmd FORCE=1 flash_usb_full` | Build (if needed) and flash firmware + resources over USB |
 | `[Windows] Build Signal Generator FAP (fbt.cmd)` | `fbt.cmd fap_signal_generator` | Build only the signal generator FAP |
