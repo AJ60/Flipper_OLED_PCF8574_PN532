@@ -1,6 +1,6 @@
 # Changelog
 
-## [v2.2-OLED] — DIY Flipper Zero (OLED Edition by AJ_60)
+## [v2.2-OLED] — 2026-08-30 — DIY Flipper Zero (OLED Edition by AJ_60)
 
 ### Highlights & Enhancements
 

@@ -4,26 +4,33 @@
 ---
 
 ## ⬇️ Download
->### [🖥️ Web Updater (chrome)](https://momentum-fw.dev/update?version={VERSION_TAG}) [recommended]
 
->### [☁️ Flipper Lab/App (chrome/mobile)](https://lab.flipper.net/?url=https://up.momentum-fw.dev/builds/firmware/{VERSION_TAG}/flipper-z-f7-update-{VERSION_TAG}.tgz&channel=release-cfw&version={VERSION_TAG})
+> ### [🐬 qFlipper Package (.tgz)](https://github.com/AJ60/Oled_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-update-{VERSION_TAG}.tgz)
 
->### [🐬 qFlipper Package (.tgz)](https://github.com/Next-Flip/Momentum-Firmware/releases/download/{VERSION_TAG}/flipper-z-f7-update-{VERSION_TAG}.tgz)
+> ### [📦 Zipped Archive (.zip)](https://github.com/AJ60/Oled_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-update-{VERSION_TAG}.zip)
 
->### [📦 Zipped Archive (.zip)](https://github.com/Next-Flip/Momentum-Firmware/releases/download/{VERSION_TAG}/flipper-z-f7-update-{VERSION_TAG}.zip)
+> ### [💾 Standalone Firmware (.bin)](https://github.com/AJ60/Oled_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-firmware-oled-{VERSION_TAG}.bin)
 
-**Check the [install guide](https://github.com/Next-Flip/Momentum-Firmware#install) if you're not sure, or [join our Discord](https://discord.gg/momentum) if you have questions or encounter issues!**
+> ### [🔧 DFU Flash File (.dfu)](https://github.com/AJ60/Oled_PCF8574_PN532/releases/download/{VERSION_TAG}/flipper-z-f7-firmware-oled-{VERSION_TAG}.dfu)
 
-## ❤️ Support
-If you enjoy the firmware please __**spread the word!**__ And if you really love it, maybe consider donating to the team? :D
+Check the [install guide](https://github.com/AJ60/Oled_PCF8574_PN532#-4-step-quick-start-flashing-the-device) in the README if you're not sure, or [open an issue](https://github.com/AJ60/Oled_PCF8574_PN532/issues) if you have questions or encounter problems!
 
-> **[Ko-fi](https://ko-fi.com/willyjl)**: One-off or Recurring, No signup required
+## 🔧 Hardware Requirements
 
-> **[PayPal](https://paypal.me/willyjl1)**: One-off, Signup required
+This firmware is built for the **DIY Flipper Zero (OLED Edition)**:
+- **MCU**: WeAct STM32WB55CGU6
+- **Display**: SSD1306 0.96" I2C OLED (`0x3C`)
+- **Keypad**: PCF8574 I2C Expander (`0x20`) with interrupt on PB0
+- **NFC**: PN532 over I2C3 (PA7/PB4, IRQ on PA2)
+- **Sub-GHz**: CC1101 over SPI1 (CS: PA15, GDO0: PA1)
+- **Power Monitor**: INA219/INA226 I2C (`0x40`)
+- **MicroSD**: SPI1 (CS: PA10)
 
-> **BTC**: `1EnCi1HF8Jw6m2dWSUwHLbCRbVBCQSyDKm`
+## ⚖️ Legal & Educational Disclaimer
 
-**Thank you <3**
+This project is strictly for **educational, academic research, and authorized security testing purposes only**.  
+Do **NOT** use this firmware or hardware for unauthorized access, card cloning, or any illegal activities.  
+The developers assume **no liability** for any misuse.
 
 ## 🚀 Changelog
 {CHANGELOG}

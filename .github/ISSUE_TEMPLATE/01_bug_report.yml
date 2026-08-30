@@ -1,11 +1,12 @@
 name: Bug report
-description: File a bug reports regarding the firmware.
+description: File a bug report regarding the DIY Flipper Zero (OLED Edition) firmware.
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for taking the time to fill out an issue, this template is meant for any issues related to the Flipper Zero unleashed firmware.
+        Thank you for taking the time to file a bug report! This template is for issues related to the **DIY Flipper Zero (OLED Edition)** firmware and hardware.
+        Please fill in as much detail as possible to help us reproduce and fix the issue.
   - type: textarea
     id: description
     attributes:
@@ -16,30 +17,37 @@ body:
   - type: textarea
     id: repro
     attributes:
-      label: Reproduction
+      label: Reproduction steps
       description: "How can this bug be reproduced?"
       placeholder: |
-        1. Switch on...
-        2. Press button '....'
-        3. Wait for the moon phase
-        4. It burns
+        1. Power on the device...
+        2. Navigate to...
+        3. Press button '...'
+        4. Observe the issue
     validations:
       required: true
   - type: input
-    id: target
+    id: firmware_version
     attributes:
-      label: Target
-      description: Specify the target
-      # Target seems to be largely ignored by outside sources.
+      label: Firmware Version
+      description: Which firmware version are you running? (Check the About screen or release tag)
+      placeholder: "e.g. v2.2"
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware Variant
+      description: Which hardware are you using?
+      placeholder: "e.g. WeAct STM32WB55CGU6 + SSD1306 OLED + PCF8574 + PN532"
   - type: textarea
     id: logs
     attributes:
-      label: Logs
-      description: Attach your debug logs here
+      label: Logs / Serial Output
+      description: Attach your debug logs or CLI serial output here (if applicable)
       render: Text
-      # Avoid rendering as Markdown here.
   - type: textarea
     id: anything-else
     attributes:
       label: Anything else?
-      description: Let us know if you have anything else to share.
+      description: Let us know if you have anything else to share (photos, oscilloscope traces, etc.)

@@ -21,6 +21,7 @@ graph LR
         PA3[PA3 - 1-Wire iButton Probe]
         PA5[PA5 - LF-RFID 125kHz TX Carrier]
         PA6[PA6 - SPI1 Shared MISO]
+        PA7["PA7 (header C0) - I2C3 PN532 SCL"]
         PA8[PA8 - IR Transmitter TX]
         PA9[PA9 - I2C1 Shared SCL]
         PA10[PA10 - MicroSD Card SPI CS]
@@ -28,12 +29,11 @@ graph LR
         PB0[PB0 - PCF8574 Keypad Ext INT]
         PB1[PB1 - INA219/226 Power ALERT]
         PB3[PB3 - SPI1 Shared SCK]
+        PB4["PB4 (header C1) - I2C3 PN532 SDA"]
         PB5[PB5 - SPI1 Shared MOSI]
         PB8[PB8 - Piezo Speaker Buzzer]
         PB9[PB9 - I2C1 Shared SDA]
-        PC0[PC0 - I2C3 PN532 SCL]
-        PC1[PC1 - I2C3 PN532 SDA]
-        PE4[PE4 - ST25R3916 SPI CS]
+        PE4[PE4 - ST25R3916 SPI CS (Alternative NFC)]
     end
 ```
 

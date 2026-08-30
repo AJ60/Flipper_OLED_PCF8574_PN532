@@ -16,16 +16,23 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
+          submodules: recursive
 
       - name: "Install Build Dependencies"
         run: |
           sudo apt-get update
-          sudo apt-get install -y p7zip-full
+          sudo apt-get install -y p7zip-full python3-pip
+          pip3 install --break-system-packages requests
 
       - name: "Build Firmware and Updater Package"
         run: |
           ./fbt COMPACT=1 DEBUG=0 --with-updater updater_package fap_dist
+
+      - name: "Generate Release Notes from Template"
+        run: |
+          python3 .github/workflow_data/release.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Collect Release Assets"
         run: |
@@ -43,8 +50,9 @@ jobs:
       - name: "Create GitHub Release"
         uses: softprops/action-gh-release@v2
         with:
+          name: "DIY Flipper Zero OLED Edition ${{ github.ref_name }}"
+          body_path: .github/workflow_data/release.md
           files: release_assets/*
-          generate_release_notes: true
           draft: false
           prerelease: false
         env:

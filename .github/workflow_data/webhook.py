@@ -5,6 +5,9 @@ import json
 import sys
 import os
 
+REPO_URL = "https://github.com/AJ60/Oled_PCF8574_PN532"
+REPO_NAME = "DIY Flipper Zero (OLED Edition)"
+
 
 if __name__ == "__main__":
     with open(os.environ["GITHUB_EVENT_PATH"], "r") as f:
@@ -55,10 +58,10 @@ if __name__ == "__main__":
             webhook = "RELEASE_WEBHOOK"
             color = 9471191
             version_tag = event["release"]["tag_name"]
-            title = f"New Release: `{version_tag}`!"
-            desc += f"> 💻 [**Web Installer**](https://momentum-fw.dev/update?version={version_tag})\n\n"
-            desc += f"> 🐬 [**Changelog & Download**](https://github.com/Next-Flip/Momentum-Firmware/releases/tag/{version_tag})\n\n"
-            desc += f"> 🛞 [**Project Page**](https://github.com/Next-Flip/Momentum-Firmware)"
+            title = f"New Release: `{version_tag}`! — {REPO_NAME}"
+            desc += f"> 🐬 [**Changelog & Download**]({REPO_URL}/releases/tag/{version_tag})\n\n"
+            desc += f"> 🔧 [**Project Repository**]({REPO_URL})\n\n"
+            desc += f"> 📖 [**Hardware Build Guide**]({REPO_URL}#-easy-visual-wiring-guide-breadboard-style)"
 
         case "workflow_run":
             run = event["workflow_run"]

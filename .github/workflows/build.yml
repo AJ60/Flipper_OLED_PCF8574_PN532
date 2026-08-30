@@ -19,11 +19,19 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Cache ARM toolchain packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-arm-toolchain-${{ runner.os }}
+          restore-keys: |
+            apt-arm-toolchain-
+
       - name: Install toolchain
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip scons gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
-          pip3 install protobuf grpcio-tools
+          pip3 install --break-system-packages protobuf grpcio-tools
 
       - name: Build firmware (basic_dist)
         run: ./fbt

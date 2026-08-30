@@ -9,6 +9,7 @@
 
 > Build your own DIY Flipper Zero with an I2C OLED display, PCF8574 keypad, PN532 NFC reader, and discrete sub-GHz / 125kHz RFID hardware!
 
+[![CI Build](https://github.com/AJ60/Oled_PCF8574_PN532/actions/workflows/build.yml/badge.svg)](https://github.com/AJ60/Oled_PCF8574_PN532/actions/workflows/build.yml)
 [![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/Oled_PCF8574_PN532)
 [![Platform](https://img.shields.io/badge/platform-STM32WB55-orange.svg)](https://www.st.com/en/microcontrollers-microprocessors/stm32wb-series.html)
 [![Maintainer](https://img.shields.io/badge/maintainer-AJ__60-brightgreen.svg)](https://github.com/AJ60)
@@ -249,7 +250,7 @@ Connect your OLED screen, buttons, and MCU according to the wiring diagram.
 2. Open the official **qFlipper** application on your PC.
 3. qFlipper will show **"RECOVERY MODE"**. Click **"REPAIR"** to install the bootloader.
 4. Put the board back into **DFU mode** once more.
-5. Click **"Install from file"** in qFlipper and select our **`.tgz`** firmware package from the [Releases](https://github.com/AJ60/oled_flipper/releases) page.
+5. Click **"Install from file"** in qFlipper and select our **`.tgz`** firmware package from the [Releases](https://github.com/AJ60/Oled_PCF8574_PN532/releases) page.
 6. qFlipper will flash the firmware, turn on the OLED screen, and automatically copy all required game/app resource files to your microSD card!
 
 #### For Normal Updates:
