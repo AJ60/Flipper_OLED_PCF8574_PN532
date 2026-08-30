@@ -1,4 +1,4 @@
-# 🎮 Key Combos & Hardware Recovery {#key_combos}
+# 🎮 Key Combos & Hardware Recovery — DIY Flipper Zero (OLED Edition)
 
 > Quick reference guide for button combinations, hardware reset, recovery modes, and DFU flashing on the DIY Flipper Zero (OLED Edition).
 

@@ -1,33 +1,28 @@
-# Sub-GHz Remote
+# 📡 Sub-GHz Remote Plugin — DIY Flipper Zero (OLED Edition)
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
 **Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
 ---
 
+Credit to the [SubGHz_Remote](https://github.com/DarkFlippers/SubGHz_Remote) project for the original app and documentation.
 
+> [!NOTE]
+> **Map files can now be created and edited directly on the device.**
+> Go into the Sub-GHz Remote app and press the **Back** button to open the map editor.
 
-Credit to [Unleashed Firmware](https://github.com/DarkFlippers/unleashed-firmware) team for documentation and the [app itself](https://github.com/DarkFlippers/SubGHz_Remote)!
+---
 
+### The SubGHz Remote Tool *requires* a custom user map file with `.txt` extension in the `subghz/remote` folder on the SD card.
 
-# UPDATE!!!!!!
-## Now you can create and edit map files directly on flipper, go into Sub-GHz Remote and click back button
+#### If these files do not exist or are not configured properly, **you will receive an error each time you select an incorrect file**.
 
-<br>
-<br>
-<br>
-
-
-### The SubGHz Remote Tool *requires* the creation of custom user map with `.txt` extension in the `subghz/remote` folder on the sdcard. 
-
-#### If these files are not exist or not configured properly, **you will receive an error each time you try to select wrong file in the UniRF Tool**.
-
-## You can add as many `.txt` map files as you want, file name doesn't matter!
+## You can add as many `.txt` map files as you want — the file name doesn't matter!
 
 
 ## Incorrect or unconfigured file error
 
-If the `.txt` file has not been properly configured, the following error will be thrown when trying to run the UniRF Remix app:
+If the `.txt` file has not been properly configured, the following error will appear:
 
 ```
 Config is incorrect.
@@ -36,7 +31,6 @@ Please configure map
 
 Press Back to Exit
 ```
-
 
 
 ## Setting up the `subghz/remote/example.txt` file:
@@ -54,9 +48,9 @@ RLABEL: Right Label
 OKLABEL: Ok Label
 ```
 
-The UP/DOWN/LEFT/RIGHT/OK file locations must be set to the specific file you want mapped to that directional pad direction.
+The UP/DOWN/LEFT/RIGHT/OK file locations must point to the `.sub` capture file you want mapped to each direction.
 
-The ULABEL/DLABEL/LLABEL/RLABEL/OKLABEL variables should be set to the text to be displayed for each of the files set earlier.
+The ULABEL/DLABEL/LLABEL/RLABEL/OKLABEL variables set the display text for each assigned file.
 
 ## Example:
 
@@ -74,12 +68,10 @@ OKLABEL: Garage CLOSE
 ```
 
 ## Notes
-* ##### App Usage
-  - Press a button to send the assigned capture file.
-  - Press Back button to exit app.
+* **App Usage**
+  - Press a directional button to transmit the assigned capture file.
+  - Press the **Back** button to exit the app or open the map editor.
 
-* ##### SubGHz Remote Map
-  - File path should not have any spaces or special characters (- and _ excluded).
-  - Labels are limited to 16 characters.
-    - Why? This is to prevent overlapping elements on screen.
-    - For example: If you set your label or file to ```WWWWWWWWWWWWWWW``` you'll be over the screen limits.
+* **SubGHz Remote Map Rules**
+  - File paths must not contain spaces or special characters (`-` and `_` are allowed).
+  - Labels are limited to **16 characters** to prevent text from overflowing the screen.

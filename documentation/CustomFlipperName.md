@@ -1,23 +1,26 @@
-# How to change Flipper name:
+# 🏷️ Custom Device Name — DIY Flipper Zero (OLED Edition)
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
 **Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
 ---
 
+## How to change your device name
 
-
-## Instruction
-1. Go to Momentum -> Misc -> Spoofing Options -> Flipper Name
-2. Enter your new custom name for your flipper and click `Save`, **name will be saved on microSD card, and will stay same after firmware updates**
-3. You will need to exit from Momentum app and Flipper will automatically reboot!
-4. After reboot you will see your new custom name in device info and right screen `passport`
+1. Go to `Settings` → `Misc` → `Spoofing Options` → `Flipper Name`
+2. Enter your new custom name and click `Save` — **the name is saved on the microSD card and persists across firmware updates**
+3. Exit the Settings app and the device will automatically reboot
+4. After reboot you will see your new custom name in device info and on the `Passport` screen
 5. Done!
 
-**To reset device name to default - do same steps but do not enter any characters, leave it empty and click** `Save`
+**To reset the device name to default:** follow the same steps but leave the name field empty and click `Save`.
 
-Currently, changing Flipper name on Momentum Firmware also affects:
+---
+
+## What changes when you set a custom name
+
+Changing the device name on this firmware also affects:
 - Bluetooth device name
-- Bluetooth MAC address (3 bytes of Flipper ID + 3 bytes of ASCII from custom name)
+- Bluetooth MAC address (3 bytes of device ID + 3 bytes of ASCII from custom name)
 - USB device name
 - Serial number (ASCII from custom name)

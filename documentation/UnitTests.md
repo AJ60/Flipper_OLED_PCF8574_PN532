@@ -1,4 +1,4 @@
-# 🧪 Unit Tests Framework {#unit_tests}
+# 🧪 Unit Tests Framework — DIY Flipper Zero (OLED Edition)
 
 > Guidelines for authoring, running, and debugging automated unit tests on the DIY Flipper firmware.
 

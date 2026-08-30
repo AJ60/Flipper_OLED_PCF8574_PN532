@@ -1,28 +1,32 @@
+# ⚙️ Sub-GHz Frequency Settings — DIY Flipper Zero (OLED Edition)
+
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
 **Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
 ---
 
-## How to add new SubGHz frequencies
+## How to add new Sub-GHz frequencies
 
-#### CC1101 Frequency range specs: 300-348 MHz, 386-464 MHz, and 778-928 MHz  (+ 350MHz and 467MHz was added to default range)
+#### CC1101 Frequency range specs: 300–348 MHz, 386–464 MHz, and 778–928 MHz (+ 350 MHz and 467 MHz added to default range)
 
 ### From Flipper
 
-On Momentum Firmware, you can add manage frequencies list from Flipper from `Momentum > Protocols > SubGHz Freqs`:
-- Use Defaults: whether to include default frequency list, if yes your custom frequencies go at END of default list
-- Static Freqs: list used by `Read`, `Read RAW` and `Frequency Analyzer`
-- Hopper Freqs: list used by `Read > Config > Hopping: ON`
+You can manage the Sub-GHz frequencies list directly from the device menu:
+`Settings → Protocols → Sub-GHz Frequencies`
 
-This menu is a utility for configuring the normal config file that all firmwares use directly from Flipper. See below for a guide written by [Unleashed Firmware](https://github.com/DarkFlippers/unleashed-firmware) team on how to use the config file manually.
+- **Use Defaults**: whether to include the default frequency list; if yes, your custom frequencies go at the END of the default list
+- **Static Freqs**: list used by `Read`, `Read RAW`, and `Frequency Analyzer`
+- **Hopper Freqs**: list used by `Read > Config > Hopping: ON`
+
+This menu is a utility for configuring the normal config file. See below for a manual config file guide.
 
 
 ### From config file
 
-Edit user settings file located on your microSD card - `subghz/assets/setting_user` (remove .example from name to use config)
+Edit the user settings file located on your microSD card — `subghz/assets/setting_user` (remove `.example` from name to activate)
 
-in this file you will find we already have extra frequencies added
-if you need your custom one, make sure it doesn't listed here
+In this file you will find extra frequencies already added.
+If you need a custom one, make sure it's not already listed.
 
 ### Default frequency list
 ```
@@ -95,26 +99,26 @@ if you need your custom one, make sure it doesn't listed here
     928000000,
 ```
 
-### User frequencies added AFTER that default list! You need to continue until you reach the end of that list
+### User frequencies added AFTER the default list! Continue until you reach the end of that list.
 
-### If you want to disable default list and use ONLY user added frequencies from user settings file
-Change that line
+### To disable the default list and use ONLY user-added frequencies:
+Change this line:
 `#Add_standard_frequencies: true`
-to
+to:
 `Add_standard_frequencies: false`
 
-**You need to have custom frequencies added in both lists! in main frequency list and in hopping list! Replacing only hopping freqs will not work with that setting set on false, you need to add something in main list since it will be empty**
+**You need to have custom frequencies added in both lists (main frequency list AND hopping list). Replacing only hopping freqs will not work with that setting set to false — you need to add something to the main list since it will be empty.**
 
-### To add your own frequency to user list 
-Just add new line
-`Frequency: 928000000` - where `928000000` is your frequency, keep it in that format! it should be 9 digits!
+### To add your own frequency to the user list:
+Add a new line:
+`Frequency: 928000000` — where `928000000` is your frequency. Keep it in that format (9 digits)!
 
 ### Hopper frequency list
-To add new frequency to hopper:
-add new line `Hopper_frequency: 345000000`<br>
-But remember! You should keep it as small as possible, or hopper functionality would be useless!<br>
-If `#Add_standard_frequencies: true` is not changed<br>
-Your frequencies will be added after default ones
+To add a new frequency to the hopper:
+Add a new line: `Hopper_frequency: 345000000`
+
+Keep the hopper list as small as possible, or hopper functionality becomes too slow.
+If `#Add_standard_frequencies: true` is not changed, your frequencies will be added after the default ones.
 
 ### Default hopper list
 ```

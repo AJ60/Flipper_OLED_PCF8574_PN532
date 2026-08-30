@@ -1,13 +1,11 @@
-# FAM (Flipper App Manifests) {#app_manifests}
+# 📦 FAP App Manifests (application.fam) — DIY Flipper Zero (OLED Edition)
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
 **Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
 ---
 
-
-
-All components of Flipper Zero firmware — services, user applications, and system settings — are developed independently. Each component has a build system manifest file named `application.fam`, which defines the basic properties of that component and its relations to other parts of the system.
+All components of the firmware — services, user applications, and system settings — are developed independently. Each component has a build system manifest file named `application.fam`, which defines the basic properties of that component and its relations to other parts of the system.
 
 When building firmware, `fbt` collects all app manifests and processes their dependencies. Then it builds only those components referenced in the current build configuration. See [FBT docs](fbt.md) for details on build configurations.
 
@@ -21,7 +19,7 @@ Only two parameters are mandatory: **appid** and **apptype**. Others are optiona
 
 - **appid**: string, app ID within the build system. It is used to specify which app to include in the build configuration and resolve dependencies and conflicts.
 
-- **apptype**: member of DIYAppType.\* enumeration. Valid values are:
+- **apptype**: member of `FlipperAppType.*` enumeration (aliased as `DIYAppType` in this project's build system context). Valid values are:
 
 | Enum member | Firmware component type                                                                     |
 | ----------- | ------------------------------------------------------------------------------------------- |

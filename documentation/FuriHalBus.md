@@ -1,11 +1,9 @@
-# Using FuriHalBus API {#furi_hal_bus}
+# ⚙️ Using FuriHalBus API — DIY Flipper Zero (OLED Edition)
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
 **Repository**: [https://github.com/AJ60/Oled_PCF8574_PN532](https://github.com/AJ60/Oled_PCF8574_PN532)
 
 ---
-
-
 
 ## Basic info
 
@@ -64,7 +62,7 @@ When not using the API, these peripherals MUST be enabled by the user code and t
 | SPI1          | `furi_hal_spi.h`      | MicroSD Card (`PA10`), CC1101 Radio (`PA15`) |
 | SPI2          | --                    | Optional expansion |
 | I2C1          | `furi_hal_i2c.h`      | SSD1306 OLED (`0x3C`), PCF8574 Keypad (`0x20`), INA219 (`0x40`) |
-| I2C3          | `furi_hal_i2c.h`      | PN532 NFC Module (`0x24` / SCL: `PC0`, SDA: `PC1`, IRQ: `PA2`) |
+| I2C3          | `furi_hal_i2c.h`      | PN532 NFC Module (`0x24` / SCL: `PA7` header "C0", SDA: `PB4` header "C1", IRQ: `PA2`) |
 | USART1        | `furi_hal_serial.h`   | Expansion UART Header |
 | LPUART1       | --                    | Low-power UART interface |
 | USB           | `furi_hal_usb.h`      | USB CDC / VCP / DFU |

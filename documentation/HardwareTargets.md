@@ -1,4 +1,4 @@
-# 🎯 Hardware Targets & Board Definitions {#hardware_targets}
+# 🎯 Hardware Targets & Board Definitions — DIY Flipper Zero (OLED Edition)
 
 > Flipper firmware is modular and supports different hardware configurations within a unified codebase. Hardware-specific differences are encapsulated in `furi_hal`, board initialization routines, linker scripts, and target definitions.
 

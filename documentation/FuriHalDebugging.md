@@ -18,6 +18,9 @@ Usually, they are used for low level tracing and profiling or signal redirection
 There are 3 signals that will be exposed to external GPIO pins:
 
 - `AWAKE`   — `PA7` — High when system is busy with computations, low when sleeping. Can be used to track transitions to sleep mode.
+
+> [!WARNING]
+> **DIY Hardware Conflict**: `PA7` is also used as the **PN532 I2C3 SCL** pin on this build (header label "C0"). Do **not** enable `FURI_HAL_OS_DEBUG` with the PN532 connected — the debug signal will conflict with I2C3 bus traffic and corrupt NFC communication. Disconnect the PN532 module before using this debug mode.
 - `TICK`    — `PA6` — Flipped on system tick, only flips when no tick suppression in progress. Can be used to track tick skew and abnormal task scheduling.
 - `SECOND`  — `PA4` — Flipped each second. Can be used for tracing RT issue: time flow disturbance means system doesn't conform Hard RT.
 
