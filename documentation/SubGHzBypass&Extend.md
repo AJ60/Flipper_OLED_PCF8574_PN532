@@ -31,4 +31,4 @@
 
 ## ⚙️ Configuration
 
-* Settings can be configured under **Momentum / Radio Settings -> Sub-GHz -> Frequencies** or by editing the text config file `/ext/subghz/assets/setting_user` on your microSD card.
+* Settings can be configured under **Settings -> Protocols -> Sub-GHz -> Frequencies** or by editing the text config file `/ext/subghz/assets/setting_user` on your microSD card.
