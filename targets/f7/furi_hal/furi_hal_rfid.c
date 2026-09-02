@@ -125,9 +125,9 @@ void furi_hal_rfid_pins_reset(void) {
     furi_hal_gpio_init(&gpio_rfid_carrier_out, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
     furi_hal_gpio_write(&gpio_rfid_carrier_out, false);
 
-    // from both sides
-    furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
-    furi_hal_gpio_write(&gpio_nfc_irq_rfid_pull, true);
+    // Release PA2 (gpio_nfc_irq_rfid_pull) as analog mode when RFID is idle so
+    // PN532 active-low IRQ is never short-circuited by a PushPull HIGH driver.
+    furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
 
     furi_hal_gpio_init_simple(&gpio_rfid_carrier, GpioModeAnalog);
 
@@ -158,7 +158,7 @@ static void furi_hal_rfid_pins_read(void) {
     furi_hal_ibutton_pin_write(false);
 
     // dont pull rfid antenna
-    furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
+    furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
     furi_hal_gpio_write(&gpio_nfc_irq_rfid_pull, false);
 
     // carrier pin to timer out (PA5 = TIM2_CH1 = AF1)
@@ -182,7 +182,7 @@ static void furi_hal_rfid_pins_field(void) {
     furi_hal_ibutton_pin_write(false);
 
     // pull pin to timer out
-    furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeOutputPushPull, GpioPullNo, GpioSpeedLow);
+    furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
     furi_hal_gpio_write(&gpio_nfc_irq_rfid_pull, false);
 
     // carrier pin to timer out (PA5 = TIM2_CH1 = AF1)

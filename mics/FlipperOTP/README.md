@@ -62,13 +62,12 @@ Simply launch **`generate_otp_gui.exe`** — no installation required.
 | --- | --- | --- |
 | **Device Name** | Unique name for your Flipper (shown in About menu & Bluetooth) | Max 8 ASCII characters |
 | **Board Version** | Hardware board revision | 0–255 (use `12` for WeAct STM32WB55) |
-| **Display Type** | Screen driver selection | **MGG** for custom SSD1306 I2C OLED *(critical!)* |
+| **Display Type** | Screen driver selection profile | **MGG** (Default) or **ERC** |
 | **Body Color** | Cosmetic shell color in animations | Black / White / Transparent |
 | **Sub-GHz Region** | Frequency rules for CC1101 radio | Europe, USA, Japan, or World |
 
-> [!IMPORTANT]
-> **Display Type must be set to `MGG`** for the custom SSD1306 OLED screen to work.  
-> Selecting `ERC` will result in a black screen on DIY boards.
+> [!NOTE]
+> **Display Type Configuration**: The DIY firmware defaults to SSD1306/SH1106 OLED automatically via runtime configuration. Both `MGG` and `ERC` profiles are supported.
 
 ### 3. Enter DFU mode on the WeAct board
 

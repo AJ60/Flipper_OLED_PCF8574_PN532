@@ -427,9 +427,13 @@ bool furi_hal_i2c_read_reg_16(
     uint32_t timeout) {
     furi_check(handle);
 
-    uint8_t reg_data[2];
+    uint8_t reg_data[2] = {0};
     bool ret = furi_hal_i2c_trx(handle, i2c_addr, &reg_addr, 1, reg_data, 2, timeout);
-    *data = (reg_data[0] << 8) | (reg_data[1]);
+    if(ret && data) {
+        *data = (reg_data[0] << 8) | (reg_data[1]);
+    } else if(data) {
+        *data = 0;
+    }
 
     return ret;
 }

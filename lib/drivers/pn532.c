@@ -419,7 +419,8 @@ Pn532Error pn532_in_data_exchange(
     size_t resp_sz = sizeof(resp);
     Pn532Error err = Pn532ErrorInternal;
 
-    for(int retry = 0; retry < 3; retry++) {
+    int max_retries = (tx_len == 2 && tx_data[0] == 0x50) ? 1 : 2;
+    for(int retry = 0; retry < max_retries; retry++) {
         if(retry > 0) {
             FURI_LOG_D(TAG, "InDataExchange retry %d", retry);
             furi_delay_ms(3);
@@ -477,12 +478,15 @@ Pn532Error pn532_mifare_classic_auth(
     auth_payload[0] = auth_cmd; // 0x60 or 0x61
     auth_payload[1] = block;
     memcpy(&auth_payload[2], key, 6);
-    memcpy(&auth_payload[8], uid, uid_len > 4 ? 4 : uid_len);
+    // For 7-byte UID MIFARE Classic cards, Crypto-1 uses the 4-byte NUID (bytes 3..6)
+    const uint8_t* auth_uid = (uid_len == 7) ? &uid[3] : uid;
+    uint8_t copy_len = uid_len > 4 ? 4 : uid_len;
+    memcpy(&auth_payload[8], auth_uid, copy_len);
 
     uint8_t rx[4];
     size_t rx_len = sizeof(rx);
     return pn532_in_data_exchange(
-        handle, tg, auth_payload, 8 + (uid_len > 4 ? 4 : uid_len), rx, &rx_len, 200);
+        handle, tg, auth_payload, 8 + copy_len, rx, &rx_len, 200);
 }
 
 Pn532Error pn532_mifare_read_block(

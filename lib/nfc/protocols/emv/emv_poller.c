@@ -25,6 +25,7 @@ static EmvPoller* emv_poller_alloc(Iso14443_4aPoller* iso14443_4a_poller) {
     instance->rx_buffer = bit_buffer_alloc(EMV_BUF_SIZE);
 
     instance->state = EmvPollerStateIdle;
+    instance->records_mask = 0;
 
     instance->emv_event.data = &instance->emv_event_data;
 
@@ -47,6 +48,9 @@ static void emv_poller_free(EmvPoller* instance) {
 static NfcCommand emv_poller_handler_idle(EmvPoller* instance) {
     bit_buffer_reset(instance->tx_buffer);
     bit_buffer_reset(instance->rx_buffer);
+
+    emv_reset(instance->data);
+    instance->records_mask = 0;
 
     iso14443_4a_copy(
         instance->data->iso14443_4a_data,
@@ -111,8 +115,11 @@ static NfcCommand emv_poller_handler_read_extra_data(EmvPoller* instance) {
     emv_poller_get_last_online_atc(instance);
     emv_poller_get_pin_try_counter(instance);
 
-    // Search cardholder name. This operation may break communication with the card, so it should be the last one
-    // emv_poller_read_afl(instance, true, &instance->records_mask);
+    // Search cardholder name only if PAN has not yet been found
+    if(instance->data->emv_application.pan_len == 0 &&
+       strlen(instance->data->emv_application.cardholder_name) == 0) {
+        emv_poller_read_afl(instance, true, &instance->records_mask);
+    }
 
     instance->state = EmvPollerStateReadSuccess;
     return NfcCommandContinue;

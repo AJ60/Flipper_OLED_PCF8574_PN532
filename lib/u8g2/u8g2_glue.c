@@ -326,29 +326,13 @@ uint8_t u8x8_d_ssd1306_common(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* 
 }
 
 void u8x8_d_ssd1306_init(u8x8_t* u8x8, uint8_t contrast, uint8_t regulation_ratio, bool bias) {
-    // Contrast passes through unmasked: the SSD1306 EV register is 8-bit
-    // (0x00-0xFF), unlike the ST7565's 6-bit EV. regulation_ratio / bias are
-    // ST7565-heritage parameters — the 0xA2/0xA3 and 0x20|r commands below are
-    // ignored by the SSD1306 (kept so the display-test app keeps working).
-    regulation_ratio = regulation_ratio & 0b111;
+    UNUSED(regulation_ratio);
+    UNUSED(bias);
 
     u8x8_cad_StartTransfer(u8x8);
-    // Reset
-    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_RESET);
-    // Bias: 1/7(0b1) or 1/9(0b0)
-    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_BIAS_SELECT | bias);
-    // Page, Line and Segment config
-    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_SEG_DIRECTION);
-    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_COM_DIRECTION | 0b1000);
-    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_SET_LINE);
-    // Set Regulation Ratio
-    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_REGULATION_RATIO | regulation_ratio);
-    // Set EV
+    // Set Contrast (EV) cleanly on SSD1306 without sending illegal ST7565 commands
     u8x8_cad_SendCmd(u8x8, SSD1306_CMD_SET_EV);
     u8x8_cad_SendArg(u8x8, contrast);
-    // Enable power
-    u8x8_cad_SendCmd(u8x8, SSD1306_CMD_POWER_CONTROL | 0b111);
-
     u8x8_cad_EndTransfer(u8x8);
 }
 

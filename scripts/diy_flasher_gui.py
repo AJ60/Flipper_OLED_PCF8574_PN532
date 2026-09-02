@@ -1221,7 +1221,16 @@ class DIYFlasherApp:
                 # 1. Unpack tgz
                 self.log("Unpacking tarball...")
                 with tarfile.open(tgz_path, "r:gz") as tar:
-                    tar.extractall(path=temp_extract_dir)
+                    # Sanitize tarball members to prevent directory traversal (CVE-2007-4559)
+                    resolved_temp_dir = os.path.abspath(temp_extract_dir)
+                    for member in tar.getmembers():
+                        dest_path = os.path.abspath(os.path.join(temp_extract_dir, member.name))
+                        if not dest_path.startswith(resolved_temp_dir + os.sep) and dest_path != resolved_temp_dir:
+                            raise RuntimeError(f"Illegal path traversal detected in tar member: {member.name}")
+                    if hasattr(tarfile, "data_filter"):
+                        tar.extractall(path=temp_extract_dir, filter="data")
+                    else:
+                        tar.extractall(path=temp_extract_dir)
 
                 # Locate directory with update.fuf (sometimes nested)
                 update_fuf_path = None

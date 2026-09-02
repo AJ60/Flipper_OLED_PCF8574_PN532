@@ -215,16 +215,20 @@ Iso14443_4aError iso14443_4_layer_decode_response_pwt_ext(
             break;
         case ISO14443_4_BLOCK_PCB_S:
             if((pcb_field & ISO14443_4_BLOCK_PCB_S_WTX) == ISO14443_4_BLOCK_PCB_S_WTX) {
-                const uint8_t inf_field = bit_buffer_get_byte(block_data, 1);
-                //const uint8_t power_level = inf_field >> 6;
-                const uint8_t wtxm = inf_field & 0b111111;
-                //uint32_t fwt_temp = MIN((fwt * wtxm), fwt_max);
+                if(bit_buffer_get_size_bytes(block_data) > 1) {
+                    const uint8_t inf_field = bit_buffer_get_byte(block_data, 1);
+                    //const uint8_t power_level = inf_field >> 6;
+                    const uint8_t wtxm = inf_field & 0b111111;
+                    //uint32_t fwt_temp = MIN((fwt * wtxm), fwt_max);
 
-                bit_buffer_append_byte(
-                    output_data,
-                    ISO14443_4_BLOCK_PCB_S | ISO14443_4_BLOCK_PCB_S_WTX | ISO14443_4_BLOCK_PCB);
-                bit_buffer_append_byte(output_data, wtxm);
-                ret = Iso14443_4aErrorSendExtra;
+                    bit_buffer_append_byte(
+                        output_data,
+                        ISO14443_4_BLOCK_PCB_S | ISO14443_4_BLOCK_PCB_S_WTX | ISO14443_4_BLOCK_PCB);
+                    bit_buffer_append_byte(output_data, wtxm);
+                    ret = Iso14443_4aErrorSendExtra;
+                } else {
+                    ret = Iso14443_4aErrorProtocol;
+                }
             }
             break;
         }

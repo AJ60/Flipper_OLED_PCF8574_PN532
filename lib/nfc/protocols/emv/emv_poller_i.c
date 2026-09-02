@@ -9,10 +9,10 @@ const PDOLValue pdol_term_type = {0x9F5A, {0x00}}; // Terminal transaction type
 const PDOLValue pdol_merchant_type = {0x9F58, {0x01}}; // Merchant type indicator
 const PDOLValue pdol_term_trans_qualifies = {
     0x9F66,
-    {0x79, 0x00, 0x40, 0x80}}; // Terminal transaction qualifiers
+    {0x36, 0x00, 0x40, 0x00}}; // Terminal transaction qualifiers (EMV contactless & contact, online capable)
 const PDOLValue pdol_addtnl_term_qualifies = {
     0x9F40,
-    {0x79, 0x00, 0x40, 0x80}}; // Terminal transaction qualifiers
+    {0x79, 0x00, 0x40, 0x80}}; // Additional terminal qualifiers
 const PDOLValue pdol_amount_authorise = {
     0x9F02,
     {0x00, 0x00, 0x00, 0x10, 0x00, 0x00}}; // Amount, authorised
@@ -27,6 +27,12 @@ const PDOLValue pdol_transaction_type = {0x9C, {0x00}}; // Transaction type
 const PDOLValue pdol_transaction_cert = {0x98, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}; // Transaction cert
 const PDOLValue pdol_unpredict_number = {0x9F37, {0x82, 0x3D, 0xDE, 0x7A}}; // Unpredictable number
+const PDOLValue pdol_term_type_emv = {0x9F35, {0x22}}; // Terminal Type (Attended, Online capable)
+const PDOLValue pdol_term_capabilities = {0x9F33, {0xE0, 0xF8, 0xC8}}; // Terminal Capabilities
+const PDOLValue pdol_ifd_serial = {0x9F1E, {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38}}; // IFD Serial
+const PDOLValue pdol_trans_time = {0x9F21, {0x12, 0x00, 0x00}}; // Transaction Time (HHMMSS)
+const PDOLValue pdol_app_version = {0x9F09, {0x00, 0x02}}; // Application Version
+const PDOLValue pdol_vlp_support = {0x9F7A, {0x00}}; // VLP / Electronic Cash Terminal Support
 
 const PDOLValue* const pdol_values[] = {
     &pdol_term_info,
@@ -43,6 +49,12 @@ const PDOLValue* const pdol_values[] = {
     &pdol_transaction_type,
     &pdol_transaction_cert,
     &pdol_unpredict_number,
+    &pdol_term_type_emv,
+    &pdol_term_capabilities,
+    &pdol_ifd_serial,
+    &pdol_trans_time,
+    &pdol_app_version,
+    &pdol_vlp_support,
 };
 
 EmvError emv_process_error(Iso14443_4aError error) {
@@ -183,37 +195,51 @@ static bool
         memcpy(track_1_equiv, &buff[i], copy_len);
         track_1_equiv[copy_len] = '\0';
         success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_TRACK_1_EQUIV %x : %s", tag, track_1_equiv);
+        FURI_LOG_T(TAG, "found EMV_TAG_TRACK_1_EQUIV %x (len=%zu, redacted)", tag, copy_len);
         break;
     }
     case EMV_TAG_TRACK_2_DATA:
     case EMV_TAG_TRACK_2_EQUIV: {
         FURI_LOG_T(TAG, "found EMV_TAG_TRACK_2 %X", tag);
-        // 0xD0 delimits PAN from expiry (YYMM)
-        for(int x = 1; x < tlen - 2; x++) {
-            if(buff[i + x + 1] > 0xD0) {
-                size_t pan_copy_len = MIN((size_t)(x + 1), sizeof(app->pan));
-                memcpy(app->pan, &buff[i], pan_copy_len);
-                app->pan_len = pan_copy_len;
-                app->exp_year = (buff[i + x + 1] << 4) | (buff[i + x + 2] >> 4);
-                app->exp_month = (buff[i + x + 2] << 4) | (buff[i + x + 3] >> 4);
+        // Robust nibble-based Track 2 parser: search for delimiter 0x0D ('D' / '=')
+        int sep_nibble = -1;
+        int total_nibbles = (int)tlen * 2;
+        for(int n = 0; n < total_nibbles; n++) {
+            uint8_t nibble = (n % 2 == 0) ? (buff[i + (n / 2)] >> 4) : (buff[i + (n / 2)] & 0x0F);
+            if(nibble == 0x0D) {
+                sep_nibble = n;
                 break;
             }
         }
 
-        // Convert 4-bit to ASCII representation
-        char track_2_equiv[41];
-        uint8_t track_2_equiv_len = 0;
-        for(int x = 0; x < tlen && track_2_equiv_len < sizeof(track_2_equiv) - 2; x++) {
-            char top = (buff[i + x] >> 4) + '0';
-            char bottom = (buff[i + x] & 0x0F) + '0';
-            track_2_equiv[track_2_equiv_len++] = top;
-            if(top == '?') break;
-            track_2_equiv[track_2_equiv_len++] = bottom;
-            if(bottom == '?') break;
+        if(sep_nibble > 0 && sep_nibble <= 19) {
+            uint8_t pan_bytes = (sep_nibble + 1) / 2;
+            size_t pan_copy_len = MIN((size_t)pan_bytes, sizeof(app->pan));
+            memset(app->pan, 0, sizeof(app->pan));
+            for(int n = 0; n < sep_nibble; n++) {
+                uint8_t digit = (n % 2 == 0) ? (buff[i + (n / 2)] >> 4) : (buff[i + (n / 2)] & 0x0F);
+                if(n % 2 == 0) {
+                    app->pan[n / 2] = (digit << 4);
+                } else {
+                    app->pan[n / 2] |= (digit & 0x0F);
+                }
+            }
+            if(sep_nibble % 2 != 0) {
+                app->pan[sep_nibble / 2] |= 0x0F;
+            }
+            app->pan_len = pan_copy_len;
+
+            // Extract expiry YYMM from 4 nibbles immediately after 'D'
+            if(sep_nibble + 4 < total_nibbles) {
+                uint8_t y1 = (buff[i + ((sep_nibble + 1) / 2)] >> (((sep_nibble + 1) % 2 == 0) ? 4 : 0)) & 0x0F;
+                uint8_t y2 = (buff[i + ((sep_nibble + 2) / 2)] >> (((sep_nibble + 2) % 2 == 0) ? 4 : 0)) & 0x0F;
+                uint8_t m1 = (buff[i + ((sep_nibble + 3) / 2)] >> (((sep_nibble + 3) % 2 == 0) ? 4 : 0)) & 0x0F;
+                uint8_t m2 = (buff[i + ((sep_nibble + 4) / 2)] >> (((sep_nibble + 4) % 2 == 0) ? 4 : 0)) & 0x0F;
+                app->exp_year = (y1 << 4) | y2;
+                app->exp_month = (m1 << 4) | m2;
+            }
         }
-        track_2_equiv[track_2_equiv_len] = '\0';
-        FURI_LOG_T(TAG, "found EMV_TAG_TRACK_2 %X : %s", tag, track_2_equiv);
+        FURI_LOG_T(TAG, "found EMV_TAG_TRACK_2 %X (pan_len=%d, redacted)", tag, (int)app->pan_len);
         success = true;
         break;
     }
@@ -231,7 +257,7 @@ static bool
         }
 
         success = true;
-        FURI_LOG_T(TAG, "found EMV_TAG_CARDHOLDER_NAME %x: %s", tag, app->cardholder_name);
+        FURI_LOG_T(TAG, "found EMV_TAG_CARDHOLDER_NAME %x (redacted)", tag);
         break;
     }
     case EMV_TAG_PAN: {
@@ -365,17 +391,19 @@ static bool emv_response_error(const uint8_t* buff, uint16_t len) {
 
 static bool
     emv_parse_tag(const uint8_t* buff, uint16_t len, uint16_t* t, uint8_t* tl, uint8_t* off) {
+    if(!buff || !t || !tl || !off) return false;
     uint8_t i = *off;
     uint16_t tag = 0;
     uint8_t first_byte = 0;
     uint8_t tlen = 0;
-    bool success = false;
+
+    if(i >= len) return false;
+    if(emv_response_error(buff, len)) return false;
 
     first_byte = buff[i];
 
-    if(emv_response_error(buff, len)) return success;
-
     if((first_byte & 31) == 31) { // 2-byte tag
+        if(i + 1 >= len) return false;
         tag = buff[i] << 8 | buff[i + 1];
         i++;
         FURI_LOG_T(TAG, " 2-byte TLV EMV tag: %x", tag);
@@ -384,9 +412,11 @@ static bool
         FURI_LOG_T(TAG, " 1-byte TLV EMV tag: %x", tag);
     }
     i++;
+    if(i >= len) return false;
     tlen = buff[i];
     if((tlen & 128) == 128) { // long length value
         i++;
+        if(i >= len) return false;
         tlen = buff[i];
         FURI_LOG_T(TAG, " 2-byte TLV length: %d", tlen);
     } else {
@@ -397,8 +427,7 @@ static bool
     *off = i;
     *t = tag;
     *tl = tlen;
-    success = true;
-    return success;
+    return true;
 }
 
 static bool emv_decode_tl(
@@ -425,7 +454,15 @@ static bool emv_decode_tl(
     return success;
 }
 
-static bool emv_decode_response_tlv(const uint8_t* buff, uint8_t len, EmvApplication* app) {
+static bool emv_decode_response_tlv_internal(
+    const uint8_t* buff,
+    uint8_t len,
+    EmvApplication* app,
+    uint8_t depth) {
+    if(depth > 4) {
+        FURI_LOG_W(TAG, "Exceeded maximum TLV nesting depth (%d)", depth);
+        return false;
+    }
     uint8_t i = 0;
     uint16_t tag = 0;
     uint8_t first_byte = 0;
@@ -433,6 +470,10 @@ static bool emv_decode_response_tlv(const uint8_t* buff, uint8_t len, EmvApplica
     bool success = false;
 
     while(i < len) {
+        // If remaining 2 bytes are APDU status word (e.g. 90 00, 62 XX, 63 XX), finish parsing
+        if((i + 2 == len) && (buff[i] == 0x90 || (buff[i] >> 4) == 0x6)) {
+            break;
+        }
         first_byte = buff[i];
 
         success = emv_parse_tag(buff, len, &tag, &tlen, &i);
@@ -440,18 +481,29 @@ static bool emv_decode_response_tlv(const uint8_t* buff, uint8_t len, EmvApplica
 
         if((first_byte & 32) == 32) { // "Constructed" -- contains more TLV data to parse
             FURI_LOG_T(TAG, "Constructed TLV %x", tag);
-            if(!emv_decode_response_tlv(&buff[i], tlen, app)) {
+            if(i + tlen > len) {
+                FURI_LOG_W(TAG, "Constructed TLV tag length exceeds buffer (%d + %d > %d)", i, tlen, len);
+                return false;
+            }
+            if(!emv_decode_response_tlv_internal(&buff[i], tlen, app, depth + 1)) {
                 FURI_LOG_T(TAG, "Failed to decode response for %x", tag);
-                // return false;
             } else {
                 success = true;
             }
         } else {
-            emv_decode_tlv_tag(&buff[i], tag, tlen, app);
+            if(i + tlen <= len) {
+                if(emv_decode_tlv_tag(&buff[i], tag, tlen, app)) {
+                    success = true;
+                }
+            }
         }
         i += tlen;
     }
     return success;
+}
+
+static bool emv_decode_response_tlv(const uint8_t* buff, uint8_t len, EmvApplication* app) {
+    return emv_decode_response_tlv_internal(buff, len, app, 0);
 }
 
 static void emv_prepare_pdol(APDU* dest, APDU* src) {
@@ -621,11 +673,30 @@ EmvError emv_poller_get_processing_options(EmvPoller* instance) {
             break;
         }
 
+        size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
         const uint8_t* buff = bit_buffer_get_data(instance->rx_buffer);
+
+        // If card responded with 6C XX (Wrong length), re-issue with exact Le requested by card
+        if(rx_len == 2 && buff[0] == EMV_TAG_RESP_BUF_SIZE) {
+            uint8_t exact_len = buff[1];
+            FURI_LOG_D(TAG, "GPO: card requested Le=0x%02X, reissuing", exact_len);
+            size_t tx_size = bit_buffer_get_size_bytes(instance->tx_buffer);
+            bit_buffer_set_byte(instance->tx_buffer, tx_size - 1, exact_len);
+            bit_buffer_reset(instance->rx_buffer);
+            iso14443_4a_error = iso14443_4a_poller_send_block_pwt_ext(
+                instance->iso14443_4a_poller, instance->tx_buffer, instance->rx_buffer);
+            if(iso14443_4a_error != Iso14443_4aErrorNone) {
+                FURI_LOG_E(TAG, "Failed to get processing options on retry, error %u", iso14443_4a_error);
+                error = emv_process_error(iso14443_4a_error);
+                break;
+            }
+            buff = bit_buffer_get_data(instance->rx_buffer);
+            rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
+        }
 
         if(!emv_decode_response_tlv(
                buff,
-               bit_buffer_get_size_bytes(instance->rx_buffer),
+               rx_len,
                &instance->data->emv_application)) {
             error = EmvErrorProtocol;
             FURI_LOG_E(TAG, "Failed to parse processing options");
@@ -670,6 +741,24 @@ EmvError emv_poller_read_sfi_record(EmvPoller* instance, uint8_t sfi, uint8_t re
             error = emv_process_error(iso14443_4a_error);
             break;
         }
+
+        // If card responded with 6C XX (Wrong length), re-issue with exact Le requested by card
+        size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
+        const uint8_t* rx_data = bit_buffer_get_data(instance->rx_buffer);
+        if(rx_len == 2 && rx_data[0] == EMV_TAG_RESP_BUF_SIZE) {
+            uint8_t exact_len = rx_data[1];
+            FURI_LOG_D(TAG, "SFI 0x%X record %d: card requested Le=0x%02X, reissuing", sfi, record_num, exact_len);
+            emv_sfi_header[4] = exact_len;
+            bit_buffer_reset(instance->tx_buffer);
+            bit_buffer_reset(instance->rx_buffer);
+            bit_buffer_copy_bytes(instance->tx_buffer, emv_sfi_header, sizeof(emv_sfi_header));
+            iso14443_4a_error = iso14443_4a_poller_send_block_pwt_ext(
+                instance->iso14443_4a_poller, instance->tx_buffer, instance->rx_buffer);
+            if(iso14443_4a_error != Iso14443_4aErrorNone) {
+                error = emv_process_error(iso14443_4a_error);
+                break;
+            }
+        }
     } while(false);
 
     furi_string_free(text);
@@ -686,41 +775,62 @@ EmvError emv_poller_read_afl(EmvPoller* instance, bool bruteforce_sfi, uint16_t*
         // SEARCH PAN, RETURN WHEN FOUND
         APDU* afl = &instance->data->emv_application.afl;
 
-        if(afl->size == 0) {
-            return EmvErrorProtocol; // AFL is empty - no records to read
+        if(afl->size > 0) {
+            FURI_LOG_D(TAG, "Search PAN in SFI");
+
+            // Iterate through all files
+            for(size_t i = 0; i < instance->data->emv_application.afl.size; i += 4) {
+                uint8_t sfi = afl->data[i] >> 3;
+                uint8_t record_start = afl->data[i + 1];
+                uint8_t record_end = afl->data[i + 2];
+                // Iterate through all records in file
+                for(uint8_t record = record_start; record <= record_end; ++record) {
+                    if((sfi >= 2) && (sfi <= 3) && (record <= 5))
+                        FURI_BIT_SET(
+                            *readed_mask,
+                            record + ((sfi - 2) * 8));
+
+                    error = emv_poller_read_sfi_record(instance, sfi, record);
+                    if(error != EmvErrorNone) break;
+
+                    if(!emv_decode_response_tlv(
+                           bit_buffer_get_data(instance->rx_buffer),
+                           bit_buffer_get_size_bytes(instance->rx_buffer),
+                           &instance->data->emv_application)) {
+                        error = EmvErrorProtocol;
+                        FURI_LOG_T(TAG, "Failed to parse SFI 0x%X record %d", sfi, record);
+                    }
+
+                    if(instance->data->emv_application.pan_len) {
+                        pan_fetched = true;
+                        break;
+                    } // Card number fetched
+                }
+                if(pan_fetched) break;
+            }
         }
 
-        FURI_LOG_D(TAG, "Search PAN in SFI");
+        // Fallback for RuPay / qSPARC / cards where PAN is stored in SFI 2 or omitted from AFL
+        if(!pan_fetched) {
+            FURI_LOG_D(TAG, "PAN not found in AFL, scanning SFIs 1-4 for PAN/Track2");
+            for(uint8_t sfi = 1; sfi <= 4; sfi++) {
+                for(uint8_t record = 1; record <= 5; record++) {
+                    error = emv_poller_read_sfi_record(instance, sfi, record);
+                    if(error != EmvErrorNone) break;
 
-        // Iterate through all files
-        for(size_t i = 0; i < instance->data->emv_application.afl.size; i += 4) {
-            uint8_t sfi = afl->data[i] >> 3;
-            uint8_t record_start = afl->data[i + 1];
-            uint8_t record_end = afl->data[i + 2];
-            // Iterate through all records in file
-            for(uint8_t record = record_start; record <= record_end; ++record) {
-                if((sfi <= 3) && (record <= 5))
-                    FURI_BIT_SET(
-                        *readed_mask,
-                        record + ((sfi - 2) * 8)); //black magic: mask 0003333300022222
+                    emv_decode_response_tlv(
+                        bit_buffer_get_data(instance->rx_buffer),
+                        bit_buffer_get_size_bytes(instance->rx_buffer),
+                        &instance->data->emv_application);
 
-                error = emv_poller_read_sfi_record(instance, sfi, record);
-                if(error != EmvErrorNone) break;
-
-                if(!emv_decode_response_tlv(
-                       bit_buffer_get_data(instance->rx_buffer),
-                       bit_buffer_get_size_bytes(instance->rx_buffer),
-                       &instance->data->emv_application)) {
-                    error = EmvErrorProtocol;
-                    FURI_LOG_T(TAG, "Failed to parse SFI 0x%X record %d", sfi, record);
+                    if(instance->data->emv_application.pan_len) {
+                        pan_fetched = true;
+                        FURI_LOG_I(TAG, "PAN found in SFI 0x%X record %d", sfi, record);
+                        break;
+                    }
                 }
-
-                if(instance->data->emv_application.pan_len) {
-                    pan_fetched = true;
-                    break;
-                } // Card number fetched
+                if(pan_fetched) break;
             }
-            if(pan_fetched) break;
         }
     } else { // BRUTFORCE FILES 2-3. SEARCH CARDHOLDER NAME
         FURI_LOG_T(TAG, "Bruteforce files 2-3");

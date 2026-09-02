@@ -66,9 +66,12 @@ float curr_soc_percent = 100.0f;
 const float R_INTERNAL = 0.25f;
 #endif
 
+static volatile bool furi_hal_power_alert_active = false;
+
 static void furi_hal_power_ina_alert_isr(void* ctx) {
     UNUSED(ctx);
-    FURI_LOG_E(TAG, "INA226 ALERT Triggered on PB1! Emergency overcurrent event");
+    // ISR context: Never call FURI_LOG_* (acquires mutexes and allocates dynamic heap strings).
+    furi_hal_power_alert_active = true;
 }
 
 void furi_hal_power_init(void) {
@@ -322,18 +325,21 @@ bool furi_hal_power_is_charging_done(void) {
 }
 
 void furi_hal_power_shutdown(void) {
-    // Must not return
-    // TODO: Clear and deinit the screen first
+    // Disable interrupts to avoid interrupt preemption during power-down sequence
+    __disable_irq();
 
-    // TODO: Then deinit peripherals
+    // Enable Cortex-M4 DeepSleep
+    LL_LPM_EnableDeepSleep();
 
-    // Then Prepare Wakeup pin (boot0 pin)
+    // Configure STM32WB55 to enter true low-power SHUTDOWN mode
+    LL_PWR_SetPowerMode(LL_PWR_MODE_SHUTDOWN);
 
-    // Then Release RCC semaphore
+    // Clear all wakeup flags
+    LL_PWR_ClearFlag_WU();
 
-    // Finally, vibrate briefly to indicate shutdown
-
+    // Enter low-power mode and wait for interrupt/wakeup
     while(1) {
+        __WFI();
     }
 }
 

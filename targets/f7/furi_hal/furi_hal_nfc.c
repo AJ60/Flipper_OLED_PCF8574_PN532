@@ -930,6 +930,7 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
         is_iso_dep_i_block,
         furi_hal_pn532_ctx.target_detected);
 
+    uint32_t trx_timeout = (actual_tx[0] == 0x50 && actual_len == 2) ? 15 : 500;
     Pn532Error pn_err = pn532_in_data_exchange(
         PN532_I2C_BUS,
         1,
@@ -937,7 +938,7 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
         actual_len,
         furi_hal_pn532_ctx.rx_buf,
         &furi_hal_pn532_ctx.rx_len,
-        500);
+        trx_timeout);
 
     if(pn_err == Pn532ErrorNone) {
         size_t payload_len = furi_hal_pn532_ctx.rx_len;
