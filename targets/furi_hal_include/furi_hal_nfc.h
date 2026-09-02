@@ -98,7 +98,15 @@ typedef enum {
  *
  * This function is called automatically during the firmware initialisation,
  * so there is no need to call it explicitly.
- * 
+ *
+ * @note When PN532 is the active NFC chip (FURI_HAL_NFC_CHIP_PN532), the
+ *       following limitations apply:
+ *       - MIFARE Classic authentication is performed by the PN532 via
+ *         InDataExchange (0x40); raw Crypto1 frame injection is NOT possible.
+ *       - Nested authentication (key recovery from known keys) is NOT supported.
+ *       - MIFARE Classic halt is a no-op (only deauth, no HLTA command).
+ *       - ISO 15693 listener mode is not supported.
+ *
  * @returns FuriHalNfcErrorNone on success, any other error code on failure.
  */
 FuriHalNfcError furi_hal_nfc_init(void);

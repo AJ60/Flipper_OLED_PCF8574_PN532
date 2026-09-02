@@ -88,6 +88,9 @@ node_modules/
 
 # Local project files (not for repo)
 .agents/
+.hermes/
+graphify-out/
+**/graphify-out/
 CHANGELOG_v*.md
 *.kicad_sym
 *.kicad_mod

@@ -85,6 +85,7 @@ static void furi_hal_rfid_comp_out_config(void) {
 void furi_hal_rfid_init(void) {
     furi_check(furi_hal_rfid == NULL);
     furi_hal_rfid = malloc(sizeof(FuriHalRfid));
+    furi_check(furi_hal_rfid);
     furi_hal_rfid->field.counter = 0;
     furi_hal_rfid->field.set_tim_counter_cnt = 0;
 

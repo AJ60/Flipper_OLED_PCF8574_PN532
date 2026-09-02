@@ -287,7 +287,6 @@ bool furi_hal_i2c_rx_ext(
         handle->bus->i2c, address, ten_bit, data, size, begin, end, true, timer);
 
     if(!ok) {
-        // FURI_LOG_E(TAG, "I2C rx failed, recovering bus...");
         furi_hal_i2c_recover_bus(handle);
         timer = furi_hal_cortex_timer_get(timeout * 1000);
         ok = furi_hal_i2c_transaction(

@@ -37,6 +37,7 @@ MfClassicPoller* mf_classic_poller_alloc(Iso14443_3aPoller* iso14443_3a_poller) 
     furi_assert(iso14443_3a_poller);
 
     MfClassicPoller* instance = malloc(sizeof(MfClassicPoller));
+    furi_check(instance);
     instance->iso14443_3a_poller = iso14443_3a_poller;
     instance->data = mf_classic_alloc();
     instance->crypto = crypto1_alloc();

@@ -828,6 +828,7 @@ bool furi_hal_subghz_start_async_tx(FuriHalSubGhzAsyncTxCallback callback, void*
 
     furi_hal_subghz_async_tx.buffer =
         malloc(FURI_HAL_SUBGHZ_ASYNC_TX_BUFFER_FULL * sizeof(uint32_t));
+    furi_check(furi_hal_subghz_async_tx.buffer);
 
     // Connect CC1101_GD0 to TIM2 as output
     furi_hal_gpio_init_ex(

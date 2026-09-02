@@ -4,6 +4,7 @@ FuriHalNfcEventInternal* furi_hal_nfc_event = NULL;
 
 void furi_hal_nfc_event_init(void) {
     furi_hal_nfc_event = malloc(sizeof(FuriHalNfcEventInternal));
+    furi_check(furi_hal_nfc_event);
 }
 
 FuriHalNfcError furi_hal_nfc_event_start(void) {

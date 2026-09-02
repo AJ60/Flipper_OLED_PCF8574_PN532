@@ -236,11 +236,7 @@ FuriHalNfcError furi_hal_nfc_init(void) {
             break;
         }
         FURI_LOG_D(TAG, "Clearing and masking interrupts");
-        // Clear interrupts
-        //  uint32_t pending_irqs = st25r3916_get_irq(handle);
-        //furi_hal_nfc_log_irq("Cleared pending IRQs", pending_irqs);
         // Mask all interrupts
-        //furi_hal_nfc_log_irq("Masking all IRQs", ST25R3916_IRQ_MASK_ALL);
         st25r3916_mask_irq(handle, ST25R3916_IRQ_MASK_ALL);
         FURI_LOG_D(TAG, "Initializing GPIO ISR");
         // Enable interrupts
