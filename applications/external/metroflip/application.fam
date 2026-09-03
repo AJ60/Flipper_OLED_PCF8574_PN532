@@ -3,7 +3,7 @@ App(
     name="Metroflip",
     apptype=DIYAppType.EXTERNAL,
     entry_point="metroflip",
-    stack_size=2 * 1024,
+    stack_size=4 * 1024,
     fap_category="NFC",
     fap_version="0.9",
     fap_icon="icon.png",
@@ -11,6 +11,11 @@ App(
     fap_author="luu176",
     fap_icon_assets="images",  # Image assets to compile for this application
     fap_file_assets="files",
+    sources=[
+        "*.c",
+        "*.cpp",
+        "!scenes/plugins/*.c",
+    ],
 )
 
 App(

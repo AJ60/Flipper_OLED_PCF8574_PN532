@@ -66,6 +66,8 @@ MfcEditorApp* mfc_editor_app_alloc() {
     instance->mf_classic_data = mf_classic_alloc();
     instance->file_path = furi_string_alloc_set(NFC_APP_FOLDER);
 
+    instance->is_busy = false;
+
     instance->data_view_header = furi_string_alloc();
     instance->data_view_text = furi_string_alloc();
 

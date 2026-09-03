@@ -141,7 +141,8 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_init(const FuriHalSpiBusHand
     return furi_hal_nfc_iso15693_common_init(handle);
 #else
     UNUSED(handle);
-    return FuriHalNfcErrorNone;
+    FURI_LOG_W(TAG, "ISO15693 poller not supported on PN532 hardware");
+    return FuriHalNfcErrorCommunication;
 #endif
 }
 
@@ -155,6 +156,7 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_deinit(const FuriHalSpiBusHa
     return FuriHalNfcErrorNone;
 }
 
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
 static void iso15693_3_poller_encode_frame(
     const uint8_t* tx_data,
     size_t tx_bits,
@@ -240,11 +242,18 @@ static FuriHalNfcError iso15693_3_poller_decode_frame(
 
     return ret;
 }
+#endif
 
 static FuriHalNfcError furi_hal_nfc_iso15693_poller_tx(
     const FuriHalSpiBusHandle* handle,
     const uint8_t* tx_data,
     size_t tx_bits) {
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    UNUSED(handle);
+    UNUSED(tx_data);
+    UNUSED(tx_bits);
+    return FuriHalNfcErrorCommunication;
+#else
     FuriHalNfcIso15693Poller* instance = furi_hal_nfc_iso15693_poller;
     furi_check(instance != NULL);
     iso15693_3_poller_encode_frame(
@@ -254,6 +263,7 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_tx(
         sizeof(instance->frame_buf),
         &instance->frame_buf_bits);
     return furi_hal_nfc_poller_tx_common(handle, instance->frame_buf, instance->frame_buf_bits);
+#endif
 }
 
 static FuriHalNfcError furi_hal_nfc_iso15693_poller_rx(
@@ -261,6 +271,13 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_rx(
     uint8_t* rx_data,
     size_t rx_data_size,
     size_t* rx_bits) {
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    UNUSED(handle);
+    UNUSED(rx_data);
+    UNUSED(rx_data_size);
+    UNUSED(rx_bits);
+    return FuriHalNfcErrorCommunication;
+#else
     FuriHalNfcError error = FuriHalNfcErrorNone;
     FuriHalNfcIso15693Poller* instance = furi_hal_nfc_iso15693_poller;
     furi_check(instance != NULL);
@@ -288,6 +305,7 @@ static FuriHalNfcError furi_hal_nfc_iso15693_poller_rx(
     } while(false);
 
     return error;
+#endif
 }
 
 #if !defined(FURI_HAL_NFC_CHIP_PN532)

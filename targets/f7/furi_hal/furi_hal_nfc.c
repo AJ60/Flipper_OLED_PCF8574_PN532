@@ -14,6 +14,16 @@
 
 #define TAG "FuriHalNfc"
 
+// PicoPass protocol commands (ISO14443-B proprietary, require InCommunicateThru)
+#define PICOPASS_CMD_ACTALL           0x0A
+#define PICOPASS_CMD_READ_OR_IDENTIFY 0x0C
+#define PICOPASS_CMD_SELECT           0x81
+#define PICOPASS_CMD_READCHECK_KD     0x48
+#define PICOPASS_CMD_READCHECK_KC     0x18
+#define PICOPASS_CMD_CHECK            0x88
+#define PICOPASS_CMD_UPDATE           0x87
+#define PICOPASS_CMD_ADDITIONAL_FRAME 0xAF
+
 const FuriHalNfcTechBase* const furi_hal_nfc_tech[FuriHalNfcTechNum] = {
     [FuriHalNfcTechIso14443a] = &furi_hal_nfc_iso14443a,
     [FuriHalNfcTechIso14443b] = &furi_hal_nfc_iso14443b,
@@ -783,6 +793,38 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
 #if defined(FURI_HAL_NFC_CHIP_PN532)
     UNUSED(handle);
     size_t tx_bytes = (tx_bits + 7) / 8;
+
+    // PicoPass protocol: raw ISO14443-B commands via PN532 InCommunicateThru
+    if(furi_hal_nfc.tech == FuriHalNfcTechIso14443b && tx_bytes >= 1) {
+        uint8_t cmd = tx_data[0];
+        bool is_picopass_cmd = (cmd == PICOPASS_CMD_ACTALL ||
+                                cmd == PICOPASS_CMD_READ_OR_IDENTIFY ||
+                                cmd == PICOPASS_CMD_SELECT ||
+                                cmd == PICOPASS_CMD_READCHECK_KD ||
+                                cmd == PICOPASS_CMD_READCHECK_KC ||
+                                cmd == PICOPASS_CMD_CHECK ||
+                                cmd == PICOPASS_CMD_UPDATE ||
+                                cmd == PICOPASS_CMD_ADDITIONAL_FRAME);
+        if(is_picopass_cmd) {
+            size_t send_len = tx_bytes;
+            furi_hal_pn532_ctx.rx_len = sizeof(furi_hal_pn532_ctx.rx_buf);
+            Pn532Error pn_err = pn532_in_communicate_thru(
+                PN532_I2C_BUS,
+                tx_data,
+                send_len,
+                furi_hal_pn532_ctx.rx_buf,
+                &furi_hal_pn532_ctx.rx_len,
+                50);
+            if(pn_err == Pn532ErrorNone && furi_hal_pn532_ctx.rx_len > 0) {
+                furi_hal_nfc_event_set(FuriHalNfcEventInternalTypeIrq);
+                return FuriHalNfcErrorNone;
+            } else if(pn_err == Pn532ErrorTimeout) {
+                return FuriHalNfcErrorCommunicationTimeout;
+            } else {
+                return FuriHalNfcErrorCommunication;
+            }
+        }
+    }
 
     // Check if this is ISO14443-3B technology
     if(furi_hal_nfc.tech == FuriHalNfcTechIso14443b) {

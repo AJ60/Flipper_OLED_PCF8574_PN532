@@ -188,6 +188,7 @@ Passy* passy_alloc() {
         passy->view_dispatcher, PassyViewWidget, widget_get_view(passy->widget));
 
     passy->storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_mkdir(passy->storage, STORAGE_APP_DATA_PATH_PREFIX);
     passy->dialogs = furi_record_open(RECORD_DIALOGS);
     passy->load_path = furi_string_alloc();
 

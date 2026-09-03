@@ -382,6 +382,7 @@ Weebo* weebo_alloc() {
         weebo->view_dispatcher, WeeboViewWidget, widget_get_view(weebo->widget));
 
     weebo->storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_mkdir(weebo->storage, STORAGE_APP_DATA_PATH_PREFIX);
     weebo->dialogs = furi_record_open(RECORD_DIALOGS);
     weebo->load_path = furi_string_alloc();
 

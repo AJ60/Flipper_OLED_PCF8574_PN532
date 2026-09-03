@@ -1,6 +1,7 @@
 #include "../picopass_i.h"
 #include <dolphin/dolphin.h>
 #include "../picopass_keys.h"
+#include <furi_hal_resources.h>
 
 enum {
     PicopassSceneReadCardDictStandard,
@@ -58,6 +59,7 @@ NfcCommand picopass_read_card_worker_callback(PicopassPollerEvent event, void* c
         memcpy(&picopass->dev->dev_data, data, sizeof(PicopassDeviceData));
         view_dispatcher_send_custom_event(
             picopass->view_dispatcher, PicopassCustomEventPollerSuccess);
+        command = NfcCommandStop;
     } else if(event.type == PicopassPollerEventTypeFail) {
         // the poller will retry, but provide some feedback to the user
         uint32_t ticks = furi_get_tick();
@@ -78,6 +80,11 @@ void picopass_scene_read_card_on_enter(void* context) {
 
     // Setup view
     Popup* popup = picopass->popup;
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    popup_set_header(popup, "PN532 HW:\nISO15693\nNot supported", 68, 30, AlignLeft, AlignTop);
+    popup_set_icon(popup, 0, 3, &I_RFIDDolphinReceive_97x61);
+    view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewPopup);
+#else
     popup_set_header(popup, "Detecting\npicopass\ncard", 68, 30, AlignLeft, AlignTop);
     popup_set_icon(popup, 0, 3, &I_RFIDDolphinReceive_97x61);
 
@@ -91,6 +98,7 @@ void picopass_scene_read_card_on_enter(void* context) {
 
     view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewPopup);
     picopass_blink_start(picopass);
+#endif
 }
 
 bool picopass_scene_read_card_on_event(void* context, SceneManagerEvent event) {
@@ -120,8 +128,11 @@ void picopass_scene_read_card_on_exit(void* context) {
         keys_dict_free(picopass->dict);
         picopass->dict = NULL;
     }
-    picopass_poller_stop(picopass->poller);
-    picopass_poller_free(picopass->poller);
+    if(picopass->poller) {
+        picopass_poller_stop(picopass->poller);
+        picopass_poller_free(picopass->poller);
+        picopass->poller = NULL;
+    }
 
     // Clear view
     popup_reset(picopass->popup);

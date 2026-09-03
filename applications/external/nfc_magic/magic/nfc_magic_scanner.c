@@ -8,6 +8,7 @@
 #include <nfc/nfc_poller.h>
 
 #include <furi/furi.h>
+#include <furi_hal_resources.h>
 
 typedef enum {
     NfcMagicScannerSessionStateIdle,
@@ -32,7 +33,9 @@ struct NfcMagicScanner {
 
 static const NfcProtocol nfc_magic_scanner_not_magic_protocols[] = {
     NfcProtocolIso14443_3b,
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
     NfcProtocolIso15693_3,
+#endif
     NfcProtocolFelica,
 };
 

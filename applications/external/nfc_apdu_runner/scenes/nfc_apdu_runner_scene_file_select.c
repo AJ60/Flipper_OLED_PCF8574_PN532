@@ -14,6 +14,7 @@ void nfc_apdu_runner_scene_file_select_on_enter(void* context) {
 
     // 确保目录存在
     Storage* storage = app->storage;
+    storage_simply_mkdir(storage, STORAGE_APP_DATA_PATH_PREFIX);
     if(!storage_dir_exists(storage, APP_DIRECTORY_PATH)) {
         if(!storage_simply_mkdir(storage, APP_DIRECTORY_PATH)) {
             dialog_message_show_storage_error(app->dialogs, "Cannot create\napp folder");

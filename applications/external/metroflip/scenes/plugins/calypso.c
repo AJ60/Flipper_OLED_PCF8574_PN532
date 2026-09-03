@@ -297,6 +297,10 @@ void update_page_info(void* context, FuriString* parsed_data) {
     }
 }
 
+static void metroflip_back_button_widget_callback(GuiButtonType result, InputType type, void* context);
+static void metroflip_next_button_widget_callback(GuiButtonType result, InputType type, void* context);
+static void calypso_save_button_widget_callback(GuiButtonType result, InputType type, void* context);
+
 void update_widget_elements(void* context) {
     Metroflip* app = context;
     CalypsoContext* ctx = app->calypso_context;
@@ -328,7 +332,7 @@ void update_widget_elements(void* context) {
     }
 }
 
-void metroflip_back_button_widget_callback(GuiButtonType result, InputType type, void* context) {
+static void metroflip_back_button_widget_callback(GuiButtonType result, InputType type, void* context) {
     Metroflip* app = context;
     CalypsoContext* ctx = app->calypso_context;
     UNUSED(result);
@@ -387,7 +391,7 @@ void metroflip_back_button_widget_callback(GuiButtonType result, InputType type,
     }
 }
 
-void calypso_save_button_widget_callback(GuiButtonType result, InputType type, void* context) {
+static void calypso_save_button_widget_callback(GuiButtonType result, InputType type, void* context) {
     Metroflip* app = context;
     UNUSED(result);
 
@@ -400,7 +404,7 @@ void calypso_save_button_widget_callback(GuiButtonType result, InputType type, v
     }
 }
 
-void metroflip_next_button_widget_callback(GuiButtonType result, InputType type, void* context) {
+static void metroflip_next_button_widget_callback(GuiButtonType result, InputType type, void* context) {
     Metroflip* app = context;
     CalypsoContext* ctx = app->calypso_context;
     UNUSED(result);

@@ -195,6 +195,9 @@ static void nfc_eink_load_settings(NfcEinkApp* instance) {
            NFC_EINK_SETTINGS_MAGIC,
            NFC_EINK_SETTINGS_VERSION)) {
         FURI_LOG_D(TAG, "Failed to load settings, using defaults");
+        Storage* storage = furi_record_open(RECORD_STORAGE);
+        storage_common_mkdir(storage, "/ext/nfc_eink");
+        furi_record_close(RECORD_STORAGE);
         nfc_eink_save_settings(instance);
     }
 

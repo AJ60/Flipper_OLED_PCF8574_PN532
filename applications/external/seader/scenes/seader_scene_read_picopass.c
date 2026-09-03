@@ -1,5 +1,6 @@
 #include "../seader_i.h"
 #include <dolphin/dolphin.h>
+#include <furi_hal_resources.h>
 
 void seader_scene_read_picopass_on_enter(void* context) {
     Seader* seader = context;
@@ -7,6 +8,11 @@ void seader_scene_read_picopass_on_enter(void* context) {
 
     // Setup view
     Popup* popup = seader->popup;
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    popup_set_header(popup, "PN532 HW:\nISO15693\nNot supported", 68, 30, AlignLeft, AlignTop);
+    popup_set_icon(popup, 0, 3, &I_RFIDDolphinReceive_97x61);
+    view_dispatcher_switch_to_view(seader->view_dispatcher, SeaderViewPopup);
+#else
     popup_set_header(popup, "Detecting\npicopass\ncard", 68, 30, AlignLeft, AlignTop);
     popup_set_icon(popup, 0, 3, &I_RFIDDolphinReceive_97x61);
 
@@ -20,6 +26,7 @@ void seader_scene_read_picopass_on_enter(void* context) {
     picopass_poller_start(seader->picopass_poller, seader_worker_poller_callback_picopass, seader);
 
     seader_blink_start(seader);
+#endif
 }
 
 bool seader_scene_read_picopass_on_event(void* context, SceneManagerEvent event) {

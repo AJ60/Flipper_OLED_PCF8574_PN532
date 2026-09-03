@@ -21,6 +21,10 @@ void nfc_maker_scene_save_result_on_enter(void* context) {
     NfcMaker* app = context;
     Popup* popup = app->popup;
 
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_mkdir(storage, NFC_APP_FOLDER);
+    furi_record_close(RECORD_STORAGE);
+
     FuriString* path =
         furi_string_alloc_printf(NFC_APP_FOLDER "/%s" NFC_APP_EXTENSION, app->save_buf);
     bool success = nfc_device_save(app->nfc_device, furi_string_get_cstr(path));

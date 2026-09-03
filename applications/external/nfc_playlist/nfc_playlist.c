@@ -144,8 +144,8 @@ static NfcPlaylist* nfc_playlist_alloc() {
    nfc_playlist->notification_app = furi_record_open(RECORD_NOTIFICATION);
 
    Storage* storage = furi_record_open(RECORD_STORAGE);
+   storage_simply_mkdir(storage, "/ext/apps_data/nfc_playlist");
    storage_simply_mkdir(storage, PLAYLIST_DIR);
-   furi_record_close(RECORD_STORAGE);
 
    nfc_playlist->worker_info.settings = malloc(sizeof(NfcPlaylistWorkerSettings));
    furi_assert(nfc_playlist->worker_info.settings);
@@ -156,6 +156,7 @@ static NfcPlaylist* nfc_playlist_alloc() {
    if(!storage_dir_exists(storage, PLAYLIST_DIR)) {
       storage_simply_mkdir(storage, PLAYLIST_DIR);
    }
+   furi_record_close(RECORD_STORAGE);
 
    view_dispatcher_set_event_callback_context(nfc_playlist->view_dispatcher, nfc_playlist);
    view_dispatcher_set_custom_event_callback(

@@ -27,7 +27,7 @@
 
 #define TAG "MFCEditor"
 
-#define NFC_APP_FOLDER           ANY_PATH("nfc")
+#define NFC_APP_FOLDER           EXT_PATH("nfc")
 #define NFC_APP_EXTENSION        ".nfc"
 #define NFC_APP_SHADOW_EXTENSION ".shd"
 
@@ -72,6 +72,9 @@ struct MfcEditorApp {
 
     uint8_t* edit_buffer;
     MfcEditorAccessBits access_bits_edit;
+
+    // Guard against rapid OK presses causing ViewPort lockup
+    bool is_busy;
 };
 
 typedef enum {

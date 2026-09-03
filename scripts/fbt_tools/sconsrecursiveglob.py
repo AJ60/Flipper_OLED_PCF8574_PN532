@@ -1,3 +1,4 @@
+import fnmatch
 import itertools
 
 import SCons
@@ -44,6 +45,24 @@ def GatherSources(env, sources_list, node="."):
             for source_type in include_sources
         )
     )
+    if exclude_sources:
+        filtered = []
+        for src in gathered_sources:
+            src_rel = src.get_path(node).replace("\\", "/")
+            src_name = src.name
+            excluded = False
+            for pat in exclude_sources:
+                pat_clean = pat.replace("\\", "/").rstrip("/")
+                if (
+                    fnmatch.fnmatch(src_rel, pat_clean)
+                    or fnmatch.fnmatch(src_rel, f"{pat_clean}/*")
+                    or fnmatch.fnmatch(src_name, pat_clean)
+                ):
+                    excluded = True
+                    break
+            if not excluded:
+                filtered.append(src)
+        gathered_sources = filtered
     ## Debug
     # print(
     #     f"Gathered sources for {sources_list} from {node}: {list(f.path for f in gathered_sources)}"

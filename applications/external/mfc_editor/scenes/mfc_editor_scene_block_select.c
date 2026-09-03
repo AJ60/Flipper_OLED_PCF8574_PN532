@@ -102,6 +102,12 @@ bool mfc_editor_scene_block_select_on_event(void* context, SceneManagerEvent eve
     bool consumed = false;
 
     if(event.type == SceneManagerEventTypeCustom) {
+        // Guard against rapid OK presses causing ViewPort lockup
+        if(instance->is_busy) {
+            return true;
+        }
+        instance->is_busy = true;
+
         scene_manager_set_scene_state(
             instance->scene_manager, MfcEditorSceneBlockSelect, event.event);
 
@@ -138,5 +144,6 @@ bool mfc_editor_scene_block_select_on_event(void* context, SceneManagerEvent eve
 void mfc_editor_scene_block_select_on_exit(void* context) {
     MfcEditorApp* instance = context;
 
+    instance->is_busy = false;
     submenu_reset(instance->submenu);
 }

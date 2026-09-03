@@ -42,7 +42,7 @@
 
 #include "lib/nfc/protocols/mf_classic/mf_classic_poller.h"
 
-#define NFC_APP_FOLDER           ANY_PATH("nfc")
+#define NFC_APP_FOLDER           EXT_PATH("nfc")
 #define NFC_APP_EXTENSION        ".nfc"
 #define NFC_APP_SHADOW_EXTENSION ".shd"
 
