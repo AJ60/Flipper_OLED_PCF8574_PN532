@@ -89,6 +89,7 @@ extern "C" {
 #define PN532_REG_CIU_MifNFC      (0x630C)
 #define PN532_REG_CIU_ManualRCV   (0x630D)
 #define PN532_REG_CIU_TypeB       (0x630E)
+#define PN532_REG_CIU_RFCfg       (0x6316)
 #define PN532_REG_CIU_Command     (0x6331)
 #define PN532_REG_CIU_CommIEn     (0x6332)
 #define PN532_REG_CIU_DivIEn      (0x6333)

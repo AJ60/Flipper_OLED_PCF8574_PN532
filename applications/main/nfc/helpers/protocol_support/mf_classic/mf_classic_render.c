@@ -16,6 +16,9 @@ void nfc_render_mf_classic_info(
 
     furi_string_cat_printf(str, "\nKeys Found: %u/%u", keys_found, keys_total);
     furi_string_cat_printf(str, "\nSectors Read: %u/%u", sectors_read, sectors_total);
+    if(sectors_read < sectors_total) {
+        furi_string_cat(str, "\n(Partial: Can Save)");
+    }
 }
 
 static void

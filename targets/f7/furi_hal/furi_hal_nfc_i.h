@@ -84,6 +84,15 @@ typedef struct {
 } FuriHalPn532Ctx;
 
 extern FuriHalPn532Ctx furi_hal_pn532_ctx;
+
+static inline Pn532Error furi_hal_pn532_abort(void) {
+    static const uint8_t pn532_ack[] = {0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};
+    furi_hal_i2c_acquire(PN532_I2C_BUS);
+    bool ok = furi_hal_i2c_tx(PN532_I2C_BUS, PN532_I2C_ADDR_8BIT, pn532_ack, sizeof(pn532_ack), 50);
+    furi_hal_i2c_release(PN532_I2C_BUS);
+    furi_delay_ms(5);
+    return ok ? Pn532ErrorNone : Pn532ErrorBus;
+}
 #endif
 
 /**

@@ -164,6 +164,30 @@ Pn532Error pn532_wake_up(const FuriHalI2cBusHandle* handle) {
     return Pn532ErrorNone;
 }
 
+static Pn532Error pn532_write_register(
+    const FuriHalI2cBusHandle* handle,
+    uint16_t address,
+    uint8_t value) {
+    uint8_t cmd[4];
+    cmd[0] = PN532_CMD_WRITEREGISTER;
+    cmd[1] = (uint8_t)((address >> 8) & 0xFF);
+    cmd[2] = (uint8_t)(address & 0xFF);
+    cmd[3] = value;
+
+    Pn532Error err = pn532_write_command(handle, cmd, sizeof(cmd));
+    if(err != Pn532ErrorNone) return err;
+
+    return pn532_read_response(handle, PN532_CMD_WRITEREGISTER, NULL, NULL, 100);
+}
+
+static Pn532Error pn532_set_rx_gain(const FuriHalI2cBusHandle* handle, uint8_t gain) {
+    // CIU_RFCfg (0x6316):
+    // Bits 6:4 = RxGain (0b100 = 33dB default, 0b111 = 43dB max)
+    // Bits 3:0 = RFLevelAmp (0x09)
+    uint8_t reg_val = ((gain & 0x07) << 4) | 0x09;
+    return pn532_write_register(handle, PN532_REG_CIU_RFCfg, reg_val);
+}
+
 Pn532Error pn532_init(const FuriHalI2cBusHandle* handle) {
     pn532_wake_up(handle);
     furi_delay_ms(10);
@@ -178,7 +202,11 @@ Pn532Error pn532_init(const FuriHalI2cBusHandle* handle) {
     // Set passive activation retries to finite count to prevent indefinite blocking
     pn532_set_passive_activation_retries(handle, 0x05);
 
-    FURI_LOG_I(TAG, "PN532 initialized successfully over I2C");
+    // Set maximum receiver gain (43dB, +10dB boost) and sensitivity threshold for weak tags / PCB coils
+    pn532_set_rx_gain(handle, 0x07);
+    pn532_write_register(handle, PN532_REG_CIU_RxThreshold, 0x85);
+
+    FURI_LOG_I(TAG, "PN532 initialized successfully over I2C (RxGain=+10dB)");
     return Pn532ErrorNone;
 }
 
