@@ -5,6 +5,7 @@
 #include <nfc/protocols/nfc_device_defs.h>
 
 #include <furi/furi.h>
+#include <furi_hal_resources.h>
 
 #define TAG "NfcScanner"
 
@@ -74,6 +75,11 @@ void nfc_scanner_state_handler_idle(NfcScanner* instance) {
     for(size_t i = 0; i < NfcProtocolNum; i++) {
         NfcProtocol parent_protocol = nfc_protocol_get_parent(i);
         if(parent_protocol == NfcProtocolInvalid) {
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+            if(i == NfcProtocolIso15693_3) {
+                continue;
+            }
+#endif
             instance->base_protocols[instance->base_protocols_num] = i;
             instance->base_protocols_num++;
         }

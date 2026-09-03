@@ -202,7 +202,12 @@ NfcCommand mf_classic_poller_handler_start(MfClassicPoller* instance) {
     } else if(instance->mfc_event_data.poller_mode.mode == MfClassicPollerModeDictAttackEnhanced) {
         mf_classic_copy(instance->data, instance->mfc_event_data.poller_mode.data);
         instance->mode_ctx.dict_attack_ctx.mode = instance->mfc_event_data.poller_mode.mode;
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+        instance->mode_ctx.dict_attack_ctx.backdoor = MfClassicBackdoorNone;
+        instance->state = MfClassicPollerStateRequestKey;
+#else
         instance->state = MfClassicPollerStateAnalyzeBackdoor;
+#endif
     } else if(instance->mfc_event_data.poller_mode.mode == MfClassicPollerModeRead) {
         instance->state = MfClassicPollerStateRequestReadSector;
     } else if(instance->mfc_event_data.poller_mode.mode == MfClassicPollerModeWrite) {
@@ -620,6 +625,14 @@ NfcCommand mf_classic_poller_handler_analyze_backdoor(MfClassicPoller* instance)
     // Attempt backdoor authentication
     MfClassicError error = mf_classic_poller_auth(
         instance, 0, &dict_attack_ctx->current_key, MfClassicKeyTypeA, NULL, true);
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    if(error != MfClassicErrorNone) {
+        FURI_LOG_D(TAG, "No backdoor identified (PN532)");
+        dict_attack_ctx->backdoor = MfClassicBackdoorNone;
+        instance->state = MfClassicPollerStateRequestKey;
+        return command;
+    }
+#endif
     if((next_key_index == 0) &&
        (error == MfClassicErrorProtocol || error == MfClassicErrorTimeout)) {
         FURI_LOG_D(TAG, "No backdoor identified");
@@ -2063,6 +2076,14 @@ NfcCommand mf_classic_poller_handler_nested_controller(MfClassicPoller* instance
                 instance->state = MfClassicPollerStateSuccess;
                 return command;
             }
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+            // On PN532, nested attack cannot extract PRNG nonces via hardware co-processor.
+            // Complete with partial keys found from dictionary attack.
+            FURI_LOG_I(TAG, "Dictionary attack finished on PN532, stopping before nested attack");
+            dict_attack_ctx->nested_phase = MfClassicNestedPhaseFinished;
+            instance->state = MfClassicPollerStateSuccess;
+            return command;
+#endif
             if(dict_attack_ctx->backdoor == MfClassicBackdoorAuth3) {
                 // Skip initial calibration for static encrypted backdoored tags
                 dict_attack_ctx->calibrated = true;

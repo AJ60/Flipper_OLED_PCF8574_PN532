@@ -3174,8 +3174,10 @@ Function,+,plugin_manager_get_ep,const void*,"PluginManager*, uint32_t"
 Function,+,plugin_manager_load_all,PluginManagerError,"PluginManager*, const char*"
 Function,+,plugin_manager_load_single,PluginManagerError,"PluginManager*, const char*"
 Function,+,pn532_get_firmware_version,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t*, uint8_t*, uint8_t*, uint8_t*"
+Function,+,pn532_in_communicate_thru,Pn532Error,"const FuriHalI2cBusHandle*, const uint8_t*, size_t, uint8_t*, size_t*, uint32_t"
 Function,+,pn532_in_data_exchange,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t, const uint8_t*, size_t, uint8_t*, size_t*, uint32_t"
 Function,+,pn532_in_list_passive_target_iso14443a,Pn532Error,"const FuriHalI2cBusHandle*, Pn532TargetIso14443a*, uint32_t"
+Function,+,pn532_in_list_passive_target_iso14443b,Pn532Error,"const FuriHalI2cBusHandle*, Pn532TargetIso14443b*, uint32_t"
 Function,+,pn532_in_release,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t"
 Function,+,pn532_init,Pn532Error,const FuriHalI2cBusHandle*
 Function,+,pn532_mifare_classic_auth,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t, uint8_t, uint8_t, const uint8_t*, const uint8_t*, uint8_t"
@@ -3189,8 +3191,6 @@ Function,+,pn532_tg_get_data,Pn532Error,"const FuriHalI2cBusHandle*, uint8_t*, s
 Function,+,pn532_tg_init_as_target,Pn532Error,"const FuriHalI2cBusHandle*, const uint8_t*, size_t, uint8_t*, size_t*, uint32_t"
 Function,+,pn532_tg_set_data,Pn532Error,"const FuriHalI2cBusHandle*, const uint8_t*, size_t, uint32_t"
 Function,+,pn532_wake_up,Pn532Error,const FuriHalI2cBusHandle*
-Function,+,pn532_in_list_passive_target_iso14443b,Pn532Error,"const FuriHalI2cBusHandle*, Pn532TargetIso14443b*, uint32_t"
-Function,+,pn532_in_communicate_thru,Pn532Error,"const FuriHalI2cBusHandle*, const uint8_t*, size_t, uint8_t*, size_t*, uint32_t"
 Function,-,popen,FILE*,"const char*, const char*"
 Function,+,popup_alloc,Popup*,
 Function,+,popup_disable_timeout,void,Popup*

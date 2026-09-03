@@ -4,6 +4,7 @@ import os
 import struct
 import subprocess
 import tempfile
+import time
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -136,31 +137,33 @@ class Main(App):
                 )
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            for section in sections:
-                data = serialize_relsection_data(section.data)
-                hash_name = hashlib.md5(section.name.encode()).hexdigest()
-                filename = os.path.join(temp_dir, f"{hash_name}.bin")
+            BATCH_SIZE = 25
+            for i in range(0, len(sections), BATCH_SIZE):
+                batch = sections[i : i + BATCH_SIZE]
+                args = [objcopy_path]
+                for section in batch:
+                    data = serialize_relsection_data(section.data)
+                    hash_name = hashlib.md5(section.name.encode()).hexdigest()
+                    filename = os.path.join(temp_dir, f"{hash_name}.bin")
 
-                if os.path.isfile(filename):
-                    self.logger.error(f"File {filename} already exists")
-                    return 1
+                    if not os.path.isfile(filename):
+                        with open(filename, "wb") as f:
+                            f.write(data)
 
-                with open(filename, "wb") as f:
-                    f.write(data)
+                    args.extend(["--add-section", f"{section.name}={filename}"])
 
-                exit_code = subprocess.run(
-                    [
-                        objcopy_path,
-                        "--add-section",
-                        f"{section.name}={filename}",
-                        fap_path,
-                    ],
-                    check=True,
-                )
+                args.append(fap_path)
 
-                if exit_code.returncode != 0:
-                    self.logger.error("objcopy failed")
-                    return 1
+                max_retries = 5
+                for attempt in range(max_retries):
+                    res = subprocess.run(args)
+                    if res.returncode == 0:
+                        break
+                    if attempt < max_retries - 1:
+                        time.sleep(0.15 * (attempt + 1))
+                    else:
+                        self.logger.error("objcopy failed after %d attempts", max_retries)
+                        return 1
 
         return 0
 

@@ -4,6 +4,7 @@
 #include "nfc/helpers/iso14443_crc.h"
 
 #include <furi.h>
+#include <furi_hal_resources.h>
 #include <lib/nfc/nfc.h>
 
 #define TAG "Iso14443_3aListener"
@@ -14,11 +15,18 @@ static bool iso14443_3a_listener_halt_received(BitBuffer* buf) {
     bool halt_cmd_received = false;
 
     do {
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+        if(bit_buffer_get_size_bytes(buf) != 2) break;
+        if(bit_buffer_get_byte(buf, 0) != 0x50) break;
+        if(bit_buffer_get_byte(buf, 1) != 0x00) break;
+        halt_cmd_received = true;
+#else
         if(bit_buffer_get_size_bytes(buf) != 4) break;
         if(!iso14443_crc_check(Iso14443CrcTypeA, buf)) break;
         if(bit_buffer_get_byte(buf, 0) != 0x50) break;
         if(bit_buffer_get_byte(buf, 1) != 0x00) break;
         halt_cmd_received = true;
+#endif
     } while(false);
 
     return halt_cmd_received;
@@ -101,6 +109,10 @@ NfcCommand iso14443_3a_listener_run(NfcGenericEvent event, void* context) {
             }
             command = NfcCommandSleep;
         } else {
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+            instance->iso14443_3a_event.type =
+                Iso14443_3aListenerEventTypeReceivedStandardFrame;
+#else
             if(iso14443_crc_check(Iso14443CrcTypeA, nfc_event->data.buffer)) {
                 instance->iso14443_3a_event.type =
                     Iso14443_3aListenerEventTypeReceivedStandardFrame;
@@ -108,6 +120,7 @@ NfcCommand iso14443_3a_listener_run(NfcGenericEvent event, void* context) {
             } else {
                 instance->iso14443_3a_event.type = Iso14443_3aListenerEventTypeReceivedData;
             }
+#endif
             instance->iso14443_3a_event_data.buffer = nfc_event->data.buffer;
             if(instance->callback) {
                 command = instance->callback(instance->generic_event, instance->context);

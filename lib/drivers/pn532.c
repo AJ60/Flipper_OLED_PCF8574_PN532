@@ -550,13 +550,12 @@ Pn532Error pn532_tg_init_as_target(
     uint8_t* rx_cmd,
     size_t* rx_len,
     uint32_t timeout_ms) {
-    uint8_t cmd[64];
+    uint8_t cmd[40] = {0};
     cmd[0] = PN532_CMD_TGINITASTARGET;
-    cmd[1] = 0x01; // Mode: Passive only (Bit 0 = 1)
+    cmd[1] = 0x05; // Mode: Passive only (Bit 0) + PICC only (Bit 2)
 
-    size_t copy_sz = params_len > 36 ? 36 : params_len;
-    if(mifare_params && copy_sz > 0) {
-        memcpy(&cmd[2], mifare_params, copy_sz);
+    if(mifare_params && params_len >= 6) {
+        memcpy(&cmd[2], mifare_params, 6);
     } else {
         // Default Mifare 1K target params: SENS_RES (0x0004), NFCID (4 bytes), SEL_RES (0x08)
         cmd[2] = 0x04;
@@ -565,10 +564,10 @@ Pn532Error pn532_tg_init_as_target(
         cmd[5] = 0x34;
         cmd[6] = 0x56; // NFCID1t
         cmd[7] = 0x08; // SEL_RES (Mifare 1K)
-        copy_sz = 6;
     }
+    // FeliCaParams (18 bytes = 0), NFCID3t (10 bytes = 0), Gt/Tk (0)
 
-    Pn532Error err = pn532_write_command(handle, cmd, 2 + copy_sz);
+    Pn532Error err = pn532_write_command(handle, cmd, 38);
     if(err != Pn532ErrorNone) return err;
 
     return pn532_read_response(handle, PN532_CMD_TGINITASTARGET, rx_cmd, rx_len, timeout_ms);
@@ -600,5 +599,12 @@ Pn532Error pn532_tg_set_data(
     Pn532Error err = pn532_write_command(handle, cmd, 1 + tx_len);
     if(err != Pn532ErrorNone) return err;
 
-    return pn532_read_response(handle, PN532_CMD_TGSETDATA, NULL, NULL, timeout_ms);
+    uint8_t status = 0;
+    size_t resp_len = sizeof(status);
+    err = pn532_read_response(handle, PN532_CMD_TGSETDATA, &status, &resp_len, timeout_ms);
+    if(err != Pn532ErrorNone) return err;
+    if(resp_len > 0 && (status & 0x3F) != 0) {
+        return Pn532ErrorInternal;
+    }
+    return Pn532ErrorNone;
 }

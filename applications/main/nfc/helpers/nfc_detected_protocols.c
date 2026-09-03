@@ -1,6 +1,7 @@
 #include "nfc_detected_protocols.h"
 
 #include <furi.h>
+#include <furi_hal_resources.h>
 
 struct NfcDetectedProtocols {
     uint32_t protocols_detected_num;
@@ -66,9 +67,14 @@ NfcProtocol nfc_detected_protocols_get_protocol(NfcDetectedProtocols* instance, 
 void nfc_detected_protocols_fill_all_protocols(NfcDetectedProtocols* instance) {
     furi_assert(instance);
 
-    instance->protocols_detected_num = NfcProtocolNum;
+    instance->protocols_detected_num = 0;
     for(uint32_t i = 0; i < NfcProtocolNum; i++) {
-        instance->protocols_detected[i] = i;
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+        if(i == NfcProtocolSlix || i == NfcProtocolIso15693_3) {
+            continue;
+        }
+#endif
+        instance->protocols_detected[instance->protocols_detected_num++] = i;
     }
 }
 

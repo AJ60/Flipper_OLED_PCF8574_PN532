@@ -78,6 +78,9 @@ typedef struct {
     uint8_t rx_buf[260];
     size_t rx_len;
     uint8_t sdd_cascade_level;
+    uint8_t target_params[38];
+    size_t target_params_len;
+    bool target_activated;
 } FuriHalPn532Ctx;
 
 extern FuriHalPn532Ctx furi_hal_pn532_ctx;

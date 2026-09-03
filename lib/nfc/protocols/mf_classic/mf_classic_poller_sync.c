@@ -4,6 +4,7 @@
 #include <nfc/nfc_poller.h>
 
 #include <furi.h>
+#include <furi_hal_resources.h>
 
 #define TAG "MfClassicPoller"
 
@@ -502,8 +503,20 @@ MfClassicError mf_classic_poller_sync_detect_type(Nfc* nfc, MfClassicType* type)
     furi_check(nfc);
     furi_check(type);
 
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+    NfcPoller* poller = nfc_poller_alloc(nfc, NfcProtocolMfClassic);
+    if(nfc_poller_detect(poller)) {
+        const MfClassicData* data = nfc_poller_get_data(poller);
+        if(data) {
+            *type = data->type;
+            nfc_poller_free(poller);
+            return MfClassicErrorNone;
+        }
+    }
+    nfc_poller_free(poller);
+    return MfClassicErrorNotPresent;
+#else
     MfClassicError error = MfClassicErrorNone;
-
     const uint8_t mf_classic_verify_block[MfClassicTypeNum] = {
         [MfClassicTypeMini] = 0,
         [MfClassicType1k] = 62,
@@ -521,4 +534,5 @@ MfClassicError mf_classic_poller_sync_detect_type(Nfc* nfc, MfClassicType* type)
     }
 
     return error;
+#endif
 }
