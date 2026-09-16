@@ -83,6 +83,49 @@ Connecting the modules is just like snapping together color-coded blocks. Follow
 
 ![DIY Flipper Breadboard Wiring Diagram](misc/wiring_diagram_easy.jpg)
 
+### 🖼️ Core Subsystem Schematic (Cirkit Designer)
+
+For the core system (OLED, PCF8574 I2C expander, 5-way joystick navigation, buzzer, IR Tx/Rx, and vibration motor), follow the wiring layout below:
+
+![DIY Flipper Zero Core Circuit Diagram (Cirkit Designer)](./misc/cirkit_wiring_diagram.png)
+
+#### 📋 Core Subsystem Wiring Table
+
+| Component | Pin / Terminal | Connects to MCU / Destination | Wire Color (in diagram) | Function / Notes |
+|---|---|---|:---:|---|
+| **1.3" / 0.96" OLED** | `VCC` | **3.3V Rail** | 🔴 Red | Display Power (3.3V) |
+| | `GND` | **GND Rail** | ⚫ Black | Ground |
+| | `SCL` | **PA9** | 🟡 Yellow | I2C1 Clock (400 kHz) |
+| | `SDA` | **PB9** | 🔵 Teal / Blue | I2C1 Data (400 kHz) |
+| **PCF8574 I2C Expander** | `VCC` | **3.3V Rail** | 🔴 Red | Expander Power (3.3V) |
+| | `GND` | **GND Rail** | ⚫ Black | Ground |
+| | `SCL` | **PA9** | 🟡 Yellow | Shared I2C1 Clock |
+| | `SDA` | **PB9** | 🔵 Teal / Blue | Shared I2C1 Data |
+| | `INT` | **PB0** | 🟢 Dark Teal | Hardware Interrupt (`EXTI0`, active-low) |
+| | `A0, A1, A2` | **GND** | — | Hardware address set to `0x20` (DIP switches OFF/GND) |
+| **5-Way Joystick & Buttons** | `UP` | **PCF8574 P0** | 🔵 Cyan | Up Navigation Button |
+| | `DWN` | **PCF8574 P1** | 🟠 Orange | Down Navigation Button |
+| | `LFT` | **PCF8574 P2** | 🟣 Purple | Left Navigation Button |
+| | `RHT` | **PCF8574 P3** | 🟤 Brown | Right Navigation Button |
+| | `MID` (Center Press)| **PCF8574 P4** | 🟢 Green | OK / Select Button |
+| | `SET` / `RST` (Back) | **PCF8574 P5** | ⚪ Gray | Back Button |
+| | `COM` | **GND Rail** | ⚫ Black | Common Ground (active-low switches) |
+| **Vibration Motor Module** | `VCC` | **3.3V Rail** | 🔴 Red | Motor Power (via onboard driver) |
+| | `GND` | **GND Rail** | ⚫ Black | Ground |
+| | `IN` | **PCF8574 P6** | 🟣 Violet | Haptic Rumble Trigger (Active-High) |
+| **Passive Piezo Buzzer** | Positive `+` | **PB8** | 🟣 Dark Purple | TIM16_CH1 Hardware Audio PWM |
+| | Negative `-` | **GND Rail** | ⚫ Black | Ground Return |
+| **IR Transmitter (TX)** | `VCC` | **3.3V / 5V Rail** | 🔴 Red | Transmitter Power |
+| | `GND` | **GND Rail** | ⚫ Black | Ground |
+| | `SIG / IN` | **PA8** | 🌸 Light Pink | TIM1_CH1 38 kHz Modulated IR Signal |
+| **IR Receiver (RX)** | `VCC` | **3.3V Rail** | 🔴 Red | 38 kHz TSOP Receiver Power |
+| | `GND` | **GND Rail** | ⚫ Black | Ground |
+| | `OUT / DATA` | **PA0** | 🟣 Purple | TIM2_CH1 Demodulated Signal Input |
+| **Decoupling Capacitors** | `10 µF` (Electrolytic) | **3.3V ➔ GND** | — | Bulk Power Rail Filter (absorbs current spikes) |
+| | `100 nF` (Ceramic) | Across VCC/GND of each module | — | High-frequency noise suppression |
+
+---
+
 ```mermaid
 graph LR
     subgraph MCU_Pins [WeAct STM32WB55 MCU]
