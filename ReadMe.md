@@ -5,9 +5,7 @@
 
 ---
 
-
-
-> Build your own DIY Flipper Zero with an I2C OLED display, PCF8574 keypad, PN532 NFC reader, and discrete sub-GHz / 125kHz RFID hardware!
+> Build your own DIY Flipper Zero with an I2C OLED display, PCF8574 keypad, PN532 NFC reader, CC1101 sub-GHz radio, and discrete 125 kHz RFID hardware!
 
 [![CI Build](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/actions/workflows/build.yml/badge.svg)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/actions/workflows/build.yml)
 [![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
@@ -16,42 +14,43 @@
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
 > [!CAUTION]
-> ⚖️ **LEGAL & EDUCATIONAL DISCLAIMER**:
+> ⚖️ **LEGAL & EDUCATIONAL DISCLAIMER**:  
 > This project and firmware are created strictly for **educational, academic research, and authorized security testing purposes only**. 
-> - **DO NOT** use this firmware or hardware for any unauthorized access, card cloning, or malicious activities.
+> - **DO NOT** use this firmware or hardware for unauthorized access, card cloning, or malicious activities.
 > - The developers and contributors assume **no liability or responsibility** for any misuse, damage to property, or illegal actions committed using this software or hardware.
 
 > [!WARNING]
 > 🚧 **DEVELOPMENT STATUS NOTICE**:
-> - **NFC Subsystem (PN532)**: **Under Active Development / Experimental.** Currently tested and verified only with **MIFARE Classic 1K tags**, **NTAG series (NTAG213/215/216/Ultralight)**, and **EMV ATM / Bank payment cards** (ISO 14443-4 APDU reading). Other NFC standards and card types may behave unpredictably.
+> - **NFC Subsystem (PN532)**: **Under Active Development / Experimental.** Currently verified with **MIFARE Classic 1K/4K tags**, **NTAG series (NTAG213/215/216/Ultralight)**, and **EMV ATM / Bank payment cards** (ISO 14443-4 APDU reading).
 > - **125 kHz LF-RFID Subsystem**: **Under Active Development / Experimental.** May contain bugs due to discrete analog hardware tolerances, coil inductance variance, and signal demodulation thresholds.
 
 ---
 
 ## 🧩 The Building Blocks (Hardware Modules)
 
-Think of your DIY Flipper as a friendly little robot made of modular building blocks:
+Your DIY Flipper is built from standard, readily available breakout modules:
 
 ![DIY Flipper Component Guide](misc/module_overview.jpg)
 
 ```mermaid
 graph TD
-    subgraph Core [The Core Hardware]
+    subgraph Core [Core Hardware]
         MCU["🧠 The Brain<br><b>WeAct STM32WB55</b>"]
-        OLED["👀 The Eyes<br><b>SSD1306 0.96 inch OLED</b>"]
-        KEYPAD["🎮 The Hands<br><b>PCF8574 Button Board</b>"]
+        OLED["👀 The Eyes<br><b>0.96 / 1.3 inch I2C OLED</b>"]
+        KEYPAD["🎮 The Hands<br><b>PCF8574 + 5-Way Joystick</b>"]
     end
     
     subgraph Radios [Wireless & Sensors]
         NFC["💳 Keycard Reader<br><b>PN532 NFC Module</b>"]
-        RADIO["📻 The Antenna<br><b>CC1101 Sub-GHz</b>"]
+        RADIO["📻 Sub-GHz Radio<br><b>CC1101 Transceiver</b>"]
         RFID["🏷️ Key Fob Reader<br><b>125kHz Discrete Tank</b>"]
     end
     
     subgraph StoragePower [Storage, Sound & Power]
         SD["💾 The Backpack<br><b>MicroSD SPI Module</b>"]
-        BUZZER["🔊 The Voice<br><b>Piezo Buzzer PB8</b>"]
+        BUZZER["🔊 The Voice<br><b>Piezo Buzzer (PB8)</b>"]
         INA["🔋 Fuel Gauge<br><b>INA219 / INA226</b>"]
+        PWR_CHAIN["⚡ Power Management<br><b>TP4056 + LiPo + 5V Boost</b>"]
     end
 
     MCU --- OLED
@@ -62,32 +61,56 @@ graph TD
     MCU --- SD
     MCU --- BUZZER
     MCU --- INA
+    INA --- PWR_CHAIN
 ```
 
 | # | Part | Nickname | What It Does (In Simple Words) |
-|---|---|---|---|
-| **1** | **WeAct STM32WB55** | 🧠 **The Brain** | Fast dual-core chip that runs the operating system, games, and apps. |
-| **2** | **SSD1306 0.96" OLED** | 👀 **The Eyes** | Shows animations, dolphin pet, menus, and signal frequencies. |
-| **3** | **PCF8574 Expander** | 🎮 **The Hands** | Connects 6 direction/action buttons + haptic vibration rumble. |
-| **4** | **PN532 NFC Module** | 💳 **Keycard Reader** | Reads 13.56 MHz NFC (MIFARE Classic 1K, NTAG, Bank Cards). |
-| **5** | **CC1101 Radio** | 📻 **The Antenna** | Transmits and catches sub-GHz radio signals (gates, remotes, sensors). |
+|:---:|---|---|---|
+| **1** | **WeAct STM32WB55** | 🧠 **The Brain** | Fast dual-core chip running Furi OS, FreeRTOS, games, and apps. |
+| **2** | **SSD1306 / SH1106 OLED** | 👀 **The Eyes** | Shows animations, dolphin pet, menus, and frequency graphs (0.96" or 1.3"). |
+| **3** | **PCF8574 Expander** | 🎮 **The Hands** | Connects 6 direction/action buttons + haptic vibration rumble motor. |
+| **4** | **PN532 NFC Module** | 💳 **Keycard Reader** | Reads 13.56 MHz NFC (MIFARE Classic, NTAG, Bank Cards) on dedicated I2C3. |
+| **5** | **CC1101 Radio** | 📻 **The Antenna** | Transmits and sniffs sub-GHz radio signals (gates, remotes, sensors). |
 | **6** | **MicroSD Card Module** | 💾 **The Backpack** | Stores your saved keys, remotes, scripts, games, and animations. |
-| **7** | **Passive Buzzer** | 🔊 **The Voice** | Plays fun 8-bit chimes, game sounds, and keypress clicks. |
-| **8** | **INA219 / INA226** | 🔋 **Fuel Gauge** | Monitors battery voltage and charging percentage accurately. |
+| **7** | **Passive Buzzer** | 🔊 **The Voice** | Plays fun 8-bit chimes, game sounds, and keypress clicks via timer PWM. |
+| **8** | **INA219 / INA226** | 🔋 **Fuel Gauge** | High-side current/voltage sensor for battery curve & charging animations. |
 
 ---
 
-## 🔌 Easy Visual Wiring Guide
+## 🔌 Complete Wiring & Electrical Guide
 
-### 🖼️ Core Subsystem Schematic (Cirkit Designer)
+Connecting the hardware is divided into four straightforward subsystems:
 
-For the core system (OLED, PCF8574 I2C expander, 5-way joystick navigation, buzzer, IR Tx/Rx, and vibration motor), follow the wiring layout below:
+```mermaid
+graph LR
+    subgraph Bus_Architecture [Bus Routing Architecture]
+        I2C1["I2C1 Power Bus (PA9 SCL / PB9 SDA)<br>400 kHz"]
+        I2C3["I2C3 Dedicated NFC Bus (PA7 SCL / PB4 SDA)<br>400 kHz"]
+        SPI1["SPI1 High-Speed Bus (PB3 SCK / PB5 MOSI / PA6 MISO)<br>up to 32 MHz"]
+        TIMERS["Dedicated Timers & GPIOs<br>PB8 (Buzzer) / PA8 (IR TX) / PA0 (IR RX)"]
+    end
+
+    I2C1 --> OLED["OLED Display (0x3C)"]
+    I2C1 --> PCF["PCF8574 Keypad (0x20)"]
+    I2C1 --> INA["INA219 Fuel Gauge (0x40)"]
+    
+    I2C3 --> PN532["PN532 NFC Module (0x24)"]
+    
+    SPI1 --> SD["MicroSD Card (CS: PA10)"]
+    SPI1 --> CC1101["CC1101 Radio (CS: PA15)"]
+```
+
+---
+
+### Part 1: 🖼️ Core Subsystem (Cirkit Designer Schematic)
+
+Follow the authoritative wiring schematic below for the core human-interface peripherals:
 
 ![DIY Flipper Zero Core Circuit Diagram (Cirkit Designer)](./misc/cirkit_wiring_diagram.png)
 
-#### 📋 Core Subsystem Wiring Table
+#### 📋 Core Subsystem Pin-to-Pin Table
 
-| Component | Pin / Terminal | Connects to MCU / Destination | Wire Color (in diagram) | Function / Notes |
+| Component | Pin / Terminal | Connects to MCU / Destination | Wire Color (Diagram) | Function / Notes |
 |---|---|---|:---:|---|
 | **1.3" / 0.96" OLED** | `VCC` | **3.3V Rail** | 🔴 Red | Display Power (3.3V) |
 | | `GND` | **GND Rail** | ⚫ Black | Ground |
@@ -98,7 +121,7 @@ For the core system (OLED, PCF8574 I2C expander, 5-way joystick navigation, buzz
 | | `SCL` | **PA9** | 🟡 Yellow | Shared I2C1 Clock |
 | | `SDA` | **PB9** | 🔵 Teal / Blue | Shared I2C1 Data |
 | | `INT` | **PB0** | 🟢 Dark Teal | Hardware Interrupt (`EXTI0`, active-low) |
-| | `A0, A1, A2` | **GND** | — | Hardware address set to `0x20` (DIP switches OFF/GND) |
+| | `A0, A1, A2` | **GND** | — | Sets hardware I2C address to `0x20` |
 | **5-Way Joystick & Buttons** | `UP` | **PCF8574 P0** | 🔵 Cyan | Up Navigation Button |
 | | `DWN` | **PCF8574 P1** | 🟠 Orange | Down Navigation Button |
 | | `LFT` | **PCF8574 P2** | 🟣 Purple | Left Navigation Button |
@@ -113,124 +136,112 @@ For the core system (OLED, PCF8574 I2C expander, 5-way joystick navigation, buzz
 | | Negative `-` | **GND Rail** | ⚫ Black | Ground Return |
 | **IR Transmitter (TX)** | `VCC` | **3.3V / 5V Rail** | 🔴 Red | Transmitter Power |
 | | `GND` | **GND Rail** | ⚫ Black | Ground |
-| | `SIG / IN` | **PA8** | 🌸 Light Pink | TIM1_CH1 38 kHz Modulated IR Signal |
+| | `SIG / IN` | **PA8** | 🌸 Light Pink | TIM1_CH1 38 kHz Modulated Carrier |
 | **IR Receiver (RX)** | `VCC` | **3.3V Rail** | 🔴 Red | 38 kHz TSOP Receiver Power |
 | | `GND` | **GND Rail** | ⚫ Black | Ground |
 | | `OUT / DATA` | **PA0** | 🟣 Purple | TIM2_CH1 Demodulated Signal Input |
 | **Decoupling Capacitors** | `10 µF` (Electrolytic) | **3.3V ➔ GND** | — | Bulk Power Rail Filter (absorbs current spikes) |
 | | `100 nF` (Ceramic) | Across VCC/GND of each module | — | High-frequency noise suppression |
 
+> [!IMPORTANT]
+> **I2C Pull-Up Resistors**: Standard I2C OLED boards have onboard 4.7 kΩ pull-up resistors on SDA/SCL. Keep the OLED connected so the I2C1 bus stays pulled up during boot!
+
 ---
 
-```mermaid
-graph LR
-    subgraph MCU_Pins [WeAct STM32WB55 MCU]
-        PWR["🔴 3.3V (Power Rail)"]
-        GND["⚫ GND (Ground Rail)"]
-        I2C1_SCL["🟡 PA9 (I2C1 Clock)"]
-        I2C1_SDA["🔵 PB9 (I2C1 Data)"]
-        I2C3_SCL["🟡 PA7 (header C0) (I2C3 Clock)"]
-        I2C3_SDA["🔵 PB4 (header C1) (I2C3 Data)"]
-        SPI_SCK["🟡 PB3 (SPI Clock)"]
-        SPI_MOSI["🔵 PB5 (SPI MOSI)"]
-        SPI_MISO["🟡 PA6 (SPI MISO)"]
-    end
+### Part 2: 📻 Wireless, NFC & Storage Subsystem
 
-    subgraph I2C_Bus [Shared I2C1 Bus]
-        OLED_MOD["SSD1306 OLED (0x3C)"]
-        PCF_MOD["PCF8574 Keypad (0x20)"]
-        INA_MOD["INA219 Power Gauge (0x40)"]
-    end
+The MicroSD card and CC1101 sub-GHz radio share the high-speed **SPI1** bus, while the PN532 NFC reader is isolated on hardware **I2C3** to prevent bus contention:
 
-    subgraph SPI_Bus [Shared SPI1 Bus]
-        SD_MOD["MicroSD Card (CS: PA10)"]
-        CC_MOD["CC1101 Radio (CS: PA15)"]
-    end
+| Module | Module Pin | Connects to MCU Pin | Purpose / Notes |
+|---|---|---|---|
+| **Shared SPI1 Clock** | `SCK` | **PB3** | SPI1 Clock |
+| **Shared SPI1 MOSI** | `MOSI` | **PB5** | Data Out from MCU |
+| **Shared SPI1 MISO** | `MISO` | **PA6** | Data In to MCU |
+| **MicroSD Card** | `CS` | **PA10** | SD Card Chip Select (Active-Low) |
+| | `CD` (Detect) | *Not Connected (NC)* | Optional (firmware detects automatically) |
+| **CC1101 Sub-GHz Radio**| `CSN / CS` | **PA15** | Radio Chip Select (Active-Low) |
+| | `GDO0 / G0` | **PA1** | Radio Demodulated Data IRQ |
+| | `VCC` / `GND` | **3.3V** / **GND** | **3.3V only!** (5V will permanently burn the CC1101) |
+| **PN532 NFC Module** | `SCL` | **PA7** (Header "C0") | Dedicated I2C3 Clock (400 kHz) |
+| | `SDA` | **PB4** (Header "C1") | Dedicated I2C3 Data (400 kHz) |
+| | `IRQ` | **PA2** | Card Detection Interrupt (`EXTI2`, Active-Low) |
+| **1-Wire / iButton** | `Data` | **PA3** | Dallas iButton probe with external 4.7 kΩ pull-up |
+| **LF-RFID (125 kHz)** | Carrier TX | **PA5** | TIM2_CH1 coil push-pull driver stage *(Experimental)* |
+| | Envelope RX | **PA1** | TIM1_CH1 demodulated envelope input *(Experimental)* |
+| | Emulate | **PA2** | TIM2_CH3 tag emulation pulse switch *(Experimental)* |
 
-    subgraph NFC_Bus [NFC I2C3 Bus]
-        PN_MOD["PN532 NFC (IRQ: PA2)"]
-    end
+---
 
-    I2C1_SCL --> OLED_MOD
-    I2C1_SCL --> PCF_MOD
-    I2C1_SCL --> INA_MOD
+### Part 3: ⚡ Battery & Power Management Subsystem
 
-    I2C1_SDA --> OLED_MOD
-    I2C1_SDA --> PCF_MOD
-    I2C1_SDA --> INA_MOD
+To ensure accurate battery percentage curves and trigger the Flipper OS **charging lightning bolt animation**, the INA219 sensor must sit on the **battery side (3.0V – 4.2V)**, *before* the 5V boost converter:
 
-    SPI_SCK --> SD_MOD
-    SPI_SCK --> CC_MOD
-    SPI_MOSI --> SD_MOD
-    SPI_MOSI --> CC_MOD
-    SPI_MISO --> SD_MOD
-    SPI_MISO --> CC_MOD
-
-    I2C3_SCL --> PN_MOD
-    I2C3_SDA --> PN_MOD
+```text
+    [ USB-C 5V Input ]
+               │
+    ┌──────────▼──────────┐
+    │     TP4056 Board    │
+    │  B+   B-  OUT+ OUT- │
+    └──┬────┬────┬────┬───┘
+       │    │    │    │
+       │    │    │    └───────────────┬───────────────────────────► Common GND
+       │    │    │                    │
+       │  ┌─┴────┴───────┐            │
+       │  │ 3.7V Battery │            │
+       │  │  (+)     (-) │            │
+       │  └──┬───────────┘            │
+       │     │                        │
+       └─────┼────────────┐           │
+             │            │           │
+          ┌──▼────────────▼───┐       │
+          │      INA219       │       │
+          │  Vin+        Vin- │       │
+          │ 3.3V GND SCL  SDA │       │
+          └───┬───┬───┬────┬──┘       │
+              │   │   │    │          │
+              │   └───┼────┼──────────┤ (Common GND)
+              │       │    │          │
+              │       │    │  [Power Switch]
+              │       │    │        / 
+              │       │    └───►[ ]── / ──[ ]
+              │       │           (ON/OFF)  │
+              │       │                     │
+              │       │       ┌─────────────▼─────────┐
+              │       │       │ Mini Boost Converter  │
+              │       │       │ VIN  GND   GND   OUT  │
+              │       │       └──┬────┬─────┬─────┬───┘
+              │       │          │    │     │     │ (Regulated 5.0V)
+              │       │          │    └─────┴─────┼───────────────► Common GND
+              │       │          │                │
+              │       │          │                └───────────────┐
+              │       │          │                                │
+  ┌───────────▼───────┼──────────┼────────────────────────────────┼────────┐
+  │  3.3V            PA9        PB9                              5V   GND  │
+  │ (Logic Out)     (SCL)       (SDA)                         (Power In)    │
+  │                                                                        │
+  │                       WeAct STM32WB55CGU6 Board                        │
+  └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 🎨 Wire Color Rule:
-* 🔴 **Red** = Power (`3.3V`)
-* ⚫ **Black** = Ground (`GND`)
-* 🔵 **Blue** = Data line (`SDA` / `MOSI`)
-* 🟡 **Yellow** = Clock line (`SCL` / `SCK` / `MISO`)
-* 🟢 **Green** = Control signal (`CS` / `INT` / `IRQ`)
+#### 📋 Power Chain Connection Table
+
+| From Component & Pin | To Component & Pin | Wire Color | Voltage | Role / Notes |
+|---|---|:---:|:---:|---|
+| **Battery (+)** | **INA219 `Vin+`** & **TP4056 `B+`** | 🔴 Red | 3.0V – 4.2V | Cell positive terminal |
+| **Battery (-)** | **TP4056 `B-`** | ⚫ Black | 0V | Protected negative terminal |
+| **TP4056 `OUT+`** | **INA219 `Vin-`** | 🔴 Red | 3.0V – 4.2V | Charger output rail |
+| **TP4056 `OUT-`** | **Common Ground (`GND`)** | ⚫ Black | 0V | System ground return |
+| **INA219 `Vin-`** | **Power Switch (Terminal 1)** | 🔴 Red | 3.0V – 4.2V | Unswitched raw battery power |
+| **Power Switch (Terminal 2)** | **Boost Converter `VIN`** | 🔴 Red | 3.0V – 4.2V | Switched battery power into boost |
+| **Boost Converter `OUT`** | **WeAct `5V` (or `VBUS`)** | 🔴 Red | **5.0V DC** | Clean 5.0V into WeAct onboard LDO |
+| **INA219 `VCC`** / `GND` | **WeAct `3.3V`** / `GND` | 🔴 / ⚫ | 3.3V / 0V | Sensor logic power & ground |
+| **INA219 `SCL`** / `SDA` | **WeAct `PA9`** / `PB9` | 🟡 / 🔵 | 3.3V I2C | `I2C1` fuel gauge telemetry |
 
 ---
 
-### 📋 Pin-to-Pin Connection Table
+### Part 4: 🎮 Keypad & 5-Way Joystick Mapping
 
-#### 1. I2C Bus Devices (Screen, Keypad & Power Monitor)
-All 3 modules share the same two clock & data pins:
-
-| Module Pin | Connects to MCU Pin | Wire Color | Purpose |
-|---|---|---|---|
-| **VCC** (All 3 modules) | **3.3V** | 🔴 Red | Power |
-| **GND** (All 3 modules) | **GND** | ⚫ Black | Ground |
-| **SCL** (All 3 modules) | **PA9** | 🟡 Yellow | I2C Clock |
-| **SDA** (All 3 modules) | **PB9** | 🔵 Blue | I2C Data |
-| **PCF8574 INT** | **PB0** | 🟢 Green | Button Press Wakeup Signal |
-| **INA219/226 ALERT** | **PB1** | 🟢 Green | Low Battery / Overcurrent Alert |
-
-> [!IMPORTANT]
-> **I2C Pull-Up Resistors**: The OLED screen board has built-in 4.7 kΩ pull-up resistors on SDA/SCL. Keep the OLED connected so the I2C bus stays stable during boot!
-
----
-
-#### 2. SPI & External Bus Devices (SD Card, CC1101 Radio & NFC)
-
-| Module | Module Pin | Connects to MCU Pin | Purpose |
-|---|---|---|---|
-| **Shared Clock** | `SCK` | **PB3** | SPI Clock |
-| **Shared MOSI** | `MOSI` | **PB5** | Data Out from MCU |
-| **Shared MISO** | `MISO` | **PA6** | Data In to MCU |
-| **MicroSD Card** | `CS` | **PA10** | SD Card Select |
-| **CC1101 Radio** | `CSN / CS` | **PA15** | Radio Select |
-| | `GDO0 / G0` | **PA1** | Radio IRQ Signal |
-| **PN532 NFC (I2C3)** | `SCL` / `SDA` | **PA7 (header "C0")** / **PB4 (header "C1")** | NFC I2C Bus 3 |
-| | `IRQ` | **PA2** | NFC Card Detect IRQ |
-| **ST25R3916 (SPI)** | `CS` | **PE4** | SPI NFC Select (Alternative) |
-
----
-
-#### 3. Other Peripherals (Buzzer, IR & 125kHz RFID)
-
-| Feature | Component Pin | Connects to MCU Pin | Note |
-|---|---|---|---|
-| 🔊 **Speaker / Buzzer** | Positive `+` | **PB8** (TIM16) | Connect negative `-` to GND |
-| 🔴 **IR Receiver** | `DATA` | **PA0** | 38 kHz TSOP receiver |
-| 💡 **IR Transmitter** | `LED Anode` | **PA8** | High-power IR LED (via NPN transistor) |
-| 🏷️ **1-Wire / iButton** | `Data` | **PA3** | Dallas iButton probe with 4.7k pull-up |
-| 📻 **LF-RFID (125 kHz)** | Carrier TX | **PA5** (TIM2_CH1) | Coil driver push-pull stage *(Experimental)* |
-| | Envelope RX | **PA1** (TIM1_CH1) | Demodulated envelope input *(Experimental)* |
-| | Emulate | **PA2** (TIM2_CH3) | Tag emulation pulse switch *(Experimental)* |
-
----
-
-## 🎮 Button Mapping Guide (PCF8574 Keypad)
-
-Buttons are wired to the PCF8574 board in an **active-low** configuration (pressing a button connects the pin to **GND**):
+The buttons operate in an **active-low** configuration (pressing connects the pin to **GND**). The PCF8574 weak internal pull-up holds released pins `HIGH`:
 
 ```text
                  ┌───────────────┐
@@ -248,7 +259,7 @@ Buttons are wired to the PCF8574 board in an **active-low** configuration (press
                  └───────────────┘
 
        ┌──────────────┐     ┌──────────────┐
-       │ ↩ BACK (P5)  │     │ 📳 VIBRO(P6) │
+       │ ↩ BACK (P5)  │     │ 📳 VIBRO (P6)│
        └──────────────┘     └──────────────┘
 ```
 
@@ -256,9 +267,9 @@ Buttons are wired to the PCF8574 board in an **active-low** configuration (press
 * **P1** ➔ Down Button
 * **P2** ➔ Left Button
 * **P3** ➔ Right Button
-* **P4** ➔ OK (Select) Button
-* **P5** ➔ Back Button
-* **P6** ➔ Vibration Motor (driven through an N-channel MOSFET; do not connect motor directly to pin!)
+* **P4** ➔ OK (Select) Button *(Joystick Center Press)*
+* **P5** ➔ Back Button *(SET or RST switch)*
+* **P6** ➔ Vibration Motor *(Driven through N-MOSFET / NPN transistor with 1N4148 flyback diode; never connect motor directly to pin!)*
 
 ---
 
@@ -267,17 +278,17 @@ Buttons are wired to the PCF8574 board in an **active-low** configuration (press
 ```mermaid
 graph LR
     A[1. Connect Hardware] --> B[2. Set OTP Profile]
-    B --> C[3. Flash in qFlipper]
-    C --> D[4. Have Fun!]
+    B --> C[3. Bootloader Repair in qFlipper]
+    C --> D[4. Install Firmware .tgz]
 ```
 
 ### Step 1: Connect your modules
-Connect your OLED screen, buttons, and MCU according to the wiring diagram.
+Wire your OLED screen, buttons, and MCU according to the visual wiring diagram above.
 
-### Step 2: Configure OTP Memory (Only Once)
-1. Open **`generate_otp_gui.exe`** (in the [`mics/FlipperOTP/`](mics/FlipperOTP/) folder).
-2. Set **Device Name** (e.g. `Flipper`), **Board Version** (`12` for WeAct STM32WB55), and **Display Type: MGG** *(required for OLED)*.
-3. Put the board into **DFU mode**: hold the physical **BOOT0** button on the WeAct board, plug in the USB cable, and release BOOT0.
+### Step 2: Configure OTP Memory (One-Time Only)
+1. Open **`generate_otp_gui.exe`** (in [`mics/FlipperOTP/`](mics/FlipperOTP/)).
+2. Set **Device Name** (e.g. `Flipper`), **Board Version: 12** *(WeAct STM32WB55)*, and **Display Type: MGG** *(Required for OLED)*.
+3. Put the board into **DFU mode**: hold physical **BOOT0** on the WeAct board, plug in USB, and release BOOT0.
 4. Click **"2. Flash (DFU)"** in the app.
 
 ---
@@ -285,21 +296,21 @@ Connect your OLED screen, buttons, and MCU according to the wiring diagram.
 ### Step 3: Flash Firmware via qFlipper (1-Click Install)
 
 #### For First-Time Setup:
-1. Put the board in **DFU mode** (hold `BOOT0`, plug in USB, release `BOOT0`).
-2. Open the official **qFlipper** application on your PC.
-3. qFlipper will show **"RECOVERY MODE"**. Click **"REPAIR"** to install the bootloader.
+1. Put the board into **DFU mode** (hold `BOOT0`, plug in USB, release `BOOT0`).
+2. Open official **qFlipper** on your PC.
+3. qFlipper will display **"RECOVERY MODE"**. Click **"REPAIR"** to flash the official bootloader.
 4. Put the board back into **DFU mode** once more.
-5. Click **"Install from file"** in qFlipper and select our **`.tgz`** firmware package from the [Releases](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases) page.
-6. qFlipper will flash the firmware, turn on the OLED screen, and automatically copy all required game/app resource files to your microSD card!
+5. In qFlipper, click **"Install from file"** and select our **`.tgz`** release package from [Releases](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases).
+6. qFlipper will flash the firmware, turn on the OLED screen, and copy all game/app assets to your microSD card!
 
-#### For Normal Updates:
-Connect the DIY Flipper via USB, open **qFlipper**, click **"Install from file"**, and select the updated **`.tgz`** package.
+> [!NOTE]
+> **Black Screen During Update is Normal**: The standalone updater payload only contains drivers for the factory SPI screen. During installation, the screen stays off. Wait until qFlipper shows **"Update Successful!"** and the device will boot into the full OS.
 
 ---
 
 ## 🛠️ How to Build from Source (For Developers)
 
-Use the built-in FBT build system to compile the firmware locally:
+Use the built-in FBT build tool to compile locally:
 
 ```bash
 # Windows (Command Prompt / PowerShell)
@@ -312,7 +323,7 @@ cmd /c fbt.cmd
 cmd /c fbt.cmd --with-updater updater_package
 ```
 
-Compiled binaries land in `build/f7-firmware-C/` and `dist/f7-C/`.
+Compiled binaries are output to `build/f7-firmware-C/` and `dist/f7-C/`.
 
 ---
 
@@ -379,7 +390,7 @@ graph TD
 
 ---
 
-### 3. 🔄 I2C Bus Arbitration & Rate-Limited Self-Healing Waterfall
+### 3. 🔄 I2C Bus Arbitration & Rate-Limited Self-Healing
 
 ```mermaid
 sequenceDiagram
@@ -411,7 +422,7 @@ sequenceDiagram
 
 ---
 
-### 4. ⚡ PN532 Hardware Crypto1 & ISO 14443-4 APDU Protocol Flow
+### 4. ⚡ PN532 Hardware Crypto1 & ISO 14443-4 Protocol Flow
 
 ```mermaid
 graph TD
@@ -430,11 +441,12 @@ graph TD
 
 ---
 
-### 📚 Deep-Dive Engineering Documentation:
-* 🏛️ [**System & Firmware Architecture Guide**](documentation/ARCHITECTURE.md) — FreeRTOS task scheduling, memory maps, IPCC dual-core mailbox, and Furi OS primitives.
-* 🌊 [**Firmware Boot & System Lifecycle Guide**](documentation/BOOT_AND_LIFECYCLE.md) — Step-by-step waterfall sequence, OTP validation, bus recovery, and sleep/wake state machines.
-* ⚡ [**PN532 NFC Protocol & Hardware Acceleration Guide**](documentation/NFC_PN532_ENGINEERING.md) — Hardware Crypto1 authentication, ISO 14443-4 APDU tunneling for bank cards, and checksum error retries.
-* 📐 [**Hardware & Electrical Engineering Guide**](documentation/HARDWARE_DESIGN.md) — Schematic analysis, I2C pull-up calculations, 125kHz analog tank tuning, and power decoupling.
+### 📚 Deep-Dive Documentation Index
+* 🏛️ [**System & Firmware Architecture Guide**](documentation/ARCHITECTURE.md) — FreeRTOS task scheduling, memory maps, and Furi OS primitives.
+* 🌊 [**Firmware Boot & System Lifecycle Guide**](documentation/BOOT_AND_LIFECYCLE.md) — Waterfall boot sequence, OTP validation, bus recovery, and sleep/wake state machines.
+* ⚡ [**PN532 NFC Protocol & Hardware Acceleration Guide**](documentation/NFC_PN532_ENGINEERING.md) — Hardware Crypto1 acceleration, ISO 14443-4 APDU tunneling for bank cards, and retry mechanisms.
+* 📐 [**Hardware & Electrical Engineering Guide**](documentation/HARDWARE_DESIGN.md) — Complete schematic analysis, I2C pull-up calculations, and decoupling guidelines.
+* ❓ [**FAQ & Troubleshooting Guide**](faq_diy_flipper.md) — Common boot issues, I2C freeze recovery, CC1101 calibration, and power troubleshooting.
 
 ---
 
@@ -443,9 +455,6 @@ graph TD
 The LF-RFID 125 kHz subsystem operates using discrete analog components:
 
 * 📄 **LF-RFID PDF Schematic**: [Download 125kHz Subsystem Schematic (PDF)](misc/rfid_lf.pdf)
-
-> [!WARNING]
-> The 125 kHz analog circuit is sensitive to component tolerances (coil inductance, capacitor values, and diode forward voltage). It is provided for **educational experimentation** and may require fine-tuning on breadboards.
 
 <details>
 <summary><b>🔍 View LF-RFID Component Bill of Materials (BOM)</b></summary>
