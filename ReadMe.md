@@ -77,11 +77,7 @@ graph TD
 
 ---
 
-## 🔌 Easy Visual Wiring Guide (Breadboard Style)
-
-Connecting the modules is just like snapping together color-coded blocks. Follow the wiring visual and connection map below:
-
-![DIY Flipper Breadboard Wiring Diagram](misc/wiring_diagram_easy.jpg)
+## 🔌 Easy Visual Wiring Guide
 
 ### 🖼️ Core Subsystem Schematic (Cirkit Designer)
 
