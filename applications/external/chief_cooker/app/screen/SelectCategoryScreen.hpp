@@ -14,8 +14,8 @@ private:
     CategoryType categoryType;
     forward_list<char*> categories;
     function<void(CategoryType, const char*)> categorySelectedHandler;
-    TextInputUiView* nameInput;
-    char* categoryAddedName;
+    TextInputUiView* nameInput = nullptr;
+    char* categoryAddedName = nullptr;
 
 public:
     SelectCategoryScreen(

@@ -231,12 +231,18 @@ static void bt_rpc_send_bytes_callback(void* context, uint8_t* bytes, size_t byt
     size_t bytes_sent = 0;
     while(bytes_sent < bytes_len) {
         size_t bytes_remain = bytes_len - bytes_sent;
+        bool tx_ok = false;
         if(bytes_remain > bt->max_packet_size) {
-            ble_profile_serial_tx(bt->current_profile, &bytes[bytes_sent], bt->max_packet_size);
+            tx_ok = ble_profile_serial_tx(
+                bt->current_profile, &bytes[bytes_sent], bt->max_packet_size);
             bytes_sent += bt->max_packet_size;
         } else {
-            ble_profile_serial_tx(bt->current_profile, &bytes[bytes_sent], bytes_remain);
+            tx_ok = ble_profile_serial_tx(bt->current_profile, &bytes[bytes_sent], bytes_remain);
             bytes_sent += bytes_remain;
+        }
+        if(!tx_ok) {
+            FURI_LOG_W(TAG, "BLE serial TX failed to queue packet");
+            break;
         }
         // We want BT_RPC_EVENT_DISCONNECTED to stick, so don't clear
         uint32_t event_flag = furi_event_flag_wait(

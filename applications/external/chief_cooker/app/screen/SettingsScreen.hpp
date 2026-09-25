@@ -15,13 +15,13 @@ private:
     PagerReceiver* receiver;
     VariableItemListUiView* varItemList;
 
-    UiVariableItem* currentCategoryItem;
-    UiVariableItem* frequencyItem;
-    UiVariableItem* maxPagerItem;
-    UiVariableItem* signalRepeatItem;
-    UiVariableItem* ignoreSavedItem;
-    UiVariableItem* autosaveFoundItem;
-    UiVariableItem* debugModeItem;
+    UiVariableItem* currentCategoryItem = nullptr;
+    UiVariableItem* frequencyItem = nullptr;
+    UiVariableItem* maxPagerItem = nullptr;
+    UiVariableItem* signalRepeatItem = nullptr;
+    UiVariableItem* ignoreSavedItem = nullptr;
+    UiVariableItem* autosaveFoundItem = nullptr;
+    UiVariableItem* debugModeItem = nullptr;
 
     String frequencyStr;
     String maxPagerStr;
@@ -164,13 +164,13 @@ private:
             receiver->ReloadKnownStations();
         }
 
-        delete currentCategoryItem;
-        delete frequencyItem;
-        delete maxPagerItem;
-        delete signalRepeatItem;
-        delete ignoreSavedItem;
-        delete autosaveFoundItem;
-        delete debugModeItem;
+        if(currentCategoryItem != nullptr) delete currentCategoryItem;
+        if(frequencyItem != nullptr) delete frequencyItem;
+        if(maxPagerItem != nullptr) delete maxPagerItem;
+        if(signalRepeatItem != nullptr) delete signalRepeatItem;
+        if(ignoreSavedItem != nullptr) delete ignoreSavedItem;
+        if(autosaveFoundItem != nullptr) delete autosaveFoundItem;
+        if(debugModeItem != nullptr) delete debugModeItem;
 
         delete this;
     }

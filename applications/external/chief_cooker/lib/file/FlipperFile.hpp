@@ -35,7 +35,7 @@ public:
     }
 
     bool ReadHex(const char* key, uint64_t* value) {
-        return flipper_format_read_hex(flipperFormat, key, (uint8_t*)value, sizeof(value));
+        return flipper_format_read_hex(flipperFormat, key, (uint8_t*)value, sizeof(*value));
     }
 
     bool WriteUInt32(const char* key, uint32_t value) {

@@ -49,6 +49,9 @@ private:
 
     String* getFilePath(CategoryType categoryType, const char* category, StoredPagerData* pager) {
         String* categoryPath = getCategoryPath(categoryType, category);
+        if(categoryPath == NULL) {
+            return NULL;
+        }
         String* pagerFilename = PagerSerializer().GetFilename(pager);
         String* filePath = new String("%s/%s", categoryPath->cstr(), pagerFilename->cstr());
         delete categoryPath;
@@ -79,7 +82,7 @@ public:
         if(dir != NULL) {
             char fileName[MAX_FILENAME_LENGTH];
             while(dir->GetNextDir(fileName, MAX_FILENAME_LENGTH)) {
-                char* category = new char[strlen(fileName)];
+                char* category = new char[strlen(fileName) + 1];
                 strcpy(category, fileName);
                 categoryList->push_front(category);
                 categoriesLoaded++;
@@ -97,8 +100,12 @@ public:
         const char* category,
         bool loadNames
     ) {
-        FileManager fileManager = FileManager();
         String* stationDirPath = getCategoryPath(categoryType, category);
+        if(stationDirPath == NULL) {
+            return 0;
+        }
+
+        FileManager fileManager = FileManager();
         Directory* dir = fileManager.OpenDirectory(stationDirPath->cstr());
         PagerSerializer serializer = PagerSerializer();
         size_t stationsLoaded = 0;
@@ -130,8 +137,11 @@ public:
     }
 
     String* GetOnlyStationName(CategoryType categoryType, const char* category, StoredPagerData* pager) {
-        FileManager fileManager = FileManager();
         String* categoryPath = getCategoryPath(categoryType, category);
+        if(categoryPath == NULL) {
+            return NULL;
+        }
+        FileManager fileManager = FileManager();
         String* name = PagerSerializer().LoadOnlyStationName(&fileManager, categoryPath->cstr(), pager);
         delete categoryPath;
         return name;

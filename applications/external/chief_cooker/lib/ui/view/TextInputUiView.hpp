@@ -26,8 +26,9 @@ public:
         textInput = text_input_alloc();
         text_input_set_header_text(textInput, header);
         text_input_set_minimum_length(textInput, minLength);
-        textBuffer = new char[maxLength];
-        bufferSize = maxLength;
+        textBuffer = new char[maxLength + 1];
+        bufferSize = maxLength + 1;
+        textBuffer[0] = '\0';
     }
 
     void SetDefaultText(String* text) {

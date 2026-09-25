@@ -97,8 +97,7 @@ uint8_t u8g2_gpio_and_delay_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, vo
  * Performance: ~4x faster than software I2C bit-banging
  */
 uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
-    static uint8_t buffer
-        [256]; // Increased buffer to 256 bytes to prevent truncation of full-row draws (128 bytes + command headers)
+    static uint8_t buffer[512]; // 512 bytes prevents truncation of full-row draws and init sequences
     static uint16_t buf_idx = 0;
 
     switch(msg) {
@@ -120,8 +119,8 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
         // Not used for I2C
         break;
     case U8X8_MSG_BYTE_START_TRANSFER:
-        buf_idx = 0;
         furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
+        buf_idx = 0;
         break;
     case U8X8_MSG_BYTE_END_TRANSFER:
         // Send accumulated buffer via hardware I2C as ONE transaction
@@ -136,13 +135,14 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
                 furi_delay_ms(1);
             }
             if(!success) {
-                // On transient I2C contention, safely release bus and skip frame without re-initializing display
+                // On transient I2C contention, safely release bus, reset index, and skip frame
+                buf_idx = 0;
                 furi_hal_i2c_release(&furi_hal_i2c_handle_power);
                 return 0;
             }
         }
-        furi_hal_i2c_release(&furi_hal_i2c_handle_power);
         buf_idx = 0;
+        furi_hal_i2c_release(&furi_hal_i2c_handle_power);
         break;
     default:
         return 0;

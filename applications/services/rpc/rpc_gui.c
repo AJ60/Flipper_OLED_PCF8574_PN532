@@ -66,6 +66,10 @@ typedef struct {
     // Transmit
     PB_Main* transmit_frame;
     FuriThread* transmit_thread;
+    FuriMutex* frame_mutex;
+    uint8_t* staging_buffer;
+    CanvasOrientation staging_orientation;
+    bool has_new_frame;
 
     bool virtual_display_not_empty;
     bool is_streaming;
@@ -92,41 +96,13 @@ static void rpc_system_gui_screen_stream_frame_callback(
     furi_assert(context);
 
     RpcGuiSystem* rpc_gui = (RpcGuiSystem*)context;
-    uint8_t* buffer = rpc_gui->transmit_frame->content.gui_screen_frame.data->bytes;
+    if(!rpc_gui->is_streaming || !rpc_gui->frame_mutex || !rpc_gui->staging_buffer) return;
 
-    furi_assert(size == rpc_gui->transmit_frame->content.gui_screen_frame.data->size);
-
-    memcpy(buffer, data, size);
-    rpc_gui->transmit_frame->content.gui_screen_frame.orientation =
-        rpc_system_gui_screen_orientation_map[orientation];
-
-    if(momentum_settings.rpc_color_fg.mode == ScreenColorModeRgbBacklight) {
-        ScreenFrameColor fg_color;
-        if(rgb_backlight_get_rainbow_mode() == RGBBacklightRainbowModeOff) {
-            fg_color.mode = ScreenColorModeCustom;
-            rgb_backlight_get_color(0, &fg_color.rgb);
-        } else {
-            fg_color.mode = ScreenColorModeRainbow;
-        }
-        rpc_gui->transmit_frame->content.gui_screen_frame.fg_color = fg_color.value;
-    } else {
-        rpc_gui->transmit_frame->content.gui_screen_frame.fg_color =
-            momentum_settings.rpc_color_fg.value;
-    }
-
-    if(momentum_settings.rpc_color_bg.mode == ScreenColorModeRgbBacklight) {
-        ScreenFrameColor bg_color;
-        if(rgb_backlight_get_rainbow_mode() == RGBBacklightRainbowModeOff) {
-            bg_color.mode = ScreenColorModeCustom;
-            rgb_backlight_get_color(0, &bg_color.rgb);
-        } else {
-            bg_color.mode = ScreenColorModeRainbow;
-        }
-        rpc_gui->transmit_frame->content.gui_screen_frame.bg_color = bg_color.value;
-    } else {
-        rpc_gui->transmit_frame->content.gui_screen_frame.bg_color =
-            momentum_settings.rpc_color_bg.value;
-    }
+    furi_mutex_acquire(rpc_gui->frame_mutex, FuriWaitForever);
+    memcpy(rpc_gui->staging_buffer, data, size);
+    rpc_gui->staging_orientation = orientation;
+    rpc_gui->has_new_frame = true;
+    furi_mutex_release(rpc_gui->frame_mutex);
 
     furi_thread_flags_set(furi_thread_get_id(rpc_gui->transmit_thread), RpcGuiWorkerFlagTransmit);
 }
@@ -141,23 +117,96 @@ static int32_t rpc_system_gui_screen_stream_frame_transmit_thread(void* context)
         uint32_t flags =
             furi_thread_flags_wait(RpcGuiWorkerFlagAny, FuriFlagWaitAny, FuriWaitForever);
 
-        if(flags & RpcGuiWorkerFlagTransmit) {
-            transmit_time = furi_get_tick();
-            rpc_send(rpc_gui->session, rpc_gui->transmit_frame);
-            transmit_time = furi_get_tick() - transmit_time;
-
-            // Guaranteed bandwidth reserve
-            uint32_t extra_delay = transmit_time / 20;
-            if(extra_delay > 500) extra_delay = 500;
-            if(extra_delay) furi_delay_tick(extra_delay);
-        }
-
         if(flags & RpcGuiWorkerFlagExit) {
             break;
+        }
+
+        if(flags & RpcGuiWorkerFlagTransmit) {
+            bool send_frame = false;
+            CanvasOrientation orientation = CanvasOrientationHorizontal;
+
+            furi_mutex_acquire(rpc_gui->frame_mutex, FuriWaitForever);
+            if(rpc_gui->has_new_frame) {
+                uint8_t* buffer = rpc_gui->transmit_frame->content.gui_screen_frame.data->bytes;
+                memcpy(
+                    buffer,
+                    rpc_gui->staging_buffer,
+                    rpc_gui->transmit_frame->content.gui_screen_frame.data->size);
+                orientation = rpc_gui->staging_orientation;
+                rpc_gui->has_new_frame = false;
+                send_frame = true;
+            }
+            furi_mutex_release(rpc_gui->frame_mutex);
+
+            if(send_frame) {
+                rpc_gui->transmit_frame->content.gui_screen_frame.orientation =
+                    rpc_system_gui_screen_orientation_map[orientation];
+
+                if(momentum_settings.rpc_color_fg.mode == ScreenColorModeRgbBacklight) {
+                    ScreenFrameColor fg_color;
+                    if(rgb_backlight_get_rainbow_mode() == RGBBacklightRainbowModeOff) {
+                        fg_color.mode = ScreenColorModeCustom;
+                        rgb_backlight_get_color(0, &fg_color.rgb);
+                    } else {
+                        fg_color.mode = ScreenColorModeRainbow;
+                    }
+                    rpc_gui->transmit_frame->content.gui_screen_frame.fg_color = fg_color.value;
+                } else {
+                    rpc_gui->transmit_frame->content.gui_screen_frame.fg_color =
+                        momentum_settings.rpc_color_fg.value;
+                }
+
+                if(momentum_settings.rpc_color_bg.mode == ScreenColorModeRgbBacklight) {
+                    ScreenFrameColor bg_color;
+                    if(rgb_backlight_get_rainbow_mode() == RGBBacklightRainbowModeOff) {
+                        bg_color.mode = ScreenColorModeCustom;
+                        rgb_backlight_get_color(0, &bg_color.rgb);
+                    } else {
+                        bg_color.mode = ScreenColorModeRainbow;
+                    }
+                    rpc_gui->transmit_frame->content.gui_screen_frame.bg_color = bg_color.value;
+                } else {
+                    rpc_gui->transmit_frame->content.gui_screen_frame.bg_color =
+                        momentum_settings.rpc_color_bg.value;
+                }
+
+                transmit_time = furi_get_tick();
+                rpc_send(rpc_gui->session, rpc_gui->transmit_frame);
+                transmit_time = furi_get_tick() - transmit_time;
+
+                // Guaranteed bandwidth reserve for BLE & RPC command responses
+                uint32_t extra_delay = transmit_time / 10;
+                if(rpc_session_get_owner(rpc_gui->session) == RpcOwnerBle) {
+                    if(extra_delay < 35) extra_delay = 35; // At least 35ms pause between frames on BLE (~12-14 FPS)
+                }
+                if(extra_delay > 500) extra_delay = 500;
+                if(extra_delay) furi_delay_tick(extra_delay);
+            }
         }
     }
 
     return 0;
+}
+
+static void rpc_system_gui_stop_screen_stream_internal(RpcGuiSystem* rpc_gui) {
+    if(rpc_gui->is_streaming) {
+        rpc_gui->is_streaming = false;
+        // Remove GUI framebuffer callback
+        gui_remove_framebuffer_callback(
+            rpc_gui->gui, rpc_system_gui_screen_stream_frame_callback, rpc_gui);
+        // Stop and release worker thread
+        furi_thread_flags_set(furi_thread_get_id(rpc_gui->transmit_thread), RpcGuiWorkerFlagExit);
+        furi_thread_join(rpc_gui->transmit_thread);
+        furi_thread_free(rpc_gui->transmit_thread);
+        // Release frame and staging buffer
+        pb_release(&PB_Main_msg, rpc_gui->transmit_frame);
+        free(rpc_gui->transmit_frame);
+        rpc_gui->transmit_frame = NULL;
+        free(rpc_gui->staging_buffer);
+        rpc_gui->staging_buffer = NULL;
+        furi_mutex_free(rpc_gui->frame_mutex);
+        rpc_gui->frame_mutex = NULL;
+    }
 }
 
 static void rpc_system_gui_start_screen_stream_process(const PB_Main* request, void* context) {
@@ -171,28 +220,33 @@ static void rpc_system_gui_start_screen_stream_process(const PB_Main* request, v
     furi_assert(session);
 
     if(rpc_gui->is_streaming) {
-        rpc_send_and_release_empty(
-            session, request->command_id, PB_CommandStatus_ERROR_VIRTUAL_DISPLAY_ALREADY_STARTED);
-    } else {
         rpc_send_and_release_empty(session, request->command_id, PB_CommandStatus_OK);
-
-        rpc_gui->is_streaming = true;
-        size_t framebuffer_size = gui_get_framebuffer_size(rpc_gui->gui);
-        // Reusable Frame
-        rpc_gui->transmit_frame = malloc(sizeof(PB_Main));
-        rpc_gui->transmit_frame->which_content = PB_Main_gui_screen_frame_tag;
-        rpc_gui->transmit_frame->command_status = PB_CommandStatus_OK;
-        rpc_gui->transmit_frame->content.gui_screen_frame.data =
-            malloc(PB_BYTES_ARRAY_T_ALLOCSIZE(framebuffer_size));
-        rpc_gui->transmit_frame->content.gui_screen_frame.data->size = framebuffer_size;
-        // Transmission thread for async TX
-        rpc_gui->transmit_thread = furi_thread_alloc_ex(
-            "GuiRpcWorker", 1024, rpc_system_gui_screen_stream_frame_transmit_thread, rpc_gui);
-        furi_thread_start(rpc_gui->transmit_thread);
-        // GUI framebuffer callback
-        gui_add_framebuffer_callback(
-            rpc_gui->gui, rpc_system_gui_screen_stream_frame_callback, context);
+        gui_update(rpc_gui->gui);
+        return;
     }
+
+    rpc_send_and_release_empty(session, request->command_id, PB_CommandStatus_OK);
+
+    rpc_gui->is_streaming = true;
+    size_t framebuffer_size = gui_get_framebuffer_size(rpc_gui->gui);
+    // Staging buffer and synchronization mutex
+    rpc_gui->frame_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
+    rpc_gui->staging_buffer = malloc(framebuffer_size);
+    rpc_gui->has_new_frame = false;
+    // Reusable Frame
+    rpc_gui->transmit_frame = malloc(sizeof(PB_Main));
+    rpc_gui->transmit_frame->which_content = PB_Main_gui_screen_frame_tag;
+    rpc_gui->transmit_frame->command_status = PB_CommandStatus_OK;
+    rpc_gui->transmit_frame->content.gui_screen_frame.data =
+        malloc(PB_BYTES_ARRAY_T_ALLOCSIZE(framebuffer_size));
+    rpc_gui->transmit_frame->content.gui_screen_frame.data->size = framebuffer_size;
+    // Transmission thread for async TX (increased to 2048 to prevent stack overflow during protobuf encoding)
+    rpc_gui->transmit_thread = furi_thread_alloc_ex(
+        "GuiRpcWorker", 2048, rpc_system_gui_screen_stream_frame_transmit_thread, rpc_gui);
+    furi_thread_start(rpc_gui->transmit_thread);
+    // GUI framebuffer callback
+    gui_add_framebuffer_callback(
+        rpc_gui->gui, rpc_system_gui_screen_stream_frame_callback, context);
 }
 
 static void rpc_system_gui_stop_screen_stream_process(const PB_Main* request, void* context) {
@@ -205,20 +259,7 @@ static void rpc_system_gui_stop_screen_stream_process(const PB_Main* request, vo
     RpcSession* session = rpc_gui->session;
     furi_assert(session);
 
-    if(rpc_gui->is_streaming) {
-        rpc_gui->is_streaming = false;
-        // Remove GUI framebuffer callback
-        gui_remove_framebuffer_callback(
-            rpc_gui->gui, rpc_system_gui_screen_stream_frame_callback, context);
-        // Stop and release worker thread
-        furi_thread_flags_set(furi_thread_get_id(rpc_gui->transmit_thread), RpcGuiWorkerFlagExit);
-        furi_thread_join(rpc_gui->transmit_thread);
-        furi_thread_free(rpc_gui->transmit_thread);
-        // Release frame
-        pb_release(&PB_Main_msg, rpc_gui->transmit_frame);
-        free(rpc_gui->transmit_frame);
-        rpc_gui->transmit_frame = NULL;
-    }
+    rpc_system_gui_stop_screen_stream_internal(rpc_gui);
 
     rpc_send_and_release_empty(session, request->command_id, PB_CommandStatus_OK);
 }
@@ -264,9 +305,11 @@ static void
         rpc_gui->input_key_counter[event.key] = RPC_GUI_INPUT_RESET;
     }
 
-    // Submit event
-    furi_pubsub_publish(rpc_gui->input_events, &event);
+    // Send response first so mobile app immediately receives confirmation without waiting for frame render
     rpc_send_and_release_empty(session, request->command_id, PB_CommandStatus_OK);
+
+    // Submit event to GUI
+    furi_pubsub_publish(rpc_gui->input_events, &event);
 }
 
 static void
@@ -536,20 +579,7 @@ void rpc_system_gui_free(void* context) {
         view_port_free(rpc_gui->rpc_session_active_viewport);
     }
 
-    if(rpc_gui->is_streaming) {
-        rpc_gui->is_streaming = false;
-        // Remove GUI framebuffer callback
-        gui_remove_framebuffer_callback(
-            rpc_gui->gui, rpc_system_gui_screen_stream_frame_callback, context);
-        // Stop and release worker thread
-        furi_thread_flags_set(furi_thread_get_id(rpc_gui->transmit_thread), RpcGuiWorkerFlagExit);
-        furi_thread_join(rpc_gui->transmit_thread);
-        furi_thread_free(rpc_gui->transmit_thread);
-        // Release frame
-        pb_release(&PB_Main_msg, rpc_gui->transmit_frame);
-        free(rpc_gui->transmit_frame);
-        rpc_gui->transmit_frame = NULL;
-    }
+    rpc_system_gui_stop_screen_stream_internal(rpc_gui);
     furi_record_close(RECORD_INPUT_EVENTS);
     furi_record_close(RECORD_GUI);
     free(rpc_gui);

@@ -97,3 +97,4 @@ CHANGELOG_v*.md
 telegram_bot/
 *.otp.bin
 mics/FlipperOTP/*.bin
+scripts/diy_otp_*.bin

@@ -421,7 +421,6 @@ uint32_t furi_hal_subghz_set_frequency_and_path(uint32_t value) {
 SubGhzTx furi_hal_subghz_check_tx(uint32_t value) {
     // Check against extended range of YARD Stick One, no configuration would allow this frequency
     if(!furi_hal_subghz_is_frequency_valid(value)) {
-        FURI_LOG_I(TAG, "Frequency blocked - outside supported range");
         return SubGhzTxUnsupported;
     }
 
@@ -430,18 +429,23 @@ SubGhzTx furi_hal_subghz_check_tx(uint32_t value) {
        !(value >= 299999755 && value <= 350000335) && // was increased from 348 to 350
        !(value >= 386999938 && value <= 467750000) && // was increased from 464 to 467.75
        !(value >= 778999847 && value <= 928000000)) {
-        FURI_LOG_I(TAG, "Frequency blocked - outside default range");
         return SubGhzTxBlockedDefault;
     }
 
     // Check against region restrictions, tighter than extended and default
     if(!furi_hal_subghz.bypass_region) {
-        if(!furi_hal_region_is_provisioned()) {
-            FURI_LOG_I(TAG, "Frequency blocked - region not provisioned");
+        const FuriHalRegion* region = furi_hal_region_get();
+        if(!region) {
             return SubGhzTxBlockedRegionNotProvisioned;
         }
-        if(!_furi_hal_region_is_frequency_allowed(value)) {
-            FURI_LOG_I(TAG, "Frequency blocked - outside region range");
+        bool allowed = false;
+        for(size_t i = 0; i < region->bands_count; i++) {
+            if(region->bands[i].start <= value && region->bands[i].end >= value) {
+                allowed = true;
+                break;
+            }
+        }
+        if(!allowed) {
             return SubGhzTxBlockedRegion;
         }
     }

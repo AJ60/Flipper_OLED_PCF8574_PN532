@@ -5,7 +5,7 @@ App(
     name="Chief Cooker",  # Displayed in menus
     apptype=DIYAppType.EXTERNAL,
     entry_point="chief_cooker_app",
-    stack_size=2 * 1024,
+    stack_size=4 * 1024,
     fap_category="Sub-GHz",
     # Optional values
     # fap_version="0.1",

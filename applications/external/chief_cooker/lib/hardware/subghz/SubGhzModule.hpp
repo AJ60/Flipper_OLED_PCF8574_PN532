@@ -28,19 +28,19 @@ using namespace std;
 
 class SubGhzModule {
 private:
-    SubGhzEnvironment* environment;
-    const SubGhzDevice* device;
-    SubGhzReceiver* receiver;
-    SubGhzWorker* worker;
-    SubGhzTransmitter* transmitter;
-    function<void(SubGhzReceivedData*)> receiveHandler;
-    FuriTimer* txCompleteCheckTimer;
-    function<void()> txCompleteHandler;
+    SubGhzEnvironment* environment = nullptr;
+    const SubGhzDevice* device = nullptr;
+    SubGhzReceiver* receiver = nullptr;
+    SubGhzWorker* worker = nullptr;
+    SubGhzTransmitter* transmitter = nullptr;
+    function<void(SubGhzReceivedData*)> receiveHandler = nullptr;
+    FuriTimer* txCompleteCheckTimer = nullptr;
+    function<void()> txCompleteHandler = nullptr;
     int repeatsLeft = 0;
-    SubGhzPayload* currentPayload;
+    SubGhzPayload* currentPayload = nullptr;
     uint32_t receiveFrequency = 0;
 
-    bool isExternal;
+    bool isExternal = false;
     SubGhzState state = IDLE;
     bool receiveAfterTransmission = false;
 
@@ -59,7 +59,7 @@ private:
 
     static void txCompleteCheckCallback(void* context) {
         SubGhzModule* subghz = (SubGhzModule*)context;
-        if(subghz_devices_is_async_complete_tx(subghz->device)) {
+        if(subghz->device != nullptr && subghz_devices_is_async_complete_tx(subghz->device)) {
             if(subghz->repeatsLeft-- > 0 && subghz->currentPayload != NULL) {
                 subghz->startTransmission(0);
                 return;
@@ -87,7 +87,7 @@ private:
     }
 
     void setFrequencyIgnoringStateChecks(uint32_t frequency) {
-        if(subghz_devices_is_frequency_valid(device, frequency)) {
+        if(device != nullptr && subghz_devices_is_frequency_valid(device, frequency)) {
             subghz_devices_set_frequency(device, frequency);
         }
     }
@@ -100,7 +100,7 @@ public:
         subghz_devices_init();
         furi_hal_power_enable_otg();
         device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
-        if(!subghz_devices_is_connect(device)) {
+        if(!device || !subghz_devices_is_connect(device)) {
             furi_hal_power_disable_otg();
             device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
             isExternal = false;
@@ -108,8 +108,10 @@ public:
             isExternal = true;
         }
 
-        subghz_devices_begin(device);
-        subghz_devices_load_preset(device, FuriHalSubGhzPresetOok650Async, NULL);
+        if(device != nullptr) {
+            subghz_devices_begin(device);
+            subghz_devices_load_preset(device, FuriHalSubGhzPresetOok650Async, NULL);
+        }
 
         SetReceiveFrequency(frequency);
 
@@ -158,9 +160,11 @@ public:
 
         setFrequencyIgnoringStateChecks(receiveFrequency);
 
-        subghz_devices_flush_rx(device);
-        subghz_devices_start_async_rx(device, (void*)subghz_worker_rx_callback, worker);
-        subghz_worker_start(worker);
+        if(device != nullptr && worker != nullptr) {
+            subghz_devices_flush_rx(device);
+            subghz_devices_start_async_rx(device, (void*)subghz_worker_rx_callback, worker);
+            subghz_worker_start(worker);
+        }
 
         state = RECEIVING;
     }
@@ -174,8 +178,13 @@ public:
             PutToIdle();
             state = TRANSMITTING;
         } else {
-            furi_timer_stop(txCompleteCheckTimer);
-            delete currentPayload;
+            if(txCompleteCheckTimer != nullptr) {
+                furi_timer_stop(txCompleteCheckTimer);
+            }
+            if(currentPayload != nullptr) {
+                delete currentPayload;
+                currentPayload = nullptr;
+            }
         }
 
         Notification::Play(&sequence_blink_start_magenta);
@@ -186,7 +195,9 @@ public:
         startTransmission(frequency);
 
         uint32_t interval = furi_kernel_get_tick_frequency() / 100; // every 10 ms
-        furi_timer_start(txCompleteCheckTimer, interval);
+        if(txCompleteCheckTimer != nullptr) {
+            furi_timer_start(txCompleteCheckTimer, interval);
+        }
     }
 
 private:
@@ -197,15 +208,19 @@ private:
             setFrequencyIgnoringStateChecks(frequency);
         }
 
-        transmitter = subghz_transmitter_alloc_init(environment, currentPayload->GetProtocol());
-        subghz_transmitter_deserialize(transmitter, currentPayload->GetFlipperFormat());
-        subghz_devices_flush_tx(device);
-        subghz_devices_start_async_tx(device, (void*)subghz_transmitter_yield, transmitter);
+        if(currentPayload != nullptr && environment != nullptr && device != nullptr) {
+            transmitter = subghz_transmitter_alloc_init(environment, currentPayload->GetProtocol());
+            subghz_transmitter_deserialize(transmitter, currentPayload->GetFlipperFormat());
+            subghz_devices_flush_tx(device);
+            subghz_devices_start_async_tx(device, (void*)subghz_transmitter_yield, transmitter);
+        }
     }
 
     void stopTransmission() {
         if(transmitter != NULL) {
-            subghz_devices_stop_async_tx(device);
+            if(device != nullptr) {
+                subghz_devices_stop_async_tx(device);
+            }
             subghz_transmitter_free(transmitter);
             transmitter = NULL;
         }
@@ -213,9 +228,13 @@ private:
 
 public:
     void StopReceive() {
-        subghz_worker_stop(worker);
-        subghz_devices_stop_async_rx(device);
-        subghz_devices_idle(device);
+        if(worker != nullptr && subghz_worker_is_running(worker)) {
+            subghz_worker_stop(worker);
+        }
+        if(device != nullptr) {
+            subghz_devices_stop_async_rx(device);
+            subghz_devices_idle(device);
+        }
         state = IDLE;
     }
 
@@ -223,11 +242,18 @@ public:
         Notification::Play(&sequence_blink_stop);
 
         repeatsLeft = 0;
-        delete currentPayload;
+        if(currentPayload != nullptr) {
+            delete currentPayload;
+            currentPayload = nullptr;
+        }
 
-        furi_timer_stop(txCompleteCheckTimer);
+        if(txCompleteCheckTimer != nullptr) {
+            furi_timer_stop(txCompleteCheckTimer);
+        }
         stopTransmission();
-        subghz_devices_idle(device);
+        if(device != nullptr) {
+            subghz_devices_idle(device);
+        }
 
         state = IDLE;
     }
@@ -257,6 +283,7 @@ public:
 
         if(txCompleteCheckTimer != NULL) {
             furi_timer_free(txCompleteCheckTimer);
+            txCompleteCheckTimer = NULL;
         }
 
         if(furi_hal_power_is_otg_enabled()) {

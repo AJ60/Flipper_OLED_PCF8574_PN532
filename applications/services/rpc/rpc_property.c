@@ -31,8 +31,8 @@ static void
     PB_Main* response = ctx->response;
 
     if(!strncmp(key, furi_string_get_cstr(ctx->subkey), furi_string_size(ctx->subkey))) {
-        response->content.system_device_info_response.key = strdup(key);
-        response->content.system_device_info_response.value = strdup(value);
+        response->content.property_get_response.key = strdup(key);
+        response->content.property_get_response.value = strdup(value);
         rpc_send_and_release(session, response);
     }
 

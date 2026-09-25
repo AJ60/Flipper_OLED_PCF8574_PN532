@@ -47,16 +47,16 @@ public:
     };
 
 private:
-    AppConfig* config;
+    AppConfig* config = nullptr;
     uint16_t nextPagerIndex = 0;
     uint16_t pagersArraySize = PAGERS_ARRAY_SIZE_MULTIPLIER;
     StoredPagerData* pagers = new StoredPagerData[pagersArraySize];
     size_t knownStationsSize = 0;
-    KnownStationData* knownStations;
+    KnownStationData* knownStations = nullptr;
     uint32_t lastFrequency = 0;
     uint8_t lastFrequencyIndex = 0;
     bool knownStationsLoaded = false;
-    const char* userCategory;
+    const char* userCategory = nullptr;
 
     void loadKnownStations() {
         AppFileSysytem appFilesystem;
@@ -76,13 +76,16 @@ private:
     }
 
     void unloadKnownStations() {
-        for(size_t i = 0; i < knownStationsSize; i++) {
-            if(knownStations[i].name != NULL) {
-                delete knownStations[i].name;
+        if(knownStations != nullptr) {
+            for(size_t i = 0; i < knownStationsSize; i++) {
+                if(knownStations[i].name != nullptr) {
+                    delete knownStations[i].name;
+                }
             }
-        }
 
-        delete[] knownStations;
+            delete[] knownStations;
+            knownStations = nullptr;
+        }
 
         knownStationsLoaded = false;
         knownStationsSize = 0;
