@@ -102,6 +102,10 @@ public:
         device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
         if(!device || !subghz_devices_is_connect(device)) {
             furi_hal_power_disable_otg();
+            // The is_connect probe manipulates the external SPI bus and GPIO lines.
+            // Give the internal CC1101's MISO line 10ms to settle before the first
+            // SPI transaction, otherwise cc1101_spi_trx may see MISO stuck high.
+            furi_delay_ms(10);
             device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
             isExternal = false;
         } else {

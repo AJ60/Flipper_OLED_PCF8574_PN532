@@ -1,5 +1,4 @@
 #include "cc1101.h"
-#include <assert.h>
 #include <string.h>
 #include <furi_hal_cortex.h>
 #include <momentum/settings.h>
@@ -26,9 +25,13 @@ CC1101Status cc1101_strobe(const FuriHalSpiBusHandle* handle, uint8_t strobe) {
     CC1101Status rx[1] = {0};
     rx[0].CHIP_RDYn = 1;
 
-    cc1101_spi_trx(handle, tx, (uint8_t*)rx, 1);
-
-    assert(rx[0].CHIP_RDYn == 0);
+    if(!cc1101_spi_trx(handle, tx, (uint8_t*)rx, 1)) {
+        FURI_LOG_E(TAG, "strobe 0x%02X: SPI timeout (MISO stuck high)", strobe);
+        return rx[0]; // CHIP_RDYn=1 signals failure to callers
+    }
+    if(rx[0].CHIP_RDYn != 0) {
+        FURI_LOG_E(TAG, "strobe 0x%02X: CHIP_RDYn=%u after SPI", strobe, rx[0].CHIP_RDYn);
+    }
     return rx[0];
 }
 
@@ -38,21 +41,30 @@ CC1101Status cc1101_write_reg(const FuriHalSpiBusHandle* handle, uint8_t reg, ui
     rx[0].CHIP_RDYn = 1;
     rx[1].CHIP_RDYn = 1;
 
-    cc1101_spi_trx(handle, tx, (uint8_t*)rx, 2);
-
-    assert((rx[0].CHIP_RDYn | rx[1].CHIP_RDYn) == 0);
+    if(!cc1101_spi_trx(handle, tx, (uint8_t*)rx, 2)) {
+        FURI_LOG_E(TAG, "write_reg 0x%02X: SPI timeout (MISO stuck high)", reg);
+        return rx[1]; // CHIP_RDYn=1 signals failure to callers
+    }
+    if((rx[0].CHIP_RDYn | rx[1].CHIP_RDYn) != 0) {
+        FURI_LOG_E(TAG, "write_reg 0x%02X: CHIP_RDYn error rx0=%u rx1=%u", reg, rx[0].CHIP_RDYn, rx[1].CHIP_RDYn);
+    }
     return rx[1];
 }
 
 CC1101Status cc1101_read_reg(const FuriHalSpiBusHandle* handle, uint8_t reg, uint8_t* data) {
-    assert(sizeof(CC1101Status) == 1);
+    static_assert(sizeof(CC1101Status) == 1, "CC1101Status must be 1 byte");
     uint8_t tx[2] = {reg | CC1101_READ, 0};
     CC1101Status rx[2] = {0};
     rx[0].CHIP_RDYn = 1;
 
-    cc1101_spi_trx(handle, tx, (uint8_t*)rx, 2);
-
-    assert((rx[0].CHIP_RDYn) == 0);
+    if(!cc1101_spi_trx(handle, tx, (uint8_t*)rx, 2)) {
+        FURI_LOG_E(TAG, "read_reg 0x%02X: SPI timeout (MISO stuck high)", reg);
+        *data = 0xFF;
+        return rx[0]; // CHIP_RDYn=1 signals failure to callers
+    }
+    if(rx[0].CHIP_RDYn != 0) {
+        FURI_LOG_E(TAG, "read_reg 0x%02X: CHIP_RDYn=%u after SPI", reg, rx[0].CHIP_RDYn);
+    }
     *data = *(uint8_t*)&rx[1];
     return rx[0];
 }
@@ -140,8 +152,8 @@ uint32_t cc1101_set_frequency(const FuriHalSpiBusHandle* handle, uint32_t value)
 
     uint64_t real_value = (uint64_t)calibrated_value * CC1101_FDIV / CC1101_QUARTZ;
 
-    // Sanity check
-    assert((real_value & CC1101_FMASK) == real_value);
+    // Sanity check: frequency word must fit within 22-bit CC1101 FREQ register
+    furi_check((real_value & CC1101_FMASK) == real_value);
 
     cc1101_write_reg(handle, CC1101_FREQ2, (real_value >> 16) & 0xFF);
     cc1101_write_reg(handle, CC1101_FREQ1, (real_value >> 8) & 0xFF);
@@ -169,9 +181,13 @@ void cc1101_set_pa_table(const FuriHalSpiBusHandle* handle, const uint8_t value[
 
     memcpy(&tx[1], &value[0], 8);
 
-    cc1101_spi_trx(handle, tx, (uint8_t*)rx, sizeof(rx));
-
-    assert((rx[0].CHIP_RDYn | rx[8].CHIP_RDYn) == 0);
+    if(!cc1101_spi_trx(handle, tx, (uint8_t*)rx, sizeof(rx))) {
+        FURI_LOG_E(TAG, "set_pa_table: SPI timeout (MISO stuck high)");
+        return;
+    }
+    if((rx[0].CHIP_RDYn | rx[8].CHIP_RDYn) != 0) {
+        FURI_LOG_E(TAG, "set_pa_table: CHIP_RDYn error rx0=%u rx8=%u", rx[0].CHIP_RDYn, rx[8].CHIP_RDYn);
+    }
 }
 
 uint8_t cc1101_write_fifo(const FuriHalSpiBusHandle* handle, const uint8_t* data, uint8_t size) {
