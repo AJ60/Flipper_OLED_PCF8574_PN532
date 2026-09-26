@@ -88,6 +88,7 @@ private:
 
     void setFrequencyIgnoringStateChecks(uint32_t frequency) {
         if(device != nullptr && subghz_devices_is_frequency_valid(device, frequency)) {
+            subghz_devices_idle(device);
             subghz_devices_set_frequency(device, frequency);
         }
     }
@@ -113,6 +114,8 @@ public:
         }
 
         if(device != nullptr) {
+            subghz_devices_reset(device);
+            subghz_devices_idle(device);
             subghz_devices_begin(device);
             subghz_devices_load_preset(device, FuriHalSubGhzPresetOok650Async, NULL);
         }
@@ -275,6 +278,10 @@ public:
         default:
         case IDLE:
             break;
+        }
+
+        if(device != nullptr) {
+            subghz_devices_idle(device);
         }
     }
 

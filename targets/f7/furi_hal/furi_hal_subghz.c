@@ -470,6 +470,9 @@ uint32_t furi_hal_subghz_set_frequency(uint32_t value) {
     // Force IDLE before touching frequency registers.
     // If CC1101 is in RX/TX, SCAL will be silently ignored causing a missed calibration.
     cc1101_strobe(&furi_hal_spi_bus_handle_subghz, CC1101_STROBE_SIDLE);
+    if(!cc1101_wait_status_state(&furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000)) {
+        FURI_LOG_E(TAG, "CC1101 SIDLE before set_frequency failed");
+    }
 
     uint32_t real_frequency = cc1101_set_frequency(&furi_hal_spi_bus_handle_subghz, value);
 
