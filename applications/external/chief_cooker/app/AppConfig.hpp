@@ -37,7 +37,9 @@ private:
         file->ReadBool(KEY_CONFIG_AUTOSAVE, &AutosaveFoundSignals);
         file->ReadString(KEY_CONFIG_USER_CATGEGORY, userCat);
 
-        SavedStrategy = static_cast<enum SavedStationStrategy>(savedStrategyValue);
+        SavedStrategy = (savedStrategyValue < SavedStationStrategyValuesCount) ?
+            static_cast<enum SavedStationStrategy>(savedStrategyValue) :
+            SHOW_NAME;
         if(!userCat->isEmpty()) {
             CurrentUserCategory = userCat;
         } else {
@@ -57,7 +59,8 @@ private:
 
 public:
     void Load() {
-        FlipperFile* configFile = FileManager().OpenRead(CONFIG_FILE_PATH);
+        FileManager fileManager;
+        FlipperFile* configFile = fileManager.OpenRead(CONFIG_FILE_PATH);
         if(configFile != NULL) {
             readFromFile(configFile);
             delete configFile;
@@ -65,7 +68,8 @@ public:
     }
 
     void Save() {
-        FlipperFile* configFile = FileManager().OpenWrite(CONFIG_FILE_PATH);
+        FileManager fileManager;
+        FlipperFile* configFile = fileManager.OpenWrite(CONFIG_FILE_PATH);
         if(configFile != NULL) {
             writeToFile(configFile);
             delete configFile;

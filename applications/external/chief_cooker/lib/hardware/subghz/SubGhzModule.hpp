@@ -120,9 +120,12 @@ public:
             subghz_devices_load_preset(device, FuriHalSubGhzPresetOok650Async, NULL);
         }
 
+        FURI_LOG_I(LOG_TAG, "SubGhzModule: calling SetReceiveFrequency(%lu)", frequency);
         SetReceiveFrequency(frequency);
+        FURI_LOG_I(LOG_TAG, "SubGhzModule: SetReceiveFrequency done");
 
         txCompleteCheckTimer = furi_timer_alloc(txCompleteCheckCallback, FuriTimerTypePeriodic, this);
+        FURI_LOG_I(LOG_TAG, "SubGhzModule: constructor completed");
     }
 
     void SetReceiveFrequency(uint32_t frequency) {
@@ -159,6 +162,7 @@ public:
     }
 
     void ReceiveAsync() {
+        FURI_LOG_I(LOG_TAG, "ReceiveAsync: entering, state=%d", state);
         if(receiver == NULL) {
             prepareReceiver();
         }
@@ -168,12 +172,15 @@ public:
         setFrequencyIgnoringStateChecks(receiveFrequency);
 
         if(device != nullptr && worker != nullptr) {
+            FURI_LOG_I(LOG_TAG, "ReceiveAsync: starting RX worker");
             subghz_devices_flush_rx(device);
             subghz_devices_start_async_rx(device, (void*)subghz_worker_rx_callback, worker);
             subghz_worker_start(worker);
+            FURI_LOG_I(LOG_TAG, "ReceiveAsync: RX worker started");
         }
 
         state = RECEIVING;
+        FURI_LOG_I(LOG_TAG, "ReceiveAsync: completed");
     }
 
     void SetTransmitCompleteHandler(function<void()> txCompleteHandler) {

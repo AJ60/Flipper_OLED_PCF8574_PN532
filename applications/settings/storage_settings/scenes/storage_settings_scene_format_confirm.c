@@ -1,5 +1,7 @@
 #include "../storage_settings.h"
 
+#define STORAGE_SETTINGS_SCENE_FORMAT_CONFIRM_COUNT 5
+
 static void
     storage_settings_scene_format_confirm_dialog_callback(DialogExResult result, void* context) {
     StorageSettings* app = context;
@@ -10,6 +12,8 @@ static void
 void storage_settings_scene_format_confirm_on_enter(void* context) {
     StorageSettings* app = context;
     DialogEx* dialog_ex = app->dialog_ex;
+
+    scene_manager_set_scene_state(app->scene_manager, StorageSettingsFormatConfirm, 0);
 
     FS_Error sd_status = storage_sd_status(app->fs_api);
 
@@ -37,15 +41,37 @@ bool storage_settings_scene_format_confirm_on_event(void* context, SceneManagerE
     StorageSettings* app = context;
     bool consumed = false;
 
+    uint32_t counter =
+        scene_manager_get_scene_state(app->scene_manager, StorageSettingsFormatConfirm);
+
     if(event.type == SceneManagerEventTypeCustom) {
         switch(event.event) {
         case DialogExResultLeft:
         case DialogExResultCenter:
+            scene_manager_set_scene_state(app->scene_manager, StorageSettingsFormatConfirm, 0);
             consumed = scene_manager_previous_scene(app->scene_manager);
             break;
         case DialogExResultRight:
-            scene_manager_set_scene_state(app->scene_manager, StorageSettingsFormatting, false);
-            scene_manager_next_scene(app->scene_manager, StorageSettingsFormatting);
+            counter++;
+            if(counter < STORAGE_SETTINGS_SCENE_FORMAT_CONFIRM_COUNT) {
+                furi_string_printf(
+                    app->text_string,
+                    "All data will be lost!\n%ld presses left",
+                    STORAGE_SETTINGS_SCENE_FORMAT_CONFIRM_COUNT - counter);
+                dialog_ex_set_text(
+                    app->dialog_ex,
+                    furi_string_get_cstr(app->text_string),
+                    64,
+                    12,
+                    AlignCenter,
+                    AlignTop);
+                scene_manager_set_scene_state(
+                    app->scene_manager, StorageSettingsFormatConfirm, counter);
+            } else {
+                scene_manager_set_scene_state(app->scene_manager, StorageSettingsFormatConfirm, 0);
+                scene_manager_set_scene_state(app->scene_manager, StorageSettingsFormatting, false);
+                scene_manager_next_scene(app->scene_manager, StorageSettingsFormatting);
+            }
             consumed = true;
             break;
         }

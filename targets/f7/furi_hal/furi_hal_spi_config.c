@@ -419,7 +419,7 @@ const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external = {
     .miso = &gpio_spi_miso, // Use shared pin
     .mosi = &gpio_spi_mosi, // Use shared pin
     .sck = &gpio_spi_sck, // Use shared pin
-    .cs = &gpio_ext_pa4, // Ensure this pin is defined and unique
+    .cs = &gpio_ext_pc3, // Header Pin 7 (Official Default CS pin)
 };
 
 const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external_extra = {
@@ -428,5 +428,5 @@ const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external_extra = {
     .miso = &gpio_spi_miso, // Use shared pin
     .mosi = &gpio_spi_mosi, // Use shared pin
     .sck = &gpio_spi_sck, // Use shared pin
-    .cs = &gpio_ext_pc1, // Ensure this pin is defined and unique
+    .cs = &gpio_ext_pa4, // Header Pin 4 (Official Extra CS pin)
 };

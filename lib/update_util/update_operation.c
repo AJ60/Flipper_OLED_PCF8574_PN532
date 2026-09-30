@@ -234,6 +234,7 @@ bool update_operation_is_armed(void) {
 void update_operation_disarm(void) {
     furi_hal_rtc_set_boot_mode(FuriHalRtcBootModeNormal);
     furi_hal_rtc_set_register(FuriHalRtcRegisterUpdateFolderFSIndex, INT_MAX);
+    furi_hal_rtc_set_fault_data(0);
     Storage* storage = furi_record_open(RECORD_STORAGE);
     storage_simply_remove(storage, UPDATE_FILE_POINTER_FN);
     furi_record_close(RECORD_STORAGE);

@@ -57,7 +57,10 @@ public:
     }
 
     ~Directory() {
-        storage_dir_close(dir);
-        storage_file_free(dir);
+        if(dir) {
+            storage_dir_close(dir);
+            storage_file_free(dir);
+            dir = nullptr;
+        }
     }
 };

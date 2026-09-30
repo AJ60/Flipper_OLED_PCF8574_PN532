@@ -37,7 +37,7 @@ static float s_cached_voltage_v = 0.0f;
 static float s_cached_current_a = 0.0f;
 static uint32_t s_last_read_tick = 0;
 
-#define INA_READ_PERIOD_MS 500
+#define INA_READ_PERIOD_MS 5000
 
 static bool ina_read_reg16(uint8_t reg, uint16_t* out) {
     const FuriHalI2cBusHandle* handle = &furi_hal_i2c_handle_power;

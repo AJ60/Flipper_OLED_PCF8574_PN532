@@ -588,8 +588,18 @@ int32_t desktop_srv(void* p) {
         scene_manager_next_scene(desktop->scene_manager, DesktopSceneHwMismatch);
     }
 
-    if(furi_hal_rtc_get_fault_data()) {
-        scene_manager_next_scene(desktop->scene_manager, DesktopSceneFault);
+    uint32_t fault_ptr = furi_hal_rtc_get_fault_data();
+    if(fault_ptr) {
+        if(fault_ptr >= FLASH_BASE && fault_ptr < (FLASH_BASE + FLASH_SIZE)) {
+            const char* msg = (const char*)fault_ptr;
+            if(msg[0] != '\0' && (uint8_t)msg[0] >= 32 && (uint8_t)msg[0] <= 126) {
+                scene_manager_next_scene(desktop->scene_manager, DesktopSceneFault);
+            } else {
+                furi_hal_rtc_set_fault_data(0);
+            }
+        } else {
+            furi_hal_rtc_set_fault_data(0);
+        }
     }
 
     uint8_t keys_total, keys_valid;

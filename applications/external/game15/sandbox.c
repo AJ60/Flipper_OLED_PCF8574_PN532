@@ -13,7 +13,7 @@ SandboxEventHandler sandbox_user_event_handler;
 
 static void sandbox_render_callback(Canvas* const canvas, void* context) {
     UNUSED(context);
-    if(furi_mutex_acquire(sandbox_mutex, 25) != FuriStatusOk) return;
+    if(furi_mutex_acquire(sandbox_mutex, 100) != FuriStatusOk) return;
 
     if(sandbox_user_render_callback) sandbox_user_render_callback(canvas);
 

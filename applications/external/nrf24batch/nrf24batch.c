@@ -1206,7 +1206,7 @@ void display_add_status(void) {
 static void render_callback(Canvas* const canvas, void* ctx) {
     if(ctx == NULL) return;
     const PluginState* plugin_state = ctx;
-    if(furi_mutex_acquire(plugin_state->mutex, 5) != FuriStatusOk) return;
+    if(furi_mutex_acquire(plugin_state->mutex, 100) != FuriStatusOk) return;
 
     //canvas_draw_frame(canvas, 0, 0, 128, 64); // border around the edge of the screen
     if(what_doing == 0) {
@@ -1757,7 +1757,12 @@ int32_t nrf24batch_app(void* p) {
                         } else if(what_doing == 0) {
                             if(setup_cursor == 0) { // open file
                                 file_stream_close(file_stream);
-                                if(select_settings_file()) {
+                                furi_mutex_release(APP->plugin_state->mutex);
+                                view_port_enabled_set(view_port, false);
+                                bool selected = select_settings_file();
+                                view_port_enabled_set(view_port, true);
+                                furi_mutex_acquire(APP->plugin_state->mutex, FuriWaitForever);
+                                if(selected) {
                                     uint8_t err = load_settings_file();
                                     if(err)
                                         snprintf(
@@ -1945,6 +1950,8 @@ int32_t nrf24batch_app(void* p) {
                                     ConvertHexToArray((char*)payload, listen_addr, 5);
                             }
                             Edit = 0;
+                        } else if(what_doing == 0) {
+                            processing = false;
                         } else {
                             if(what_doing == 2 && Edited) {
                                 ask_question = ask_return;
@@ -1965,8 +1972,8 @@ int32_t nrf24batch_app(void* p) {
             }
         }
 
-        view_port_update(view_port);
         furi_mutex_release(APP->plugin_state->mutex);
+        view_port_update(view_port);
     }
     nrf24_set_idle(nrf24_HANDLE);
     nrf24_deinit();

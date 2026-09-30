@@ -420,7 +420,7 @@ static void tama_p1_draw_callback(Canvas* const canvas, void* cb_ctx) {
     furi_assert(cb_ctx);
 
     FuriMutex* const mutex = cb_ctx;
-    if(furi_mutex_acquire(mutex, 25) != FuriStatusOk) return;
+    if(furi_mutex_acquire(mutex, 100) != FuriStatusOk) return;
 
     if(g_ctx->rom == NULL) {
         canvas_set_font(canvas, FontPrimary);

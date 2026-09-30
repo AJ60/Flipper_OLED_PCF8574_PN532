@@ -81,8 +81,8 @@ static bool popup_view_input_callback(InputEvent* event, void* context) {
     Popup* popup = context;
     bool consumed = false;
 
-    // Process key presses only
-    if(event->type == InputTypeShort && popup->callback) {
+    // Process key presses (Short or Release, ensuring compatibility with qFlipper / RPC clicks)
+    if((event->type == InputTypeShort || event->type == InputTypeRelease) && popup->callback) {
         popup->callback(popup->context);
         consumed = true;
     }

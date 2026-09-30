@@ -34,14 +34,29 @@ public:
     }
 
     uint32_t GetFrequency(size_t index) {
+        if(frequencies == NULL || frequencyCount == 0) {
+            return 433920000;
+        }
+        if(index >= frequencyCount) {
+            return GetDefaultFrequency();
+        }
         return frequencies[index];
     }
 
     uint32_t GetDefaultFrequency() {
+        if(frequencies == NULL || frequencyCount == 0) {
+            return 433920000;
+        }
+        if(defaultFreqIndex >= frequencyCount) {
+            return frequencies[0];
+        }
         return frequencies[defaultFreqIndex];
     }
 
     size_t GetDefaultFrequencyIndex() {
+        if(defaultFreqIndex >= frequencyCount) {
+            return 0;
+        }
         return defaultFreqIndex;
     }
 

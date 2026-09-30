@@ -31,6 +31,7 @@ private:
 
 public:
     SettingsScreen(AppConfig* config, PagerReceiver* receiver, SubGhzModule* subghz, bool updateUserCategory) {
+        FURI_LOG_I("SETTINGS", "SettingsScreen constructor begin");
         this->config = config;
         this->receiver = receiver;
         this->subghz = subghz;
@@ -40,10 +41,12 @@ public:
         varItemList->SetOnDestroyHandler(HANDLER(&SettingsScreen::destroy));
         varItemList->SetEnterPressHandler(HANDLER_1ARG(&SettingsScreen::enterPressHandler));
 
+        FURI_LOG_I("SETTINGS", "Adding Category item");
         categoryItemIndex = varItemList->AddItem(
             currentCategoryItem = new UiVariableItem("Category", HANDLER_1ARG(&SettingsScreen::categoryChangedHandler))
         );
 
+        FURI_LOG_I("SETTINGS", "Adding Frequency item");
         varItemList->AddItem(
             frequencyItem = new UiVariableItem(
                 "Scan frequency",
@@ -57,10 +60,12 @@ public:
             )
         );
 
+        FURI_LOG_I("SETTINGS", "Adding Max pager item");
+        uint8_t maxPagerIndex = config->MaxPagerForBatchOrDetection > 0 ? (config->MaxPagerForBatchOrDetection - 1) : 0;
         varItemList->AddItem(
             maxPagerItem = new UiVariableItem(
                 "Max pager value",
-                config->MaxPagerForBatchOrDetection - 1,
+                maxPagerIndex,
                 UINT8_MAX,
                 [this](uint8_t val) {
                     this->config->MaxPagerForBatchOrDetection = val + 1;
@@ -69,10 +74,12 @@ public:
             )
         );
 
+        FURI_LOG_I("SETTINGS", "Adding Signal repeats item");
+        uint8_t repeatsIndex = config->SignalRepeats > 0 ? (config->SignalRepeats - 1) : 0;
         varItemList->AddItem(
             signalRepeatItem = new UiVariableItem(
                 "Times to repeat signal",
-                config->SignalRepeats - 1,
+                repeatsIndex,
                 UINT8_MAX,
                 [this](uint8_t val) {
                     this->config->SignalRepeats = val + 1;
@@ -81,29 +88,34 @@ public:
             )
         );
 
+        FURI_LOG_I("SETTINGS", "Adding Saved stations item");
+        uint8_t savedStrategyIdx = config->SavedStrategy < SavedStationStrategyValuesCount ? config->SavedStrategy : 0;
         varItemList->AddItem(
             ignoreSavedItem = new UiVariableItem(
                 "Saved stations",
-                config->SavedStrategy,
+                savedStrategyIdx,
                 SavedStationStrategyValuesCount,
                 [this](uint8_t val) {
-                    this->config->SavedStrategy = static_cast<enum SavedStationStrategy>(val);
+                    this->config->SavedStrategy = (val < SavedStationStrategyValuesCount) ?
+                        static_cast<enum SavedStationStrategy>(val) : SHOW_NAME;
                     return savedStationsStrategy(this->config->SavedStrategy);
                 }
             )
         );
 
+        FURI_LOG_I("SETTINGS", "Adding Autosave item");
         varItemList->AddItem(
             autosaveFoundItem = new UiVariableItem(
                 "Autosave found signals",
-                config->AutosaveFoundSignals,
+                config->AutosaveFoundSignals ? 1 : 0,
                 2,
                 [this](uint8_t val) {
-                    this->config->AutosaveFoundSignals = val;
+                    this->config->AutosaveFoundSignals = (val != 0);
                     return boolOption(val);
                 }
             )
         );
+        FURI_LOG_I("SETTINGS", "SettingsScreen constructor end");
     }
 
     UiView* GetView() {
@@ -153,7 +165,7 @@ private:
             return "Hide";
 
         default:
-            return NULL;
+            return "Ignore";
         }
     }
 

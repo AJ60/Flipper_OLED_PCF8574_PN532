@@ -8,7 +8,8 @@ using namespace std;
 
 class UiVariableItem {
 private:
-    VariableItem* item = NULL;
+    VariableItemList* varItemList = nullptr;
+    uint8_t position = 0;
     const char* label;
 
     uint8_t selectedIndex;
@@ -17,9 +18,16 @@ private:
     function<const char*(uint8_t)> changeHandler;
 
     static void itemChangeCallback(VariableItem* item) {
+        if(item == NULL) {
+            return;
+        }
         UiVariableItem* uiItem = (UiVariableItem*)variable_item_get_context(item);
+        if(uiItem == NULL || !uiItem->changeHandler) {
+            return;
+        }
         uint8_t index = variable_item_get_current_value_index(item);
-        variable_item_set_current_value_text(item, uiItem->changeHandler(index));
+        const char* text = uiItem->changeHandler(index);
+        variable_item_set_current_value_text(item, text ? text : "");
     }
 
 public:
@@ -37,9 +45,15 @@ public:
         this->changeHandler = changeHandler;
     }
 
-    void AddTo(VariableItemList* varItemList) {
-        item = variable_item_list_add(varItemList, label, valuesCount, itemChangeCallback, this);
+    void AddTo(VariableItemList* varItemList, uint8_t pos) {
+        this->varItemList = varItemList;
+        this->position = pos;
+        variable_item_list_add(varItemList, label, valuesCount, itemChangeCallback, this);
         Refresh();
+    }
+
+    void AddTo(VariableItemList* varItemList) {
+        AddTo(varItemList, 0);
     }
 
     void SetSelectedItem(uint8_t selectedIndex, uint8_t valuesCount) {
@@ -50,6 +64,10 @@ public:
     }
 
     void Refresh() {
+        if(varItemList == NULL) {
+            return;
+        }
+        VariableItem* item = variable_item_list_get(varItemList, position);
         if(item == NULL) {
             return;
         }

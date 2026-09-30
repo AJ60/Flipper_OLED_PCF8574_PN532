@@ -28,7 +28,7 @@ struct TotpRenderCallbackContext {
 static void render_callback(Canvas* const canvas, void* const ctx) {
     furi_assert(ctx);
     const struct TotpRenderCallbackContext* context = ctx;
-    if(furi_mutex_acquire(context->mutex, 25) == FuriStatusOk) {
+    if(furi_mutex_acquire(context->mutex, 100) == FuriStatusOk) {
         totp_scene_director_render(canvas, context->plugin_state);
         furi_mutex_release(context->mutex);
     }

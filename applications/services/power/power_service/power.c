@@ -283,7 +283,7 @@ static bool power_update_info(Power* power) {
 static void power_check_charging_state(Power* power) {
     NotificationApp* notification = furi_record_open(RECORD_NOTIFICATION);
 
-    if(furi_hal_power_is_charging()) {
+    if(power->info.is_charging) {
         if((power->info.charge == 100) || (furi_hal_power_is_charging_done())) {
             if(power->state != PowerStateCharged) {
                 notification_internal_message(notification, &sequence_charged);
@@ -579,8 +579,8 @@ static void power_tick_callback(void* context) {
     furi_assert(context);
     Power* power = context;
 
-    // Adjust polling interval when display is sleeping (15s vs 1s)
-    uint32_t current_tick_ms = display_is_sleeping ? 15000UL : 1000UL;
+    // Adjust polling interval when display is sleeping (30s vs 10s)
+    uint32_t current_tick_ms = display_is_sleeping ? 30000UL : 10000UL;
     furi_event_loop_tick_set(power->event_loop, current_tick_ms, power_tick_callback, power);
 
     // Update data from gauge and charger
@@ -683,7 +683,7 @@ static Power* power_alloc(void) {
         FuriEventLoopEventIn,
         power_message_callback,
         power);
-    furi_event_loop_tick_set(power->event_loop, 1000, power_tick_callback, power);
+    furi_event_loop_tick_set(power->event_loop, 10000, power_tick_callback, power);
 
     return power;
 }

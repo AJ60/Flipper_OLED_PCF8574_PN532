@@ -26,6 +26,13 @@ void desktop_scene_fault_on_enter(void* context) {
     popup_set_text(popup, message, 64, 37 + STATUS_BAR_Y_SHIFT, AlignCenter, AlignCenter);
     popup_set_callback(popup, desktop_scene_fault_callback);
 
+    // Auto-dismiss after 3 seconds so the device never stays stuck on this screen
+    popup_set_timeout(popup, 3000);
+    popup_enable_timeout(popup);
+
+    // Clear fault data immediately so next reboot is clean
+    furi_hal_rtc_set_fault_data(0);
+
     view_dispatcher_switch_to_view(desktop->view_dispatcher, DesktopViewIdPopup);
 }
 

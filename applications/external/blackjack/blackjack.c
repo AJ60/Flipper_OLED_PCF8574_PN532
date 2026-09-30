@@ -34,9 +34,10 @@ static void draw_ui(Canvas* const canvas, const GameState* game_state) {
 
 static void render_callback(Canvas* const canvas, void* ctx) {
     const GameState* game_state = ctx;
-    furi_mutex_acquire(game_state->mutex, 25);
-
     if(game_state == NULL) {
+        return;
+    }
+    if(furi_mutex_acquire(game_state->mutex, 100) != FuriStatusOk) {
         return;
     }
 

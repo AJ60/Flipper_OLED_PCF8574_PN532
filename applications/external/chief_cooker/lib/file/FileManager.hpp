@@ -9,20 +9,52 @@
 
 class FileManager {
 private:
-    Storage* storage;
+    Storage* storage = nullptr;
 
 public:
     FileManager() {
         storage = (Storage*)furi_record_open(RECORD_STORAGE);
     }
 
+    FileManager(const FileManager&) = delete;
+    FileManager& operator=(const FileManager&) = delete;
+
+    FileManager(FileManager&& other) noexcept : storage(other.storage) {
+        other.storage = nullptr;
+    }
+
+    FileManager& operator=(FileManager&& other) noexcept {
+        if(this != &other) {
+            if(storage) {
+                furi_record_close(RECORD_STORAGE);
+            }
+            storage = other.storage;
+            other.storage = nullptr;
+        }
+        return *this;
+    }
+
+    Storage* GetStorage() {
+        return storage;
+    }
+
+    bool DirExists(const char* path) {
+        if(!storage || !path) return false;
+        return storage_dir_exists(storage, path);
+    }
+
     void CreateDirIfNotExists(const char* path) {
+        if(!storage || !path) return;
         if(!storage_dir_exists(storage, path)) {
             storage_common_mkdir(storage, path);
         }
     }
 
     Directory* OpenDirectory(const char* path) {
+        if(!storage || !path) return NULL;
+        if(!storage_dir_exists(storage, path)) {
+            return NULL;
+        }
         Directory* dir = new Directory(storage, path);
         if(dir->IsOpened()) {
             return dir;
@@ -32,6 +64,7 @@ public:
     }
 
     FlipperFile* OpenRead(const char* path) {
+        if(!storage || !path) return NULL;
         FlipperFile* file = new FlipperFile(storage, path, false);
         if(file->IsOpened()) {
             return file;
@@ -46,6 +79,7 @@ public:
     }
 
     FlipperFile* OpenWrite(const char* path) {
+        if(!storage || !path) return NULL;
         FlipperFile* file = new FlipperFile(storage, path, true);
         if(file->IsOpened()) {
             return file;
@@ -65,10 +99,15 @@ public:
     }
 
     void DeleteFile(const char* filePath) {
-        storage_common_remove(storage, filePath);
+        if(storage && filePath) {
+            storage_common_remove(storage, filePath);
+        }
     }
 
     ~FileManager() {
-        furi_record_close(RECORD_STORAGE);
+        if(storage) {
+            furi_record_close(RECORD_STORAGE);
+            storage = nullptr;
+        }
     }
 };

@@ -352,16 +352,19 @@ FURI_NORETURN void furi_hal_power_reset(void) {
     NVIC_SystemReset();
 }
 
+static bool furi_hal_power_otg_enabled = false;
+
 bool furi_hal_power_enable_otg(void) {
-    return false; // OTG is not supported on DIY board
+    furi_hal_power_otg_enabled = true;
+    return true;
 }
 
 void furi_hal_power_disable_otg(void) {
-    // OTG is not supported on DIY board
+    furi_hal_power_otg_enabled = false;
 }
 
 bool furi_hal_power_is_otg_enabled(void) {
-    return false; // OTG is not supported on DIY board
+    return furi_hal_power_otg_enabled;
 }
 
 static float furi_hal_power_battery_charge_voltage_limit = 4.208f;
@@ -454,7 +457,7 @@ float furi_hal_power_get_battery_current(FuriHalPowerIC ic) {
     if(furi_hal_ina219_is_ready()) {
         float v = 0.0f, i = 0.0f;
         if(furi_hal_ina219_get_voltage_current(&v, &i)) {
-            FURI_LOG_D(TAG, "INA219 voltage=%.3f V, current=%.3f A", (double)v, (double)i);
+            FURI_LOG_T(TAG, "INA219 voltage=%.3f V, current=%.3f A", (double)v, (double)i);
             return i;
         }
     }

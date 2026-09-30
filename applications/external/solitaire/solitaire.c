@@ -128,7 +128,7 @@ static void direct_draw_run(GameState* instance) {
     furi_thread_set_current_priority(FuriThreadPriorityIdle);
     do {
         FuriStatus status = furi_mutex_acquire(update_mutex, 20);
-        if(!status) continue;
+        if(status != FuriStatusOk) continue;
 
         GameLogic* curr_state = (GameLogic*)current_state->data;
         currFrameTime = curr_time();

@@ -30,8 +30,11 @@ Canvas* canvas_init(void) {
     u8g2_Setup_ssd1306_flipper(
         &canvas->fb, U8G2_R0, u8x8_byte_hw_i2c_stm32, u8g2_gpio_and_delay_stm32);
     canvas->orientation = CanvasOrientationHorizontal;
+    // Settle delay to let decoupling capacitors charge and power rails stabilize
+    furi_delay_ms(50);
     // Initialize display
     u8g2_InitDisplay(&canvas->fb);
+    furi_delay_ms(10);
     // Wake up display
     u8g2_SetPowerSave(&canvas->fb, 0);
 

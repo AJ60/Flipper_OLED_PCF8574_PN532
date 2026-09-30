@@ -32,6 +32,7 @@ typedef struct {
 
 typedef struct {
     FuriMutex* mutex;
+    bool is_nrf24_connected;
 } PluginState;
 
 char rate_text_fmt[] = "Transfer rate: %dMbps";
@@ -99,7 +100,9 @@ static void insert_addr(uint8_t* addr, uint8_t addr_size) {
 static void render_callback(Canvas* const canvas, void* ctx) {
     furi_assert(ctx);
     const PluginState* plugin_state = ctx;
-    furi_mutex_acquire(plugin_state->mutex, FuriWaitForever);
+    if(furi_mutex_acquire(plugin_state->mutex, 100) != FuriStatusOk) {
+        return;
+    }
 
     uint8_t rate = 2;
     char sniffing[] = "Yes";
@@ -124,8 +127,14 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     canvas_draw_str_aligned(canvas, 10, 30, AlignLeft, AlignBottom, channel_text);
     //canvas_draw_str_aligned(canvas, 10, 30, AlignLeft, AlignBottom, preamble_text);
     canvas_draw_str_aligned(canvas, 10, 40, AlignLeft, AlignBottom, sniff_text);
-    canvas_draw_str_aligned(canvas, 30, 50, AlignLeft, AlignBottom, addresses_header_text);
-    canvas_draw_str_aligned(canvas, 30, 60, AlignLeft, AlignBottom, sniffed_address);
+
+    if(!plugin_state->is_nrf24_connected) {
+        canvas_draw_str_aligned(canvas, 10, 50, AlignLeft, AlignBottom, "NRF24 NOT CONNECTED!");
+        canvas_draw_str_aligned(canvas, 10, 60, AlignLeft, AlignBottom, "CSN: Pin 7 / 4  CE: Pin 6");
+    } else {
+        canvas_draw_str_aligned(canvas, 30, 50, AlignLeft, AlignBottom, addresses_header_text);
+        canvas_draw_str_aligned(canvas, 30, 60, AlignLeft, AlignBottom, sniffed_address);
+    }
 
     furi_mutex_release(plugin_state->mutex);
 }
@@ -135,7 +144,7 @@ static void input_callback(InputEvent* input_event, void* ctx) {
     FuriMessageQueue* event_queue = ctx;
 
     PluginEvent event = {.type = EventTypeKey, .input = *input_event};
-    furi_message_queue_put(event_queue, &event, FuriWaitForever);
+    furi_message_queue_put(event_queue, &event, 0);
 }
 
 static void hexlify(uint8_t* in, uint8_t size, char* out) {
@@ -260,7 +269,7 @@ static bool previously_confirmed(uint8_t* addr) {
     return found;
 }
 
-static void wrap_up(Storage* storage, NotificationApp* notification) {
+static void wrap_up(const FuriHalSpiBusHandle* handle, Storage* storage, NotificationApp* notification) {
     uint8_t ch;
     uint8_t addr[5];
     uint8_t altaddr[5];
@@ -269,9 +278,10 @@ static void wrap_up(Storage* storage, NotificationApp* notification) {
     uint8_t rate = 0;
     if(target_rate == 8) rate = 2;
 
-    nrf24_set_idle(nrf24_HANDLE);
+    nrf24_set_idle(handle);
 
-    while(true) {
+    int max_candidates = 2; // Test at most the top 2 candidates to prevent UI lockup
+    while(max_candidates-- > 0) {
         idx = get_highest_idx();
         if(counts[idx] < COUNT_THRESHOLD) break;
 
@@ -279,14 +289,14 @@ static void wrap_up(Storage* storage, NotificationApp* notification) {
         memcpy(addr, candidates[idx], 5);
         hexlify(addr, 5, trying);
         FURI_LOG_I(TAG, "trying address %s", trying);
-        ch = nrf24_find_channel(nrf24_HANDLE, addr, addr, 5, rate, 2, LOGITECH_MAX_CHANNEL, false);
+        ch = nrf24_find_channel(handle, addr, addr, 5, rate, 2, LOGITECH_MAX_CHANNEL, false);
         FURI_LOG_I(TAG, "find_channel returned %d", (int)ch);
         if(ch > LOGITECH_MAX_CHANNEL) {
             alt_address(addr, altaddr);
             hexlify(altaddr, 5, trying);
             FURI_LOG_I(TAG, "trying alternate address %s", trying);
             ch = nrf24_find_channel(
-                nrf24_HANDLE, altaddr, altaddr, 5, rate, 2, LOGITECH_MAX_CHANNEL, false);
+                handle, altaddr, altaddr, 5, rate, 2, LOGITECH_MAX_CHANNEL, false);
             FURI_LOG_I(TAG, "find_channel returned %d", (int)ch);
             memcpy(addr, altaddr, 5);
         }
@@ -298,7 +308,10 @@ static void wrap_up(Storage* storage, NotificationApp* notification) {
             if(confirmed_idx < MAX_CONFIRMED) memcpy(confirmed[confirmed_idx++], addr, 5);
             break;
         }
+        furi_delay_ms(1);
     }
+    // Clear low count candidates so noise does not accumulate and cause long freezes
+    memset(counts, 0, sizeof(counts));
 }
 
 static void clear_cache() {
@@ -313,18 +326,20 @@ static void clear_cache() {
     memset(confirmed, 0, sizeof(confirmed));
 }
 
-static void start_sniffing() {
-    nrf24_init_promisc_mode(nrf24_HANDLE, target_channel, target_rate);
+static void start_sniffing(const FuriHalSpiBusHandle* handle) {
+    nrf24_init_promisc_mode(handle, target_channel, target_rate);
 }
+
 
 int32_t nrfsniff_app(void* p) {
     UNUSED(p);
     uint8_t address[5] = {0};
     uint32_t start = 0;
     hexlify(address, 5, top_address);
-    FuriMessageQueue* event_queue = furi_message_queue_alloc(8, sizeof(PluginEvent));
+    FuriMessageQueue* event_queue = furi_message_queue_alloc(16, sizeof(PluginEvent));
     PluginState* plugin_state = malloc(sizeof(PluginState));
     plugin_state->mutex = furi_mutex_alloc(FuriMutexTypeNormal);
+    plugin_state->is_nrf24_connected = false;
     if(!plugin_state->mutex) {
         furi_message_queue_free(event_queue);
         FURI_LOG_E(TAG, "cannot create mutex\r\n");
@@ -343,12 +358,12 @@ int32_t nrfsniff_app(void* p) {
 
     nrf24_init();
 
-    bool nrf_ready = false;
-    if(nrf24_check_connected(nrf24_HANDLE)) {
-        nrf_ready = true;
+    const FuriHalSpiBusHandle* active_handle = nrf24_get_handle();
+    plugin_state->is_nrf24_connected = nrf24_check_connected(active_handle);
+    if(plugin_state->is_nrf24_connected) {
+        FURI_LOG_I(TAG, "NRF24 detected on handle %p", active_handle);
     } else {
-        nrf_ready = false;
-        FURI_LOG_E(TAG, "NRF24 not connected");
+        FURI_LOG_W(TAG, "NRF24 not connected");
     }
 
     // Set system callbacks
@@ -367,81 +382,66 @@ int32_t nrfsniff_app(void* p) {
     storage_common_mkdir(storage, NRFSNIFF_APP_PATH_FOLDER);
 
     PluginEvent event;
+    uint32_t last_redraw = 0;
     for(bool processing = true; processing;) {
-        FuriStatus event_status = furi_message_queue_get(event_queue, &event, 100);
-        furi_mutex_acquire(plugin_state->mutex, FuriWaitForever);
+        FuriStatus event_status =
+            furi_message_queue_get(event_queue, &event, sniffing_state ? 0 : 100);
+
+        bool needs_redraw = false;
 
         if(event_status == FuriStatusOk) {
-            // press events
+            // key events
             if(event.type == EventTypeKey) {
-                if(event.input.type == InputTypePress ||
-                   (event.input.type == InputTypeLong && event.input.key == InputKeyBack)) {
+                if(event.input.type == InputTypeShort ||
+                   (event.input.type == InputTypeRepeat &&
+                    (event.input.key == InputKeyRight || event.input.key == InputKeyLeft))) {
+                    needs_redraw = true;
                     switch(event.input.key) {
                     case InputKeyUp:
                         // toggle rate  1/2Mbps
                         if(!sniffing_state) {
-                            if(target_rate == 0)
-                                target_rate = 8;
-                            else
-                                target_rate = 0;
+                            target_rate = (target_rate == 0) ? 8 : 0;
                         }
                         break;
                     case InputKeyDown:
                         // toggle preamble
                         if(!sniffing_state) {
-                            if(target_preamble[0] == 0x55)
-                                target_preamble[0] = 0xAA;
-                            else
-                                target_preamble[0] = 0x55;
-
-                            nrf24_set_src_mac(nrf24_HANDLE, target_preamble, 2);
+                            target_preamble[0] = (target_preamble[0] == 0x55) ? 0xAA : 0x55;
+                            if(active_handle) {
+                                nrf24_set_src_mac(active_handle, target_preamble, 2);
+                            }
                         }
                         break;
                     case InputKeyRight:
-                        // increment channel
-                        //if(!sniffing_state && target_channel <= LOGITECH_MAX_CHANNEL)
-                        //    target_channel++;
                         sample_time += 500;
                         break;
                     case InputKeyLeft:
-                        // decrement channel
-                        //if(!sniffing_state && target_channel > 0) target_channel--;
                         if(sample_time > 500) sample_time -= 500;
                         break;
                     case InputKeyOk:
-                        // toggle sniffing
-                        if(nrf_ready) {
+                        // toggle sniffing or re-detect NRF24
+                        if(!plugin_state->is_nrf24_connected) {
+                            active_handle = nrf24_get_handle();
+                            plugin_state->is_nrf24_connected = nrf24_check_connected(active_handle);
+                        }
+
+                        if(plugin_state->is_nrf24_connected) {
                             sniffing_state = !sniffing_state;
                             if(sniffing_state) {
                                 clear_cache();
-                                start_sniffing();
+                                start_sniffing(active_handle);
                                 start = furi_get_tick();
                             } else {
-                                wrap_up(storage, notification);
+                                wrap_up(active_handle, storage, notification);
                             }
                         } else {
                             notification_message(notification, &sequence_error);
-                            if(nrf24_check_connected(nrf24_HANDLE)) {
-                                nrf_ready = true;
-                            } else {
-                                nrf_ready = false;
-                                FURI_LOG_E(TAG, "NRF24 not connected");
-                            }
                         }
 
                         break;
                     case InputKeyBack:
-                        if(nrf_ready) {
-                            if(sniffing_state) {
-                                wrap_up(storage, notification);
-                            }
-                        } else {
-                            if(nrf24_check_connected(nrf24_HANDLE)) {
-                                nrf_ready = true;
-                            } else {
-                                nrf_ready = false;
-                                FURI_LOG_E(TAG, "NRF24 not connected");
-                            }
+                        if(active_handle && sniffing_state) {
+                            wrap_up(active_handle, storage, notification);
                         }
                         processing = false;
                         break;
@@ -452,36 +452,42 @@ int32_t nrfsniff_app(void* p) {
             }
         }
 
-        if(sniffing_state) {
-            if(nrf24_sniff_address(nrf24_HANDLE, 5, address)) {
-                int idx;
-                uint8_t* top_addr;
-                if(!previously_confirmed(address)) {
-                    idx = get_addr_index(address, 5);
-                    if(idx == -1)
-                        insert_addr(address, 5);
-                    else
-                        counts[idx]++;
+        if(sniffing_state && active_handle) {
+            for(int i = 0; i < 20; i++) {
+                if(nrf24_sniff_address(active_handle, 5, address)) {
+                    furi_mutex_acquire(plugin_state->mutex, FuriWaitForever);
+                    if(!previously_confirmed(address)) {
+                        int idx = get_addr_index(address, 5);
+                        if(idx == -1)
+                            insert_addr(address, 5);
+                        else
+                            counts[idx]++;
 
-                    top_addr = candidates[get_highest_idx()];
-                    hexlify(top_addr, 5, top_address);
+                        uint8_t* top_addr = candidates[get_highest_idx()];
+                        hexlify(top_addr, 5, top_address);
+                        needs_redraw = true;
+                    }
+                    furi_mutex_release(plugin_state->mutex);
+                    break;
                 }
+                furi_delay_us(100);
             }
 
             if(furi_get_tick() - start >= sample_time) {
                 target_channel++;
                 if(target_channel > LOGITECH_MAX_CHANNEL) target_channel = 2;
-                {
-                    wrap_up(storage, notification);
-                    start_sniffing();
-                }
-
+                wrap_up(active_handle, storage, notification);
+                start_sniffing(active_handle);
                 start = furi_get_tick();
+                needs_redraw = true;
             }
         }
 
-        furi_mutex_release(plugin_state->mutex);
-        view_port_update(view_port);
+        uint32_t now = furi_get_tick();
+        if(needs_redraw || (sniffing_state && (now - last_redraw >= 150))) {
+            view_port_update(view_port);
+            last_redraw = now;
+        }
     }
 
     clear_cache();

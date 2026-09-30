@@ -75,7 +75,7 @@ public:
             return 0;
         }
 
-        FileManager fileManager = FileManager();
+        FileManager fileManager;
         Directory* dir = fileManager.OpenDirectory(dirPath);
         uint16_t categoriesLoaded = 0;
 
@@ -105,7 +105,7 @@ public:
             return 0;
         }
 
-        FileManager fileManager = FileManager();
+        FileManager fileManager;
         Directory* dir = fileManager.OpenDirectory(stationDirPath->cstr());
         PagerSerializer serializer = PagerSerializer();
         size_t stationsLoaded = 0;
@@ -141,7 +141,7 @@ public:
         if(categoryPath == NULL) {
             return NULL;
         }
-        FileManager fileManager = FileManager();
+        FileManager fileManager;
         String* name = PagerSerializer().LoadOnlyStationName(&fileManager, categoryPath->cstr(), pager);
         delete categoryPath;
         return name;
@@ -153,7 +153,7 @@ public:
         String* todayDate = new String("%d-%02d-%02d", datetime.year, datetime.month, datetime.day);
         String* todaysDir = getCategoryPath(Autosaved, todayDate->cstr());
 
-        FileManager fileManager = FileManager();
+        FileManager fileManager;
         fileManager.CreateDirIfNotExists(STATIONS_PATH);
         fileManager.CreateDirIfNotExists(AUTOSAVED_STATIONS_PATH);
         fileManager.CreateDirIfNotExists(todaysDir->cstr());
@@ -174,9 +174,9 @@ public:
     ) {
         String* catDir = getCategoryPath(User, userCategory);
 
-        FileManager fileManager = FileManager();
+        FileManager fileManager;
         fileManager.CreateDirIfNotExists(STATIONS_PATH);
-        fileManager.CreateDirIfNotExists(AUTOSAVED_STATIONS_PATH);
+        fileManager.CreateDirIfNotExists(SAVED_STATIONS_PATH);
         fileManager.CreateDirIfNotExists(catDir->cstr());
 
         PagerSerializer().SavePagerData(&fileManager, catDir->cstr(), stationName, storedData, decoder, protocol, frequency);
@@ -186,13 +186,15 @@ public:
 
     void DeletePager(const char* userCategory, StoredPagerData* storedData) {
         String* filePath = getFilePath(User, userCategory, storedData);
-        FileManager().DeleteFile(filePath->cstr());
+        FileManager fileManager;
+        fileManager.DeleteFile(filePath->cstr());
         delete filePath;
     }
 
     void DeleteCategory(const char* userCategory) {
         String* catPath = getCategoryPath(User, userCategory);
-        FileManager().DeleteFile(catPath->cstr());
+        FileManager fileManager;
+        fileManager.DeleteFile(catPath->cstr());
         delete catPath;
     }
 };

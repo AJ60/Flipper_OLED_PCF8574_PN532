@@ -136,14 +136,14 @@ const GpioPinRecord gpio_pins[] = {
      .channel = FuriHalAdcChannel15,
      .number = 6,
      .debug = false},
-    // Header "PC3" is wired to MCU PA5 = LF-RFID 125kHz carrier (TIM2_CH1);
-    // MCU PA5 = ADC_IN10, but it belongs to the RFID HAL -> hidden from the
-    // GPIO app.
+    // Header "PC3" is wired to MCU PA5 (Pin 7).
+    // LF-RFID 125kHz carrier disabled; pin is now a fully functional, safe GPIO
+    // and ADC pin (MCU PA5 = ADC_IN10).
     {.pin = &gpio_ext_pc3,
      .name = "PC3",
      .channel = FuriHalAdcChannel10,
      .number = 7,
-     .debug = true},
+     .debug = false},
     // GND: 8
     // Space
     // 3v3: 9
@@ -352,6 +352,22 @@ const GpioPinRecord* furi_hal_resources_pin_by_name(const char* name) {
         const GpioPinRecord* record = &gpio_pins[i];
         if(strcasecmp(name, record->name) == 0) return record;
     }
+    // Flipper Zero standard header label aliases
+    if(strcasecmp(name, "C3") == 0) return furi_hal_resources_pin_by_number(7);
+    if(strcasecmp(name, "C1") == 0) return furi_hal_resources_pin_by_number(15);
+    if(strcasecmp(name, "C0") == 0) return furi_hal_resources_pin_by_number(16);
+    if(strcasecmp(name, "A4") == 0) return furi_hal_resources_pin_by_number(4);
+    if(strcasecmp(name, "B2") == 0) return furi_hal_resources_pin_by_number(6);
+    if(strcasecmp(name, "TX") == 0) return furi_hal_resources_pin_by_number(13);
+    if(strcasecmp(name, "RX") == 0) return furi_hal_resources_pin_by_number(14);
+    if(strcasecmp(name, "1W") == 0 || strcasecmp(name, "iButton") == 0)
+        return furi_hal_resources_pin_by_number(17);
+    if(strcasecmp(name, "SWC") == 0 || strcasecmp(name, "SWCLK") == 0)
+        return furi_hal_resources_pin_by_number(10);
+    if(strcasecmp(name, "SWD") == 0 || strcasecmp(name, "SIO") == 0 ||
+       strcasecmp(name, "SWDIO") == 0)
+        return furi_hal_resources_pin_by_number(12);
+
     return NULL;
 }
 

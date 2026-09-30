@@ -107,7 +107,6 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
             if(buf_idx < sizeof(buffer)) {
                 buffer[buf_idx++] = data[i];
             } else {
-                display_needs_reinit = true;
                 break;
             }
         }
@@ -135,9 +134,10 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
                 furi_delay_ms(1);
             }
             if(!success) {
-                // On transient I2C contention, safely release bus, reset index, and skip frame
+                // On transient I2C contention, safely release bus, reset index, and flag reinit
                 buf_idx = 0;
                 furi_hal_i2c_release(&furi_hal_i2c_handle_power);
+                display_needs_reinit = true;
                 return 0;
             }
         }

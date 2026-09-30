@@ -888,7 +888,12 @@ bool nrf24_read_newpacket() {
             }
         }
         FURI_LOG_D(TAG, "Found packet #%d pipe %d", log_arr_idx, st);
-        notification_message(APP->notification, &sequence_blink_white_100);
+        static uint32_t last_notify = 0;
+        uint32_t now = furi_get_tick();
+        if(now - last_notify >= 250) {
+            notification_message(APP->notification, &sequence_blink_white_100);
+            last_notify = now;
+        }
         found = true;
     }
     return found;
@@ -960,7 +965,7 @@ bool nrf24_send_packet() {
 static void render_callback(Canvas* const canvas, void* ctx) {
     const PluginState* plugin_state = ctx;
     if(plugin_state == NULL) return;
-    if(furi_mutex_acquire(plugin_state->mutex, 25) != FuriStatusOk) return;
+    if(furi_mutex_acquire(plugin_state->mutex, 100) != FuriStatusOk) return;
     //canvas_draw_frame(canvas, 0, 0, 128, 64); // border around the edge of the screen
     if(what_doing == 0) {
         canvas_set_font(canvas, FontSecondary); // 8x10 font, 6 lines
@@ -1409,7 +1414,7 @@ int32_t nrf24scan_app(void* p) {
 
     PluginEvent event;
     for(bool processing = true; processing;) {
-        FuriStatus event_status = furi_message_queue_get(APP->event_queue, &event, 100);
+        FuriStatus event_status = furi_message_queue_get(APP->event_queue, &event, (what_doing && what_to_do) ? 5 : 100);
         furi_mutex_acquire(plugin_state->mutex, FuriWaitForever);
 
         if(event_status == FuriStatusOk) {
@@ -1538,7 +1543,12 @@ int32_t nrf24scan_app(void* p) {
                                     write_to_log_file(APP->storage, true);
                                 } else {
                                     file_stream = file_stream_alloc(APP->storage);
-                                    if(select_settings_file(file_stream)) {
+                                    furi_mutex_release(plugin_state->mutex);
+                                    view_port_enabled_set(APP->view_port, false);
+                                    bool selected = select_settings_file(file_stream);
+                                    view_port_enabled_set(APP->view_port, true);
+                                    furi_mutex_acquire(plugin_state->mutex, FuriWaitForever);
+                                    if(selected) {
                                         uint8_t err = load_settings_file(file_stream);
                                         if(!err)
                                             save_to_new_log = true;
@@ -1633,7 +1643,9 @@ int32_t nrf24scan_app(void* p) {
             }
         }
         if(what_doing && what_to_do) {
-            nrf24_read_newpacket();
+            uint8_t drain_count = 0;
+            while(nrf24_read_newpacket() && ++drain_count < 3) {
+            }
             if(find_channel_period &&
                furi_get_tick() - start_time >= (uint32_t)find_channel_period * 1000UL) {
                 if(++NRF_channel > MAX_CHANNEL) NRF_channel = 0;

@@ -100,8 +100,8 @@ static void cbDraw(Canvas* const canvas, void* ctx) {
 
     state_t* state = ctx;
 
-    // Try to acquire the mutex for the plugin state variables, timeout = 25mS
-    if(furi_mutex_acquire(state->mutex, 25) != FuriStatusOk) return;
+    // Try to acquire the mutex for the plugin state variables, timeout = 100mS
+    if(furi_mutex_acquire(state->mutex, 100) != FuriStatusOk) return;
 
     switch(state->scene) {
     //---------------------------------------------------------------------

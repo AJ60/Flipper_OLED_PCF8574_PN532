@@ -156,7 +156,7 @@ A6 - A6      (SPI1 MISO -> NOT GPIO safe)
 A2 - A2      (NFC IRQ / LF-RFID pull, internal)
 B3 - B3      (SPI1 SCK -> NOT GPIO safe)
 B2 - B2      (free GPIO; MCU PB2 = ADC_IN15)
-C3 - A5      (LF-RFID 125kHz carrier, TIM2_CH1; MCU PA5 = ADC_IN10, internal)
+C3 - A5      (Header Pin 7: free GPIO & ADC_IN10; LF-RFID 125kHz carrier disabled)
 GND - GND
 
 3V3 - 3V3
@@ -173,7 +173,7 @@ GND - GND
 Internal aliases / pin conflicts (not on header):
 PA1 = CC1101 GDO0 (Sub-GHz) AND LF-RFID 125kHz data input
 PA2 = NFC IRQ AND LF-RFID pull
-PA5 = LF-RFID carrier (exposed on header as "C3")
+PA5 = Header Pin 7 ("PC3" / "C3", free GPIO & ADC_IN10; LF-RFID carrier disabled)
 */
 #define PA7_GPIO_Port GPIOB
 #define PA7_Pin       LL_GPIO_PIN_5

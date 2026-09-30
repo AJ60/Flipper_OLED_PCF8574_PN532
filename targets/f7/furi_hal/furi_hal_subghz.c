@@ -506,6 +506,7 @@ uint32_t furi_hal_subghz_set_frequency(uint32_t value) {
     }
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+    FURI_LOG_I(TAG, "set_frequency finished: %lu", real_frequency);
     return real_frequency;
 }
 
@@ -529,6 +530,7 @@ void furi_hal_subghz_set_path(FuriHalSubGhzPath path) {
         furi_crash("SubGhz: Incorrect path during set.");
     }
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+    FURI_LOG_I(TAG, "set_path finished: %d", path);
 }
 
 static bool furi_hal_subghz_start_debug(void) {

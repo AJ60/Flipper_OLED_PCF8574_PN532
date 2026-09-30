@@ -103,7 +103,13 @@ void furi_hal_pwm_stop(FuriHalPwmOutputId channel) {
         // either if PWM never started.
         if(!pwm_tim17_active) return;
         pwm_tim17_active = false;
-        furi_hal_gpio_init_simple(&gpio_ext_pc0, GpioModeAnalog);
+        // Restore PA7 (I2C3 SCL) to OpenDrain AltFn4I2C3 so PN532 / external I2C clock is not left in dead analog mode
+        furi_hal_gpio_init_ex(
+            &gpio_ext_pc0,
+            GpioModeAltFunctionOpenDrain,
+            GpioPullNo,
+            GpioSpeedHigh,
+            GpioAltFn4I2C3);
         if(furi_hal_bus_is_enabled(FuriHalBusTIM17)) {
             furi_hal_bus_disable(FuriHalBusTIM17);
         }

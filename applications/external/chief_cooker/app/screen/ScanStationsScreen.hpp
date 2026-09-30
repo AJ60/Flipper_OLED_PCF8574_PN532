@@ -75,14 +75,9 @@ public:
 
         menuView->SetLeftButton("Conf", HANDLER_1ARG(&ScanStationsScreen::showConfig));
 
-        subghz = new SubGhzModule(config->Frequency);
-        subghz->SetReceiveHandler(HANDLER_1ARG(&ScanStationsScreen::receive));
-        if(receiveNew) {
-            subghz->SetReceiveAfterTransmission(true);
-            subghz->ReceiveAsync();
-        }
-
+        FURI_LOG_I("SCAN", "Step 1: creating PagerReceiver");
         pagerReceiver = new PagerReceiver(config);
+        FURI_LOG_I("SCAN", "Step 2: PagerReceiver created");
         if(categoryType == User) {
             pagerReceiver->SetUserCategory(category);
             updateUserCategory = false;
@@ -91,17 +86,9 @@ public:
                 menuView->SetRightButton("Delete category", HANDLER_1ARG(&ScanStationsScreen::deleteCategory));
             }
         } else {
+            FURI_LOG_I("SCAN", "Step 3: ReloadKnownStations");
             pagerReceiver->ReloadKnownStations();
-        }
-
-        if(receiveNew) {
-            if(subghz->IsExternal()) {
-                menuView->SetNoElementCaption("Receiving via EXT...");
-            } else {
-                menuView->SetNoElementCaption("Receiving...");
-            }
-        } else {
-            menuView->SetNoElementCaption("No stations found!");
+            FURI_LOG_I("SCAN", "Step 4: ReloadKnownStations done");
         }
 
         if(!receiveNew) {
@@ -112,9 +99,28 @@ public:
                 fromFilePagersCount = menuView->GetElementsCount();
                 menuView->AddElement();
             }
+            menuView->SetNoElementCaption("No stations found!");
+        }
+
+        FURI_LOG_I("SCAN", "Step 5: creating SubGhzModule(%lu)", config->Frequency);
+        subghz = new SubGhzModule(config->Frequency);
+        FURI_LOG_I("SCAN", "Step 6: setting receive handler");
+        subghz->SetReceiveHandler(HANDLER_1ARG(&ScanStationsScreen::receive));
+
+        if(receiveNew) {
+            if(subghz->IsExternal()) {
+                menuView->SetNoElementCaption("Receiving via EXT...");
+            } else {
+                menuView->SetNoElementCaption("Receiving...");
+            }
+            FURI_LOG_I("SCAN", "Step 7: calling ReceiveAsync()");
+            subghz->SetReceiveAfterTransmission(true);
+            subghz->ReceiveAsync();
+            FURI_LOG_I("SCAN", "Step 8: ReceiveAsync() completed");
         }
 
         receiveMode = receiveNew;
+        FURI_LOG_I("SCAN", "ScanStationsScreen constructor fully completed");
     }
 
     UiView* GetView() {
@@ -217,8 +223,11 @@ private:
     }
 
     void showConfig(uint32_t) {
+        FURI_LOG_I("SCAN", "showConfig: 1 creating SettingsScreen");
         SettingsScreen* screen = new SettingsScreen(config, pagerReceiver, subghz, updateUserCategory);
+        FURI_LOG_I("SCAN", "showConfig: 2 pushing SettingsScreen view");
         UiManager::GetInstance()->PushView(screen->GetView());
+        FURI_LOG_I("SCAN", "showConfig: 3 completed");
     }
 
     void editPagerMessage(uint32_t index) {

@@ -218,6 +218,7 @@ private:
 
         case InputKeyLeft:
             if(event->type == InputTypePress && leftButtonPress != NULL) {
+                FURI_LOG_I(LOG_TAG, "InputKeyLeft pressed");
                 leftButtonPress(selectedIndex);
                 return true;
             }
@@ -265,7 +266,9 @@ private:
     static bool inputCallback(InputEvent* event, void* context) {
         ColumnOrientedListUiView* uiView = (ColumnOrientedListUiView*)context;
         if(uiView->input(event)) {
-            uiView->Refresh();
+            if(uiView->IsOnTop()) {
+                uiView->Refresh();
+            }
             return true;
         }
         return false;

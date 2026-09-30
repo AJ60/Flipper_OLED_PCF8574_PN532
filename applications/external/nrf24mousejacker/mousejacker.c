@@ -43,7 +43,7 @@ char index_text[30];
 static void render_callback(Canvas* const canvas, void* ctx) {
     furi_assert(ctx);
     const PluginState* plugin_state = ctx;
-    furi_mutex_acquire(plugin_state->mutex, FuriWaitForever);
+    if(furi_mutex_acquire(plugin_state->mutex, 100) != FuriStatusOk) return;
 
     // border around the edge of the screen
     canvas_draw_frame(canvas, 0, 0, 128, 64);
@@ -322,6 +322,7 @@ int32_t mousejacker_app(void* p) {
     }
 
     nrf24_init();
+    plugin_state->is_nrf24_connected = nrf24_check_connected(nrf24_HANDLE);
 
     PluginEvent event;
     for(bool processing = true; processing;) {
@@ -355,11 +356,13 @@ int32_t mousejacker_app(void* p) {
                         if(!plugin_state->addr_err) {
                             if(!nrf24_check_connected(nrf24_HANDLE)) {
                                 plugin_state->is_nrf24_connected = false;
-                                view_port_update(view_port);
                                 notification_message(notification, &sequence_error);
                             } else if(!plugin_state->is_thread_running) {
+                                if(plugin_state->mjthread) {
+                                    furi_thread_join(plugin_state->mjthread);
+                                }
+                                plugin_state->is_nrf24_connected = true;
                                 furi_thread_start(plugin_state->mjthread);
-                                view_port_update(view_port);
                             }
                         }
                         break;

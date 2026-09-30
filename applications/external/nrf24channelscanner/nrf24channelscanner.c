@@ -21,6 +21,7 @@ static bool isInfiniteScan = false; //to prevent stop scan when OK long pressed
 
 static bool threadStoppedsoFree = false; //indicate if I can free the thread from ram.
 static uint8_t currCh = 0; //for the progress bar or the channel selector
+static uint8_t selectedCh = 0; //remember user selected frequency/channel
 
 static int delayPerChan = 150; //can set via up / down.
 
@@ -61,8 +62,13 @@ static void draw_callback(Canvas* canvas, void* ctx) {
         return;
     }
 
-    canvas_draw_line(canvas, currCh, 12, currCh, 13); //draw the current channel
-
+    canvas_draw_line(
+        canvas,
+        isScanning ? currCh : selectedCh,
+        12,
+        isScanning ? currCh : selectedCh,
+        13); //draw the current channel
+ 
     //draw hello mesage
     if(szuz) {
         canvas_set_font(canvas, FontSecondary);
@@ -82,7 +88,7 @@ static void draw_callback(Canvas* canvas, void* ctx) {
 
     } else {
         if(showFreq) {
-            int freq = 2400 + currCh;
+            int freq = 2400 + selectedCh;
             char strfreq[10] = {0};
             snprintf(strfreq, sizeof(strfreq), "%d MHZ", freq);
             canvas_draw_str(canvas, 40, 8, strfreq);
@@ -146,13 +152,19 @@ static int32_t scanner(void* context) {
     nrf24_set_idle(nrf24_HANDLE);
     isScanning = false;
     threadStoppedsoFree = true;
-    currCh = 0;
+    currCh = selectedCh;
     return 0;
 }
 
 void ChangeFreq(int delta) {
-    currCh += delta;
-    if(currCh > num_channels) currCh = 0;
+    int new_ch = (int)selectedCh + delta;
+    if(new_ch < 0) {
+        new_ch = num_channels - 1;
+    } else if(new_ch >= num_channels) {
+        new_ch = 0;
+    }
+    selectedCh = (uint8_t)new_ch;
+    currCh = selectedCh;
     showFreq = true;
 }
 
@@ -202,6 +214,7 @@ int32_t nrf24channelscanner_main(void* p) {
                     notification_message(notification, &sequence_blink_yellow_100);
                     furi_thread_join(thread);
                     furi_thread_free(thread);
+                    currCh = selectedCh;
                 }
                 break;
             }
@@ -214,6 +227,7 @@ int32_t nrf24channelscanner_main(void* p) {
                     furi_thread_join(thread);
                     furi_thread_free(thread);
                     threadStoppedsoFree = false; //to prevent double free
+                    currCh = selectedCh;
                     continue;
                 }
                 memset(nrf24values, 0, sizeof(nrf24values));
@@ -255,6 +269,7 @@ int32_t nrf24channelscanner_main(void* p) {
             threadStoppedsoFree = false;
             furi_thread_join(thread);
             furi_thread_free(thread);
+            currCh = selectedCh;
         }
     }
     nrf24_deinit();

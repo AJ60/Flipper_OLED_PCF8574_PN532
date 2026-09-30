@@ -29,8 +29,9 @@ public:
     }
 
     uint32_t AddItem(UiVariableItem* item) {
-        item->AddTo(varItemList);
-        return itemCounter++;
+        uint8_t pos = itemCounter++;
+        item->AddTo(varItemList, pos);
+        return pos;
     }
 
     void SetEnterPressHandler(function<void(uint32_t)> handler) {

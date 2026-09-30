@@ -65,10 +65,14 @@ private:
 
         size_t count = appFilesystem.GetStationsFromDirectory(&stations, this, User, userCategory, withNames);
 
-        knownStations = new KnownStationData[count];
-        for(size_t i = 0; i < count; i++) {
-            knownStations[i] = buildKnownStationWithName(stations.front());
-            stations.pop_front();
+        if(count > 0) {
+            knownStations = new KnownStationData[count];
+            for(size_t i = 0; i < count; i++) {
+                knownStations[i] = buildKnownStationWithName(stations.front());
+                stations.pop_front();
+            }
+        } else {
+            knownStations = nullptr;
         }
 
         knownStationsSize = count;
@@ -205,10 +209,15 @@ public:
         int count = appFilesystem.GetStationsFromDirectory(&stations, this, categoryType, category, withNames);
 
         delete[] pagers;
-        pagers = new StoredPagerData[count];
+        pagersArraySize = (count > 0) ? count : PAGERS_ARRAY_SIZE_MULTIPLIER;
+        pagers = new StoredPagerData[pagersArraySize];
 
         if(!knownStationsLoaded) {
-            knownStations = new KnownStationData[count];
+            if(count > 0) {
+                knownStations = new KnownStationData[count];
+            } else {
+                knownStations = nullptr;
+            }
         }
 
         for(int i = 0; i < count; i++) {
@@ -227,7 +236,6 @@ public:
         }
 
         nextPagerIndex = count;
-        pagersArraySize = count;
         knownStationsLoaded = true;
     }
 
@@ -236,6 +244,9 @@ public:
     }
 
     String* GetName(StoredPagerData* pager) {
+        if(knownStations == nullptr || knownStationsSize == 0) {
+            return NULL;
+        }
         uint32_t stationId = buildKnownStationWithoutName(pager).toInt();
         for(size_t i = 0; i < knownStationsSize; i++) {
             if(knownStations[i].toInt() == stationId) {
@@ -246,6 +257,9 @@ public:
     }
 
     bool IsKnown(StoredPagerData* pager) {
+        if(knownStations == nullptr || knownStationsSize == 0) {
+            return false;
+        }
         uint32_t stationId = buildKnownStationWithoutName(pager).toInt();
         for(size_t i = 0; i < knownStationsSize; i++) {
             if(knownStations[i].toInt() == stationId) {

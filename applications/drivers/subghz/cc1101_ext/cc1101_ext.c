@@ -237,13 +237,16 @@ bool subghz_device_cc1101_ext_alloc(SubGhzDeviceConf* conf) {
 
     subghz_device_cc1101_ext->spi_bus_handle =
         (momentum_settings.spi_cc1101_handle == SpiDefault ?
-             &furi_hal_spi_bus_handle_external :
-             &furi_hal_spi_bus_handle_external_extra);
+             &furi_hal_spi_bus_handle_external_extra :
+             &furi_hal_spi_bus_handle_external);
 
     // this is needed if multiple SPI devices are connected to the same bus but with different CS pins
-    if(momentum_settings.spi_cc1101_handle == SpiExtra) {
+    if(subghz_device_cc1101_ext->spi_bus_handle == &furi_hal_spi_bus_handle_external) {
         furi_hal_gpio_init_simple(&gpio_ext_pa4, GpioModeOutputPushPull);
         furi_hal_gpio_write(&gpio_ext_pa4, true);
+    } else {
+        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeOutputPushPull);
+        furi_hal_gpio_write(&gpio_ext_pc3, true);
     }
 
     furi_hal_spi_bus_handle_init(subghz_device_cc1101_ext->spi_bus_handle);
@@ -252,7 +255,23 @@ bool subghz_device_cc1101_ext_alloc(SubGhzDeviceConf* conf) {
         furi_hal_gpio_write(SUBGHZ_DEVICE_CC1101_EXT_E07_AMP_GPIO, 0);
     }
 
-    return subghz_device_cc1101_ext_check_init();
+    bool ok = subghz_device_cc1101_ext_check_init();
+    if(!ok) {
+        const FuriHalSpiBusHandle* alt_handle =
+            (subghz_device_cc1101_ext->spi_bus_handle == &furi_hal_spi_bus_handle_external ?
+                 &furi_hal_spi_bus_handle_external_extra :
+                 &furi_hal_spi_bus_handle_external);
+        furi_hal_spi_bus_handle_init(alt_handle);
+        subghz_device_cc1101_ext->spi_bus_handle = alt_handle;
+        ok = subghz_device_cc1101_ext_check_init();
+        if(ok) {
+            FURI_LOG_I(
+                TAG,
+                "CC1101 auto-detected on alternative pin (%s)",
+                alt_handle == &furi_hal_spi_bus_handle_external ? "Pin 7 (PC3)" : "Pin 4 (PA4)");
+        }
+    }
+    return ok;
 }
 
 void subghz_device_cc1101_ext_free(void) {
@@ -260,13 +279,9 @@ void subghz_device_cc1101_ext_free(void) {
 
     furi_hal_spi_bus_handle_deinit(subghz_device_cc1101_ext->spi_bus_handle);
 
-    // resetting the CS pins to floating
-    if(momentum_settings.spi_nrf24_handle == SpiDefault ||
-       subghz_device_cc1101_ext->amp_and_leds) {
-        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
-    } else if(momentum_settings.spi_nrf24_handle == SpiExtra) {
-        furi_hal_gpio_init_simple(&gpio_ext_pa4, GpioModeAnalog);
-    }
+    // resetting both CS pins to floating analog
+    furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
+    furi_hal_gpio_init_simple(&gpio_ext_pa4, GpioModeAnalog);
 
     free(subghz_device_cc1101_ext);
     subghz_device_cc1101_ext = NULL;

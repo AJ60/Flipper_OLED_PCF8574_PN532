@@ -459,41 +459,11 @@ static void furi_hal_serial_lpuart_deinit_dma_rx(void) {
 }
 
 static void furi_hal_serial_lpuart_init(FuriHalSerialHandle* handle, uint32_t baud) {
-    furi_hal_bus_enable(FuriHalBusLPUART1);
-    LL_RCC_SetLPUARTClockSource(LL_RCC_LPUART1_CLKSOURCE_PCLK1);
-
-    furi_hal_gpio_init_ex(
-        &gpio_ext_pc0,
-        GpioModeAltFunctionPushPull,
-        GpioPullUp,
-        GpioSpeedVeryHigh,
-        GpioAltFn8LPUART1);
-    furi_hal_gpio_init_ex(
-        &gpio_ext_pc1,
-        GpioModeAltFunctionPushPull,
-        GpioPullUp,
-        GpioSpeedVeryHigh,
-        GpioAltFn8LPUART1);
-
-    LL_LPUART_InitTypeDef LPUART_InitStruct;
-    LPUART_InitStruct.PrescalerValue = LL_LPUART_PRESCALER_DIV1;
-    LPUART_InitStruct.BaudRate = baud;
-    LPUART_InitStruct.DataWidth = LL_LPUART_DATAWIDTH_8B;
-    LPUART_InitStruct.StopBits = LL_LPUART_STOPBITS_1;
-    LPUART_InitStruct.Parity = LL_LPUART_PARITY_NONE;
-    LPUART_InitStruct.TransferDirection = LL_LPUART_DIRECTION_TX_RX;
-    LPUART_InitStruct.HardwareFlowControl = LL_LPUART_HWCONTROL_NONE;
-    LL_LPUART_Init(LPUART1, &LPUART_InitStruct);
-    LL_LPUART_EnableFIFO(LPUART1);
-
-    LL_LPUART_Enable(LPUART1);
-
-    while(!LL_LPUART_IsActiveFlag_TEACK(LPUART1) || !LL_LPUART_IsActiveFlag_REACK(LPUART1))
-        ;
-
-    furi_hal_serial_set_br(handle, baud);
-    LL_LPUART_DisableIT_ERROR(LPUART1);
-    furi_hal_serial[handle->id].enabled = true;
+    UNUSED(handle);
+    UNUSED(baud);
+    // UFQFPN48 lacks PC0/PC1; gpio_ext_pc0 (PA7) and gpio_ext_pc1 (PB4) are dedicated to I2C3 (PN532 NFC).
+    // Reconfiguring them as LPUART1 would corrupt the I2C bus.
+    FURI_LOG_W("FuriHalSerial", "LPUART1 is disabled on this 48-pin DIY target (pins dedicated to I2C3 PN532)");
 }
 
 void furi_hal_serial_init(FuriHalSerialHandle* handle, uint32_t baud) {
@@ -713,8 +683,7 @@ void furi_hal_serial_deinit(FuriHalSerialHandle* handle) {
             LL_LPUART_Disable(LPUART1);
         }
         furi_hal_serial_lpuart_deinit_dma_rx();
-        furi_hal_gpio_init(&gpio_ext_pc0, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
-        furi_hal_gpio_init(&gpio_ext_pc1, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+        // Do NOT set gpio_ext_pc0 (PA7) or gpio_ext_pc1 (PB4) to Analog: they are owned by I2C3 (PN532)
     } else {
         furi_crash();
     }
