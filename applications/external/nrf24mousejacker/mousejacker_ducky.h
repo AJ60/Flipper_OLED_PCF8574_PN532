@@ -31,6 +31,7 @@ typedef struct {
     Storage* storage;
     FuriThread* mjthread;
     Stream* file_stream;
+    char ducky_path[128];
 } PluginState;
 
 void mj_process_ducky_script(

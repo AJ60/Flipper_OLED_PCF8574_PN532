@@ -107,7 +107,12 @@ static void input_callback(InputEvent* input_event, void* ctx) {
 
 static void mousejacker_state_init(PluginState* const plugin_state) {
     plugin_state->is_thread_running = false;
+    plugin_state->is_ducky_running = false;
+    plugin_state->ducky_err = false;
+    plugin_state->addr_err = false;
+    plugin_state->close_thread_please = false;
     plugin_state->is_nrf24_connected = true;
+    plugin_state->ducky_path[0] = '\0';
 }
 
 static void hexlify(uint8_t* in, uint8_t size, char* out) {
@@ -117,88 +122,7 @@ static void hexlify(uint8_t* in, uint8_t size, char* out) {
         snprintf(out + i * 2, 3, "%02X", in[i]);
 }
 
-static bool open_ducky_script(Stream* stream, PluginState* plugin_state) {
-    DialogsApp* dialogs = furi_record_open("dialogs");
-    bool result = false;
-    FuriString* path;
-    path = furi_string_alloc();
-    furi_string_set(path, LOCAL_BADUSB_FOLDER);
-
-    DialogsFileBrowserOptions browser_options;
-    dialog_file_browser_set_basic_options(
-        &browser_options, MOUSEJACKER_APP_PATH_EXTENSION, &I_badusb_10px);
-    browser_options.hide_ext = false;
-
-    bool ret = dialog_file_browser_show(dialogs, path, path, &browser_options);
-
-    furi_record_close("dialogs");
-    if(ret) {
-        if(!file_stream_open(stream, furi_string_get_cstr(path), FSAM_READ, FSOM_OPEN_EXISTING)) {
-            FURI_LOG_D(TAG, "Cannot open file \"%s\"", furi_string_get_cstr(path));
-        } else {
-            result = true;
-        }
-    }
-    furi_string_free(path);
-
-    plugin_state->is_ducky_running = true;
-
-    return result;
-}
-
-static bool open_addrs_file(Stream* stream) {
-    bool result = false;
-    FuriString* path;
-    path = furi_string_alloc();
-    furi_string_set(path, NRFSNIFF_APP_PATH_FOLDER_ADDRESSES);
-
-    if(!file_stream_open(stream, furi_string_get_cstr(path), FSAM_READ, FSOM_OPEN_EXISTING)) {
-        FURI_LOG_D(TAG, "Cannot open file \"%s\"", furi_string_get_cstr(path));
-    } else {
-        result = true;
-    }
-
-    furi_string_free(path);
-    return result;
-}
-
-static bool process_ducky_file(
-    Stream* file_stream,
-    uint8_t* addr,
-    uint8_t addr_size,
-    uint8_t rate,
-    PluginState* plugin_state) {
-    size_t file_size = 0;
-    size_t bytes_read = 0;
-    uint8_t* file_buf;
-    bool loaded = false;
-    FURI_LOG_D(TAG, "opening ducky script");
-    if(open_ducky_script(file_stream, plugin_state)) {
-        file_size = stream_size(file_stream);
-        if(file_size == (size_t)0) {
-            FURI_LOG_D(TAG, "load failed. file_size: %d", file_size);
-            plugin_state->is_ducky_running = false;
-            return loaded;
-        }
-        file_buf = malloc(file_size);
-        memset(file_buf, 0, file_size);
-        bytes_read = stream_read(file_stream, file_buf, file_size);
-        if(bytes_read == file_size) {
-            FURI_LOG_D(TAG, "executing ducky script");
-            mj_process_ducky_script(
-                nrf24_HANDLE, addr, addr_size, rate, (char*)file_buf, plugin_state);
-            FURI_LOG_D(TAG, "finished execution");
-            loaded = true;
-        } else {
-            FURI_LOG_D(TAG, "load failed. file size: %d", file_size);
-        }
-        free(file_buf);
-    }
-    plugin_state->is_ducky_running = false;
-    return loaded;
-}
-
-static bool load_addrs_file(Stream* file_stream) {
+static bool load_addrs_file(Storage* storage) {
     uint8_t rate;
     uint8_t addrlen = 0;
     uint32_t counter = 0;
@@ -208,7 +132,9 @@ static bool load_addrs_file(Stream* file_stream) {
     bool loaded = false;
     FURI_LOG_D(TAG, "opening addrs file");
     addrs_count = 0;
-    if(open_addrs_file(file_stream)) {
+    Stream* file_stream = file_stream_alloc(storage);
+    if(file_stream_open(
+           file_stream, NRFSNIFF_APP_PATH_FOLDER_ADDRESSES, FSAM_READ, FSOM_OPEN_EXISTING)) {
         FURI_LOG_D(TAG, "loading addrs file");
         FuriString* line = furi_string_alloc();
         while(stream_read_line(file_stream, line)) {
@@ -238,32 +164,66 @@ static bool load_addrs_file(Stream* file_stream) {
             loaded = true;
         }
         furi_string_free(line);
+        file_stream_close(file_stream);
+    } else {
+        FURI_LOG_D(TAG, "Cannot open file \"%s\"", NRFSNIFF_APP_PATH_FOLDER_ADDRESSES);
+        file_stream_close(file_stream);
     }
+    stream_free(file_stream);
     return loaded;
 }
 
 static bool create_default_addrs_file(Storage* storage) {
-    storage_common_mkdir(storage, EXT_PATH("apps_data/nrf24sniff"));
+    storage_simply_mkdir(storage, EXT_PATH("apps_data"));
+    storage_simply_mkdir(storage, EXT_PATH("apps_data/nrf24sniff"));
     Stream* stream = file_stream_alloc(storage);
     bool ok = false;
-    if(file_stream_open(stream, NRFSNIFF_APP_PATH_FOLDER_ADDRESSES, FSAM_WRITE, FSOM_CREATE_ALWAYS)) {
+    if(file_stream_open(
+           stream, NRFSNIFF_APP_PATH_FOLDER_ADDRESSES, FSAM_WRITE, FSOM_CREATE_ALWAYS)) {
         const char default_content[] = "123456789A,2\n";
-        if(stream_write(stream, (const uint8_t*)default_content, strlen(default_content)) == strlen(default_content)) {
+        if(stream_write(stream, (const uint8_t*)default_content, strlen(default_content)) ==
+           strlen(default_content)) {
             ok = true;
         }
+        file_stream_close(stream);
+    } else {
         file_stream_close(stream);
     }
     stream_free(stream);
     return ok;
 }
 
+static void create_default_ducky_script(Storage* storage) {
+    storage_simply_mkdir(storage, LOCAL_BADUSB_FOLDER);
+    const char demo_path[] = EXT_PATH("badusb/demo.txt");
+    Stream* stream = file_stream_alloc(storage);
+    if(file_stream_open(stream, demo_path, FSAM_WRITE, FSOM_CREATE_NEW)) {
+        const char content[] =
+            "REM MouseJacker Demo Script\n"
+            "DELAY 500\n"
+            "GUI r\n"
+            "DELAY 500\n"
+            "STRING notepad\n"
+            "ENTER\n"
+            "DELAY 500\n"
+            "STRING Hello from Flipper MouseJacker!\n"
+            "ENTER\n";
+        stream_write(stream, (const uint8_t*)content, strlen(content));
+        file_stream_close(stream);
+    } else {
+        file_stream_close(stream);
+    }
+    stream_free(stream);
+}
+
 // entrypoint for worker
 static int32_t mj_worker_thread(void* ctx) {
     PluginState* plugin_state = ctx;
-    bool ducky_ok = false;
-    if(!plugin_state->addr_err) {
+    if(!plugin_state->addr_err && addrs_count > 0 && strlen(plugin_state->ducky_path) > 0) {
         plugin_state->is_thread_running = true;
-        plugin_state->file_stream = file_stream_alloc(plugin_state->storage);
+        plugin_state->ducky_err = false;
+
+        // 1. Scan for active channel
         nrf24_find_channel(
             nrf24_HANDLE,
             loaded_addrs[addr_idx] + 1,
@@ -273,20 +233,46 @@ static int32_t mj_worker_thread(void* ctx) {
             2,
             LOGITECH_MAX_CHANNEL,
             true);
-        ducky_ok = process_ducky_file(
-            plugin_state->file_stream,
-            loaded_addrs[addr_idx] + 1,
-            5,
-            loaded_addrs[addr_idx][0],
-            plugin_state);
-        if(!ducky_ok) {
-            plugin_state->ducky_err = true;
+
+        // 2. Open and execute ducky script
+        Stream* file_stream = file_stream_alloc(plugin_state->storage);
+        if(file_stream_open(
+               file_stream, plugin_state->ducky_path, FSAM_READ, FSOM_OPEN_EXISTING)) {
+            size_t file_size = stream_size(file_stream);
+            if(file_size > 0) {
+                uint8_t* file_buf = malloc(file_size + 1);
+                memset(file_buf, 0, file_size + 1);
+                size_t bytes_read = stream_read(file_stream, file_buf, file_size);
+                file_stream_close(file_stream);
+
+                if(bytes_read == file_size && !plugin_state->close_thread_please) {
+                    plugin_state->is_ducky_running = true;
+                    FURI_LOG_D(TAG, "executing ducky script");
+                    mj_process_ducky_script(
+                        nrf24_HANDLE,
+                        loaded_addrs[addr_idx] + 1,
+                        5,
+                        loaded_addrs[addr_idx][0],
+                        (char*)file_buf,
+                        plugin_state);
+                    FURI_LOG_D(TAG, "finished execution");
+                    plugin_state->is_ducky_running = false;
+                } else {
+                    plugin_state->ducky_err = true;
+                }
+                free(file_buf);
+            } else {
+                file_stream_close(file_stream);
+                plugin_state->ducky_err = true;
+            }
         } else {
-            plugin_state->ducky_err = false;
+            file_stream_close(file_stream);
+            plugin_state->ducky_err = true;
         }
-        stream_free(plugin_state->file_stream);
+        stream_free(file_stream);
     }
     plugin_state->is_thread_running = false;
+    plugin_state->is_ducky_running = false;
     return 0;
 }
 
@@ -295,39 +281,23 @@ int32_t mousejacker_app(void* p) {
     FuriMessageQueue* event_queue = furi_message_queue_alloc(8, sizeof(PluginEvent));
 
     PluginState* plugin_state = malloc(sizeof(PluginState));
+    memset(plugin_state, 0, sizeof(PluginState));
     mousejacker_state_init(plugin_state);
     plugin_state->mutex = furi_mutex_alloc(FuriMutexTypeNormal);
     if(!plugin_state->mutex) {
-        FURI_LOG_E("mousejacker", "cannot create mutex\r\n");
+        FURI_LOG_E(TAG, "cannot create mutex\r\n");
         furi_message_queue_free(event_queue);
         free(plugin_state);
         return 255;
     }
 
+    plugin_state->storage = furi_record_open(RECORD_STORAGE);
     NotificationApp* notification = furi_record_open(RECORD_NOTIFICATION);
 
-    // Set system callbacks
-    ViewPort* view_port = view_port_alloc();
-    view_port_draw_callback_set(view_port, render_callback, plugin_state);
-    view_port_input_callback_set(view_port, input_callback, event_queue);
-
-    // Open GUI and register view_port
-    Gui* gui = furi_record_open(RECORD_GUI);
-    gui_add_view_port(gui, view_port, GuiLayerFullscreen);
-
-    plugin_state->storage = furi_record_open(RECORD_STORAGE);
-    plugin_state->file_stream = file_stream_alloc(plugin_state->storage);
-
-    plugin_state->mjthread = furi_thread_alloc();
-    furi_thread_set_name(plugin_state->mjthread, "MJ Worker");
-    furi_thread_set_stack_size(plugin_state->mjthread, 2048);
-    furi_thread_set_context(plugin_state->mjthread, plugin_state);
-    furi_thread_set_callback(plugin_state->mjthread, mj_worker_thread);
-
     // load sniffed addresses file, or create template if missing/empty
-    if(!load_addrs_file(plugin_state->file_stream)) {
+    if(!load_addrs_file(plugin_state->storage)) {
         create_default_addrs_file(plugin_state->storage);
-        load_addrs_file(plugin_state->file_stream);
+        load_addrs_file(plugin_state->storage);
     }
 
     if(addrs_count > 0) {
@@ -337,7 +307,6 @@ int32_t mousejacker_app(void* p) {
     } else {
         plugin_state->addr_err = true;
     }
-    stream_free(plugin_state->file_stream);
 
     uint8_t attempts = 0;
     bool otg_was_enabled = furi_hal_power_is_otg_enabled();
@@ -348,6 +317,21 @@ int32_t mousejacker_app(void* p) {
 
     nrf24_init();
     plugin_state->is_nrf24_connected = nrf24_check_connected(nrf24_HANDLE);
+
+    plugin_state->mjthread = furi_thread_alloc();
+    furi_thread_set_name(plugin_state->mjthread, "MJ Worker");
+    furi_thread_set_stack_size(plugin_state->mjthread, 2048);
+    furi_thread_set_context(plugin_state->mjthread, plugin_state);
+    furi_thread_set_callback(plugin_state->mjthread, mj_worker_thread);
+
+    // Set system callbacks
+    ViewPort* view_port = view_port_alloc();
+    view_port_draw_callback_set(view_port, render_callback, plugin_state);
+    view_port_input_callback_set(view_port, input_callback, event_queue);
+
+    // Open GUI and register view_port AFTER full initialization
+    Gui* gui = furi_record_open(RECORD_GUI);
+    gui_add_view_port(gui, view_port, GuiLayerFullscreen);
 
     PluginEvent event;
     for(bool processing = true; processing;) {
@@ -364,14 +348,14 @@ int32_t mousejacker_app(void* p) {
                     case InputKeyDown:
                         break;
                     case InputKeyRight:
-                        if(!plugin_state->addr_err) {
+                        if(!plugin_state->addr_err && addrs_count > 0) {
                             addr_idx++;
                             if(addr_idx >= addrs_count) addr_idx = 0;
                             hexlify(loaded_addrs[addr_idx] + 1, 5, target_address_str);
                         }
                         break;
                     case InputKeyLeft:
-                        if(!plugin_state->addr_err) {
+                        if(!plugin_state->addr_err && addrs_count > 0) {
                             // Bug #23 fix: safe wraparound — addr_idx is uint8_t so
                             // we check before decrementing to prevent underflow.
                             if(addr_idx == 0)
@@ -382,24 +366,56 @@ int32_t mousejacker_app(void* p) {
                         }
                         break;
                     case InputKeyOk:
-                        if(!plugin_state->addr_err) {
+                        if(!plugin_state->addr_err && addrs_count > 0 &&
+                           !plugin_state->is_thread_running) {
                             if(!nrf24_check_connected(nrf24_HANDLE)) {
                                 plugin_state->is_nrf24_connected = false;
                                 notification_message(notification, &sequence_error);
-                            } else if(!plugin_state->is_thread_running) {
-                                if(plugin_state->mjthread) {
-                                    furi_thread_join(plugin_state->mjthread);
-                                }
+                            } else {
                                 plugin_state->is_nrf24_connected = true;
-                                furi_thread_start(plugin_state->mjthread);
+                                create_default_ducky_script(plugin_state->storage);
+
+                                DialogsApp* dialogs = furi_record_open(RECORD_DIALOGS);
+                                FuriString* path = furi_string_alloc_set(LOCAL_BADUSB_FOLDER);
+                                DialogsFileBrowserOptions browser_options;
+                                dialog_file_browser_set_basic_options(
+                                    &browser_options,
+                                    MOUSEJACKER_APP_PATH_EXTENSION,
+                                    &I_badusb_10px);
+                                browser_options.base_path = LOCAL_BADUSB_FOLDER;
+                                browser_options.hide_ext = false;
+
+                                bool ret = dialog_file_browser_show(
+                                    dialogs, path, path, &browser_options);
+                                furi_record_close(RECORD_DIALOGS);
+
+                                if(ret) {
+                                    strncpy(
+                                        plugin_state->ducky_path,
+                                        furi_string_get_cstr(path),
+                                        sizeof(plugin_state->ducky_path) - 1);
+                                    plugin_state->ducky_path[sizeof(plugin_state->ducky_path) - 1] =
+                                        '\0';
+
+                                    furi_mutex_release(plugin_state->mutex);
+                                    furi_thread_join(plugin_state->mjthread);
+                                    furi_thread_start(plugin_state->mjthread);
+                                    furi_mutex_acquire(plugin_state->mutex, FuriWaitForever);
+                                }
+                                furi_string_free(path);
                             }
                         }
                         break;
                     case InputKeyBack:
+                        if(plugin_state->ducky_err) {
+                            plugin_state->ducky_err = false;
+                            break;
+                        }
                         plugin_state->close_thread_please = true;
                         if(plugin_state->is_thread_running && plugin_state->mjthread) {
-                            furi_thread_join(
-                                plugin_state->mjthread); // wait until thread is finished
+                            furi_mutex_release(plugin_state->mutex);
+                            furi_thread_join(plugin_state->mjthread);
+                            furi_mutex_acquire(plugin_state->mutex, FuriWaitForever);
                         }
                         plugin_state->close_thread_please = false;
                         processing = false;
@@ -415,7 +431,11 @@ int32_t mousejacker_app(void* p) {
         view_port_update(view_port);
     }
 
-    furi_thread_free(plugin_state->mjthread);
+    if(plugin_state->mjthread) {
+        plugin_state->close_thread_please = true;
+        furi_thread_join(plugin_state->mjthread);
+        furi_thread_free(plugin_state->mjthread);
+    }
     nrf24_deinit();
 
     if(furi_hal_power_is_otg_enabled() && !otg_was_enabled) {
