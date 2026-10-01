@@ -68,10 +68,10 @@ void nrf24_spi_trx(
     uint8_t* rx,
     uint8_t size,
     uint32_t timeout) {
-    UNUSED(timeout);
+    // Bug #6 fix: use the caller-supplied timeout instead of the hardcoded macro.
     furi_hal_spi_acquire(handle);
     furi_hal_gpio_write(handle->cs, false);
-    furi_hal_spi_bus_trx(handle, tx, rx, size, nrf24_TIMEOUT);
+    furi_hal_spi_bus_trx(handle, tx, rx, size, timeout);
     furi_hal_gpio_write(handle->cs, true);
     furi_hal_spi_release(handle);
 }
@@ -85,8 +85,11 @@ uint8_t nrf24_write_reg(const FuriHalSpiBusHandle* handle, uint8_t reg, uint8_t 
 
 uint8_t
     nrf24_write_buf_reg(const FuriHalSpiBusHandle* handle, uint8_t reg, uint8_t* data, uint8_t size) {
-    uint8_t tx[size + 1];
-    uint8_t rx[size + 1];
+    // Bug #2 fix: replaced VLA (uint8_t tx[size+1]) with a fixed-size array.
+    // NRF24L01+ max payload is 32 bytes; 33 bytes covers any valid frame.
+    if(size > 32) size = 32;
+    uint8_t tx[33];
+    uint8_t rx[33];
     memset(rx, 0, size + 1);
     tx[0] = W_REGISTER | (REGISTER_MASK & reg);
     memcpy(&tx[1], data, size);
@@ -95,8 +98,10 @@ uint8_t
 }
 
 uint8_t nrf24_read_reg(const FuriHalSpiBusHandle* handle, uint8_t reg, uint8_t* data, uint8_t size) {
-    uint8_t tx[size + 1];
-    uint8_t rx[size + 1];
+    // Bug #2 fix: replaced VLA (uint8_t tx[size+1]) with a fixed-size array.
+    if(size > 32) size = 32;
+    uint8_t tx[33];
+    uint8_t rx[33];
     memset(rx, 0, size + 1);
     tx[0] = R_REGISTER | (REGISTER_MASK & reg);
     memset(&tx[1], 0, size);
@@ -265,8 +270,10 @@ uint8_t
 
 uint8_t nrf24_txpacket(const FuriHalSpiBusHandle* handle, uint8_t* payload, uint8_t size, bool ack) {
     uint8_t status = 0;
-    uint8_t tx[size + 1];
-    uint8_t rx[size + 1];
+    // Bug #2 fix: replace VLA with fixed-size arrays; NRF24 max payload = 32 bytes.
+    if(size > 32) size = 32;
+    uint8_t tx[33];
+    uint8_t rx[33];
     memset(tx, 0, size + 1);
     memset(rx, 0, size + 1);
 
@@ -299,7 +306,9 @@ uint8_t nrf24_power_up(const FuriHalSpiBusHandle* handle) {
     nrf24_read_reg(handle, REG_CONFIG, &cfg, 1);
     cfg = cfg | 2;
     status = nrf24_write_reg(handle, REG_CONFIG, cfg);
-    furi_delay_ms(5000);
+    // Bug #3 fix: NRF24L01+ datasheet Tpd2stby = 1.5 ms max; 2 ms is safe.
+    // The original 5000 ms (5 s) blocked the entire OS.
+    furi_delay_ms(2);
     return status;
 }
 
@@ -317,13 +326,13 @@ uint8_t nrf24_set_idle(const FuriHalSpiBusHandle* handle) {
 uint8_t nrf24_set_rx_mode(const FuriHalSpiBusHandle* handle) {
     uint8_t status = 0;
     uint8_t cfg = 0;
-    //status = nrf24_write_reg(handle, REG_CONFIG, 0x0F); // enable 2-byte CRC, PWR_UP, and PRIM_RX
     nrf24_read_reg(handle, REG_CONFIG, &cfg, 1);
     cfg |= 0x03; // PWR_UP, and PRIM_RX
     status = nrf24_write_reg(handle, REG_CONFIG, cfg);
-    //nr204_write_reg(REG_EN_RXADDR, 0x03) // Set RX Pipe 0 and 1
     furi_hal_gpio_write(nrf24_CE_PIN, true);
-    furi_delay_ms(2000);
+    // Bug #4 fix: NRF24L01+ Tstby2a = 130 us; 2 ms is a generous safe margin.
+    // The original 2000 ms (2 s) blocked the entire OS on every channel hop.
+    furi_delay_ms(2);
     return status;
 }
 
@@ -415,9 +424,10 @@ void nrf24_init_promisc_mode(const FuriHalSpiBusHandle* handle, uint8_t channel,
 }
 
 void hexlify(uint8_t* in, uint8_t size, char* out) {
-    memset(out, 0, size * 2);
+    // Bug #12 fix: sizeof(ptr+offset) = pointer size (4 bytes on ARM), NOT remaining buffer.
+    memset(out, 0, size * 2 + 1);
     for(int i = 0; i < size; i++)
-        snprintf(out + strlen(out), sizeof(out + strlen(out)), "%02X", in[i]);
+        snprintf(out + i * 2, 3, "%02X", in[i]);
 }
 
 uint64_t bytes_to_int64(uint8_t* bytes, uint8_t size, bool bigendian) {
@@ -508,7 +518,10 @@ void alt_address_old(uint8_t* packet, uint8_t* altaddr) {
 }
 
 bool validate_address(uint8_t* addr) {
-    uint8_t bad[][3] = {{0x55, 0x55}, {0xAA, 0xAA}, {0x00, 0x00}, {0xFF, 0xFF}};
+    // Bug #29 fix: was declared as [][3] but each pattern is only 2 bytes wide;
+    // memcmp uses size 2, so results were correct, but the declaration wasted
+    // 4 bytes and was misleading. Changed to [][2].
+    uint8_t bad[][2] = {{0x55, 0x55}, {0xAA, 0xAA}, {0x00, 0x00}, {0xFF, 0xFF}};
     for(int i = 0; i < 4; i++)
         for(int j = 0; j < 2; j++)
             if(!memcmp(addr + j * 2, bad[i], 2)) return false;
@@ -556,10 +569,13 @@ uint8_t nrf24_find_channel(
     uint8_t ping_packet[] = {0x0f, 0x0f, 0x0f, 0x0f}; // this can be anything, we just need an ack
     uint8_t ch = max_channel + 1; // means fail
     nrf24_configure(handle, rate, srcmac, dstmac, maclen, 2, false, false);
-    for(ch = min_channel; ch <= max_channel + 1; ch++) {
+    // Bug #28 fix: loop only up to max_channel (not max_channel+1) to avoid
+    // programming channel 126 which is outside the NRF24L01+ spec (max = 125).
+    for(ch = min_channel; ch <= max_channel; ch++) {
         nrf24_write_reg(handle, REG_RF_CH, ch);
         if(nrf24_txpacket(handle, ping_packet, 4, true)) break;
     }
+    if(ch > max_channel) ch = max_channel + 1; // sentinel: not found
 
     if(autoinit) {
         FURI_LOG_D("nrf24", "initializing radio for channel %d", ch);

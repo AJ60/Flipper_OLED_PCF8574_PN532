@@ -30,12 +30,12 @@ void desktop_scene_fault_on_enter(void* context) {
     popup_set_timeout(popup, 3000);
     popup_enable_timeout(popup);
 
-    // Clear fault data immediately so next reboot is clean
-    furi_hal_rtc_set_fault_data(0);
+    // Bug #14 fix: do NOT clear fault data here — the on_exit handler already clears it
+    // after the popup is dismissed. Clearing in on_enter made the RTC fault register
+    // appear empty to any diagnostic tool the instant the screen was shown.
 
     view_dispatcher_switch_to_view(desktop->view_dispatcher, DesktopViewIdPopup);
 }
-
 bool desktop_scene_fault_on_event(void* context, SceneManagerEvent event) {
     Desktop* desktop = (Desktop*)context;
     bool consumed = false;

@@ -124,12 +124,13 @@ void furi_hal_subghz_init(void) {
         uint8_t part = cc1101_get_partnumber(&furi_hal_spi_bus_handle_subghz);
         uint8_t ver = cc1101_get_version(&furi_hal_spi_bus_handle_subghz);
 
-        FURI_LOG_E(TAG, "CC1101 SPI TEST part=%u ver=%u", part, ver);
+        // Bug #30 fix: was FURI_LOG_E even on success, polluting the error log.
+        FURI_LOG_D(TAG, "CC1101 SPI TEST part=%u ver=%u", part, ver);
 
         // Normal CC1101: part=0, ver=20 / 0x14.
         // If SPI is bad, do not continue to GDO0/RX/TX tests.
         if((part != 0) || (ver != 20)) {
-            FURI_LOG_E(TAG, "CC1101 SPI test failed");
+            FURI_LOG_E(TAG, "CC1101 SPI test FAILED: expected part=0 ver=20, got part=%u ver=%u", part, ver);
             break;
         }
 
@@ -275,6 +276,11 @@ bool furi_hal_subghz_rx_pipe_not_empty(void) {
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
 
+    // Bug #22 fix: if we exhausted retries and the two reads still disagree,
+    // return false (report empty) rather than trusting an indeterminate value.
+    if(tries == 0 && s1.NUM_RXBYTES != s2.NUM_RXBYTES) {
+        return false;
+    }
     return s2.NUM_RXBYTES > 0;
 }
 

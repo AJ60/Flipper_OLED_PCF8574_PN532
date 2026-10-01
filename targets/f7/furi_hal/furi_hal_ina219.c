@@ -56,7 +56,9 @@ bool furi_hal_ina219_init(void) {
     s_is_ina226 = false;
     furi_delay_ms(200);
 
-    const int max_attempts = 1;
+    // Bug #21 fix: max_attempts was 1, making the retry body dead code.
+    // Changed to 3 attempts to handle INA power-on latency (up to ~100ms).
+    const int max_attempts = 3;
     for(int attempt = 0; attempt < max_attempts && !s_detected; ++attempt) {
         if(attempt > 0) {
             FURI_LOG_I(TAG, "Retrying INA scan (%d/%d)", attempt + 1, max_attempts);
@@ -66,30 +68,33 @@ bool furi_hal_ina219_init(void) {
         uint8_t probe_addrs[] = {0x40, 0x41, 0x44, 0x45};
         for(size_t i = 0; i < sizeof(probe_addrs) / sizeof(probe_addrs[0]); i++) {
             s_address = probe_addrs[i];
+            uint8_t addr8 = (uint8_t)(s_address << 1);
             uint16_t cfg = 0;
 
+            // Bug #10 fix: ina_read_reg16() itself calls furi_hal_i2c_acquire().
+            // Calling it while already holding the bus deadlocks on a non-recursive mutex.
+            // Perform all I2C operations inline within a single acquire/release pair.
             furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-            bool ready =
-                furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, s_address << 1, 10);
+            bool ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, addr8, 10);
             bool ok = false;
-
             if(ready) {
-                ok = ina_read_reg16(INA_REG_CONFIG, &cfg);
+                ok = furi_hal_i2c_read_reg_16(&furi_hal_i2c_handle_power, addr8, INA_REG_CONFIG, &cfg, 20);
             }
 
             if(ok) {
                 s_detected = true;
-                // Check if device is INA226 by reading Manufacturer ID (0xFE) and Die ID (0xFF)
+                // Check if device is INA226 by reading Manufacturer ID and Die ID
                 uint16_t mfg_id = 0, die_id = 0;
-                bool is_226 = ina_read_reg16(INA226_REG_MANUFACTURER_ID, &mfg_id) &&
-                              ina_read_reg16(INA226_REG_DIE_ID, &die_id);
+                bool is_226 =
+                    furi_hal_i2c_read_reg_16(&furi_hal_i2c_handle_power, addr8, INA226_REG_MANUFACTURER_ID, &mfg_id, 20) &&
+                    furi_hal_i2c_read_reg_16(&furi_hal_i2c_handle_power, addr8, INA226_REG_DIE_ID, &die_id, 20);
                 furi_hal_i2c_release(&furi_hal_i2c_handle_power);
 
                 if(is_226 && mfg_id == INA226_MANUFACTURER_ID_VAL) {
                     s_is_ina226 = true;
                     // Calibrate INA226 for 0.1 Ohm shunt: CAL = 512 (0x0200)
                     furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-                    ina_write_reg16(INA_REG_CALIBRATION, 0x0200);
+                    furi_hal_i2c_write_reg_16(&furi_hal_i2c_handle_power, addr8, INA_REG_CALIBRATION, 0x0200, 20);
                     furi_hal_i2c_release(&furi_hal_i2c_handle_power);
                     FURI_LOG_I(
                         TAG,

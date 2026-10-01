@@ -148,9 +148,11 @@ static void input_callback(InputEvent* input_event, void* ctx) {
 }
 
 static void hexlify(uint8_t* in, uint8_t size, char* out) {
-    memset(out, 0, size * 2);
+    // Bug #12 fix: sizeof(ptr+offset) is always pointer size (4 bytes on ARM), NOT the
+    // remaining buffer length. Use index-based snprintf with a known 2-char step.
+    memset(out, 0, size * 2 + 1);
     for(int i = 0; i < size; i++)
-        snprintf(out + strlen(out), sizeof(out + strlen(out)), "%02X", in[i]);
+        snprintf(out + i * 2, 3, "%02X", in[i]);
 }
 
 static bool save_addr_to_file(
@@ -175,10 +177,10 @@ static bool save_addr_to_file(
     strcpy(filepath, NRFSNIFF_APP_PATH_FOLDER);
     nrf_strcat(filepath, "/");
     nrf_strcat(filepath, NRFSNIFF_APP_FILENAME);
-    stream_seek(stream, 0, StreamOffsetFromStart);
-
     // check if address already exists in file
     if(file_stream_open(stream, filepath, FSAM_READ_WRITE, FSOM_OPEN_APPEND)) {
+        // Bug #13 fix: seek after open (seeking a never-opened stream is undefined).
+        stream_seek(stream, 0, StreamOffsetFromStart);
         bool found = false;
         file_size = stream_size(stream);
         stream_seek(stream, 0, StreamOffsetFromStart);

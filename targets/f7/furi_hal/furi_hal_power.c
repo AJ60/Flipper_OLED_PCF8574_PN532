@@ -96,8 +96,9 @@ bool furi_hal_power_gauge_is_ok(void) {
 }
 
 bool furi_hal_power_is_shutdown_requested(void) {
-    // Return a default "not requested" state
-    return false;
+    // Bug #19 fix: was always returning false, so the low-battery popup in the
+    // power service never fired. Now signals shutdown at <=3% SOC.
+    return furi_hal_power_get_pct() <= 3;
 }
 
 uint16_t furi_hal_power_insomnia_level(void) {
@@ -137,7 +138,12 @@ bool furi_hal_power_sleep_available(void) {
 // static inline void furi_hal_power_deep_sleep(void) { ... }
 
 void furi_hal_power_sleep(void) {
-    // Do nothing (don't actually sleep)
+    // Bug #8 fix: was a no-op, causing the MCU to spin at full speed during idle,
+    // draining the battery 3-5x faster. WFI halts the core until the next IRQ,
+    // which is the standard Cortex-M low-power idle technique.
+    if(furi_hal_power.insomnia == 0) {
+        __WFI();
+    }
 }
 
 // Non-linear Li-ion discharge curve: voltage fraction (V_MIN..V_MAX) -> SOC %.
@@ -394,8 +400,10 @@ void furi_hal_power_check_otg_status(void) {
 }
 
 uint32_t furi_hal_power_get_battery_remaining_capacity(void) {
-    // Return a default capacity (e.g., in mAh)
-    return BATTERY_CAPACITY;
+    // Bug #9 fix: was always returning BATTERY_CAPACITY (constant 1200 mAh),
+    // never decreasing. Calculate from current SOC percentage instead.
+    uint8_t pct = furi_hal_power_get_pct();
+    return (uint32_t)(((uint32_t)BATTERY_CAPACITY * pct) / 100U);
 }
 
 uint32_t furi_hal_power_get_battery_full_capacity(void) {

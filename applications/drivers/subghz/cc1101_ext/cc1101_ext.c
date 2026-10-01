@@ -589,9 +589,16 @@ uint32_t subghz_device_cc1101_ext_set_frequency(uint32_t value) {
         cc1101_set_frequency(subghz_device_cc1101_ext->spi_bus_handle, value);
     cc1101_calibrate(subghz_device_cc1101_ext->spi_bus_handle);
 
+    // Wait for calibration IDLE with a 10ms timeout to avoid an infinite hang
+    // if CC1101 SPI is glitching or hardware is disconnected (Bug #1 fix).
+    FuriHalCortexTimer cal_timer = furi_hal_cortex_timer_get(10000);
     while(true) {
         CC1101Status status = cc1101_get_status(subghz_device_cc1101_ext->spi_bus_handle);
         if(status.STATE == CC1101StateIDLE) break;
+        if(furi_hal_cortex_timer_is_expired(cal_timer)) {
+            FURI_LOG_E(TAG, "CC1101 ext calibration IDLE timeout — hardware issue?");
+            break;
+        }
     }
 
     furi_hal_spi_release(subghz_device_cc1101_ext->spi_bus_handle);
@@ -950,9 +957,12 @@ void subghz_device_cc1101_ext_stop_async_tx(void) {
 
     // Deinitialize Timer
     furi_hal_bus_disable(FuriHalBusTIM17);
-    furi_hal_interrupt_set_isr(FuriHalInterruptIdTim1TrgComTim17, NULL, NULL);
+    // NOTE: TIM17 update interrupt is handled via DMA (not a direct timer IRQ slot);
+    // no separate TIM17 ISR was registered, so no TIM17 IRQ slot needs clearing here.
 
-    // Deinitialize DMA
+    // Deinitialize DMA — clear the DMA CH3 ISR that was registered in start_async_tx.
+    // Bug #5 fix: previously this erroneously cleared FuriHalInterruptIdTim1TrgComTim17
+    // instead of the DMA CH3 slot, leaving the DMA ISR live after TX ended.
     LL_DMA_DeInit(SUBGHZ_DEVICE_CC1101_EXT_DMA_CH3_DEF);
     LL_DMA_DisableChannel(SUBGHZ_DEVICE_CC1101_EXT_DMA_CH4_DEF);
     furi_hal_interrupt_set_isr(SUBGHZ_DEVICE_CC1101_EXT_DMA_CH3_IRQ, NULL, NULL);

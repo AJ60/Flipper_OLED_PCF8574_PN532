@@ -32,7 +32,10 @@ typedef struct {
 } PluginEvent;
 
 uint8_t addrs_count = 0;
-int8_t addr_idx = 0;
+// Bug #23 fix: was int8_t — decrementing past 0 produced a negative index
+// (undefined behavior / HardFault on array access). Changed to uint8_t with
+// explicit wraparound guards in the Left/Right key handlers.
+uint8_t addr_idx = 0;
 uint8_t loaded_addrs[MAX_ADDRS][6]; // first byte is rate, the rest are the address
 
 char target_fmt_text[] = "Target addr: %s";
@@ -107,9 +110,10 @@ static void mousejacker_state_init(PluginState* const plugin_state) {
 }
 
 static void hexlify(uint8_t* in, uint8_t size, char* out) {
-    memset(out, 0, size * 2);
+    // Bug #12 fix: sizeof(ptr+offset) = pointer size (4 bytes on ARM), NOT remaining buffer.
+    memset(out, 0, size * 2 + 1);
     for(int i = 0; i < size; i++)
-        snprintf(out + strlen(out), sizeof(out + strlen(out)), "%02X", in[i]);
+        snprintf(out + i * 2, 3, "%02X", in[i]);
 }
 
 static bool open_ducky_script(Stream* stream, PluginState* plugin_state) {
@@ -347,8 +351,12 @@ int32_t mousejacker_app(void* p) {
                         break;
                     case InputKeyLeft:
                         if(!plugin_state->addr_err) {
-                            addr_idx--;
-                            if(addr_idx < 0) addr_idx = addrs_count - 1;
+                            // Bug #23 fix: safe wraparound — addr_idx is uint8_t so
+                            // we check before decrementing to prevent underflow.
+                            if(addr_idx == 0)
+                                addr_idx = (addrs_count > 0) ? addrs_count - 1 : 0;
+                            else
+                                addr_idx--;
                             hexlify(loaded_addrs[addr_idx] + 1, 5, target_address_str);
                         }
                         break;
