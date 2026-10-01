@@ -888,12 +888,14 @@ bool nrf24_read_newpacket() {
             }
         }
         FURI_LOG_D(TAG, "Found packet #%d pipe %d", log_arr_idx, st);
-        static uint32_t last_notify = 0;
-        uint32_t now = furi_get_tick();
-        if(now - last_notify >= 250) {
-            notification_message(APP->notification, &sequence_blink_white_100);
-            last_notify = now;
-        }
+        // Note: LED notification commented out to prevent I2C bus collision with OLED
+        // on DIY board (same approach as in nrf24batch.c:568).
+        // static uint32_t last_notify = 0;
+        // uint32_t now = furi_get_tick();
+        // if(now - last_notify >= 250) {
+        //     notification_message(APP->notification, &sequence_blink_white_100);
+        //     last_notify = now;
+        // }
         found = true;
     }
     return found;
@@ -965,7 +967,7 @@ bool nrf24_send_packet() {
 static void render_callback(Canvas* const canvas, void* ctx) {
     const PluginState* plugin_state = ctx;
     if(plugin_state == NULL) return;
-    if(furi_mutex_acquire(plugin_state->mutex, 100) != FuriStatusOk) return;
+    if(furi_mutex_acquire(plugin_state->mutex, 250) != FuriStatusOk) return;
     //canvas_draw_frame(canvas, 0, 0, 128, 64); // border around the edge of the screen
     if(what_doing == 0) {
         canvas_set_font(canvas, FontSecondary); // 8x10 font, 6 lines
@@ -1654,7 +1656,12 @@ int32_t nrf24scan_app(void* p) {
         }
 
         furi_mutex_release(plugin_state->mutex);
-        view_port_update(APP->view_port);
+        static uint32_t last_viewport_update = 0;
+        uint32_t now = furi_get_tick();
+        if(event_status == FuriStatusOk || (now - last_viewport_update >= 100)) {
+            view_port_update(APP->view_port);
+            last_viewport_update = now;
+        }
     }
     nrf24_set_idle(nrf24_HANDLE);
     if(log_arr_idx && (log_to_file == 1 || log_to_file == 2)) {

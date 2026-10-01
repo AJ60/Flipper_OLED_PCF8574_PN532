@@ -303,13 +303,12 @@ static void wrap_up(const FuriHalSpiBusHandle* handle, Storage* storage, Notific
             memcpy(addr, altaddr, 5);
         }
 
-        if(ch <= LOGITECH_MAX_CHANNEL) {
-            hexlify(addr, 5, top_address);
-            found_count++;
-            save_addr_to_file(storage, addr, 5, notification);
-            if(confirmed_idx < MAX_CONFIRMED) memcpy(confirmed[confirmed_idx++], addr, 5);
-            break;
-        }
+        // Capture the candidate address heard during passive sniff
+        hexlify(addr, 5, top_address);
+        found_count++;
+        save_addr_to_file(storage, addr, 5, notification);
+        if(confirmed_idx < MAX_CONFIRMED) memcpy(confirmed[confirmed_idx++], addr, 5);
+        break;
         furi_delay_ms(1);
     }
     // Clear low count candidates so noise does not accumulate and cause long freezes
@@ -321,7 +320,7 @@ static void clear_cache() {
     unique_saved_count = 0;
     confirmed_idx = 0;
     candidate_idx = 0;
-    target_channel = 2;
+    target_channel = 0;
     total_candidates = 0;
     memset(candidates, 0, sizeof(candidates));
     memset(counts, 0, sizeof(counts));
@@ -477,7 +476,7 @@ int32_t nrfsniff_app(void* p) {
 
             if(furi_get_tick() - start >= sample_time) {
                 target_channel++;
-                if(target_channel > LOGITECH_MAX_CHANNEL) target_channel = 2;
+                if(target_channel > 100) target_channel = 0;
                 wrap_up(active_handle, storage, notification);
                 start_sniffing(active_handle);
                 start = furi_get_tick();

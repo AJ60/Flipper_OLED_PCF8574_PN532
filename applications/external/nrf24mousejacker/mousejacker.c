@@ -10,6 +10,7 @@
 #include <furi_hal_resources.h>
 #include <nrf24.h>
 #include <notification/notification_messages.h>
+#include <storage/storage.h>
 #include "mousejacker_ducky.h"
 #include <nrf24_mouse_jacker_icons.h>
 
@@ -241,6 +242,21 @@ static bool load_addrs_file(Stream* file_stream) {
     return loaded;
 }
 
+static bool create_default_addrs_file(Storage* storage) {
+    storage_common_mkdir(storage, EXT_PATH("apps_data/nrf24sniff"));
+    Stream* stream = file_stream_alloc(storage);
+    bool ok = false;
+    if(file_stream_open(stream, NRFSNIFF_APP_PATH_FOLDER_ADDRESSES, FSAM_WRITE, FSOM_CREATE_ALWAYS)) {
+        const char default_content[] = "123456789A,2\n";
+        if(stream_write(stream, (const uint8_t*)default_content, strlen(default_content)) == strlen(default_content)) {
+            ok = true;
+        }
+        file_stream_close(stream);
+    }
+    stream_free(stream);
+    return ok;
+}
+
 // entrypoint for worker
 static int32_t mj_worker_thread(void* ctx) {
     PluginState* plugin_state = ctx;
@@ -308,8 +324,13 @@ int32_t mousejacker_app(void* p) {
     furi_thread_set_context(plugin_state->mjthread, plugin_state);
     furi_thread_set_callback(plugin_state->mjthread, mj_worker_thread);
 
-    // spawn load file dialog to choose sniffed addresses file
-    if(load_addrs_file(plugin_state->file_stream)) {
+    // load sniffed addresses file, or create template if missing/empty
+    if(!load_addrs_file(plugin_state->file_stream)) {
+        create_default_addrs_file(plugin_state->storage);
+        load_addrs_file(plugin_state->file_stream);
+    }
+
+    if(addrs_count > 0) {
         addr_idx = 0;
         hexlify(&loaded_addrs[addr_idx][1], 5, target_address_str);
         plugin_state->addr_err = false;

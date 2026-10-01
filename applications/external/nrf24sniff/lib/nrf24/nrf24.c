@@ -415,9 +415,9 @@ void nrf24_init_promisc_mode(const FuriHalSpiBusHandle* handle, uint8_t channel,
 }
 
 void hexlify(uint8_t* in, uint8_t size, char* out) {
-    memset(out, 0, size * 2);
+    memset(out, 0, size * 2 + 1);
     for(int i = 0; i < size; i++)
-        snprintf(out + strlen(out), sizeof(out + strlen(out)), "%02X", in[i]);
+        snprintf(out + i * 2, 3, "%02X", in[i]);
 }
 
 uint64_t bytes_to_int64(uint8_t* bytes, uint8_t size, bool bigendian) {
@@ -508,7 +508,7 @@ void alt_address_old(uint8_t* packet, uint8_t* altaddr) {
 }
 
 bool validate_address(uint8_t* addr) {
-    uint8_t bad[][3] = {{0x55, 0x55}, {0xAA, 0xAA}, {0x00, 0x00}, {0xFF, 0xFF}};
+    uint8_t bad[][2] = {{0x55, 0x55}, {0xAA, 0xAA}, {0x00, 0x00}, {0xFF, 0xFF}};
     for(int i = 0; i < 4; i++)
         for(int j = 0; j < 2; j++)
             if(!memcmp(addr + j * 2, bad[i], 2)) return false;
@@ -556,10 +556,11 @@ uint8_t nrf24_find_channel(
     uint8_t ping_packet[] = {0x0f, 0x0f, 0x0f, 0x0f}; // this can be anything, we just need an ack
     uint8_t ch = max_channel + 1; // means fail
     nrf24_configure(handle, rate, srcmac, dstmac, maclen, 2, false, false);
-    for(ch = min_channel; ch <= max_channel + 1; ch++) {
+    for(ch = min_channel; ch <= max_channel; ch++) {
         nrf24_write_reg(handle, REG_RF_CH, ch);
         if(nrf24_txpacket(handle, ping_packet, 4, true)) break;
     }
+    if(ch > max_channel) ch = max_channel + 1; // sentinel: not found
 
     if(autoinit) {
         FURI_LOG_D("nrf24", "initializing radio for channel %d", ch);
