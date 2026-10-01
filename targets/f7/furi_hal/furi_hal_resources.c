@@ -37,7 +37,14 @@ const GpioPin gpio_nfc_miso = {.port = GPIOB, .pin = LL_GPIO_PIN_4};
 const GpioPin gpio_nfc_irq = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 // WARNING: gpio_nfc_irq_rfid_pull is aliased to the same physical pin as gpio_nfc_irq (PA2).
 // The RFID HAL drives it as OutputPushPull during LFRFID — this CONFLICTS with NFC IRQ mode.
-// NFC and RFID cannot be used simultaneously without additional mutual exclusion on PA2.
+//
+// Bug #26: No runtime mutual exclusion is enforced here. The caller contract is:
+//   • furi_hal_lfrfid_start()  MUST call furi_hal_nfc_release() first if NFC is active.
+//   • furi_hal_nfc_acquire()   MUST NOT be called while RFID is emulating/reading.
+// Both conditions are currently upheld by the desktop app (NFC and RFID scenes are
+// mutually exclusive), but an external app bypassing the scene manager could
+// violate this. Any future automated guard should check a shared atomic:
+//   extern volatile bool g_rfid_pa2_in_use;   // set by RFID HAL, checked by NFC HAL
 const GpioPin gpio_nfc_irq_rfid_pull = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 const GpioPin gpio_rfid_carrier_out = {.port = GPIOA, .pin = LL_GPIO_PIN_5};
 // WARNING: gpio_rfid_data_in (PA1) is aliased to gpio_cc1101_g0 (CC1101 GDO0).
@@ -69,12 +76,18 @@ const GpioPin gpio_ext_pa6 = {.port = PA6_GPIO_Port, .pin = PA6_Pin};
 // (gpio_ext_pc0): it is I2C3 SCL and also carries the PWM channel (TIM17_CH1).
 const GpioPin gpio_ext_pa7 = {.port = PA7_GPIO_Port, .pin = PA7_Pin};
 
-const GpioPin gpio_button_up;
-const GpioPin gpio_button_down;
-const GpioPin gpio_button_right;
-const GpioPin gpio_button_left;
-const GpioPin gpio_button_ok;
-const GpioPin gpio_button_back;
+// Bug #24 fix: Button GPIOs do NOT exist on this board — inputs come from the
+// PCF8574 I/O expander via the input service. These sentinels (port=NULL, pin=0)
+// are kept for binary compatibility with app code that resolves GPIO symbols,
+// but any code that calls furi_hal_gpio_read/write on them will be caught by
+// the NULL-port guard in furi_hal_gpio.c.
+// NEVER pass these to furi_hal_gpio_*() — use the PCF8574 keypad API instead.
+const GpioPin gpio_button_up    = {.port = NULL, .pin = 0};
+const GpioPin gpio_button_down  = {.port = NULL, .pin = 0};
+const GpioPin gpio_button_right = {.port = NULL, .pin = 0};
+const GpioPin gpio_button_left  = {.port = NULL, .pin = 0};
+const GpioPin gpio_button_ok    = {.port = NULL, .pin = 0};
+const GpioPin gpio_button_back  = {.port = NULL, .pin = 0};
 
 const GpioPin gpio_infrared_rx = {.port = IR_RX_GPIO_Port, .pin = IR_RX_Pin};
 const GpioPin gpio_infrared_tx = {.port = IR_TX_GPIO_Port, .pin = IR_TX_Pin};

@@ -425,16 +425,18 @@ FuriHalNfcError furi_hal_nfc_acquire(void) {
     FuriHalNfcError error = FuriHalNfcErrorNone;
     furi_check(furi_hal_nfc.mutex);
     if(!furi_hal_nfc_is_mine()) {
-#if !defined(FURI_HAL_NFC_CHIP_PN532)
-        furi_hal_spi_acquire(&furi_hal_spi_bus_handle_nfc);
-#endif
+        // Bug #7 fix: acquire the mutex BEFORE the SPI bus.
+        // Original code acquired SPI first, then mutex — this is the ABBA pattern:
+        //   Thread A holds SPI, waits for NFC mutex.
+        //   Thread B holds NFC mutex, waits for SPI.
+        // Inverting the order (mutex first, SPI second) prevents the circular wait.
         if(furi_mutex_acquire(furi_hal_nfc.mutex, 1000) != FuriStatusOk) {
-#if !defined(FURI_HAL_NFC_CHIP_PN532)
-            furi_hal_spi_release(&furi_hal_spi_bus_handle_nfc);
-#endif
             error = FuriHalNfcErrorBusy;
         } else {
             furi_hal_nfc.lock_count = 1;
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
+            furi_hal_spi_acquire(&furi_hal_spi_bus_handle_nfc);
+#endif
         }
     } else {
         furi_hal_nfc.lock_count++;

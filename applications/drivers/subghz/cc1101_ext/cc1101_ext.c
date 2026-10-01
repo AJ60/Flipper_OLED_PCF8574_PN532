@@ -257,14 +257,19 @@ bool subghz_device_cc1101_ext_alloc(SubGhzDeviceConf* conf) {
 
     bool ok = subghz_device_cc1101_ext_check_init();
     if(!ok) {
+        const FuriHalSpiBusHandle* primary = subghz_device_cc1101_ext->spi_bus_handle;
         const FuriHalSpiBusHandle* alt_handle =
-            (subghz_device_cc1101_ext->spi_bus_handle == &furi_hal_spi_bus_handle_external ?
+            (primary == &furi_hal_spi_bus_handle_external ?
                  &furi_hal_spi_bus_handle_external_extra :
                  &furi_hal_spi_bus_handle_external);
         furi_hal_spi_bus_handle_init(alt_handle);
         subghz_device_cc1101_ext->spi_bus_handle = alt_handle;
         ok = subghz_device_cc1101_ext_check_init();
         if(ok) {
+            // Bug #27 fix: deinit the original handle — it was already init'd but
+            // its reference was overwritten. Leaving it init'd keeps SPI clocks
+            // active and wastes power.
+            furi_hal_spi_bus_handle_deinit(primary);
             FURI_LOG_I(
                 TAG,
                 "CC1101 auto-detected on alternative pin (%s)",

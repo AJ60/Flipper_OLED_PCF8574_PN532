@@ -307,14 +307,16 @@ bool furi_hal_pcf8574_configure_interrupts(uint8_t gpios_to_input_mask) {
     // pull-up) and participate in the INT behaviour. There is no hardware
     // interrupt-mask register; the mask is bookkeeping so the driver never
     // drives these pins low (see pcf8574_compose_byte).
-    // The mask OR and the compose run under the bus mutex: this both makes the
-    // bookkeeping atomic and re-asserts the input pins high while preserving
-    // the current output shadow, so it cannot clobber e.g. a concurrent vibro
-    // write with a stale shadow snapshot.
-    const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
-    furi_hal_i2c_acquire(bus);
+    // Bug #11 fix: pcf8574_input_mask is shared with the EXTI0 ISR (pcf8574_int_cb
+    // path) which runs asynchronously. Guard the mutation and snapshot with a
+    // critical section to prevent a torn read in the ISR.
+    FURI_CRITICAL_ENTER();
     pcf8574_input_mask |= gpios_to_input_mask;
     uint8_t byte = pcf8574_compose_byte(pcf8574_current_state);
+    FURI_CRITICAL_EXIT();
+
+    const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
+    furi_hal_i2c_acquire(bus);
     bool res = furi_hal_i2c_tx(bus, (uint8_t)(pcf8574_addr << 1), &byte, 1, 100);
     furi_hal_i2c_release(bus);
     return res;
@@ -325,10 +327,17 @@ bool furi_hal_pcf8574_check_and_restore(uint8_t expected_mask) {
     // the chip reverts to 0xFF (all quasi-bidirectional inputs). Restore
     // the full port state: re-assert the input mask AND re-write the
     // output shadow so output pins (vibro etc.) return to known state.
-    const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
-    furi_hal_i2c_acquire(bus);
+    //
+    // Bug #11 fix: pcf8574_input_mask and pcf8574_current_state are shared
+    // with the EXTI0 ISR. Guard the mask assignment and byte snapshot with a
+    // critical section so the ISR cannot observe a partially updated state.
+    FURI_CRITICAL_ENTER();
     pcf8574_input_mask = expected_mask; // force, not OR
     uint8_t byte = pcf8574_compose_byte(pcf8574_current_state);
+    FURI_CRITICAL_EXIT();
+
+    const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
+    furi_hal_i2c_acquire(bus);
     bool res = furi_hal_i2c_tx(bus, (uint8_t)(pcf8574_addr << 1), &byte, 1, 100);
     furi_hal_i2c_release(bus);
     return res;
