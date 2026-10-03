@@ -1,6 +1,7 @@
 #include <furi_hal_power.h>
 // Keep necessary includes for types used in function signatures
 #include <furi.h> // For FURI_NORETURN, basic types, PropertyValueCallback
+#include <toolbox/property.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <math.h>
@@ -558,14 +559,112 @@ void furi_hal_power_suppress_charge_exit(void) {
 }
 
 void furi_hal_power_info_get(PropertyValueCallback out, char sep, void* context) {
-    // Do nothing, don't call the callback
-    (void)out;
-    (void)sep;
-    (void)context;
+    furi_assert(out);
+
+    FuriString* value = furi_string_alloc();
+    FuriString* key = furi_string_alloc();
+
+    PropertyValueContext property_context = {
+        .key = key, .value = value, .out = out, .sep = sep, .last = false, .context = context};
+
+    // Power Info version
+    if(sep == '.') {
+        property_value_out(&property_context, NULL, 2, "format", "major", "2");
+        property_value_out(&property_context, NULL, 2, "format", "minor", "0");
+    } else {
+        property_value_out(&property_context, NULL, 3, "power", "info", "major", "1");
+        property_value_out(&property_context, NULL, 3, "power", "info", "minor", "1");
+    }
+
+    uint16_t charge = furi_hal_power_get_pct();
+    property_value_out(&property_context, "%u", 2, "charge", "level", charge);
+
+    const char* charge_state;
+    if(furi_hal_power_is_charging()) {
+        if((charge < 100) && (!furi_hal_power_is_charging_done())) {
+            charge_state = "charging";
+        } else {
+            charge_state = "charged";
+        }
+    } else {
+        charge_state = "discharging";
+    }
+
+    property_value_out(&property_context, NULL, 2, "charge", "state", charge_state);
+    uint16_t charge_voltage_limit =
+        (uint16_t)(furi_hal_power_get_battery_charge_voltage_limit() * 1000.f);
+    property_value_out(
+        &property_context, "%u", 3, "charge", "voltage", "limit", charge_voltage_limit);
+    uint16_t voltage =
+        (uint16_t)(furi_hal_power_get_battery_voltage(FuriHalPowerICFuelGauge) * 1000.f);
+    property_value_out(&property_context, "%u", 2, "battery", "voltage", voltage);
+    int16_t current =
+        (int16_t)(furi_hal_power_get_battery_current(FuriHalPowerICFuelGauge) * 1000.f);
+    property_value_out(&property_context, "%d", 2, "battery", "current", current);
+    int16_t temperature = (int16_t)furi_hal_power_get_battery_temperature(FuriHalPowerICFuelGauge);
+    property_value_out(&property_context, "%d", 2, "battery", "temp", temperature);
+    property_value_out(
+        &property_context, "%u", 2, "battery", "health", furi_hal_power_get_bat_health_pct());
+    property_value_out(
+        &property_context,
+        "%lu",
+        2,
+        "capacity",
+        "remain",
+        furi_hal_power_get_battery_remaining_capacity());
+    property_value_out(
+        &property_context,
+        "%lu",
+        2,
+        "capacity",
+        "full",
+        furi_hal_power_get_battery_full_capacity());
+    property_context.last = true;
+    property_value_out(
+        &property_context,
+        "%lu",
+        2,
+        "capacity",
+        "design",
+        furi_hal_power_get_battery_design_capacity());
+
+    furi_string_free(key);
+    furi_string_free(value);
 }
 
 void furi_hal_power_debug_get(PropertyValueCallback out, void* context) {
-    // Do nothing, don't call the callback
-    (void)out;
-    (void)context;
+    furi_assert(out);
+
+    FuriString* value = furi_string_alloc();
+    FuriString* key = furi_string_alloc();
+
+    PropertyValueContext property_context = {
+        .key = key, .value = value, .out = out, .sep = '.', .last = false, .context = context};
+
+    // Power Debug version
+    property_value_out(&property_context, NULL, 2, "format", "major", "1");
+    property_value_out(&property_context, NULL, 2, "format", "minor", "0");
+
+#ifdef USE_INA219
+    if(furi_hal_ina219_is_ready()) {
+        float v = 0.0f, i = 0.0f;
+        if(furi_hal_ina219_get_voltage_current(&v, &i)) {
+            property_value_out(&property_context, "%d", 2, "ina219", "voltage", (int)(v * 1000.f));
+            property_value_out(&property_context, "%d", 2, "ina219", "current", (int)(i * 1000.f));
+        }
+    }
+#endif
+
+    uint16_t voltage =
+        (uint16_t)(furi_hal_power_get_battery_voltage(FuriHalPowerICFuelGauge) * 1000.f);
+    property_value_out(&property_context, "%u", 2, "battery", "voltage", voltage);
+    int16_t current =
+        (int16_t)(furi_hal_power_get_battery_current(FuriHalPowerICFuelGauge) * 1000.f);
+    property_value_out(&property_context, "%d", 2, "battery", "current", current);
+
+    property_context.last = true;
+    property_value_out(&property_context, "%u", 2, "battery", "level", furi_hal_power_get_pct());
+
+    furi_string_free(key);
+    furi_string_free(value);
 }

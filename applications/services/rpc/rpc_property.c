@@ -16,6 +16,7 @@ typedef struct {
     RpcSession* session;
     PB_Main* response;
     FuriString* subkey;
+    bool finalized;
 } RpcPropertyContext;
 
 static void
@@ -37,6 +38,7 @@ static void
     }
 
     if(last) {
+        ctx->finalized = true;
         rpc_send_and_release_empty(session, response->command_id, PB_CommandStatus_OK);
     }
 }
@@ -73,6 +75,7 @@ static void rpc_system_property_get_process(const PB_Main* request, void* contex
         .session = session,
         .response = response,
         .subkey = subkey,
+        .finalized = false,
     };
 
     if(!furi_string_cmp(topkey, PROPERTY_CATEGORY_DEVICE_INFO)) {
@@ -82,8 +85,13 @@ static void rpc_system_property_get_process(const PB_Main* request, void* contex
     } else if(!furi_string_cmp(topkey, PROPERTY_CATEGORY_POWER_DEBUG)) {
         furi_hal_power_debug_get(rpc_system_property_get_callback, &property_context);
     } else {
+        property_context.finalized = true;
         rpc_send_and_release_empty(
             session, request->command_id, PB_CommandStatus_ERROR_INVALID_PARAMETERS);
+    }
+
+    if(!property_context.finalized) {
+        rpc_send_and_release_empty(session, request->command_id, PB_CommandStatus_OK);
     }
 
     furi_string_free(subkey);
