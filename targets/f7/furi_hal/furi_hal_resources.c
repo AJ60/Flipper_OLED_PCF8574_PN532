@@ -181,13 +181,13 @@ const GpioPinRecord gpio_pins[] = {
      .channel = FuriHalAdcChannelNone,
      .number = 14,
      .debug = true},
-    // Header "PC1" is wired to MCU PB4 = ST25R3916 NFC MISO (also I2C3 SDA).
-    // Not GPIO-safe while NFC/SPI is in use -> hidden from the GPIO app.
+    // Header "PC1" (Pin 15) is routed via PCF8574 Pin P7 (open-drain reset for ESP32/modules).
+    // Isolated from MCU PB4 (I2C3 SDA) to prevent bus collisions with PN532.
     {.pin = &gpio_ext_pc1,
      .name = "PC1",
      .channel = FuriHalAdcChannelNone,
      .number = 15,
-     .debug = true},
+     .debug = false},
     // Header "PC0" is wired to MCU PA7. I2C3 SCL (used by the I2C scanner / JS
     // i2c / CLI) and PWM-capable via TIM17_CH1 (AF14); MCU PA7 = ADC_IN12
     // (stock Flipper uses Ch12 for PA7 on the same MCU). One function at a

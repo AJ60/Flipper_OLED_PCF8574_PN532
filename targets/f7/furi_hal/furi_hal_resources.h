@@ -187,8 +187,10 @@ PA5 = Header Pin 7 ("PC3" / "C3", free GPIO & ADC_IN10; LF-RFID carrier disabled
 #define PB2_Pin       LL_GPIO_PIN_2
 #define PC3_GPIO_Port GPIOA
 #define PC3_Pin       LL_GPIO_PIN_5
+/* Header Pin 15 ("PC1") is routed to PCF8574 Pin P7 (DIP Pin 12).
+ * PC1_Pin is set to 0 so low-level register writes cannot tamper with MCU PB4 (I2C3 SDA). */
 #define PC1_GPIO_Port GPIOB
-#define PC1_Pin       LL_GPIO_PIN_4
+#define PC1_Pin       0
 #define PC0_GPIO_Port GPIOA
 #define PC0_Pin       LL_GPIO_PIN_7
 
