@@ -96,5 +96,5 @@ void nfc_scene_mf_ultralight_unlock_warn_on_exit(void* context) {
     dialog_ex_reset(nfc->dialog_ex);
     nfc_text_store_clear(nfc);
 
-    notification_message_block(nfc->notifications, &sequence_reset_green);
+    notification_message(nfc->notifications, &sequence_reset_green);
 }

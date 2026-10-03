@@ -221,21 +221,21 @@ void nfc_dict_attack_dict_attack_result_callback(DictAttackEvent event, void* co
 static void nfc_scene_mf_classic_dict_attack_update_view(NfcApp* instance) {
     NfcMfClassicDictAttackContext* mfc_dict = &instance->nfc_dict_context;
 
-    if(mfc_dict->is_key_attack) {
-        dict_attack_set_key_attack(instance->dict_attack, mfc_dict->key_attack_current_sector);
-    } else {
-        dict_attack_reset_key_attack(instance->dict_attack);
-        dict_attack_set_sectors_total(instance->dict_attack, mfc_dict->sectors_total);
-        dict_attack_set_sectors_read(instance->dict_attack, mfc_dict->sectors_read);
-        dict_attack_set_keys_found(instance->dict_attack, mfc_dict->keys_found);
-        dict_attack_set_current_dict_key(instance->dict_attack, mfc_dict->dict_keys_current);
-        dict_attack_set_current_sector(instance->dict_attack, mfc_dict->current_sector);
-        dict_attack_set_nested_phase(instance->dict_attack, mfc_dict->nested_phase);
-        dict_attack_set_prng_type(instance->dict_attack, mfc_dict->prng_type);
-        dict_attack_set_backdoor(instance->dict_attack, mfc_dict->backdoor);
-        dict_attack_set_nested_target_key(instance->dict_attack, mfc_dict->nested_target_key);
-        dict_attack_set_msb_count(instance->dict_attack, mfc_dict->msb_count);
-    }
+    const DictAttackMfClassicParams params = {
+        .is_key_attack = mfc_dict->is_key_attack,
+        .key_attack_current_sector = mfc_dict->key_attack_current_sector,
+        .sectors_total = mfc_dict->sectors_total,
+        .sectors_read = mfc_dict->sectors_read,
+        .keys_found = mfc_dict->keys_found,
+        .dict_keys_current = mfc_dict->dict_keys_current,
+        .current_sector = mfc_dict->current_sector,
+        .nested_phase = mfc_dict->nested_phase,
+        .prng_type = mfc_dict->prng_type,
+        .backdoor = mfc_dict->backdoor,
+        .nested_target_key = mfc_dict->nested_target_key,
+        .msb_count = mfc_dict->msb_count,
+    };
+    dict_attack_set_mf_classic_params(instance->dict_attack, &params);
 }
 
 static void nfc_scene_mf_classic_dict_attack_prepare_view(NfcApp* instance) {

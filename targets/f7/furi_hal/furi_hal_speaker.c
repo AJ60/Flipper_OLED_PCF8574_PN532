@@ -111,6 +111,7 @@ void furi_hal_speaker_start(float frequency, float volume) {
     LL_TIM_OC_InitTypeDef TIM_OC_InitStruct = {0};
     TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
     TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_ENABLE;
+    TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
     TIM_OC_InitStruct.CompareValue = furi_hal_speaker_calculate_compare(volume);
     LL_TIM_OC_Init(FURI_HAL_SPEAKER_TIMER, FURI_HAL_SPEAKER_CHANNEL, &TIM_OC_InitStruct);
 
@@ -134,6 +135,7 @@ void furi_hal_speaker_set_volume(float volume) {
 
 void furi_hal_speaker_stop(void) {
     furi_check(furi_hal_speaker_is_mine());
+    LL_TIM_OC_SetCompareCH1(FURI_HAL_SPEAKER_TIMER, 0);
     LL_TIM_DisableAllOutputs(FURI_HAL_SPEAKER_TIMER);
     LL_TIM_DisableCounter(FURI_HAL_SPEAKER_TIMER);
 }

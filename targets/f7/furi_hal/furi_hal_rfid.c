@@ -74,24 +74,6 @@ FuriHalRfid* furi_hal_rfid = NULL;
 #define LFRFID_LL_EMULATE_TIM     TIM2
 #define LFRFID_LL_EMULATE_CHANNEL LL_TIM_CHANNEL_CH3
 
-#ifdef RFID_DEBUG_COMP_OUT
-/* WeAct: PA0 (header A0 next to NR) = COMP1_OUT debug mirror. Same pin as IR RX. */
-static const GpioPin gpio_rfid_comp_out = {.port = GPIOA, .pin = LL_GPIO_PIN_0};
-
-static void furi_hal_rfid_comp_out_config(void) {
-    // Debug-only probe mirror on PA0. Kept disabled by default because PA0 is the IR Receiver (TSOP).
-    furi_hal_gpio_init_ex(
-        &gpio_rfid_comp_out,
-        GpioModeAltFunctionPushPull,
-        GpioPullNo,
-        GpioSpeedVeryHigh,
-        GpioAltFn12COMP1);
-}
-#else
-static inline void furi_hal_rfid_comp_out_config(void) {
-}
-#endif
-
 void furi_hal_rfid_init(void) {
     furi_check(furi_hal_rfid == NULL);
     furi_hal_rfid = malloc(sizeof(FuriHalRfid));
@@ -114,8 +96,6 @@ void furi_hal_rfid_init(void) {
     COMP_InitStruct.OutputBlankingSource = LL_COMP_BLANKINGSRC_NONE;
     LL_COMP_Init(COMP1, &COMP_InitStruct);
     LL_COMP_SetCommonWindowMode(__LL_COMP_COMMON_INSTANCE(COMP1), LL_COMP_WINDOWMODE_DISABLE);
-
-    furi_hal_rfid_comp_out_config();
 
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_20);
     LL_EXTI_EnableFallingTrig_0_31(LL_EXTI_LINE_20);
@@ -186,9 +166,6 @@ static void furi_hal_rfid_pins_read(void) {
 
     // comparator in (PA1 must stay analog for COMP1 IO3)
     furi_hal_gpio_init(&gpio_rfid_data_in, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
-
-    // Re-claim PA0 for COMP1_OUT (IR RX may have taken the pin earlier)
-    furi_hal_rfid_comp_out_config();
 }
 
 static void furi_hal_rfid_pins_field(void) {
@@ -215,11 +192,11 @@ static void furi_hal_rfid_pins_field(void) {
 }
 
 void furi_hal_rfid_pin_pull_release(void) {
-    furi_hal_gpio_write(&gpio_nfc_irq_rfid_pull, true);
+    furi_hal_gpio_write(&gpio_nfc_irq_rfid_pull, false); // Q3 off, tank free
 }
 
 void furi_hal_rfid_pin_pull_pulldown(void) {
-    furi_hal_gpio_write(&gpio_nfc_irq_rfid_pull, false);
+    furi_hal_gpio_write(&gpio_nfc_irq_rfid_pull, true);  // Q3 on, tank damped
 }
 
 void furi_hal_rfid_tim_read_start(float freq, float duty_cycle) {
@@ -499,7 +476,6 @@ void furi_hal_rfid_comp_start(void) {
     LL_COMP_SetInputMinus(COMP1, LL_COMP_INPUT_MINUS_VREFINT);
     LL_COMP_SetInputHysteresis(COMP1, LL_COMP_HYSTERESIS_HIGH);
     LL_COMP_SetOutputPolarity(COMP1, LL_COMP_OUTPUTPOL_NONINVERTED);
-    furi_hal_rfid_comp_out_config();
     LL_COMP_Enable(COMP1);
     // Magic
     uint32_t wait_loop_index = ((80 / 10UL) * ((SystemCoreClock / (100000UL * 2UL)) + 1UL));

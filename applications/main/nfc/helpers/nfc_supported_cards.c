@@ -164,6 +164,15 @@ static const NfcSupportedCardsPlugin* nfc_supported_cards_get_plugin(
     return plugin;
 }
 
+static bool nfc_supported_cards_reacquire_hal(void) {
+    FuriHalNfcError error = furi_hal_nfc_acquire();
+    if(error != FuriHalNfcErrorNone) {
+        FURI_LOG_W(TAG, "NFC HAL re-acquire failed (%d), continuing without lock", error);
+        return false;
+    }
+    return true;
+}
+
 static bool nfc_supported_cards_parse_named_plugin(
     NfcSupportedCards* instance,
     NfcDevice* device,
@@ -185,7 +194,7 @@ static bool nfc_supported_cards_parse_named_plugin(
     NfcSupportedCardsLoadContext* load_context = nfc_supported_cards_load_context_alloc();
 
     if(hal_acquired) {
-        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+        hal_acquired = nfc_supported_cards_reacquire_hal();
     }
 
     const ElfApiInterface* api_interface = composite_api_resolver_get(instance->api_resolver);
@@ -196,7 +205,7 @@ static bool nfc_supported_cards_parse_named_plugin(
     const NfcSupportedCardsPlugin* plugin =
         nfc_supported_cards_get_plugin(load_context, plugin_name, api_interface);
     if(hal_acquired) {
-        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+        hal_acquired = nfc_supported_cards_reacquire_hal();
     }
 
     if((plugin != NULL) && (plugin->protocol == protocol) && (plugin->parse != NULL)) {
@@ -205,7 +214,7 @@ static bool nfc_supported_cards_parse_named_plugin(
         }
         card_parsed = plugin->parse(device, parsed_data);
         if(hal_acquired) {
-            furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+            hal_acquired = nfc_supported_cards_reacquire_hal();
         }
     }
 
@@ -214,7 +223,7 @@ static bool nfc_supported_cards_parse_named_plugin(
     }
     nfc_supported_cards_load_context_free(load_context);
     if(hal_acquired) {
-        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+        hal_acquired = nfc_supported_cards_reacquire_hal();
     }
 
     return card_parsed;
@@ -291,7 +300,7 @@ void nfc_supported_cards_load_cache(NfcSupportedCards* instance) {
         nfc_supported_cards_load_context_free(instance->load_context);
 
         if(hal_acquired) {
-            furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+            hal_acquired = nfc_supported_cards_reacquire_hal();
         }
 
         size_t plugins_loaded = NfcSupportedCardsPluginCache_size(instance->plugins_cache_arr);
@@ -332,7 +341,7 @@ bool nfc_supported_cards_read(NfcSupportedCards* instance, NfcDevice* device, Nf
         }
         instance->load_context = nfc_supported_cards_load_context_alloc();
         if(hal_acquired) {
-            furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+            hal_acquired = nfc_supported_cards_reacquire_hal();
         }
 
         NfcSupportedCardsPluginCache_it_t iter;
@@ -352,7 +361,7 @@ bool nfc_supported_cards_read(NfcSupportedCards* instance, NfcDevice* device, Nf
             const NfcSupportedCardsPlugin* plugin = nfc_supported_cards_get_plugin(
                 instance->load_context, furi_string_get_cstr(plugin_cache->name), api_interface);
             if(hal_acquired) {
-                furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+                hal_acquired = nfc_supported_cards_reacquire_hal();
             }
 
             if(plugin == NULL) continue;
@@ -374,7 +383,7 @@ bool nfc_supported_cards_read(NfcSupportedCards* instance, NfcDevice* device, Nf
         }
         nfc_supported_cards_load_context_free(instance->load_context);
         if(hal_acquired) {
-            furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+            hal_acquired = nfc_supported_cards_reacquire_hal();
         }
     } while(false);
 
@@ -419,7 +428,7 @@ bool nfc_supported_cards_parse(
         }
         instance->load_context = nfc_supported_cards_load_context_alloc();
         if(hal_acquired) {
-            furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+            hal_acquired = nfc_supported_cards_reacquire_hal();
         }
 
         NfcSupportedCardsPluginCache_it_t iter;
@@ -439,7 +448,7 @@ bool nfc_supported_cards_parse(
             const NfcSupportedCardsPlugin* plugin = nfc_supported_cards_get_plugin(
                 instance->load_context, furi_string_get_cstr(plugin_cache->name), api_interface);
             if(hal_acquired) {
-                furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+                hal_acquired = nfc_supported_cards_reacquire_hal();
             }
 
             if(plugin == NULL) continue;
@@ -450,7 +459,7 @@ bool nfc_supported_cards_parse(
                 }
                 bool parse_success = plugin->parse(device, parsed_data);
                 if(hal_acquired) {
-                    furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+                    hal_acquired = nfc_supported_cards_reacquire_hal();
                 }
 
                 if(parse_success) {
@@ -465,7 +474,7 @@ bool nfc_supported_cards_parse(
         }
         nfc_supported_cards_load_context_free(instance->load_context);
         if(hal_acquired) {
-            furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+            hal_acquired = nfc_supported_cards_reacquire_hal();
         }
     } while(false);
 

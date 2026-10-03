@@ -51,7 +51,12 @@ static void nfc_app_release_hal(NfcApp* instance) {
 static void nfc_app_acquire_hal(NfcApp* instance) {
     furi_assert(instance);
     if(!furi_hal_nfc_is_mine()) {
-        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
+        FuriHalNfcError error = furi_hal_nfc_acquire();
+        if(error != FuriHalNfcErrorNone) {
+            FURI_LOG_W("NfcApp", "NFC HAL acquire failed (%d), continuing without lock", error);
+            instance->nfc_hal_acquired = false;
+            return;
+        }
     }
     instance->nfc_hal_acquired = true;
 }

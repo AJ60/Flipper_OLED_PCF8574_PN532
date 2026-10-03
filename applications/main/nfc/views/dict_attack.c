@@ -434,3 +434,34 @@ void dict_attack_set_key_found(DictAttack* instance, bool key_found) {
     with_view_model(
         instance->view, DictAttackViewModel * model, { model->key_found = key_found; }, true);
 }
+
+void dict_attack_set_mf_classic_params(
+    DictAttack* instance,
+    const DictAttackMfClassicParams* params) {
+    furi_assert(instance);
+    furi_assert(params);
+
+    // Single locked model pass: one redraw per poller event instead of ~11.
+    // Matters on I2C OLED where every redraw is a full-frame bus transfer.
+    with_view_model(
+        instance->view,
+        DictAttackViewModel * model,
+        {
+            model->is_key_attack = params->is_key_attack;
+            if(params->is_key_attack) {
+                model->key_attack_current_sector = params->key_attack_current_sector;
+            } else {
+                model->sectors_total = params->sectors_total;
+                model->sectors_read = params->sectors_read;
+                model->keys_found = params->keys_found;
+                model->dict_keys_current = params->dict_keys_current;
+                model->current_sector = params->current_sector;
+                model->nested_phase = params->nested_phase;
+                model->prng_type = params->prng_type;
+                model->backdoor = params->backdoor;
+                model->nested_target_key = params->nested_target_key;
+                model->msb_count = params->msb_count;
+            }
+        },
+        true);
+}

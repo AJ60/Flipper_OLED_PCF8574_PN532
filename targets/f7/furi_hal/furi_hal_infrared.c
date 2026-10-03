@@ -98,15 +98,16 @@ static uint8_t furi_hal_infrared_get_current_dma_tx_buffer(void);
 static void furi_hal_infrared_tx_dma_polarity_isr(void*);
 static void furi_hal_infrared_tx_dma_isr(void*);
 
+static uint32_t previous_captured_ch2 = 0;
+
 static void furi_hal_infrared_tim_rx_isr(void* context) {
     UNUSED(context);
-
-    static uint32_t previous_captured_ch2 = 0;
 
     if(LL_TIM_IsActiveFlag_CC3(INFRARED_RX_TIMER)) {
         LL_TIM_ClearFlag_CC3(INFRARED_RX_TIMER);
         furi_check(furi_hal_infrared_state == InfraredStateAsyncRx);
 
+        previous_captured_ch2 = 0;
         if(LL_GPIO_IsInputPinSet(gpio_infrared_rx.port, gpio_infrared_rx.pin) != 0) {
             if(infrared_tim_rx.timeout_callback) {
                 infrared_tim_rx.timeout_callback(infrared_tim_rx.timeout_context);
@@ -120,7 +121,7 @@ static void furi_hal_infrared_tim_rx_isr(void* context) {
 
         if(READ_BIT(INFRARED_RX_TIMER->CCMR1, TIM_CCMR1_CC1S)) {
             uint32_t duration = LL_TIM_IC_GetCaptureCH1(INFRARED_RX_TIMER) - previous_captured_ch2;
-            if(infrared_tim_rx.capture_callback) {
+            if(duration && infrared_tim_rx.capture_callback) {
                 infrared_tim_rx.capture_callback(infrared_tim_rx.capture_context, 0, duration);
             }
         } else {
@@ -182,6 +183,7 @@ void furi_hal_infrared_async_rx_start(void) {
     LL_TIM_IC_SetPrescaler(INFRARED_RX_TIMER, LL_TIM_CHANNEL_CH2, LL_TIM_ICPSC_DIV1);
 
     furi_hal_interrupt_set_isr(INFRARED_RX_IRQ, furi_hal_infrared_tim_rx_isr, NULL);
+    previous_captured_ch2 = 0;
     furi_hal_infrared_state = InfraredStateAsyncRx;
 
     LL_TIM_EnableIT_CC1(INFRARED_RX_TIMER);

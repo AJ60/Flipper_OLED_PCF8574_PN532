@@ -69,6 +69,26 @@ void dict_attack_set_pages_read(DictAttack* instance, uint8_t pages_read);
 
 void dict_attack_set_key_found(DictAttack* instance, bool key_found);
 
+typedef struct {
+    bool is_key_attack;
+    uint8_t key_attack_current_sector;
+    uint8_t sectors_total;
+    uint8_t sectors_read;
+    uint8_t keys_found;
+    size_t dict_keys_current;
+    uint8_t current_sector;
+    MfClassicNestedPhase nested_phase;
+    MfClassicPrngType prng_type;
+    MfClassicBackdoor backdoor;
+    uint16_t nested_target_key;
+    uint16_t msb_count;
+} DictAttackMfClassicParams;
+
+/** Update all MIFARE Classic progress fields in one locked model pass (one redraw). */
+void dict_attack_set_mf_classic_params(
+    DictAttack* instance,
+    const DictAttackMfClassicParams* params);
+
 #ifdef __cplusplus
 }
 #endif

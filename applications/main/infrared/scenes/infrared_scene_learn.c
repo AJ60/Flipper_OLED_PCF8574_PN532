@@ -127,6 +127,8 @@ void infrared_scene_learn_on_enter(void* context) {
 
     infrared_worker_rx_set_received_signal_callback(
         worker, infrared_signal_received_callback, context);
+    infrared_worker_rx_enable_signal_decoding(worker, infrared->app_state.is_decode_enabled);
+    infrared_worker_rx_force_signal_decoding(worker, infrared->app_state.is_decode_forced);
     infrared_worker_rx_start(worker);
     infrared_play_notification_message(infrared, InfraredNotificationMessageBlinkStartRead);
 

@@ -565,14 +565,19 @@ static void nfc_protocol_support_scene_read_success_on_enter(NfcApp* instance) {
     widget_add_button_element(
         widget, GuiButtonTypeRight, "More", nfc_protocol_support_common_widget_callback, instance);
 
-    notification_message_block(instance->notifications, &sequence_set_green_255);
+    notification_message(instance->notifications, &sequence_set_green_255);
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcViewWidget);
 
     // Re-acquire HAL now that plugin loading is done, restoring the GUI-thread
     // ownership invariant expected by subsequent scenes.
     if(!furi_hal_nfc_is_mine()) {
-        furi_check(furi_hal_nfc_acquire() == FuriHalNfcErrorNone);
-        instance->nfc_hal_acquired = true;
+        FuriHalNfcError error = furi_hal_nfc_acquire();
+        if(error != FuriHalNfcErrorNone) {
+            FURI_LOG_W("NfcProtocolSupport", "NFC HAL re-acquire failed (%d)", error);
+            instance->nfc_hal_acquired = false;
+        } else {
+            instance->nfc_hal_acquired = true;
+        }
     }
 }
 
@@ -599,7 +604,7 @@ static bool
 }
 
 static void nfc_protocol_support_scene_read_success_on_exit(NfcApp* instance) {
-    notification_message_block(instance->notifications, &sequence_reset_green);
+    notification_message(instance->notifications, &sequence_reset_green);
     widget_reset(instance->widget);
 }
 

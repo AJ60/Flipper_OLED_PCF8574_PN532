@@ -115,10 +115,8 @@ void desktop_lock_menu_draw_callback(Canvas* canvas, void* model) {
             break;
         case DesktopLockMenuIndexBrightness:
             icon = &I_Pin_star_7x7;
-            // Contrast is -8..+8; map to 0..total and invert for visual
-            // (contrast + 8) -> 0..16, then scale to total
-            value = total -
-                    ((int)(m->lock_menu->notification->settings.contrast + 8) * total + 8) / 16;
+            // Contrast is 0..15; map to 0..total and invert for visual
+            value = total - ((int)m->lock_menu->notification->settings.contrast * total + 7) / 15;
             break;
         case DesktopLockMenuIndexVolume:
             icon = m->stealth_mode ? &I_Muted_8x8 : &I_Volup_8x6;
@@ -328,14 +326,14 @@ bool desktop_lock_menu_input_callback(InputEvent* event, void* context) {
                 float value;
                 switch(idx) {
                 case DesktopLockMenuIndexBrightness:
-                    // Contrast setting is from -8 to 8
+                    // Contrast setting is from 0 to 15
                     {
                         int8_t contrast_offset =
                             lock_menu->notification->settings.contrast + offset;
-                        if(contrast_offset < -8) {
-                            contrast_offset = -8;
-                        } else if(contrast_offset > 8) {
-                            contrast_offset = 8;
+                        if(contrast_offset < 0) {
+                            contrast_offset = 0;
+                        } else if(contrast_offset > 15) {
+                            contrast_offset = 15;
                         }
                         lock_menu->notification->settings.contrast = contrast_offset;
                         lock_menu->save_notification = true;

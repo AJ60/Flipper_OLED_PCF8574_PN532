@@ -59,6 +59,9 @@ static void
 
 static void notification_apply_lcd_contrast(NotificationApp* app, uint8_t contrast) {
     UNUSED(app);
+    if(!furi_record_exists(RECORD_GUI)) {
+        return;
+    }
     Gui* gui = furi_record_open(RECORD_GUI);
     u8x8_t* u8x8 = &gui->canvas->fb.u8x8;
 
@@ -139,9 +142,8 @@ static void notification_reset_notification_layer(
     if(reset_mask & reset_display_mask) {
         if(!float_is_equal(display_brightness_set, app->settings.display_brightness)) {
             int idx = (int)app->settings.contrast;
-            if(idx < 0) idx = idx + 8;
             if(idx < 0) idx = 0;
-            if(idx > 16) idx = 16;
+            if(idx > 15) idx = 15;
             notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
         }
         if(app->settings.display_off_delay_ms > 0) {
@@ -368,9 +370,8 @@ static void notification_process_notification_message(
             break;
         case NotificationMessageTypeLcdContrastUpdate: {
             int idx = (int)app->settings.contrast;
-            if(idx < 0) idx = idx + 8;
             if(idx < 0) idx = 0;
-            if(idx > 16) idx = 16;
+            if(idx > 15) idx = 15;
             notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
             break;
         }
@@ -490,6 +491,7 @@ static NotificationApp* notification_app_alloc(void) {
     app->settings.display_off_delay_ms = 0;
     app->settings.vibro_on = true;
     app->settings.oled_driver = NotificationOledDriverSSD1306;
+    app->settings.contrast = 8;
 
     app->display.value[LayerInternal] = 0x00;
     app->display.value[LayerNotification] = 0x00;
@@ -542,9 +544,8 @@ static void notification_apply_settings(NotificationApp* app) {
     }
 
     int idx = (int)app->settings.contrast;
-    if(idx < 0) idx = idx + 8;
     if(idx < 0) idx = 0;
-    if(idx > 16) idx = 16;
+    if(idx > 15) idx = 15;
     notification_apply_lcd_contrast(app, lcd_contrast_map[idx]);
     furi_hal_light_oled_set_invert(app->settings.display_inverted);
 }

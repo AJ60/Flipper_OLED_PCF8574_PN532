@@ -79,7 +79,7 @@ void furi_hal_power_init(void) {
     FURI_LOG_I(TAG, "Initializing INA219/INA226 power sensor");
     furi_hal_ina219_init();
     if(furi_hal_ina219_is_ready()) {
-        furi_hal_ina226_set_overcurrent_limit(2.0f);
+        furi_hal_ina226_set_overcurrent_limit(1.8f);
         furi_hal_ina226_enable_alert_interrupt(furi_hal_power_ina_alert_isr, NULL);
     }
     FURI_LOG_I(TAG, "INA219/INA226 initialization complete");
