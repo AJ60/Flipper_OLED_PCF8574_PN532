@@ -96,8 +96,17 @@ bool furi_hal_power_gauge_is_ok(void) {
 }
 
 bool furi_hal_power_is_shutdown_requested(void) {
-    // Bug #19 fix: was always returning false, so the low-battery popup in the
-    // power service never fired. Now signals shutdown at <=3% SOC.
+    // If USB is connected and powered, never request shutdown
+    if(furi_hal_power_get_usb_voltage() >= 4.0f) {
+        return false;
+    }
+
+    // If measured battery voltage is below 2.0V, no battery is present (running on external power)
+    float vbat = furi_hal_power_get_battery_voltage(FuriHalPowerICFuelGauge);
+    if(vbat < 2.0f) {
+        return false;
+    }
+
     return furi_hal_power_get_pct() <= 3;
 }
 
@@ -293,6 +302,12 @@ uint8_t furi_hal_power_get_pct(void) {
     float vbat_mV = adc_input_mV * 3.0f;
     float vbat = vbat_mV / 1000.0f;
     furi_hal_adc_release(handle);
+
+    // If voltage is under 2.0V, no battery is attached (bare board or USB external power)
+    if(vbat < 2.0f) {
+        return 100;
+    }
+
     return (uint8_t)(furi_hal_power_voltage_to_soc(vbat, V_MIN, V_MAX) + 0.5f);
 }
 
@@ -519,7 +534,10 @@ float furi_hal_power_get_battery_temperature(FuriHalPowerIC ic) {
 }
 
 float furi_hal_power_get_usb_voltage(void) {
-    // Return a default voltage (0.0f assumes disconnected)
+    // If VDDUSB is enabled, the device is powered by USB
+    if(LL_PWR_IsEnabledVddUSB()) {
+        return 5.0f;
+    }
     return 0.0f;
 }
 

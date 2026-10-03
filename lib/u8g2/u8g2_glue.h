@@ -22,3 +22,5 @@ void u8x8_d_ssd1306_set_invert(u8x8_t* u8x8, bool invert);
 
 extern volatile bool display_needs_reinit;
 extern volatile bool display_is_sleeping;
+
+bool u8g2_display_is_connected(void);

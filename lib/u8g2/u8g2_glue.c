@@ -22,6 +22,41 @@
 volatile bool display_needs_reinit = false;
 volatile bool display_is_sleeping = false;
 
+extern FuriMutex* furi_hal_i2c_bus_power_mutex;
+
+static volatile bool s_display_is_present = false;
+static volatile bool s_display_checked = false;
+static uint32_t s_last_display_check_tick = 0;
+
+bool u8g2_display_is_connected(void) {
+    if(s_display_is_present) {
+        return true;
+    }
+    uint32_t now = furi_get_tick();
+    if(s_display_checked && (now - s_last_display_check_tick < 3000)) {
+        return false;
+    }
+    if(!furi_hal_i2c_bus_power_mutex || FURI_IS_ISR()) {
+        return false;
+    }
+    s_last_display_check_tick = now;
+    furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
+    bool ready = furi_hal_i2c_is_device_ready(
+        &furi_hal_i2c_handle_power, (SSD1306_I2C_ADDRESS << 1), 10);
+    if(!ready) {
+        ready = furi_hal_i2c_is_device_ready(
+            &furi_hal_i2c_handle_power, (0x3D << 1), 10);
+    }
+    furi_hal_i2c_release(&furi_hal_i2c_handle_power);
+    s_display_checked = true;
+    if(ready) {
+        s_display_is_present = true;
+        display_needs_reinit = true;
+        FURI_LOG_I("U8G2", "SSD1306 OLED display detected on I2C power bus");
+    }
+    return ready;
+}
+
 uint8_t u8g2_gpio_and_delay_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
     UNUSED(u8x8);
     UNUSED(arg_ptr);
@@ -118,10 +153,18 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
         // Not used for I2C
         break;
     case U8X8_MSG_BYTE_START_TRANSFER:
+        if(!u8g2_display_is_connected()) {
+            buf_idx = 0;
+            return 1;
+        }
         furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
         buf_idx = 0;
         break;
     case U8X8_MSG_BYTE_END_TRANSFER:
+        if(!s_display_is_present) {
+            buf_idx = 0;
+            return 1;
+        }
         // Send accumulated buffer via hardware I2C as ONE transaction
         if(buf_idx > 0) {
             bool success = false;
@@ -137,7 +180,10 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
                 // On transient I2C contention, safely release bus, reset index, and flag reinit
                 buf_idx = 0;
                 furi_hal_i2c_release(&furi_hal_i2c_handle_power);
-                display_needs_reinit = true;
+                if(s_display_is_present) {
+                    s_display_is_present = false;
+                    display_needs_reinit = true;
+                }
                 return 0;
             }
         }

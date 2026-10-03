@@ -30,13 +30,15 @@ Canvas* canvas_init(void) {
     u8g2_Setup_ssd1306_flipper(
         &canvas->fb, U8G2_R0, u8x8_byte_hw_i2c_stm32, u8g2_gpio_and_delay_stm32);
     canvas->orientation = CanvasOrientationHorizontal;
-    // Settle delay to let decoupling capacitors charge and power rails stabilize
-    furi_delay_ms(50);
-    // Initialize display
-    u8g2_InitDisplay(&canvas->fb);
-    furi_delay_ms(10);
-    // Wake up display
-    u8g2_SetPowerSave(&canvas->fb, 0);
+    if(u8g2_display_is_connected()) {
+        // Settle delay to let decoupling capacitors charge and power rails stabilize
+        furi_delay_ms(50);
+        // Initialize display
+        u8g2_InitDisplay(&canvas->fb);
+        furi_delay_ms(10);
+        // Wake up display
+        u8g2_SetPowerSave(&canvas->fb, 0);
+    }
 
     // Clear buffer and send to device
     canvas_clear(canvas);
@@ -76,8 +78,8 @@ void canvas_reset(Canvas* canvas) {
 void canvas_commit(Canvas* canvas) {
     furi_check(canvas);
 
-    // Send buffer to physical OLED display only if display is active
-    if(!display_is_sleeping) {
+    // Send buffer to physical OLED display only if display is active and connected
+    if(!display_is_sleeping && u8g2_display_is_connected()) {
         if(display_needs_reinit) {
             display_needs_reinit = false;
             u8g2_InitDisplay(&canvas->fb);

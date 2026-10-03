@@ -139,13 +139,13 @@ void furi_hal_i2c_bus_handle_external_event(
         furi_hal_gpio_init_ex(
             &gpio_i2c_3_scl,
             GpioModeAltFunctionOpenDrain,
-            GpioPullNo,
+            GpioPullUp,
             GpioSpeedHigh,
             GpioAltFn4I2C3);
         furi_hal_gpio_init_ex(
             &gpio_i2c_3_sda,
             GpioModeAltFunctionOpenDrain,
-            GpioPullNo,
+            GpioPullUp,
             GpioSpeedHigh,
             GpioAltFn4I2C3);
 
