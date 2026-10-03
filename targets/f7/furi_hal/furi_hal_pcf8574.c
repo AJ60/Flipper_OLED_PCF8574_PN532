@@ -102,6 +102,8 @@ void furi_hal_pcf8574_set_i2c_bus(const FuriHalI2cBusHandle* bus_handle) {
     FURI_LOG_I(TAG, "PCF8574 I2C bus set");
 }
 
+extern FuriMutex* furi_hal_i2c_bus_power_mutex;
+
 bool furi_hal_pcf8574_init(void) {
     // Idempotent: init is called from several boot paths (vibro, input service).
     // Re-running a full probe/write cycle would reset the port to 0xFF and
@@ -109,6 +111,11 @@ bool furi_hal_pcf8574_init(void) {
     if(pcf8574_is_initialized) {
         FURI_LOG_I(TAG, "PCF8574 already initialized at 0x%02X", pcf8574_addr);
         return true;
+    }
+
+    if(!furi_hal_i2c_bus_power_mutex) {
+        FURI_LOG_D(TAG, "Cannot init PCF8574: I2C power bus not ready yet");
+        return false;
     }
 
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
@@ -201,6 +208,11 @@ bool furi_hal_pcf8574_init_ex(uint8_t i2c_addr) {
         return true;
     }
 
+    if(!furi_hal_i2c_bus_power_mutex) {
+        FURI_LOG_D(TAG, "Cannot init PCF8574: I2C power bus not ready yet");
+        return false;
+    }
+
     if(pcf8574_probe_candidate(i2c_addr)) {
         pcf8574_addr = i2c_addr;
         pcf8574_input_mask = 0;
@@ -226,6 +238,10 @@ bool furi_hal_pcf8574_read_port(uint8_t* port_state) {
     if(!port_state) {
         return false;
     }
+    if(!pcf8574_is_initialized || !furi_hal_i2c_bus_power_mutex) {
+        *port_state = pcf8574_current_state;
+        return false;
+    }
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
     furi_hal_i2c_acquire(bus);
     bool res = furi_hal_i2c_rx(bus, (uint8_t)(pcf8574_addr << 1), port_state, 1, 100);
@@ -245,6 +261,10 @@ bool furi_hal_pcf8574_read_port(uint8_t* port_state) {
 }
 
 bool furi_hal_pcf8574_write_port(uint8_t port_state) {
+    pcf8574_current_state = port_state;
+    if(!pcf8574_is_initialized || !furi_hal_i2c_bus_power_mutex) {
+        return false;
+    }
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
     furi_hal_i2c_acquire(bus);
     // Only non-input bits are writable; input pins are forced high regardless
@@ -266,6 +286,15 @@ bool furi_hal_pcf8574_write_port(uint8_t port_state) {
 bool furi_hal_pcf8574_write_pin(uint8_t pin, bool value) {
     if(pin > 7) {
         return false;
+    }
+    // Update shadow state even if uninitialized so early pre-configuration is remembered
+    if(value) {
+        pcf8574_current_state |= (uint8_t)(1u << pin);
+    } else {
+        pcf8574_current_state &= (uint8_t) ~(1u << pin);
+    }
+    if(!pcf8574_is_initialized || !furi_hal_i2c_bus_power_mutex) {
+        return true;
     }
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
     furi_hal_i2c_acquire(bus);
@@ -322,6 +351,10 @@ bool furi_hal_pcf8574_configure_interrupts(uint8_t gpios_to_input_mask) {
     uint8_t byte = pcf8574_compose_byte(pcf8574_current_state);
     FURI_CRITICAL_EXIT();
 
+    if(!pcf8574_is_initialized || !furi_hal_i2c_bus_power_mutex) {
+        return false;
+    }
+
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
     furi_hal_i2c_acquire(bus);
     bool res = furi_hal_i2c_tx(bus, (uint8_t)(pcf8574_addr << 1), &byte, 1, 100);
@@ -342,6 +375,10 @@ bool furi_hal_pcf8574_check_and_restore(uint8_t expected_mask) {
     pcf8574_input_mask = expected_mask; // force, not OR
     uint8_t byte = pcf8574_compose_byte(pcf8574_current_state);
     FURI_CRITICAL_EXIT();
+
+    if(!pcf8574_is_initialized || !furi_hal_i2c_bus_power_mutex) {
+        return false;
+    }
 
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
     furi_hal_i2c_acquire(bus);

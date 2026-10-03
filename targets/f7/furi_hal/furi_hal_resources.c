@@ -247,7 +247,7 @@ const size_t input_pins_count = COUNT_OF(input_pins);
 
 static void furi_hal_resources_init_gpio_pins(GpioMode mode) {
     for(size_t i = 0; i < gpio_pins_count; i++) {
-        if(!gpio_pins[i].debug) {
+        if(!gpio_pins[i].debug && gpio_pins[i].pin->pin != 0) {
             furi_hal_gpio_init(gpio_pins[i].pin, mode, GpioPullNo, GpioSpeedLow);
         }
     }
