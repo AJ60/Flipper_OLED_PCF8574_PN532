@@ -166,11 +166,10 @@ bool furi_hal_pcf8574_init(void) {
 
     pcf8574_addr = detected_addr;
 
-    // Initialize all pins to 1 (inputs / high state). Reset the input-mask
-    // bookkeeping too: if a previous init failed partway, the chip is in an
-    // unknown state and must be re-declared from scratch.
+    // Initialize pins: inputs and ESP32 EN (P7) default to 1 (high),
+    // while Pin 6 (vibro) defaults to 0 (OFF) to prevent buzzing at boot.
     pcf8574_input_mask = 0;
-    pcf8574_current_state = 0xFF;
+    pcf8574_current_state = (uint8_t) ~(1u << 6);
     furi_hal_i2c_acquire(bus);
     bool res = furi_hal_i2c_tx(bus, (uint8_t)(pcf8574_addr << 1), &pcf8574_current_state, 1, 100);
     furi_hal_i2c_release(bus);
@@ -205,7 +204,7 @@ bool furi_hal_pcf8574_init_ex(uint8_t i2c_addr) {
     if(pcf8574_probe_candidate(i2c_addr)) {
         pcf8574_addr = i2c_addr;
         pcf8574_input_mask = 0;
-        pcf8574_current_state = 0xFF;
+        pcf8574_current_state = (uint8_t) ~(1u << 6);
         const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
         furi_hal_i2c_acquire(bus);
         bool res =
