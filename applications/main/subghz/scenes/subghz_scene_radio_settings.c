@@ -228,45 +228,14 @@ static void subghz_scene_radio_settings_set_ext_range(VariableItem* item) {
     uint8_t index = variable_item_get_current_value_index(item);
     bool enabled = (index == 1);
 
-    if(enabled) {
-        // Show warning dialog if not acknowledged
-        Storage* storage = furi_record_open(RECORD_STORAGE);
-        FlipperFormat* ext_file = flipper_format_file_alloc(storage);
-        bool acknowledged = false;
-        if(flipper_format_file_open_existing(ext_file, EXT_PATH("subghz/assets/extend_range.txt"))) {
-            flipper_format_read_bool(ext_file, "acknowledged", &acknowledged, 1);
-        }
-        flipper_format_free(ext_file);
-        furi_record_close(RECORD_STORAGE);
-
-        if(!acknowledged) {
-            // Show warning dialog
-            DialogMessage* message = dialog_message_alloc();
-            dialog_message_set_header(message, "Warning", 64, 3, AlignCenter, AlignTop);
-            dialog_message_set_text(
-                message,
-                "Extended range (281-962 MHz) may:\n"
-                "- Violate local regulations\n"
-                "- Damage hardware if misused\n\n"
-                "Enable at your own risk?",
-                3,
-                20,
-                AlignLeft,
-                AlignTop);
-            dialog_message_set_buttons(message, "Cancel", NULL, "Enable");
-            DialogMessageButton res = dialog_message_show(subghz->dialogs, message);
-            dialog_message_free(message);
-            if(res != DialogMessageButtonRight) {
-                // User cancelled: keep toggle OFF
-                variable_item_set_current_value_index(item, 0);
-                variable_item_set_current_value_text(item, ext_range_text[0]);
-                return;
-            }
-        }
-    }
-
     variable_item_set_current_value_text(item, ext_range_text[index]);
     furi_hal_subghz_set_extended_range(enabled);
+    furi_hal_subghz_set_bypass_region(enabled);
+
+    SubGhzSetting* setting = subghz_txrx_get_setting(subghz->txrx);
+    if(enabled) {
+        subghz_setting_load_default_extended(setting);
+    }
 
     // Save to extend_range.txt and setting_user
     Storage* storage = furi_record_open(RECORD_STORAGE);
@@ -280,7 +249,7 @@ static void subghz_scene_radio_settings_set_ext_range(VariableItem* item) {
     flipper_format_free(ext_file);
     furi_record_close(RECORD_STORAGE);
 
-    subghz_setting_save(subghz_txrx_get_setting(subghz->txrx), EXT_PATH("subghz/assets/setting_user"));
+    subghz_setting_save(setting, EXT_PATH("subghz/assets/setting_user"));
 }
 
 void subghz_scene_radio_settings_on_enter(void* context) {

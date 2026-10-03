@@ -103,7 +103,7 @@ DialogMessageButton dialogs_app_process_module_message(const DialogsAppMessageDa
 }
 
 DialogMessage* dialog_message_alloc(void) {
-    DialogMessage* message = malloc(sizeof(DialogMessage));
+    DialogMessage* message = calloc(1, sizeof(DialogMessage));
     return message;
 }
 
