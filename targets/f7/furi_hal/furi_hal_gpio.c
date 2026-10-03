@@ -94,9 +94,11 @@ void furi_hal_gpio_init_ex(
     const GpioPull pull,
     const GpioSpeed speed,
     const GpioAltFn alt_fn) {
-    if(gpio == &gpio_ext_pc1) {
-        if(mode == GpioModeAnalog || mode == GpioModeInput) {
-            furi_hal_pcf8574_write_pin(7, true);
+    if(!gpio || gpio->pin == 0) {
+        if(gpio == &gpio_ext_pc1) {
+            if(mode == GpioModeAnalog || mode == GpioModeInput) {
+                furi_hal_pcf8574_write_pin(7, true);
+            }
         }
         return;
     }
@@ -220,7 +222,7 @@ void furi_hal_gpio_init_ex(
 void furi_hal_gpio_add_int_callback(const GpioPin* gpio, GpioExtiCallback cb, void* ctx) {
     furi_check(gpio);
     furi_check(cb);
-    if(gpio == &gpio_ext_pc1) {
+    if(gpio == &gpio_ext_pc1 || gpio->pin == 0) {
         return;
     }
 
@@ -239,7 +241,7 @@ void furi_hal_gpio_add_int_callback(const GpioPin* gpio, GpioExtiCallback cb, vo
 
 void furi_hal_gpio_enable_int_callback(const GpioPin* gpio) {
     furi_check(gpio);
-    if(gpio == &gpio_ext_pc1) {
+    if(gpio == &gpio_ext_pc1 || gpio->pin == 0) {
         return;
     }
 
@@ -253,7 +255,7 @@ void furi_hal_gpio_enable_int_callback(const GpioPin* gpio) {
 
 void furi_hal_gpio_disable_int_callback(const GpioPin* gpio) {
     furi_check(gpio);
-    if(gpio == &gpio_ext_pc1) {
+    if(gpio == &gpio_ext_pc1 || gpio->pin == 0) {
         return;
     }
 
@@ -268,7 +270,7 @@ void furi_hal_gpio_disable_int_callback(const GpioPin* gpio) {
 
 void furi_hal_gpio_remove_int_callback(const GpioPin* gpio) {
     furi_check(gpio);
-    if(gpio == &gpio_ext_pc1) {
+    if(gpio == &gpio_ext_pc1 || gpio->pin == 0) {
         return;
     }
 
