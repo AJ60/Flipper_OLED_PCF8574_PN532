@@ -14,7 +14,7 @@
 #include <stm32wb55_linker.h>
 
 #define configENABLE_FPU 1
-#define configENABLE_MPU 0
+#define configENABLE_MPU 1
 
 #define configUSE_PREEMPTION             1
 #define configSUPPORT_STATIC_ALLOCATION  1
@@ -22,8 +22,8 @@
 #define configENABLE_HEAP_PROTECTOR      1
 #define configHEAP_CLEAR_MEMORY_ON_FREE  1
 #define configUSE_MALLOC_FAILED_HOOK     0
-#define configUSE_IDLE_HOOK              0
-#define configUSE_TICK_HOOK              0
+#define configUSE_IDLE_HOOK              1
+#define configUSE_TICK_HOOK              1
 #define configCPU_CLOCK_HZ               (SystemCoreClock)
 #define configTICK_RATE_HZ_RAW           1000
 #define configTICK_RATE_HZ               ((TickType_t)configTICK_RATE_HZ_RAW)

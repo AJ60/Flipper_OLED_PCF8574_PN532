@@ -170,8 +170,8 @@ void subghz_last_settings_load(SubGhzLastSettings* instance, size_t preset_count
             }
             instance->tx_power = (uint8_t)(tx_power & 0xFF);
         } while(0);
-    } else {
-        FURI_LOG_E(TAG, "Error open file %s", SUBGHZ_LAST_SETTINGS_PATH);
+    } else if(FSE_OK == storage_sd_status(storage)) {
+        FURI_LOG_I(TAG, "File is not used %s", SUBGHZ_LAST_SETTINGS_PATH);
     }
 
     furi_string_free(temp_str);

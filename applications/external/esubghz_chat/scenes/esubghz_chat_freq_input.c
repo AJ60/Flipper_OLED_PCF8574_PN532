@@ -32,11 +32,7 @@ static bool freq_input_validator(const char* text, FuriString* error, void* cont
         return false;
     }
 
-#ifdef FW_ORIGIN_Official
-    if(!furi_hal_region_is_frequency_allowed(state->frequency)) {
-#else /* FW_ORIGIN_Official */
-    if(!furi_hal_subghz_is_tx_allowed(state->frequency)) {
-#endif /* FW_ORIGIN_Official */
+    if(subghz_devices_check_tx(state->subghz_device, state->frequency) != SubGhzTxAllowed) {
         furi_string_printf(error, "TX forbidden\non frequency\n%lu!", state->frequency);
         return false;
     }

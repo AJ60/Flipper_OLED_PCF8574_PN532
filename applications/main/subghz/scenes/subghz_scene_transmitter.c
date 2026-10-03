@@ -116,6 +116,12 @@ bool subghz_scene_transmitter_on_event(void* context, SceneManagerEvent event) {
         }
     } else if(event.type == SceneManagerEventTypeTick) {
         if(subghz->state_notifications == SubGhzNotificationStateTx) {
+            // Safety check: if the radio device is NULL (e.g. during a device switch), stop immediately
+            if(subghz->txrx->radio_device == NULL) {
+                subghz->state_notifications = SubGhzNotificationStateIDLE;
+                subghz_txrx_stop(subghz->txrx);
+                return true;
+            }
             // if hardware TX still working at this time so we just blink led and return
             if(!subghz_devices_is_async_complete_tx(subghz->txrx->radio_device)) {
                 notification_message(subghz->notifications, &sequence_blink_magenta_10);
@@ -151,6 +157,15 @@ bool subghz_scene_transmitter_on_event(void* context, SceneManagerEvent event) {
 
 void subghz_scene_transmitter_on_exit(void* context) {
     SubGhz* subghz = context;
+    if(subghz->timer) {
+        furi_timer_stop(subghz->timer);
+        furi_timer_free(subghz->timer);
+        subghz->timer = NULL;
+    }
+    if(subghz->state_notifications == SubGhzNotificationStateTx) {
+        subghz_block_generic_global.endless_tx = false;
+        subghz_txrx_stop(subghz->txrx);
+    }
     subghz->state_notifications = SubGhzNotificationStateIDLE;
 
     subghz_txrx_reset_dynamic_and_custom_btns(subghz->txrx);

@@ -155,6 +155,14 @@ static void hexlify(uint8_t* in, uint8_t size, char* out) {
         snprintf(out + i * 2, 3, "%02X", in[i]);
 }
 
+static const NotificationSequence sequence_sniff_found = {
+    &message_green_255,
+    &message_note_c7,
+    &message_delay_50,
+    &message_sound_off,
+    NULL,
+};
+
 static bool save_addr_to_file(
     Storage* storage,
     uint8_t* data,
@@ -162,9 +170,9 @@ static bool save_addr_to_file(
     NotificationApp* notification) {
     size_t file_size = 0;
     uint8_t linesize = 0;
-    char filepath[42] = {0};
-    char addrline[14] = {0};
-    char ending[4];
+    char filepath[64] = {0};
+    char addrline[32] = {0};
+    char ending[8];
     uint8_t* file_contents;
     uint8_t rate = 1;
     Stream* stream = file_stream_alloc(storage);
@@ -191,7 +199,7 @@ static bool save_addr_to_file(
                 char* line = nrf_strtok((char*)file_contents, "\n");
 
                 while(line != NULL) {
-                    if(!memcmp(line, addrline, 12)) {
+                    if(strlen(line) >= 12 && !memcmp(line, addrline, 12)) {
                         found = true;
                         break;
                     }
@@ -214,7 +222,7 @@ static bool save_addr_to_file(
                 FURI_LOG_I(TAG, "Found a new address: %s", addrline);
                 FURI_LOG_I(TAG, "Save successful!");
 
-                notification_message(notification, &sequence_success);
+                notification_message(notification, &sequence_sniff_found);
 
                 stream_free(stream);
                 unique_saved_count++;
@@ -260,15 +268,14 @@ void alt_address(uint8_t* addr, uint8_t* altaddr) {
 }
 
 static bool previously_confirmed(uint8_t* addr) {
-    bool found = false;
-    for(int i = 0; i < MAX_CONFIRMED; i++) {
+    // confirmed_idx is bounded by MAX_CONFIRMED at the call site, so no extra bound needed
+    for(uint8_t i = 0; i < confirmed_idx; i++) {
         if(!memcmp(confirmed[i], addr, 5)) {
-            found = true;
-            break;
+            return true;
         }
     }
 
-    return found;
+    return false;
 }
 
 static void wrap_up(const FuriHalSpiBusHandle* handle, Storage* storage, NotificationApp* notification) {
@@ -309,7 +316,6 @@ static void wrap_up(const FuriHalSpiBusHandle* handle, Storage* storage, Notific
         save_addr_to_file(storage, addr, 5, notification);
         if(confirmed_idx < MAX_CONFIRMED) memcpy(confirmed[confirmed_idx++], addr, 5);
         break;
-        furi_delay_ms(1);
     }
     // Clear low count candidates so noise does not accumulate and cause long freezes
     memset(counts, 0, sizeof(counts));
@@ -386,7 +392,7 @@ int32_t nrfsniff_app(void* p) {
     uint32_t last_redraw = 0;
     for(bool processing = true; processing;) {
         FuriStatus event_status =
-            furi_message_queue_get(event_queue, &event, sniffing_state ? 0 : 100);
+            furi_message_queue_get(event_queue, &event, sniffing_state ? 5 : 100);
 
         bool needs_redraw = false;
 
@@ -496,6 +502,13 @@ int32_t nrfsniff_app(void* p) {
     target_rate = 8; // rate can be either 8 (2Mbps) or 0 (1Mbps)
     sniffing_state = false;
     nrf24_deinit();
+
+    // Reset sound sequence before releasing speaker to ensure clean shutdown
+    notification_message(notification, &sequence_reset_sound);
+    if(furi_hal_speaker_is_mine()) {
+        furi_hal_speaker_stop();
+        furi_hal_speaker_release();
+    }
 
     if(furi_hal_power_is_otg_enabled() && !otg_was_enabled) {
         furi_hal_power_disable_otg();

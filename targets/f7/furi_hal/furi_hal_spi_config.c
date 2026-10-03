@@ -165,7 +165,7 @@ inline static void furi_hal_spi_bus_external_handle_event_callback(
         furi_hal_gpio_init_ex(
             handle->miso,
             GpioModeAltFunctionPushPull,
-            GpioPullNo,
+            GpioPullUp,
             GpioSpeedVeryHigh,
             GpioAltFn5SPI1);
         furi_hal_gpio_init_ex(
@@ -180,6 +180,8 @@ inline static void furi_hal_spi_bus_external_handle_event_callback(
             GpioPullNo,
             GpioSpeedVeryHigh,
             GpioAltFn5SPI1);
+
+        furi_hal_gpio_write(handle->cs, false);
     } else if(event == FuriHalSpiBusHandleEventDeactivate) {
         furi_hal_gpio_write(handle->cs, true);
 
@@ -226,13 +228,7 @@ inline static void furi_hal_spi_bus_nfc_handle_event_callback(
         }
     } else if(event == FuriHalSpiBusHandleEventDeinit) {
         furi_hal_gpio_write(handle->cs, true);
-        furi_hal_gpio_init(handle->cs, GpioModeInput, GpioPullUp, GpioSpeedLow);
-
-        furi_hal_gpio_init(handle->sck, GpioModeInput, GpioPullUp, GpioSpeedLow);
-        furi_hal_gpio_init(handle->miso, GpioModeInput, GpioPullUp, GpioSpeedLow);
-
-        furi_hal_gpio_write(handle->mosi, false);
-        furi_hal_gpio_init(handle->mosi, GpioModeOutputPushPull, GpioPullNo, GpioSpeedVeryHigh);
+        furi_hal_gpio_init(handle->cs, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
     } else if(event == FuriHalSpiBusHandleEventActivate) {
         furi_hal_gpio_write(handle->cs, true);
         furi_hal_gpio_init(handle->cs, GpioModeOutputPushPull, GpioPullNo, GpioSpeedVeryHigh);
@@ -419,7 +415,7 @@ const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external = {
     .miso = &gpio_spi_miso, // Use shared pin
     .mosi = &gpio_spi_mosi, // Use shared pin
     .sck = &gpio_spi_sck, // Use shared pin
-    .cs = &gpio_ext_pc3, // Header Pin 7 (Official Default CS pin)
+    .cs = &gpio_ext_pa4, // Header Pin 4 (Safe CS pin, avoids PA5 RFID coil conflict)
 };
 
 const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external_extra = {
@@ -428,5 +424,5 @@ const FuriHalSpiBusHandle furi_hal_spi_bus_handle_external_extra = {
     .miso = &gpio_spi_miso, // Use shared pin
     .mosi = &gpio_spi_mosi, // Use shared pin
     .sck = &gpio_spi_sck, // Use shared pin
-    .cs = &gpio_ext_pa4, // Header Pin 4 (Official Extra CS pin)
+    .cs = &gpio_ext_pa4, // Header Pin 4 (Safe CS pin)
 };

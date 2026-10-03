@@ -1,0 +1,17 @@
+Filetype: Flipper SubGhz Setting File
+Version: 1
+# Extended range configuration
+# Warning: Enabling extended range allows frequencies outside standard regulatory bands.
+# This may violate local regulations and can potentially damage hardware.
+# Use at your own risk!
+
+# Acknowledged: Set to true after reading the warning above
+acknowledged: false
+
+# Enable extended frequency range (281-962 MHz)
+# Requires external CC1101 (Yard Stick One) module
+use_ext_range_at_own_risk: false
+
+# Ignore default TX region restrictions (bypass region limits)
+# Only enable if you understand the regulatory implications
+ignore_default_tx_region: false

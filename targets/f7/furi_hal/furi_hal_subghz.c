@@ -9,6 +9,7 @@
 #include <furi_hal_interrupt.h>
 #include <furi_hal_resources.h>
 #include <furi_hal_bus.h>
+#include <furi_hal_random.h>
 
 #include <stm32wbxx_ll_dma.h>
 
@@ -54,6 +55,7 @@ typedef struct {
     const GpioPin* async_mirror_pin;
 
     int32_t rolling_counter_mult;
+    uint32_t current_frequency;
     bool extended_range : 1;
     bool bypass_region  : 1;
 } FuriHalSubGhz;
@@ -92,6 +94,63 @@ bool furi_hal_subghz_get_bypass_region(void) {
 }
 bool furi_hal_subghz_is_alive(void) {
     return furi_hal_subghz.state != SubGhzStateInit && furi_hal_subghz.state != SubGhzStateBroken;
+}
+
+// Token bucket for duty cycle enforcement
+#define DUTY_CYCLE_TOKEN_SCALE 1000  // ms * 1000 for sub-ms precision
+
+static uint32_t furi_hal_subghz_max_tokens_ms(const FuriHalRegionBand* band) {
+    if(band->duty_cycle == 0 || band->duty_cycle >= 100) return UINT32_MAX;
+    return (band->duty_cycle * 3600000UL) / 100;  // Max tokens = duty% * 1 hour in ms
+}
+
+static void furi_hal_subghz_refill_tokens(FuriHalRegionBand* band) {
+    if(band->duty_cycle == 0 || band->duty_cycle >= 100) {
+        band->tokens_ms = furi_hal_subghz_max_tokens_ms(band) * DUTY_CYCLE_TOKEN_SCALE;
+        band->last_update_tick = furi_get_tick();
+        return;
+    }
+    uint32_t now = furi_get_tick();
+    uint32_t elapsed_ms = now - band->last_update_tick;
+    // Tokens replenish at rate: duty_cycle% per ms
+    uint32_t refill = (elapsed_ms * band->duty_cycle * DUTY_CYCLE_TOKEN_SCALE) / 100;
+    uint32_t max_tokens = furi_hal_subghz_max_tokens_ms(band) * DUTY_CYCLE_TOKEN_SCALE;
+    if(band->tokens_ms + refill > max_tokens) band->tokens_ms = max_tokens;
+    else band->tokens_ms += refill;
+    band->last_update_tick = now;
+}
+
+bool furi_hal_subghz_consume_tokens(FuriHalRegionBand* band, uint32_t tx_duration_ms) {
+    if(band->duty_cycle == 0 || band->duty_cycle >= 100) return true;
+    furi_hal_subghz_refill_tokens(band);
+    uint32_t cost = tx_duration_ms * DUTY_CYCLE_TOKEN_SCALE;
+    if(band->tokens_ms >= cost) {
+        band->tokens_ms -= cost;
+        band->last_tx_tick = furi_get_tick();
+        return true;
+    }
+    return false;
+}
+
+// Listen-Before-Talk check
+bool furi_hal_subghz_lbt_check(FuriHalRegionBand* band) {
+    if(!band->lbt_required) return true;
+    
+    // Switch to RX briefly to measure RSSI
+    furi_hal_subghz_rx();
+    furi_delay_ms(1); // Settle
+    
+    float rssi = furi_hal_subghz_get_rssi();
+    furi_hal_subghz_idle();
+    
+    if(rssi > band->lbt_rssi_threshold) {
+        // Channel busy: random backoff
+        uint32_t backoff = band->lbt_min_backoff_ms + 
+            (furi_hal_random_get() % (band->lbt_max_backoff_ms - band->lbt_min_backoff_ms + 1));
+        furi_delay_ms(backoff);
+        return false; // Caller should retry
+    }
+    return true; // Channel clear
 }
 
 void furi_hal_subghz_set_async_mirror_pin(const GpioPin* pin) {
@@ -134,6 +193,10 @@ void furi_hal_subghz_init(void) {
             break;
         }
 
+        // Enable extended range for external CC1101 (Yard Stick One)
+        // External CC1101 supports 281-361, 378-481, 749-962 MHz
+        furi_hal_subghz.extended_range = true;
+
         // Keep GDO0 floating for now.
         // GDO0 self-test is temporarily disabled.
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHighImpedance);
@@ -151,7 +214,7 @@ void furi_hal_subghz_init(void) {
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
 
-    FURI_LOG_E(TAG, "SUBGHZ INIT STATE=%d", furi_hal_subghz.state);
+    FURI_LOG_I(TAG, "SUBGHZ INIT STATE=%d", furi_hal_subghz.state);
 
     if(furi_hal_subghz.state == SubGhzStateIdle) {
         FURI_LOG_I(TAG, "Init OK");
@@ -192,7 +255,7 @@ void furi_hal_subghz_load_custom_preset(const uint8_t* preset_data) {
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     uint32_t i = 0;
     uint8_t pa[8] = {0};
-    while(preset_data[i]) {
+    while(i < 256 && preset_data[i]) {
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, preset_data[i], preset_data[i + 1]);
         i += 2;
     }
@@ -206,7 +269,7 @@ void furi_hal_subghz_load_custom_preset(const uint8_t* preset_data) {
     if(furi_hal_rtc_is_flag_set(FuriHalRtcFlagDebug)) {
         i = 0;
         FURI_LOG_D(TAG, "Loading custom preset");
-        while(preset_data[i]) {
+        while(i < 256 && preset_data[i]) {
             FURI_LOG_D(TAG, "Reg[%lu]: %02X=%02X", i, preset_data[i], preset_data[i + 1]);
             i += 2;
         }
@@ -222,7 +285,7 @@ void furi_hal_subghz_load_registers(const uint8_t* data) {
     furi_hal_subghz_reset();
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     uint32_t i = 0;
-    while(data[i]) {
+    while(data[i] && i < 256) {
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, data[i], data[i + 1]);
         i += 2;
     }
@@ -354,6 +417,33 @@ bool furi_hal_subghz_tx(void) {
     if(furi_hal_subghz.regulation != SubGhzRegulationTxRx) {
         FURI_LOG_E("FuriHalSubGhz", "TX blocked by regulation status!");
         return false;
+    }
+    // Duty cycle enforcement
+    const FuriHalRegion* region = furi_hal_region_get();
+    if(region && !furi_hal_subghz.bypass_region) {
+        for(size_t i = 0; i < region->bands_count; i++) {
+            if(region->bands[i].start <= furi_hal_subghz_get_frequency() && 
+               region->bands[i].end >= furi_hal_subghz_get_frequency()) {
+                // Estimate TX duration (conservative 10ms for typical packet)
+                uint32_t est_tx_ms = 10;
+                if(!furi_hal_subghz_consume_tokens((FuriHalRegionBand*)&region->bands[i], est_tx_ms)) {
+                    FURI_LOG_W(TAG, "TX blocked: duty cycle exceeded for band %lu-%lu",
+                               region->bands[i].start, region->bands[i].end);
+                    return false;
+                }
+                // Listen-Before-Talk
+                if(region->bands[i].lbt_required) {
+                    for(int retry = 0; retry < 3; retry++) {
+                        if(furi_hal_subghz_lbt_check((FuriHalRegionBand*)&region->bands[i])) break;
+                        if(retry == 2) {
+                            FURI_LOG_W(TAG, "TX blocked: LBT channel busy after retries");
+                            return false;
+                        }
+                    }
+                }
+                break;
+            }
+        }
     }
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     cc1101_switch_to_idle(&furi_hal_spi_bus_handle_subghz);
@@ -512,25 +602,29 @@ uint32_t furi_hal_subghz_set_frequency(uint32_t value) {
     }
 
     furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+    furi_hal_subghz.current_frequency = real_frequency;
     FURI_LOG_I(TAG, "set_frequency finished: %lu", real_frequency);
     return real_frequency;
 }
 
+uint32_t furi_hal_subghz_get_frequency(void) {
+    return furi_hal_subghz.current_frequency;
+}
+
 void furi_hal_subghz_set_path(FuriHalSubGhzPath path) {
+    // RF switch GPIO (gpio_rf_sw_0) is not populated on this DIY board.
+    // RF path is controlled solely via CC1101 IOCFG2 register (GDO2).
+    // See furi_hal_resources.c — gpio_rf_sw_0 init is also commented out.
     furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
     if(path == FuriHalSubGhzPath433) {
-        // furi_hal_gpio_write(&gpio_rf_sw_0, 0);
         cc1101_write_reg(
             &furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW | CC1101_IOCFG_INV);
     } else if(path == FuriHalSubGhzPath315) {
-        //furi_hal_gpio_write(&gpio_rf_sw_0, 1);
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW);
     } else if(path == FuriHalSubGhzPath868) {
-        //furi_hal_gpio_write(&gpio_rf_sw_0, 1);
         cc1101_write_reg(
             &furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW | CC1101_IOCFG_INV);
     } else if(path == FuriHalSubGhzPathIsolate) {
-        //  furi_hal_gpio_write(&gpio_rf_sw_0, 0);
         cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW);
     } else {
         furi_crash("SubGhz: Incorrect path during set.");
@@ -832,6 +926,32 @@ bool furi_hal_subghz_start_async_tx(FuriHalSubGhzAsyncTxCallback callback, void*
 
     //If transmission is prohibited by regional settings
     if(furi_hal_subghz.regulation != SubGhzRegulationTxRx) return false;
+
+    // Duty cycle enforcement for async TX
+    const FuriHalRegion* region = furi_hal_region_get();
+    if(region && !furi_hal_subghz.bypass_region) {
+        for(size_t i = 0; i < region->bands_count; i++) {
+            if(region->bands[i].start <= furi_hal_subghz_get_frequency() && 
+               region->bands[i].end >= furi_hal_subghz_get_frequency()) {
+                // Async TX: check if we have tokens for at least 100ms burst
+                if(!furi_hal_subghz_consume_tokens((FuriHalRegionBand*)&region->bands[i], 100)) {
+                    FURI_LOG_W(TAG, "Async TX blocked: duty cycle exceeded");
+                    return false;
+                }
+                // Listen-Before-Talk
+                if(region->bands[i].lbt_required) {
+                    for(int retry = 0; retry < 3; retry++) {
+                        if(furi_hal_subghz_lbt_check((FuriHalRegionBand*)&region->bands[i])) break;
+                        if(retry == 2) {
+                            FURI_LOG_W(TAG, "Async TX blocked: LBT channel busy after retries");
+                            return false;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
 
     furi_hal_subghz_async_tx.callback = callback;
     furi_hal_subghz_async_tx.callback_context = context;

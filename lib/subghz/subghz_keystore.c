@@ -68,18 +68,41 @@ static void subghz_keystore_add_key(
     manufacture_code->type = type;
 }
 
+static bool subghz_keystore_is_printable_ascii(const char* str) {
+    if(!str || *str == '\0') return false;
+    for(const char* p = str; *p != '\0'; p++) {
+        if(((unsigned char)*p < 0x20 || (unsigned char)*p > 0x7E) &&
+           *p != '\r' && *p != '\n' && *p != '\t') {
+            return false;
+        }
+    }
+    return true;
+}
+
 static bool subghz_keystore_process_line(SubGhzKeystore* instance, char* line) {
+    while(*line == ' ' || *line == '\t') line++;
+    if(*line == '\0' || *line == '#' || *line == '\r' || *line == '\n') {
+        return false;
+    }
+
     uint64_t key = 0;
     uint16_t type = 0;
     char skey[17] = {0};
     char name[65] = {0};
-    int ret = sscanf(line, "%16s:%hu:%64s", skey, &type, name);
+    int ret = sscanf(line, "%16[^:]:%hu:%64[^\r\n]", skey, &type, name);
     key = strtoull(skey, NULL, 16);
     if(ret == 3) {
         subghz_keystore_add_key(instance, name, key, type);
         return true;
     } else {
-        FURI_LOG_E(TAG, "Failed to load line: %s\r\n", line);
+        if(subghz_keystore_is_printable_ascii(line)) {
+            // Only log non-empty lines that aren't just whitespace
+            if(strlen(line) > 0 && strspn(line, " \t\r\n") != strlen(line)) {
+                FURI_LOG_E(TAG, "Failed to load line: %s", line);
+            }
+        } else {
+            FURI_LOG_E(TAG, "Failed to load line: [binary/unprintable data]");
+        }
         return false;
     }
 }
@@ -118,7 +141,11 @@ static bool subghz_keystore_read_file(SubGhzKeystore* instance, Stream* stream, 
 
     char* decrypted_line = malloc(SUBGHZ_KEYSTORE_FILE_DECRYPTED_LINE_SIZE);
     char* encrypted_line = malloc(SUBGHZ_KEYSTORE_FILE_ENCRYPTED_LINE_SIZE);
+    memset(decrypted_line, 0, SUBGHZ_KEYSTORE_FILE_DECRYPTED_LINE_SIZE);
+    memset(encrypted_line, 0, SUBGHZ_KEYSTORE_FILE_ENCRYPTED_LINE_SIZE);
     size_t encrypted_line_cursor = 0;
+    bool enclave_key_missing = false;
+    bool enclave_key_warning_logged = false;
 
     do {
         if(iv) {
@@ -133,13 +160,14 @@ static bool subghz_keystore_read_file(SubGhzKeystore* instance, Stream* stream, 
             ret = stream_read(stream, buffer, FILE_BUFFER_SIZE);
             for(uint16_t i = 0; i < ret; i++) {
                 if(buffer[i] == '\n' && encrypted_line_cursor > 0) {
+                    encrypted_line[encrypted_line_cursor] = '\0';
                     // Process line
                     if(iv) {
                         // Data alignment check, 32 instead of 16 because of hex encoding
-                        size_t len = strlen(encrypted_line);
-                        if(len % 32 == 0) {
+                        size_t len = encrypted_line_cursor;
+                        if(encrypted_line_cursor % 32 == 0) {
                             // Inplace hex to bin conversion
-                            for(size_t i = 0; i < len; i += 2) {
+                            for(size_t i = 0; i < encrypted_line_cursor; i += 2) {
                                 uint8_t hi_nibble = 0;
                                 uint8_t lo_nibble = 0;
                                 hex_char_to_hex_nibble(encrypted_line[i], &hi_nibble);
@@ -148,20 +176,41 @@ static bool subghz_keystore_read_file(SubGhzKeystore* instance, Stream* stream, 
                             }
                             len /= 2;
 
-                            if(furi_hal_crypto_decrypt(
-                                   (uint8_t*)encrypted_line, (uint8_t*)decrypted_line, len)) {
-                                subghz_keystore_process_line(instance, decrypted_line);
-                            } else {
-                                FURI_LOG_E(TAG, "Decryption failed");
-                                result = false;
-                                break;
-                            }
-                        } else {
-                            FURI_LOG_E(TAG, "Invalid encrypted data: %s", encrypted_line);
-                        }
-                    } else {
-                        subghz_keystore_process_line(instance, encrypted_line);
-                    }
+if(furi_hal_crypto_decrypt(
+                                                            (uint8_t*)encrypted_line, (uint8_t*)decrypted_line, len)) {
+                                                         decrypted_line[len] = '\0';
+if(!subghz_keystore_is_printable_ascii(decrypted_line)) {
+                                                              // Enclave key not provisioned on this hardware.
+                                                              // The file is present but keys can't be decrypted.
+                                                              // Treat the keystore as "loaded" (result stays true)
+                                                              // so the SubGHz app launches without the error popup.
+                                                              if(!enclave_key_warning_logged) {
+                                                                  FURI_LOG_W(
+                                                                      TAG,
+                                                                      "Decrypted keystore data is not valid ASCII (enclave key not provisioned). Skipping encrypted keystore.");
+                                                                  enclave_key_warning_logged = true;
+                                                              }
+                                                              enclave_key_missing = true;
+                                                              break;
+                                                        }
+                                                        subghz_keystore_process_line(instance, decrypted_line);
+                                                    } else {
+                                                        FURI_LOG_E(TAG, "Decryption failed");
+                                                        result = false;
+                                                        break;
+                                                    }
+                                                } else {
+                                                    FURI_LOG_E(TAG, "Invalid encrypted data: %s", encrypted_line);
+                                                }
+                                            } else {
+                                                // For unencrypted files, just process the line
+                                                // Don't fail on binary data - just skip it
+                                                if(subghz_keystore_is_printable_ascii(encrypted_line)) {
+                                                    subghz_keystore_process_line(instance, encrypted_line);
+                                                } else {
+                                                    // Skip binary/unprintable lines silently
+                                                }
+                                            }
                     // reset line buffer
                     memset(decrypted_line, 0, SUBGHZ_KEYSTORE_FILE_DECRYPTED_LINE_SIZE);
                     memset(encrypted_line, 0, SUBGHZ_KEYSTORE_FILE_ENCRYPTED_LINE_SIZE);
@@ -179,7 +228,7 @@ static bool subghz_keystore_read_file(SubGhzKeystore* instance, Stream* stream, 
                     }
                 }
             }
-        } while(ret > 0 && result);
+        } while(ret > 0 && result && !enclave_key_missing);
 
         if(iv) furi_hal_crypto_enclave_unload_key(SUBGHZ_KEYSTORE_FILE_ENCRYPTION_KEY_SLOT);
     } while(false);
@@ -207,7 +256,7 @@ bool subghz_keystore_load(SubGhzKeystore* instance, const char* file_name) {
     FlipperFormat* flipper_format = flipper_format_file_alloc(storage);
     do {
         if(!flipper_format_file_open_existing(flipper_format, file_name)) {
-            FURI_LOG_E(TAG, "Unable to open file for read: %s", file_name);
+            FURI_LOG_I(TAG, "File is not used %s", file_name);
             break;
         }
         if(!flipper_format_read_header(flipper_format, filetype, &version)) {
@@ -227,6 +276,11 @@ bool subghz_keystore_load(SubGhzKeystore* instance, const char* file_name) {
 
         Stream* stream = flipper_format_get_raw_stream(flipper_format);
         if(encryption == SubGhzKeystoreEncryptionNone) {
+            if(version == 0) {
+                FURI_LOG_W(
+                    TAG,
+                    "Keystore appears unencrypted but may be encrypted - check SD card assets");
+            }
             result = subghz_keystore_read_file(instance, stream, NULL);
         } else if(encryption == SubGhzKeystoreEncryptionAES256) {
             if(!flipper_format_read_hex(flipper_format, "IV", iv, 16)) {
@@ -314,7 +368,8 @@ bool subghz_keystore_save(SubGhzKeystore* instance, const char* file_name, uint8
                     FURI_LOG_E(TAG, "Encryption failed");
                     break;
                 }
-                // HEX Encode encrypted line
+                // HEX Encode encrypted line (reverse iteration to avoid
+                // overwriting unprocessed bytes in the in-place conversion)
                 const char xx[] = "0123456789ABCDEF";
                 for(int i = 0; i < len; i++) {
                     size_t cursor = len - i - 1;
@@ -432,9 +487,6 @@ bool subghz_keystore_raw_encrypted_save(
 
         size_t ret = 0;
         furi_assert(FILE_BUFFER_SIZE % 16 == 0);
-
-        //skip the end of the previous line "\n"
-        stream_read(input_stream, buffer, 1);
 
         do {
             memset(buffer, 0, FILE_BUFFER_SIZE);

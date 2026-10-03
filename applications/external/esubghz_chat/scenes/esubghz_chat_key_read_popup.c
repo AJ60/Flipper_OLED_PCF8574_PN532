@@ -174,6 +174,11 @@ void scene_on_enter_key_read_popup(void* context) {
     furi_assert(context);
     ESubGhzChatState* state = context;
 
+    if(!state->nfc_available) {
+        key_read_popup_set_state(state, KeyReadPopupState_Fail);
+        return;
+    }
+
     key_read_popup_set_state(state, KeyReadPopupState_Detecting);
 
     nfc_worker_start(
@@ -255,6 +260,10 @@ void scene_on_exit_key_read_popup(void* context) {
     popup_reset(state->nfc_popup);
     scene_manager_set_scene_state(
         state->scene_manager, ESubGhzChatScene_KeyReadPopup, KeyReadPopupState_Idle);
+
+    if(!state->nfc_available) {
+        return;
+    }
 
     notification_message(state->notification, &sequence_blink_stop);
 

@@ -141,6 +141,7 @@ uint8_t ss_subghz_init() {
 
     subghz_chat = malloc(sizeof(SubGhzChatWorker));
     furi_assert(subghz_chat);
+    memset(subghz_chat, 0, sizeof(SubGhzChatWorker));
 
     uint32_t frequency = 433920000; // TODO: define / make configurable?
 

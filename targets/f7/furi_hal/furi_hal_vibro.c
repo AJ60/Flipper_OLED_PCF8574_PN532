@@ -1,27 +1,15 @@
 #include <furi_hal_vibro.h>
 #include <furi_hal_gpio.h>
-#include <furi_hal_pcf8574.h>
+#include <core/common_defines.h>
 
 #define TAG "FuriHalVibro"
 
 void furi_hal_vibro_init(void) {
-    // Use PCF8574 pin 6 for the vibro motor
-    const uint8_t vibro_pin = 6;
-    if(!furi_hal_pcf8574_init()) {
-        FURI_LOG_E(TAG, "PCF8574 init failed");
-    } else {
-        // Configure pin as output and clear it
-        // PCF8574 has no direction register, so we just write the pin
-        if(!furi_hal_pcf8574_write_pin(vibro_pin, false)) {
-            FURI_LOG_E(TAG, "Failed to clear vibro pin");
-        }
-        FURI_LOG_I(TAG, "Vibro bound to PCF8574 pin 6");
-    }
+    // VIBRO not present on this board revision (see furi_hal_resources.h:224).
+    FURI_LOG_I(TAG, "Vibro not present on this board revision");
 }
 
 void furi_hal_vibro_on(bool value) {
-    const uint8_t vibro_pin = 6;
-    if(!furi_hal_pcf8574_write_pin(vibro_pin, value)) {
-        FURI_LOG_E(TAG, "Failed to set vibro pin");
-    }
+    UNUSED(value);
+    // VIBRO not present on this board revision.
 }

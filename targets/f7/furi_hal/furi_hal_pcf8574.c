@@ -190,7 +190,15 @@ bool furi_hal_pcf8574_init_ex(uint8_t i2c_addr) {
     // init already succeeded, the explicit address below is ignored in favor of
     // the already-bound one.
     if(pcf8574_is_initialized) {
-        FURI_LOG_I(TAG, "PCF8574 already initialized at 0x%02X", pcf8574_addr);
+        if(pcf8574_addr != i2c_addr) {
+            FURI_LOG_W(
+                TAG,
+                "PCF8574 already initialized at 0x%02X, ignoring explicit request for 0x%02X",
+                pcf8574_addr,
+                i2c_addr);
+        } else {
+            FURI_LOG_I(TAG, "PCF8574 already initialized at 0x%02X", pcf8574_addr);
+        }
         return true;
     }
 

@@ -6,5 +6,6 @@ typedef enum {
     SubGhzTxBlockedRegionNotProvisioned, /**< Region not provisioned and not bypassed */
     SubGhzTxBlockedRegion, /**< Outside region, needs bypass region */
     SubGhzTxBlockedDefault, /**< Outisde default, needs extended range */
+    SubGhzTxBlockedExtended, /**< Outside extended range */
     SubGhzTxUnsupported, /**< No configuration would allow this */
 } SubGhzTx;

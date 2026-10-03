@@ -30,22 +30,27 @@
 #define SUBGHZ_FREQUENCY_RANGE_STR \
     "299999755...348000000 or 386999938...464000000 or 778999847...928000000"
 
-// Tx/Rx Carrier | only internal module
-// Tx/Rx command | both
-// Rx RAW        | only internal module
-// Chat          | both
+// Tx/Rx Carrier | only internal module (uses furi_hal_subghz_* directly)
+// Tx/Rx command | both (uses SubGhzDevice abstraction)
+// Rx RAW        | only internal module (uses furi_hal_subghz_* directly)
+// Chat          | both (uses SubGhzDevice abstraction)
 
 #define TAG "SubGhzCli"
 
 static void subghz_cli_radio_device_power_on(void) {
     Power* power = furi_record_open(RECORD_POWER);
-    power_enable_otg(power, true);
+    if(!power_is_otg_enabled(power)) {
+        power_enable_otg(power, true);
+        furi_delay_ms(15);
+    }
     furi_record_close(RECORD_POWER);
 }
 
 static void subghz_cli_radio_device_power_off(void) {
     Power* power = furi_record_open(RECORD_POWER);
-    power_enable_otg(power, false);
+    if(power_is_otg_enabled(power)) {
+        power_enable_otg(power, false);
+    }
     furi_record_close(RECORD_POWER);
 }
 
@@ -264,6 +269,7 @@ void subghz_cli_command_tx(PipeSide* pipe, FuriString* args, void* context) {
     furi_hal_power_suppress_charge_exit();
 
     flipper_format_free(flipper_format);
+    furi_string_free(flipper_format_string);
     subghz_transmitter_free(transmitter);
     subghz_environment_free(environment);
 }
@@ -691,6 +697,7 @@ void subghz_cli_command_tx_from_file(PipeSide* pipe, FuriString* args, void* con
                    custom_preset_data,
                    custom_preset_data_size)) {
                 printf("subghz tx_from_file: \033[0;31mCustom_preset_data read error\033[0m\r\n");
+                free(custom_preset_data);
                 break;
             }
             subghz_devices_load_preset(
@@ -758,10 +765,6 @@ void subghz_cli_command_tx_from_file(PipeSide* pipe, FuriString* args, void* con
 
         if(is_init_protocol) {
             check_file = true;
-        } else {
-            subghz_devices_sleep(device);
-            subghz_devices_end(device);
-            subghz_transmitter_free(transmitter);
         }
 
     } while(false);
@@ -804,12 +807,16 @@ void subghz_cli_command_tx_from_file(PipeSide* pipe, FuriString* args, void* con
         } while(!cli_is_pipe_broken_or_is_etx_next_char(pipe) &&
                 (repeat && !strcmp(furi_string_get_cstr(temp_str), "RAW")));
 
+        furi_hal_power_suppress_charge_exit();
+    }
+
+    if(device && subghz_devices_is_connect(device)) {
         subghz_devices_sleep(device);
         subghz_devices_end(device);
-        subghz_cli_radio_device_power_off();
+    }
+    subghz_cli_radio_device_power_off();
 
-        furi_hal_power_suppress_charge_exit();
-
+    if(transmitter) {
         subghz_transmitter_free(transmitter);
     }
     flipper_format_free(fff_data_raw);
@@ -847,6 +854,8 @@ static void subghz_cli_command_print_usage(void) {
             "\tencrypt_keeloq <path_decrypted_file> <path_encrypted_file> <IV:16 bytes in hex>\t - Encrypt keeloq manufacture keys\r\n");
         printf(
             "\tencrypt_raw <path_decrypted_file> <path_encrypted_file> <IV:16 bytes in hex>\t - Encrypt RAW data\r\n");
+        printf(
+            "\tkeystore_gen <input_unencrypted> <output_encrypted>\t - Generate encrypted keystore from unencrypted input\r\n");
     }
 }
 
@@ -926,6 +935,33 @@ static void subghz_cli_command_encrypt_raw(PipeSide* pipe, FuriString* args) {
     furi_string_free(source);
 }
 
+static void subghz_cli_command_keystore_gen(PipeSide* pipe, FuriString* args) {
+    UNUSED(pipe);
+    FuriString* input_path = furi_string_alloc();
+    FuriString* output_path = furi_string_alloc();
+
+    if(!args_read_probably_quoted_string_and_trim(args, input_path) ||
+       !args_read_probably_quoted_string_and_trim(args, output_path)) {
+        printf("Usage: subghz keystore_gen <input_unencrypted> <output_encrypted>\r\n");
+        furi_string_free(input_path);
+        furi_string_free(output_path);
+        return;
+    }
+
+    uint8_t iv[16];
+    furi_hal_random_fill_buf(iv, sizeof(iv));
+
+    if(subghz_keystore_raw_encrypted_save(
+           furi_string_get_cstr(input_path), furi_string_get_cstr(output_path), iv)) {
+        printf("Keystore generated: %s\r\n", furi_string_get_cstr(output_path));
+    } else {
+        printf("Failed to generate keystore\r\n");
+    }
+
+    furi_string_free(input_path);
+    furi_string_free(output_path);
+}
+
 static void subghz_cli_command_chat(PipeSide* pipe, FuriString* args) {
     uint32_t frequency = 433920000;
     uint32_t device_ind = 0; // 0 - CC1101_INT, 1 - CC1101_EXT
@@ -967,8 +1003,10 @@ static void subghz_cli_command_chat(PipeSide* pipe, FuriString* args) {
 
         if(subghz_chat_worker_is_running(subghz_chat)) {
             subghz_chat_worker_stop(subghz_chat);
-            subghz_chat_worker_free(subghz_chat);
         }
+        subghz_chat_worker_free(subghz_chat);
+        subghz_devices_deinit();
+        subghz_cli_radio_device_power_off();
         return;
     }
 
@@ -1104,16 +1142,16 @@ static void subghz_cli_command_chat(PipeSide* pipe, FuriString* args) {
     furi_string_free(output);
     furi_string_free(sysmsg);
 
+    if(subghz_chat_worker_is_running(subghz_chat)) {
+        subghz_chat_worker_stop(subghz_chat);
+    }
+    subghz_chat_worker_free(subghz_chat);
+
     subghz_devices_deinit();
     subghz_cli_radio_device_power_off();
 
     furi_hal_power_suppress_charge_exit();
     furi_record_close(RECORD_NOTIFICATION);
-
-    if(subghz_chat_worker_is_running(subghz_chat)) {
-        subghz_chat_worker_stop(subghz_chat);
-        subghz_chat_worker_free(subghz_chat);
-    }
     printf("\r\nExit chat\r\n");
 }
 
@@ -1175,6 +1213,11 @@ static void execute(PipeSide* pipe, FuriString* args, void* context) {
 
             if(furi_string_cmp_str(cmd, "rx_carrier") == 0) {
                 subghz_cli_command_rx_carrier(pipe, args, context);
+                break;
+            }
+
+            if(furi_string_cmp_str(cmd, "keystore_gen") == 0) {
+                subghz_cli_command_keystore_gen(pipe, args);
                 break;
             }
         }

@@ -38,18 +38,28 @@ bool radio_device_loader_is_connect_external(const char* name) {
 const SubGhzDevice* radio_device_loader_set(
     const SubGhzDevice* current_radio_device,
     SubGhzRadioDeviceType radio_device_type) {
-    const SubGhzDevice* radio_device;
+    const SubGhzDevice* radio_device = NULL;
 
-    if(radio_device_type == SubGhzRadioDeviceTypeExternalCC1101 &&
-       radio_device_loader_is_connect_external(SUBGHZ_DEVICE_CC1101_EXT_NAME)) {
+    if(radio_device_type == SubGhzRadioDeviceTypeExternalCC1101) {
         radio_device_loader_power_on();
-        radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
-        subghz_devices_begin(radio_device);
-    } else if(current_radio_device == NULL) {
-        radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
-    } else {
+        if(radio_device_loader_is_connect_external(SUBGHZ_DEVICE_CC1101_EXT_NAME)) {
+            radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
+            subghz_devices_begin(radio_device);
+            FURI_LOG_I("RadioDeviceLoader", "External CC1101 detected and initialized");
+            return radio_device;
+        }
+        FURI_LOG_W("RadioDeviceLoader", "External CC1101 not detected, falling back to internal");
+        radio_device_loader_power_off();
+    }
+
+    if(current_radio_device != NULL &&
+       current_radio_device == subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME)) {
         radio_device_loader_end(current_radio_device);
-        radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
+    }
+    radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
+    if(radio_device) {
+        subghz_devices_begin(radio_device);
+        FURI_LOG_I("RadioDeviceLoader", "Internal CC1101 initialized");
     }
 
     return radio_device;
@@ -58,7 +68,13 @@ const SubGhzDevice* radio_device_loader_set(
 void radio_device_loader_end(const SubGhzDevice* radio_device) {
     furi_assert(radio_device);
     radio_device_loader_power_off();
-    if(radio_device != subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME)) {
-        subghz_devices_end(radio_device);
-    }
+    // Code below is not used (and will cause crash) since its called from tx_rx worker end!
+    //if(radio_device != subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME)) {
+    //    subghz_devices_end(radio_device);
+    //}
+}
+
+bool radio_device_loader_is_external(const SubGhzDevice* radio_device) {
+    furi_assert(radio_device);
+    return (radio_device != subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME));
 }

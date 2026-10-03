@@ -63,6 +63,18 @@ void subghz_setting_set_default_frequency(SubGhzSetting* instance, uint32_t freq
 
 uint8_t subghz_setting_customs_presets_to_log(SubGhzSetting* instance);
 
+void subghz_setting_apply_region(SubGhzSetting* instance);
+
+const char* subghz_setting_get_region(SubGhzSetting* instance);
+
+void subghz_setting_set_region(SubGhzSetting* instance, const char* region_code);
+
+bool subghz_setting_save(SubGhzSetting* instance, const char* file_path);
+
+bool subghz_setting_load_or_create(SubGhzSetting* instance, const char* file_path);
+
+void subghz_setting_load_default_extended(SubGhzSetting* instance);
+
 #ifdef __cplusplus
 }
 #endif

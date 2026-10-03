@@ -16,9 +16,8 @@ const FuriHalSpiBusHandle* nrf24_get_handle(void) {
 }
 
 void nrf24_init() {
-    // Initialize both potential CS pins high so neither floats or interferes
-    furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeOutputPushPull);
-    furi_hal_gpio_write(&gpio_ext_pc3, true);
+    // Keep PC3 (PA5) in analog mode to prevent driving the LF-RFID coil stage
+    furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
     furi_hal_gpio_init_simple(&gpio_ext_pa4, GpioModeOutputPushPull);
     furi_hal_gpio_write(&gpio_ext_pa4, true);
 

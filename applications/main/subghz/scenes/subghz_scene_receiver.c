@@ -544,5 +544,10 @@ bool subghz_scene_receiver_on_event(void* context, SceneManagerEvent event) {
 }
 
 void subghz_scene_receiver_on_exit(void* context) {
-    UNUSED(context);
+    SubGhz* subghz = context;
+    if(subghz->timer) {
+        furi_timer_stop(subghz->timer);
+        furi_timer_free(subghz->timer);
+        subghz->timer = NULL;
+    }
 }

@@ -13,3 +13,5 @@ const SubGhzDevice* radio_device_loader_set(
     SubGhzRadioDeviceType radio_device_type);
 
 void radio_device_loader_end(const SubGhzDevice* radio_device);
+
+bool radio_device_loader_is_external(const SubGhzDevice* radio_device);

@@ -17,6 +17,9 @@ typedef enum {
     SubGhzTxRxStartTxStateOk,
     SubGhzTxRxStartTxStateErrorOnlyRx,
     SubGhzTxRxStartTxStateErrorParserOthers,
+    SubGhzTxRxStartTxStateErrorRegionBlocked,
+    SubGhzTxRxStartTxStateErrorExtendedBlocked,
+    SubGhzTxRxStartTxStateErrorUnsupported,
 } SubGhzTxRxStartTxState;
 
 /**
@@ -354,6 +357,12 @@ SubGhzRadioDeviceType
 * @return SubGhzRadioDeviceType Type of installed radio device
 */
 SubGhzRadioDeviceType subghz_txrx_radio_device_get(SubGhzTxRx* instance);
+
+/* Reset the device-switched flag after handling a device change
+ *
+ * @param instance Pointer to a SubGhzTxRx
+ */
+void subghz_txrx_reset_device_switched_flag(SubGhzTxRx* instance);
 
 /* Get RSSI the selected radio device to use
 *

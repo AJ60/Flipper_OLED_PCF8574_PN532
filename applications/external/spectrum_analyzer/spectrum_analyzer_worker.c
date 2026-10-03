@@ -268,7 +268,7 @@ SpectrumAnalyzerWorker* spectrum_analyzer_worker_alloc() {
     subghz_devices_init();
 
     instance->radio_device =
-        radio_device_loader_set(instance->radio_device, SubGhzRadioDeviceTypeExternalCC1101);
+        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
 
     FURI_LOG_D("Spectrum", "spectrum_analyzer_worker_alloc: End");
 

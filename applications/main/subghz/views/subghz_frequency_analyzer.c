@@ -5,6 +5,7 @@
 #include <notification/notification_messages.h>
 #include <gui/elements.h>
 #include "../helpers/subghz_frequency_analyzer_worker.h"
+#include <furi_hal_subghz.h>
 
 #include <assets_icons.h>
 #include <float_tools.h>
@@ -160,7 +161,7 @@ void subghz_frequency_analyzer_draw(Canvas* canvas, SubGhzFrequencyAnalyzerModel
     canvas_set_color(canvas, ColorBlack);
     canvas_set_font(canvas, FontSecondary);
 
-    //canvas_draw_str(canvas, 0, 7, model->is_ext_radio ? "Ext" : "Int");
+    canvas_draw_str(canvas, 0, 7, model->is_ext_radio ? "Ext" : "Int");
     canvas_draw_str(canvas, 20, 7, "Frequency Analyzer");
 
     // RSSI
@@ -179,7 +180,19 @@ void subghz_frequency_analyzer_draw(Canvas* canvas, SubGhzFrequencyAnalyzerModel
         "%03ld.%03ld",
         model->frequency / 1000000 % 1000,
         model->frequency / 1000 % 1000);
+    
+    // Check if frequency is blocked by region
+    SubGhzTx tx_check = SubGhzTxUnsupported;
+    if(model->frequency > 0) {
+        tx_check = furi_hal_subghz_check_tx(model->frequency);
+    }
+    bool freq_blocked = (tx_check != SubGhzTxAllowed);
+    
     if(model->signal) {
+        canvas_draw_box(canvas, 4, 10, 121, 19);
+        canvas_set_color(canvas, ColorWhite);
+    } else if(freq_blocked) {
+        // Blocked frequency - show in red/inverted
         canvas_draw_box(canvas, 4, 10, 121, 19);
         canvas_set_color(canvas, ColorWhite);
     } else {
@@ -188,6 +201,15 @@ void subghz_frequency_analyzer_draw(Canvas* canvas, SubGhzFrequencyAnalyzerModel
 
     canvas_draw_str(canvas, 8, 26, buffer);
     canvas_draw_icon(canvas, 96, 15, &I_MHz_25x11);
+
+    // Draw blocked indicator
+    if(freq_blocked && !model->signal) {
+        canvas_set_color(canvas, ColorBlack);
+        canvas_set_font(canvas, FontSecondary);
+        canvas_draw_str(canvas, 8, 42, "TX BLOCKED");
+        // Draw warning icon
+        canvas_draw_frame(canvas, 4, 10, 121, 19);
+    }
 
     canvas_set_color(canvas, ColorBlack);
     canvas_set_font(canvas, FontSecondary);
@@ -497,8 +519,6 @@ void subghz_frequency_analyzer_exit(void* context) {
         subghz_frequency_analyzer_worker_stop(instance->worker);
     }
     subghz_frequency_analyzer_worker_free(instance->worker);
-
-    furi_record_close(RECORD_NOTIFICATION);
 }
 
 SubGhzFrequencyAnalyzer* subghz_frequency_analyzer_alloc(SubGhzTxRx* txrx) {

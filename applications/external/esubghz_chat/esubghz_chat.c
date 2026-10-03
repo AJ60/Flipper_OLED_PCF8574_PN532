@@ -547,15 +547,18 @@ static void chat_box_free(ESubGhzChatState* state) {
 }
 
 int32_t esubghz_chat(const char* args) {
-    if(furi_hal_nfc_is_hal_ready() != FuriHalNfcErrorNone) {
-        printf("NFC chip failed to start\r\n");
-        return -1;
+    bool nfc_initialized = false;
+    NfcDevice* nfcdevic = NULL; /* declared here so gotos below don't jump past it */
+    if(furi_hal_nfc_is_hal_ready() == FuriHalNfcErrorNone) {
+        furi_hal_nfc_acquire();
+        furi_hal_nfc_low_power_mode_start();
+        furi_hal_nfc_release();
+        furi_hal_nfc_init();
+        nfc_initialized = true;
+    } else {
+        FURI_LOG_W(APPLICATION_NAME, "NFC is not ready or absent, NFC key sharing disabled");
     }
 
-    furi_hal_nfc_acquire();
-    furi_hal_nfc_low_power_mode_start();
-    furi_hal_nfc_release();
-    furry_hal_nfc_init();
     /* init the crypto system */
     crypto_init();
 
@@ -570,6 +573,7 @@ int32_t esubghz_chat(const char* args) {
         goto err_alloc;
     }
     memset(state, 0, sizeof(*state));
+    state->nfc_available = nfc_initialized;
 
     state->scene_manager = scene_manager_alloc(&esubghz_chat_scene_event_handlers, state);
     if(state->scene_manager == NULL) {
@@ -619,12 +623,17 @@ int32_t esubghz_chat(const char* args) {
         goto err_alloc_worker;
     }
 
-    NfcDevice* nfcdevic = nfc_device_alloc();
-    state->nfc_dev_data = &nfcdevic->dev_data;
+    /* Only allocate NFC resources when the PN532 is actually present.
+     * nfc_worker_alloc() calls while(furry_hal_nfc_is_busy()) which loops
+     * forever when the chip is absent, hanging the whole app. */
+    if(nfc_initialized) {
+        nfcdevic = nfc_device_alloc();
+        state->nfc_dev_data = &nfcdevic->dev_data;
 
-    state->nfc_worker = nfc_worker_alloc();
-    if(state->nfc_worker == NULL) {
-        goto err_alloc_nworker;
+        state->nfc_worker = nfc_worker_alloc();
+        if(state->nfc_worker == NULL) {
+            goto err_alloc_nworker;
+        }
     }
 
     /*state->nfc_dev_data = malloc(sizeof(NfcDeviceData));
@@ -726,7 +735,9 @@ int32_t esubghz_chat(const char* args) {
     }
 
     /* if it is running, stop the NFC worker */
-    nfc_worker_stop(state->nfc_worker);
+    if(state->nfc_worker != NULL) {
+        nfc_worker_stop(state->nfc_worker);
+    }
 
     err = 0;
 
@@ -751,12 +762,13 @@ int32_t esubghz_chat(const char* args) {
     crypto_ctx_clear(state->crypto_ctx);
 
     /* clear nfc data */
-    if(state->nfc_dev_data->parsed_data != NULL) {
-        furi_string_free(state->nfc_dev_data->parsed_data);
+    if(state->nfc_dev_data != NULL) {
+        if(state->nfc_dev_data->parsed_data != NULL) {
+            furi_string_free(state->nfc_dev_data->parsed_data);
+        }
+        //nfc_device_data_clear(state->nfc_dev_data);
+        crypto_explicit_bzero(state->nfc_dev_data, sizeof(NfcDeviceData));
     }
-
-    //nfc_device_data_clear(state->nfc_dev_data);
-    crypto_explicit_bzero(state->nfc_dev_data, sizeof(NfcDeviceData));
 
     /* deinit devices */
     radio_device_loader_end(state->subghz_device);
@@ -774,9 +786,13 @@ err_alloc_crypto:
     //free(state->nfc_dev_data);
 
     //err_alloc_ndevdata:
-    nfc_worker_free(state->nfc_worker);
+    if(state->nfc_worker != NULL) {
+        nfc_worker_free(state->nfc_worker);
+    }
 
-    nfc_device_free(nfcdevic);
+    if(nfcdevic != NULL) {
+        nfc_device_free(nfcdevic);
+    }
 
 err_alloc_nworker:
     subghz_tx_rx_worker_free(state->subghz_worker);
@@ -818,12 +834,13 @@ err_alloc:
         FURI_LOG_I(APPLICATION_NAME, "Clean exit.");
     }
 
-    furry_hal_nfc_deinit();
+    if(nfc_initialized) {
+        furry_hal_nfc_deinit();
 
-    //
-    furi_hal_nfc_acquire();
-    furi_hal_nfc_low_power_mode_start();
-    furi_hal_nfc_release();
+        furi_hal_nfc_acquire();
+        furi_hal_nfc_low_power_mode_start();
+        furi_hal_nfc_release();
+    }
 
     return err;
 }

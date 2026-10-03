@@ -97,6 +97,10 @@ SubGhzWorker* subghz_worker_alloc(void) {
 void subghz_worker_free(SubGhzWorker* instance) {
     furi_check(instance);
 
+    if(instance->running) {
+        subghz_worker_stop(instance);
+    }
+
     furi_stream_buffer_free(instance->stream);
     furi_thread_free(instance->thread);
 
@@ -122,7 +126,7 @@ void subghz_worker_set_context(SubGhzWorker* instance, void* context) {
 
 void subghz_worker_start(SubGhzWorker* instance) {
     furi_check(instance);
-    furi_check(!instance->running);
+    if(instance->running) return;
 
     instance->running = true;
 
@@ -131,7 +135,7 @@ void subghz_worker_start(SubGhzWorker* instance) {
 
 void subghz_worker_stop(SubGhzWorker* instance) {
     furi_check(instance);
-    furi_check(instance->running);
+    if(!instance->running) return;
 
     instance->running = false;
 

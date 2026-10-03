@@ -4,16 +4,10 @@
 
 #define TAG "SubGhzDeviceCc1101Int"
 
-static bool subghz_device_cc1101_int_interconnect_is_frequency_valid(uint32_t frequency) {
-    bool ret = furi_hal_subghz_is_frequency_valid(frequency);
-    if(!ret) {
-        furi_crash("SubGhz: Incorrect frequency.");
-    }
-    return ret;
-}
-
 static uint32_t subghz_device_cc1101_int_interconnect_set_frequency(uint32_t frequency) {
-    subghz_device_cc1101_int_interconnect_is_frequency_valid(frequency);
+    if(!furi_hal_subghz_is_frequency_valid(frequency)) {
+        return 0;
+    }
     return furi_hal_subghz_set_frequency_and_path(frequency);
 }
 
@@ -98,4 +92,9 @@ const SubGhzDeviceInterconnect subghz_device_cc1101_int_interconnect = {
 const SubGhzDevice subghz_device_cc1101_int = {
     .name = SUBGHZ_DEVICE_CC1101_INT_NAME,
     .interconnect = &subghz_device_cc1101_int_interconnect,
+    .caps = {
+        .has_extended_range = false,
+        .has_amplifier = false,
+        .has_external_spi = false,
+    },
 };

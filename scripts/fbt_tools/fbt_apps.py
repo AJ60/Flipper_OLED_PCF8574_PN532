@@ -116,6 +116,8 @@ class ApplicationsCGenerator:
 
 
 def LoadAppManifest(env, entry):
+    if entry.name.startswith("graphify") or entry.name.startswith("."):
+        return
     try:
         manifest_glob = entry.glob(FlipperApplication.APP_MANIFEST_DEFAULT_NAME)
         if len(manifest_glob) == 0:

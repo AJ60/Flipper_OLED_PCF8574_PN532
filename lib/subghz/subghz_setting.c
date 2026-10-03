@@ -3,6 +3,8 @@
 
 #include <furi.h>
 #include <lib/subghz/devices/cc1101_configs.h>
+#include <furi_hal_region.h>
+#include <furi_hal_subghz.h>
 
 #define TAG "SubGhzSetting"
 
@@ -91,6 +93,35 @@ static const uint32_t subghz_hopper_frequency_list[] = {
     0,
 };
 
+// Extended frequency lists for World mode / Extended range
+static const uint32_t subghz_extended_frequency_list[] = {
+    /* 300 - 361 (315 MHz band - Yard Stick One) */
+    300000000, 302757000, 303000000, 303875000, 303900000, 304250000,
+    307000000, 307500000, 307800000, 309000000, 310000000,
+    312000000, 312100000, 312200000, 313000000, 313850000, 314000000,
+    314350000, 314980000, 315000000, 318000000, 320000000, 320150000,
+    330000000, 345000000, 348000000, 350000000, 360000000,
+    
+    /* 378 - 481 (433 MHz extended) */
+    378000000, 387000000, 390000000, 418000000, 420000000, 425000000,
+    430000000, 430500000, 431000000, 431500000, 433075000,
+    433220000, 433420000, 433657070, 433889000, 433920000 | FREQUENCY_FLAG_DEFAULT,
+    434075000, 434176948, 434190000, 434390000, 434420000,
+    434620000, 434775000, 438900000, 440175000, 450000000, 460000000,
+    464000000, 467750000, 470000000, 480000000,
+    
+    /* 749 - 962 (868/915 MHz extended) */
+    749000000, 779000000, 863000000, 868350000, 868400000, 868460000,
+    868800000, 868950000, 869000000, 902000000, 906400000, 915000000,
+    920000000, 923000000, 928000000, 960000000,
+    0,
+};
+
+static const uint32_t subghz_extended_hopper_frequency_list[] = {
+    315000000, 433920000, 868350000, 915000000,
+    0,
+};
+
 typedef struct {
     FuriString* custom_preset_name;
     uint8_t* custom_preset_data;
@@ -110,6 +141,7 @@ struct SubGhzSetting {
     FrequencyList_t frequencies;
     FrequencyList_t hopper_frequencies;
     SubGhzSettingCustomPresetStruct* preset;
+    FuriString* region_code;  // "00"=World, "EU", "US", "JP", or custom file path
 };
 
 SubGhzSetting* subghz_setting_alloc(void) {
@@ -118,6 +150,7 @@ SubGhzSetting* subghz_setting_alloc(void) {
     FrequencyList_init(instance->hopper_frequencies);
     instance->preset = malloc(sizeof(SubGhzSettingCustomPresetStruct));
     SubGhzSettingCustomPresetItemArray_init(instance->preset->data);
+    instance->region_code = furi_string_alloc_set("00");  // Default World
     return instance;
 }
 
@@ -141,6 +174,7 @@ void subghz_setting_free(SubGhzSetting* instance) {
         }
     SubGhzSettingCustomPresetItemArray_clear(instance->preset->data);
     free(instance->preset);
+    furi_string_free(instance->region_code);
     free(instance);
 }
 
@@ -196,6 +230,29 @@ static void subghz_setting_load_default_region(SubGhzSetting* instance) {
 // Region check removed
 void subghz_setting_load_default(SubGhzSetting* instance) {
     subghz_setting_load_default_region(instance);
+}
+
+void subghz_setting_load_default_extended(SubGhzSetting* instance) {
+    furi_assert(instance);
+
+    FrequencyList_reset(instance->frequencies);
+    FrequencyList_reset(instance->hopper_frequencies);
+    subghz_setting_preset_reset(instance);
+
+    subghz_setting_load_default_preset(
+        instance, "AM270", subghz_device_cc1101_preset_ook_270khz_async_regs);
+    subghz_setting_load_default_preset(
+        instance, "AM650", subghz_device_cc1101_preset_ook_650khz_async_regs);
+    subghz_setting_load_default_preset(
+        instance, "FM238", subghz_device_cc1101_preset_2fsk_dev2_38khz_async_regs);
+    subghz_setting_load_default_preset(
+        instance, "FM476", subghz_device_cc1101_preset_2fsk_dev47_6khz_async_regs);
+    subghz_setting_load_default_preset(
+        instance, "FM12K", subghz_device_cc1101_preset_2fsk_dev12khz_async_regs);
+
+    subghz_setting_load_frequencies(instance->frequencies, subghz_extended_frequency_list);
+    subghz_setting_load_frequencies(
+        instance->hopper_frequencies, subghz_extended_hopper_frequency_list);
 }
 
 void subghz_setting_load(SubGhzSetting* instance, const char* file_path) {
@@ -294,6 +351,15 @@ void subghz_setting_load(SubGhzSetting* instance, const char* file_path) {
                     instance, furi_string_get_cstr(temp_str), fff_data_file);
             }
 
+            // Region (optional)
+            if(!flipper_format_rewind(fff_data_file)) {
+                FURI_LOG_E(TAG, "Rewind error");
+                break;
+            }
+            if(flipper_format_read_string(fff_data_file, "Region", instance->region_code)) {
+                FURI_LOG_I(TAG, "Region loaded: %s", furi_string_get_cstr(instance->region_code));
+            }
+
         } while(false);
     }
 
@@ -302,14 +368,22 @@ void subghz_setting_load(SubGhzSetting* instance, const char* file_path) {
     furi_record_close(RECORD_STORAGE);
 
     if(!FrequencyList_size(instance->frequencies)) {
-        FURI_LOG_E(TAG, "Empty static frequency list, loading default ones");
+        FURI_LOG_W(TAG, "Empty static frequency list, loading default ones");
         subghz_setting_load_frequencies(instance->frequencies, subghz_frequency_list);
     }
     if(!FrequencyList_size(instance->hopper_frequencies)) {
-        FURI_LOG_E(TAG, "Empty hopper frequency list, loading default ones");
+        FURI_LOG_W(TAG, "Empty hopper frequency list, loading default ones");
         subghz_setting_load_frequencies(
             instance->hopper_frequencies, subghz_hopper_frequency_list);
     }
+}
+
+bool subghz_setting_load_or_create(SubGhzSetting* instance, const char* file_path) {
+    furi_check(instance);
+    furi_check(file_path);
+
+    subghz_setting_load(instance, file_path);
+    return true;
 }
 
 void subghz_setting_set_default_frequency(SubGhzSetting* instance, uint32_t frequency_to_setup) {
@@ -349,6 +423,9 @@ const char* subghz_setting_get_preset_name(SubGhzSetting* instance, size_t idx) 
 
 int subghz_setting_get_inx_preset_by_name(SubGhzSetting* instance, const char* preset_name) {
     furi_check(instance);
+    if(!preset_name || !preset_name[0]) {
+        return 0;
+    }
     size_t idx = 0;
     for
         M_EACH(item, instance->preset->data, SubGhzSettingCustomPresetItemArray_t) {
@@ -357,8 +434,9 @@ int subghz_setting_get_inx_preset_by_name(SubGhzSetting* instance, const char* p
             }
             idx++;
         }
-    furi_crash("SubGhz: No name preset.");
-    return -1;
+    FURI_LOG_E("SubGhzSetting", "Preset '%s' not found", preset_name);
+    furi_crash("SubGhzSetting: preset not found");
+    return 0; // unreachable
 }
 
 bool subghz_setting_load_custom_preset(
@@ -498,4 +576,130 @@ uint8_t subghz_setting_customs_presets_to_log(SubGhzSetting* instance) {
     return count;
 #endif
     return 0;
+}
+
+void subghz_setting_apply_region(SubGhzSetting* instance) {
+    furi_check(instance);
+    const char* region = furi_string_get_cstr(instance->region_code);
+    if(strcmp(region, "00") == 0) {
+        furi_hal_region_set((FuriHalRegion*)&furi_hal_region_zero);
+    } else if(strcmp(region, "EU") == 0) {
+        furi_hal_region_set((FuriHalRegion*)&furi_hal_region_eu_ru);
+    } else if(strcmp(region, "US") == 0) {
+        furi_hal_region_set((FuriHalRegion*)&furi_hal_region_us_ca_au);
+    } else if(strcmp(region, "JP") == 0) {
+        furi_hal_region_set((FuriHalRegion*)&furi_hal_region_jp);
+    }
+    // Custom file path handled separately
+}
+
+const char* subghz_setting_get_region(SubGhzSetting* instance) {
+    furi_check(instance);
+    return furi_string_get_cstr(instance->region_code);
+}
+
+void subghz_setting_set_region(SubGhzSetting* instance, const char* region_code) {
+    furi_check(instance);
+    furi_check(region_code);
+    furi_string_set(instance->region_code, region_code);
+}
+
+bool subghz_setting_save(SubGhzSetting* instance, const char* file_path) {
+    furi_check(instance);
+    furi_check(file_path);
+
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_mkdir(storage, EXT_PATH("subghz/assets"));
+    FlipperFormat* fff_data_file = flipper_format_file_alloc(storage);
+    bool result = false;
+
+    do {
+        if(!flipper_format_file_open_always(fff_data_file, file_path)) {
+            FURI_LOG_E(TAG, "Unable to open file for write: %s", file_path);
+            break;
+        }
+        if(!flipper_format_write_header_cstr(
+               fff_data_file, SUBGHZ_SETTING_FILE_TYPE, SUBGHZ_SETTING_FILE_VERSION)) {
+            FURI_LOG_E(TAG, "Unable to add header");
+            break;
+        }
+
+        // Add standard frequencies flag
+        bool add_std = true;
+        if(!flipper_format_write_bool(fff_data_file, "Add_standard_frequencies", &add_std, 1)) {
+            FURI_LOG_E(TAG, "Unable to add Add_standard_frequencies");
+            break;
+        }
+
+        // Save frequencies
+        if(!flipper_format_rewind(fff_data_file)) {
+            FURI_LOG_E(TAG, "Rewind error");
+            break;
+        }
+        for
+            M_EACH(frequency, instance->frequencies, FrequencyList_t) {
+                uint32_t freq = *frequency & FREQUENCY_MASK;
+                if(!flipper_format_write_uint32(fff_data_file, "Frequency", &freq, 1)) {
+                    FURI_LOG_E(TAG, "Unable to add Frequency");
+                    break;
+                }
+            }
+
+        // Save hopper frequencies
+        if(!flipper_format_rewind(fff_data_file)) {
+            FURI_LOG_E(TAG, "Rewind error");
+            break;
+        }
+        for
+            M_EACH(frequency, instance->hopper_frequencies, FrequencyList_t) {
+                if(!flipper_format_write_uint32(fff_data_file, "Hopper_frequency", frequency, 1)) {
+                    FURI_LOG_E(TAG, "Unable to add Hopper_frequency");
+                    break;
+                }
+            }
+
+        // Save default frequency
+        if(!flipper_format_rewind(fff_data_file)) {
+            FURI_LOG_E(TAG, "Rewind error");
+            break;
+        }
+        uint32_t default_freq = subghz_setting_get_default_frequency(instance);
+        if(!flipper_format_write_uint32(fff_data_file, "Default_frequency", &default_freq, 1)) {
+            FURI_LOG_E(TAG, "Unable to add Default_frequency");
+            break;
+        }
+
+        // Save custom presets
+        if(!flipper_format_rewind(fff_data_file)) {
+            FURI_LOG_E(TAG, "Rewind error");
+            break;
+        }
+        for
+            M_EACH(item, instance->preset->data, SubGhzSettingCustomPresetItemArray_t) {
+                if(!flipper_format_write_string_cstr(fff_data_file, "Custom_preset_name", 
+                       furi_string_get_cstr(item->custom_preset_name))) {
+                    FURI_LOG_E(TAG, "Unable to add Custom_preset_name");
+                    break;
+                }
+                if(!flipper_format_write_hex(fff_data_file, "Custom_preset_data",
+                       item->custom_preset_data, item->custom_preset_data_size)) {
+                    FURI_LOG_E(TAG, "Unable to add Custom_preset_data");
+                    break;
+                }
+            }
+
+        // Save region
+        if(!flipper_format_write_string_cstr(fff_data_file, "Region", 
+               furi_string_get_cstr(instance->region_code))) {
+            FURI_LOG_E(TAG, "Unable to add Region");
+            break;
+        }
+
+        result = true;
+    } while(false);
+
+    flipper_format_free(fff_data_file);
+    furi_record_close(RECORD_STORAGE);
+
+    return result;
 }

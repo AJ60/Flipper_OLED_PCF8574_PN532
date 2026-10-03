@@ -445,13 +445,9 @@ static void js_subghz_setup(struct mjs* mjs) {
     }
 
     js_subghz->radio_device =
-        radio_device_loader_set(js_subghz->radio_device, SubGhzRadioDeviceTypeExternalCC1101);
+        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
 
-    if(!subghz_devices_is_connect(js_subghz->radio_device)) {
-        js_subghz->is_external = true;
-    } else {
-        js_subghz->is_external = false;
-    }
+    js_subghz->is_external = radio_device_loader_is_external(js_subghz->radio_device);
 
     js_subghz->state = JsSubghzRadioStateIDLE;
     js_subghz->frequency = 433920000;

@@ -6,25 +6,36 @@
 #include <lib/subghz/blocks/custom_btn.h>
 
 #include <power/power_service/power.h>
+#include <furi_hal_region.h>
+#include <furi_hal_subghz.h>
+#include <furi_hal_subghz_i.h>
+#include <furi_hal_random.h>
 
 #define TAG "SubGhzTxRx"
 
 static void subghz_txrx_radio_device_power_on(SubGhzTxRx* instance) {
     UNUSED(instance);
     Power* power = furi_record_open(RECORD_POWER);
-    power_enable_otg(power, true);
+    if(!power_is_otg_enabled(power)) {
+        power_enable_otg(power, true);
+        // CC1101 power-up time: allow 5V booster, 3.3V LDO, and POR to stabilize
+        furi_delay_ms(15);
+    }
     furi_record_close(RECORD_POWER);
 }
 
 static void subghz_txrx_radio_device_power_off(SubGhzTxRx* instance) {
     UNUSED(instance);
     Power* power = furi_record_open(RECORD_POWER);
-    power_enable_otg(power, false);
+    if(power_is_otg_enabled(power)) {
+        power_enable_otg(power, false);
+    }
     furi_record_close(RECORD_POWER);
 }
 
 SubGhzTxRx* subghz_txrx_alloc(void) {
     SubGhzTxRx* instance = malloc(sizeof(SubGhzTxRx));
+    memset(instance, 0, sizeof(SubGhzTxRx));
     instance->setting = subghz_setting_alloc();
     subghz_setting_load(instance->setting, EXT_PATH("subghz/assets/setting_user"));
 
@@ -33,6 +44,7 @@ SubGhzTxRx* subghz_txrx_alloc(void) {
     subghz_txrx_set_default_preset(instance, 0);
 
     instance->txrx_state = SubGhzTxRxStateSleep;
+    instance->device_switched = false;
 
     subghz_txrx_hopper_set_state(instance, SubGhzHopperStateOFF);
     subghz_txrx_speaker_set_state(instance, SubGhzSpeakerStateDisable);
@@ -51,6 +63,31 @@ SubGhzTxRx* subghz_txrx_alloc(void) {
         instance->environment, SUBGHZ_NICE_FLOR_S_DIR_NAME);
     subghz_environment_set_protocol_registry(
         instance->environment, (void*)&subghz_protocol_registry);
+
+    // Load extend_range.txt (Momentum format)
+    bool ext_range_acknowledged = false;
+    bool use_ext_range = false;
+    bool ignore_default_tx = false;
+
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    FlipperFormat* ext_file = flipper_format_file_alloc(storage);
+    if(flipper_format_file_open_existing(ext_file, EXT_PATH("subghz/assets/extend_range.txt"))) {
+        flipper_format_read_bool(ext_file, "acknowledged", &ext_range_acknowledged, 1);
+        flipper_format_read_bool(ext_file, "use_ext_range_at_own_risk", &use_ext_range, 1);
+        flipper_format_read_bool(ext_file, "ignore_default_tx_region", &ignore_default_tx, 1);
+    }
+    flipper_format_free(ext_file);
+    furi_record_close(RECORD_STORAGE);
+
+    // Apply settings
+    furi_hal_subghz_set_extended_range(use_ext_range);
+    furi_hal_subghz_set_bypass_region(ignore_default_tx);
+
+    // Apply extended frequency defaults if extended range is enabled
+    if(use_ext_range) {
+        subghz_setting_load_default_extended(instance->setting);
+    }
+
     instance->receiver = subghz_receiver_alloc_init(instance->environment);
 
     subghz_worker_set_overrun_callback(
@@ -60,11 +97,10 @@ SubGhzTxRx* subghz_txrx_alloc(void) {
     subghz_worker_set_context(instance->worker, instance->receiver);
 
 #ifndef SUBGHZ_ADD_MANUALLY
-    //set default device External
+    //set default device Internal
     subghz_devices_init();
     instance->radio_device_type = SubGhzRadioDeviceTypeInternal;
-    instance->radio_device_type =
-        subghz_txrx_radio_device_set(instance, SubGhzRadioDeviceTypeExternalCC1101);
+    instance->radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
 #endif
 
     return instance;
@@ -72,6 +108,8 @@ SubGhzTxRx* subghz_txrx_alloc(void) {
 
 void subghz_txrx_free(SubGhzTxRx* instance) {
     furi_assert(instance);
+
+    subghz_txrx_speaker_off(instance);
 
 #ifndef SUBGHZ_ADD_MANUALLY
     if(instance->radio_device_type != SubGhzRadioDeviceTypeInternal) {
@@ -274,9 +312,9 @@ static void subghz_txrx_rx_end(SubGhzTxRx* instance) {
     furi_assert(instance);
     furi_assert(instance->txrx_state == SubGhzTxRxStateRx);
 
+    subghz_devices_stop_async_rx(instance->radio_device);
     if(subghz_worker_is_running(instance->worker)) {
         subghz_worker_stop(instance->worker);
-        subghz_devices_stop_async_rx(instance->radio_device);
     }
     subghz_devices_idle(instance->radio_device);
     subghz_txrx_speaker_off(instance);
@@ -337,9 +375,31 @@ SubGhzTxRxStartTxState subghz_txrx_tx_start(SubGhzTxRx* instance, FlipperFormat*
                         subghz_setting_get_preset_data_by_name(
                             instance->setting, furi_string_get_cstr(preset->name)));
                     if(preset->frequency) {
-                        if(!subghz_txrx_tx(instance, preset->frequency)) {
-                            FURI_LOG_E(TAG, "Only Rx");
-                            ret = SubGhzTxRxStartTxStateErrorOnlyRx;
+                        SubGhzTx tx_check = furi_hal_subghz_check_tx(preset->frequency);
+                        if(tx_check == SubGhzTxAllowed) {
+                            if(!subghz_txrx_tx(instance, preset->frequency)) {
+                                FURI_LOG_E(TAG, "Only Rx");
+                                ret = SubGhzTxRxStartTxStateErrorOnlyRx;
+                            }
+                        } else {
+                            switch(tx_check) {
+                                case SubGhzTxBlockedRegion:
+                                    FURI_LOG_E(TAG, "TX blocked: frequency not allowed in current region (%s)",
+                                               furi_hal_region_get_name());
+                                    ret = SubGhzTxRxStartTxStateErrorRegionBlocked;
+                                    break;
+                                case SubGhzTxBlockedDefault:
+                                    FURI_LOG_E(TAG, "TX blocked: frequency requires extended range. Enable in Radio Settings.");
+                                    ret = SubGhzTxRxStartTxStateErrorExtendedBlocked;
+                                    break;
+                                case SubGhzTxUnsupported:
+                                    FURI_LOG_E(TAG, "TX blocked: frequency not supported by hardware");
+                                    ret = SubGhzTxRxStartTxStateErrorUnsupported;
+                                    break;
+                                default:
+                                    FURI_LOG_E(TAG, "Only Rx");
+                                    ret = SubGhzTxRxStartTxStateErrorOnlyRx;
+                            }
                         }
                     } else {
                         ret = SubGhzTxRxStartTxStateErrorParserOthers;
@@ -398,11 +458,15 @@ static void subghz_txrx_tx_stop(SubGhzTxRx* instance) {
     furi_assert(instance->txrx_state == SubGhzTxRxStateTx);
     //Stop TX
     subghz_devices_stop_async_tx(instance->radio_device);
-    subghz_transmitter_stop(instance->transmitter);
-    subghz_transmitter_free(instance->transmitter);
+    if(instance->transmitter) {
+        subghz_transmitter_stop(instance->transmitter);
+        subghz_transmitter_free(instance->transmitter);
+        instance->transmitter = NULL;
+    }
 
     //if protocol dynamic then we save the last upload
-    if(instance->decoder_result->protocol->type == SubGhzProtocolTypeDynamic) {
+    if(instance->decoder_result && instance->decoder_result->protocol &&
+       instance->decoder_result->protocol->type == SubGhzProtocolTypeDynamic) {
         if(instance->need_save_callback) {
             instance->need_save_callback(instance->need_save_context);
         }
@@ -660,7 +724,23 @@ bool subghz_txrx_radio_device_is_external_connected(SubGhzTxRx* instance, const 
 
     const SubGhzDevice* device = subghz_devices_get_by_name(name);
     if(device) {
+        // Try connection check with one retry for error recovery.
+        // The first check may fail if the device is in a bad state (e.g. after
+        // a previous SPI transaction was interrupted). A second check after a
+        // short delay often succeeds.
         is_connect = subghz_devices_is_connect(device);
+        if(!is_connect) {
+            FURI_LOG_D(TAG, "Device '%s' first probe failed, retrying...", name);
+            furi_delay_ms(10);
+            is_connect = subghz_devices_is_connect(device);
+            if(!is_connect) {
+                FURI_LOG_D(TAG, "Device '%s' probe failed after retry", name);
+            } else {
+                FURI_LOG_I(TAG, "Device '%s' recovered on retry", name);
+            }
+        }
+    } else {
+        FURI_LOG_W(TAG, "Device '%s' not found in registry (missing SD plugin?)", name);
     }
 
     if(!is_otg_enabled) {
@@ -673,22 +753,51 @@ SubGhzRadioDeviceType
     subghz_txrx_radio_device_set(SubGhzTxRx* instance, SubGhzRadioDeviceType radio_device_type) {
     furi_assert(instance);
 
-    if(radio_device_type == SubGhzRadioDeviceTypeExternalCC1101 &&
-       subghz_txrx_radio_device_is_external_connected(instance, SUBGHZ_DEVICE_CC1101_EXT_NAME)) {
-        subghz_txrx_radio_device_power_on(instance);
-        instance->radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
-        subghz_devices_begin(instance->radio_device);
-        instance->radio_device_type = SubGhzRadioDeviceTypeExternalCC1101;
-    } else {
-        subghz_txrx_radio_device_power_off(instance);
-        if(instance->radio_device_type != SubGhzRadioDeviceTypeInternal) {
-            subghz_devices_end(instance->radio_device);
+    // Save current frequency for state restoration after switch
+    uint32_t saved_frequency = instance->preset->frequency;
+
+    if(radio_device_type == SubGhzRadioDeviceTypeExternalCC1101) {
+        if(instance->radio_device_type == SubGhzRadioDeviceTypeExternalCC1101) {
+            return instance->radio_device_type;
         }
-        instance->radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
-        instance->radio_device_type = SubGhzRadioDeviceTypeInternal;
+        subghz_txrx_radio_device_power_on(instance);
+        if(subghz_txrx_radio_device_is_external_connected(
+               instance, SUBGHZ_DEVICE_CC1101_EXT_NAME)) {
+            instance->device_switched = true;
+            instance->radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
+            subghz_devices_begin(instance->radio_device);
+            instance->radio_device_type = SubGhzRadioDeviceTypeExternalCC1101;
+            // Restore frequency and preset on the new device
+            if(saved_frequency) {
+                subghz_devices_set_frequency(instance->radio_device, saved_frequency);
+            }
+            return instance->radio_device_type;
+        }
+        subghz_txrx_radio_device_power_off(instance);
+    }
+
+    subghz_txrx_radio_device_power_off(instance);
+    // NOTE: We do NOT call subghz_devices_end() on the external device here.
+    // subghz_devices_end() frees the device struct, but the device registry
+    // still holds a pointer to it. If we later switch back to external,
+    // subghz_devices_get_by_name() would return a dangling pointer.
+    // Instead, we leave the external device allocated but powered off.
+    // subghz_device_cc1101_ext_alloc() is idempotent — if already allocated,
+    // it just returns true. So switching back to external works correctly.
+    instance->device_switched = true;
+    instance->radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
+    instance->radio_device_type = SubGhzRadioDeviceTypeInternal;
+    // Restore frequency on the new device
+    if(saved_frequency) {
+        subghz_devices_set_frequency(instance->radio_device, saved_frequency);
     }
 
     return instance->radio_device_type;
+}
+
+void subghz_txrx_reset_device_switched_flag(SubGhzTxRx* instance) {
+    furi_assert(instance);
+    instance->device_switched = false;
 }
 
 SubGhzRadioDeviceType subghz_txrx_radio_device_get(SubGhzTxRx* instance) {

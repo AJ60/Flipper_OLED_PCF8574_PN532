@@ -53,6 +53,17 @@ void subghz_tx_rx_worker_set_callback_have_read(
     SubGhzTxRxWorkerCallbackHaveRead callback,
     void* context);
 
+/**
+ * Set a flag pointer that the worker thread checks each iteration.
+ * When the flag becomes true, the worker stops immediately.
+ * Used for device-switch safety.
+ * @param instance Pointer to a SubGhzTxRxWorker instance
+ * @param flag     Pointer to a volatile bool flag
+ */
+void subghz_tx_rx_worker_set_device_switched_flag(
+    SubGhzTxRxWorker* instance,
+    volatile bool* flag);
+
 /** 
  * Allocate SubGhzTxRxWorker
  * @return SubGhzTxRxWorker* Pointer to a SubGhzTxRxWorker instance

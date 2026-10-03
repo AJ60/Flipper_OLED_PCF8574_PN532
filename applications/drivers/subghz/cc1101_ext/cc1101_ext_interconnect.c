@@ -4,16 +4,10 @@
 
 #define TAG "SubGhzDeviceCc1101Ext"
 
-static bool subghz_device_cc1101_ext_interconnect_is_frequency_valid(uint32_t frequency) {
-    bool ret = subghz_device_cc1101_ext_is_frequency_valid(frequency);
-    if(!ret) {
-        furi_crash("SubGhz: Incorrect frequency.");
-    }
-    return ret;
-}
-
 static uint32_t subghz_device_cc1101_ext_interconnect_set_frequency(uint32_t frequency) {
-    subghz_device_cc1101_ext_interconnect_is_frequency_valid(frequency);
+    if(!subghz_device_cc1101_ext_is_frequency_valid(frequency)) {
+        return 0;
+    }
     return subghz_device_cc1101_ext_set_frequency(frequency);
 }
 
@@ -99,6 +93,11 @@ const SubGhzDeviceInterconnect subghz_device_cc1101_ext_interconnect = {
 const SubGhzDevice subghz_device_cc1101_ext = {
     .name = SUBGHZ_DEVICE_CC1101_EXT_NAME,
     .interconnect = &subghz_device_cc1101_ext_interconnect,
+    .caps = {
+        .has_extended_range = true,
+        .has_amplifier = true,
+        .has_external_spi = true,
+    },
 };
 
 static const FlipperAppPluginDescriptor subghz_device_cc1101_ext_descriptor = {

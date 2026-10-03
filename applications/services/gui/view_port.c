@@ -142,7 +142,8 @@ void view_port_enabled_set(ViewPort* view_port, bool enabled) {
 
     // We are not going to lockup system, but will notify you instead
     // Make sure that you don't call viewport methods inside of another mutex, especially one that is used in draw call
-    bool is_locked = (furi_mutex_acquire(view_port->mutex, 2) == FuriStatusOk);
+    // Increased timeout to 100ms to reduce false lockup warnings during heavy processing
+    bool is_locked = (furi_mutex_acquire(view_port->mutex, furi_ms_to_ticks(100)) == FuriStatusOk);
     if(!is_locked) {
         FURI_LOG_W(TAG, "ViewPort lockup: see %s:%d", __FILE__, __LINE__ - 3);
     }
@@ -198,7 +199,8 @@ void view_port_update(ViewPort* view_port) {
 
     // We are not going to lockup system, but will notify you instead
     // Make sure that you don't call viewport methods inside of another mutex, especially one that is used in draw call
-    bool is_locked = (furi_mutex_acquire(view_port->mutex, 2) == FuriStatusOk);
+    // Increased timeout to 100ms to reduce false lockup warnings during heavy processing
+    bool is_locked = (furi_mutex_acquire(view_port->mutex, furi_ms_to_ticks(100)) == FuriStatusOk);
     if(!is_locked) {
         FURI_LOG_W(TAG, "ViewPort lockup: see %s:%d", __FILE__, __LINE__ - 3);
     }
@@ -222,7 +224,8 @@ void view_port_draw(ViewPort* view_port, Canvas* canvas) {
 
     // We are not going to lockup system, but will notify you instead
     // Make sure that you don't call viewport methods inside of another mutex, especially one that is used in draw call
-    bool is_locked = (furi_mutex_acquire(view_port->mutex, 2) == FuriStatusOk);
+    // Increased timeout to 100ms to reduce false lockup warnings during heavy processing
+    bool is_locked = (furi_mutex_acquire(view_port->mutex, furi_ms_to_ticks(100)) == FuriStatusOk);
     if(!is_locked) {
         FURI_LOG_W(TAG, "ViewPort lockup: see %s:%d", __FILE__, __LINE__ - 3);
     }
@@ -311,7 +314,8 @@ ViewPortOrientation view_port_get_orientation(const ViewPort* view_port) {
     furi_check(view_port);
     // We are not going to lockup system, but will notify you instead
     // Make sure that you don't call viewport methods inside of another mutex, especially one that is used in draw call
-    bool is_locked = (furi_mutex_acquire(view_port->mutex, 2) == FuriStatusOk);
+    // Increased timeout to 100ms to reduce false lockup warnings during heavy processing
+    bool is_locked = (furi_mutex_acquire(view_port->mutex, furi_ms_to_ticks(100)) == FuriStatusOk);
     if(!is_locked) {
         FURI_LOG_W(TAG, "ViewPort lockup: see %s:%d", __FILE__, __LINE__ - 3);
     }

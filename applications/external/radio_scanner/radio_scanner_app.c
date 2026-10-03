@@ -368,6 +368,7 @@ int32_t radio_scanner_app(void* p) {
 #endif
 
     InputEvent event;
+    uint32_t last_update = 0;
     while(app->running) {
 #ifdef FURI_DEBUG
         FURI_LOG_D(TAG, "Main loop iteration");
@@ -387,7 +388,9 @@ int32_t radio_scanner_app(void* p) {
 #ifdef FURI_DEBUG
         FURI_LOG_D(TAG, "Checking for input events");
 #endif
+        bool need_update = false;
         if(furi_message_queue_get(app->event_queue, &event, 10) == FuriStatusOk) {
+            need_update = true;
 #ifdef FURI_DEBUG
             FURI_LOG_D(TAG, "Input event received: type=%d, key=%d", event.type, event.key);
 #endif
@@ -414,7 +417,11 @@ int32_t radio_scanner_app(void* p) {
             }
         }
 
-        view_port_update(app->view_port);
+        uint32_t now = furi_get_tick();
+        if(need_update || (now - last_update >= furi_ms_to_ticks(33))) {
+            view_port_update(app->view_port);
+            last_update = now;
+        }
         furi_delay_ms(10);
     }
 

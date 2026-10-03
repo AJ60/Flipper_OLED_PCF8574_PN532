@@ -138,8 +138,6 @@ static int32_t subghz_file_encoder_worker_thread(void* context) {
             break;
         }
 
-        //skip the end of the previous line "\n"
-        stream_seek(stream, 1, StreamOffsetFromCurrent);
         res = true;
         instance->worker_stopping = false;
         FURI_LOG_I(TAG, "Start transmission");
@@ -224,7 +222,7 @@ bool subghz_file_encoder_worker_start(
     const char* file_path,
     const char* radio_device_name) {
     furi_assert(instance);
-    furi_assert(!instance->worker_running);
+    if(instance->worker_running) return false;
 
     furi_stream_buffer_reset(instance->stream);
     furi_string_set(instance->file_path, file_path);
@@ -239,7 +237,7 @@ bool subghz_file_encoder_worker_start(
 
 void subghz_file_encoder_worker_stop(SubGhzFileEncoderWorker* instance) {
     furi_assert(instance);
-    furi_assert(instance->worker_running);
+    if(!instance->worker_running) return;
 
     instance->worker_running = false;
     furi_thread_join(instance->thread);

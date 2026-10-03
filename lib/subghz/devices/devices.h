@@ -49,6 +49,21 @@ void subghz_devices_write_packet(const SubGhzDevice* device, const uint8_t* data
 
 SubGhzTx subghz_devices_check_tx(const SubGhzDevice* device, uint32_t frequency);
 
+/**
+ * Get device capabilities
+ * @param device Pointer to a SubGhzDevice instance
+ * @return SubGhzDeviceCapabilities struct with feature flags
+ */
+SubGhzDeviceCapabilities subghz_devices_get_caps(const SubGhzDevice* device);
+
+/**
+ * Quick connection check — verifies the device is still responding on SPI.
+ * Can be called periodically for hot-plug detection.
+ * @param device Pointer to a SubGhzDevice instance
+ * @return true if device responds, false if disconnected or unresponsive
+ */
+bool subghz_devices_check_connection(const SubGhzDevice* device);
+
 #ifdef __cplusplus
 }
 #endif

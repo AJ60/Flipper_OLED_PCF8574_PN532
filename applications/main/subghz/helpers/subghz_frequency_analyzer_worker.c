@@ -2,6 +2,10 @@
 #include <lib/drivers/cc1101.h>
 
 #include <furi.h>
+#include <furi_hal.h>
+#include <furi_hal_resources.h>
+#include <furi_hal_spi_config.h>
+#include <momentum/settings.h>
 #include <float_tools.h>
 
 #define TAG "SubghzFrequencyAnalyzerWorker"
@@ -10,12 +14,14 @@
 
 static const uint8_t subghz_preset_ook_58khz[][2] = {
     {CC1101_MDMCFG4, 0b11110111}, // Rx BW filter is 58.035714kHz
+    {CC1101_FREND1, 0xB6},
     /* End  */
     {0, 0},
 };
 
 static const uint8_t subghz_preset_ook_650khz[][2] = {
     {CC1101_MDMCFG4, 0b00010111}, // Rx BW filter is 650.000kHz
+    {CC1101_FREND1, 0xB6},
     /* End  */
     {0, 0},
 };
@@ -33,16 +39,55 @@ struct SubGhzFrequencyAnalyzerWorker {
 
     SubGhzFrequencyAnalyzerWorkerPairCallback pair_callback;
     void* context;
+    bool is_ext_radio;
+    const FuriHalSpiBusHandle* spi_handle;
+    SubGhz* subghz; // Back-pointer for device-switch safety check
 };
 
-static void subghz_frequency_analyzer_worker_load_registers(const uint8_t data[][2]) {
-    furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
+static void subghz_frequency_analyzer_worker_load_registers(
+    const FuriHalSpiBusHandle* spi_handle,
+    const uint8_t data[][2]) {
+    furi_hal_spi_acquire(spi_handle);
     size_t i = 0;
     while(data[i][0]) {
-        cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, data[i][0], data[i][1]);
+        cc1101_write_reg(spi_handle, data[i][0], data[i][1]);
         i++;
     }
-    furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+    furi_hal_spi_release(spi_handle);
+}
+
+static void subghz_frequency_analyzer_worker_idle(SubGhzFrequencyAnalyzerWorker* instance) {
+    if(instance->is_ext_radio) {
+        furi_hal_spi_acquire(instance->spi_handle);
+        cc1101_switch_to_idle(instance->spi_handle);
+        cc1101_wait_status_state(instance->spi_handle, CC1101StateIDLE, 10000);
+        furi_hal_spi_release(instance->spi_handle);
+    } else {
+        furi_hal_subghz_idle();
+    }
+}
+
+// Convert raw CC1101 RSSI register value to dBm.
+// Shared between internal and external radio paths to avoid formula drift.
+static float subghz_frequency_analyzer_worker_rssi_to_dbm(int32_t rssi_dec) {
+    float rssi = rssi_dec;
+    if(rssi_dec >= 128) {
+        rssi = ((rssi - 256.0f) / 2.0f) - 74.0f;
+    } else {
+        rssi = (rssi / 2.0f) - 74.0f;
+    }
+    return rssi;
+}
+
+static float subghz_frequency_analyzer_worker_get_rssi(SubGhzFrequencyAnalyzerWorker* instance) {
+    if(instance->is_ext_radio) {
+        furi_hal_spi_acquire(instance->spi_handle);
+        int32_t rssi_dec = cc1101_get_rssi(instance->spi_handle);
+        furi_hal_spi_release(instance->spi_handle);
+        return subghz_frequency_analyzer_worker_rssi_to_dbm(rssi_dec);
+    } else {
+        return furi_hal_subghz_get_rssi();
+    }
 }
 
 // running average with adaptive coefficient
@@ -76,33 +121,100 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
     float rssi_temp = 0;
     uint32_t frequency_temp = 0;
 
-    //Start CC1101
-    furi_hal_subghz_reset();
+    // NOTE: This worker uses direct SPI register access instead of the SubGhzDevice
+    // abstraction for performance reasons. The frequency analyzer must rapidly scan
+    // dozens of frequencies per second, and the abstraction overhead (mutex, state
+    // tracking, function call indirection) would be too high. SPI bus contention is
+    // still protected via furi_hal_spi_acquire/release.
+    const FuriHalSpiBusHandle* spi_handle = instance->spi_handle;
 
-    furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
-    cc1101_flush_rx(&furi_hal_spi_bus_handle_subghz);
-    cc1101_flush_tx(&furi_hal_spi_bus_handle_subghz);
-    cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG0, CC1101IocfgHW);
-    cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_MDMCFG3,
-                     0b01111111); // symbol rate
-    cc1101_write_reg(
-        &furi_hal_spi_bus_handle_subghz,
-        CC1101_AGCCTRL2,
-        0b00000111); // 00 - DVGA all; 000 - MAX LNA+LNA2; 111 - MAGN_TARGET 42 dB
-    cc1101_write_reg(
-        &furi_hal_spi_bus_handle_subghz,
-        CC1101_AGCCTRL1,
-        0b00001000); // 0; 0 - LNA 2 gain is decreased to minimum before decreasing LNA gain; 00 - Relative carrier sense threshold disabled; 1000 - Absolute carrier sense threshold disabled
-    cc1101_write_reg(
-        &furi_hal_spi_bus_handle_subghz,
-        CC1101_AGCCTRL0,
-        0b00110000); // 00 - No hysteresis, medium asymmetric dead zone, medium gain ; 11 - 64 samples agc; 00 - Normal AGC, 00 - 4dB boundary
+    if(instance->is_ext_radio) {
+        // Ensure external amplifier TX is disabled on pin 7 (PC3)
+        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeOutputPushPull);
+        furi_hal_gpio_write(&gpio_ext_pc3, 0);
 
-    furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+        furi_hal_spi_bus_handle_init(spi_handle);
 
-    furi_hal_subghz_set_path(FuriHalSubGhzPathIsolate);
+        // Put internal CC1101 to sleep to prevent cross-talk / power load
+        furi_hal_subghz_idle();
+        furi_hal_subghz_sleep();
+
+        furi_hal_spi_acquire(spi_handle);
+        cc1101_reset(spi_handle);
+        cc1101_flush_rx(spi_handle);
+        cc1101_flush_tx(spi_handle);
+        cc1101_write_reg(spi_handle, CC1101_IOCFG0, CC1101IocfgHW);
+        // GDO2 inverted: Assert HIGH in RX state to enable RX LNA on E07-433M20S
+        cc1101_write_reg(spi_handle, CC1101_IOCFG2, CC1101IocfgHW | CC1101_IOCFG_INV);
+        cc1101_write_reg(spi_handle, CC1101_MDMCFG3, 0b01111111); // symbol rate
+        cc1101_write_reg(spi_handle, CC1101_FREND1, 0xB6);
+        cc1101_write_reg(
+            spi_handle,
+            CC1101_AGCCTRL2,
+            0b00000111); // 00 - DVGA all; 000 - MAX LNA+LNA2; 111 - MAGN_TARGET 42 dB
+        cc1101_write_reg(
+            spi_handle,
+            CC1101_AGCCTRL1,
+            0b00001000); // 0; 0 - LNA 2 gain is decreased to minimum before decreasing LNA gain; 00 - Relative carrier sense threshold disabled; 1000 - Absolute carrier sense threshold disabled
+        cc1101_write_reg(
+            spi_handle,
+            CC1101_AGCCTRL0,
+            0b00110000); // 00 - No hysteresis, medium asymmetric dead zone, medium gain ; 11 - 64 samples agc; 00 - Normal AGC, 00 - 4dB boundary
+        furi_hal_spi_release(spi_handle);
+    } else {
+        // Explicitly put external CC1101 and its amplifier to sleep so it does NOT
+        // re-radiate or cross-couple RF into the internal CC1101 when connected.
+        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeOutputPushPull);
+        furi_hal_gpio_write(&gpio_ext_pc3, 0);
+
+        const FuriHalSpiBusHandle* ext_spi = (momentum_settings.spi_cc1101_handle == SpiDefault ?
+                                                 &furi_hal_spi_bus_handle_external_extra :
+                                                 &furi_hal_spi_bus_handle_external);
+        furi_hal_spi_bus_handle_init(ext_spi);
+        furi_hal_spi_acquire(ext_spi);
+        cc1101_switch_to_idle(ext_spi);
+        cc1101_write_reg(ext_spi, CC1101_IOCFG0, CC1101IocfgHighImpedance);
+        cc1101_write_reg(ext_spi, CC1101_IOCFG2, CC1101IocfgHighImpedance);
+        cc1101_shutdown(ext_spi);
+        furi_hal_spi_release(ext_spi);
+        furi_hal_spi_bus_handle_deinit(ext_spi);
+
+        // Start Internal CC1101
+        furi_hal_subghz_reset();
+
+        furi_hal_spi_acquire(spi_handle);
+        cc1101_flush_rx(spi_handle);
+        cc1101_flush_tx(spi_handle);
+        cc1101_write_reg(spi_handle, CC1101_IOCFG0, CC1101IocfgHW);
+        cc1101_write_reg(spi_handle, CC1101_MDMCFG3,
+                         0b01111111); // symbol rate
+        cc1101_write_reg(spi_handle, CC1101_FREND1, 0xB6);
+        cc1101_write_reg(
+            spi_handle,
+            CC1101_AGCCTRL2,
+            0b00000111); // 00 - DVGA all; 000 - MAX LNA+LNA2; 111 - MAGN_TARGET 42 dB
+        cc1101_write_reg(
+            spi_handle,
+            CC1101_AGCCTRL1,
+            0b00001000); // 0; 0 - LNA 2 gain is decreased to minimum before decreasing LNA gain; 00 - Relative carrier sense threshold disabled; 1000 - Absolute carrier sense threshold disabled
+        cc1101_write_reg(
+            spi_handle,
+            CC1101_AGCCTRL0,
+            0b00110000); // 00 - No hysteresis, medium asymmetric dead zone, medium gain ; 11 - 64 samples agc; 00 - Normal AGC, 00 - 4dB boundary
+
+        furi_hal_spi_release(spi_handle);
+
+        furi_hal_subghz_set_path(FuriHalSubGhzPathIsolate);
+    }
 
     while(instance->worker_running) {
+        // Safety check: if the SubGhz instance or its txrx is NULL (e.g. during a
+        // device switch or app shutdown), stop the worker immediately.
+        if(instance->subghz == NULL || instance->subghz->txrx == NULL) {
+            FURI_LOG_W(TAG, "SubGhz instance invalid during analysis — stopping worker");
+            break;
+        }
+
         furi_delay_ms(10);
 
         float rssi_min = 26.0f;
@@ -111,8 +223,8 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
 
         frequency_rssi.rssi_coarse = -127.0f;
         frequency_rssi.rssi_fine = -127.0f;
-        furi_hal_subghz_idle();
-        subghz_frequency_analyzer_worker_load_registers(subghz_preset_ook_650khz);
+        subghz_frequency_analyzer_worker_idle(instance);
+        subghz_frequency_analyzer_worker_load_registers(spi_handle, subghz_preset_ook_650khz);
 
         // First stage: coarse scan
         for(size_t i = 0; i < subghz_setting_get_frequency_count(instance->setting); i++) {
@@ -121,23 +233,23 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
                (((current_frequency != 462750000) && (current_frequency != 467750000) &&
                  (current_frequency != 464000000)) &&
                 (current_frequency <= 920000000))) {
-                furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
-                cc1101_switch_to_idle(&furi_hal_spi_bus_handle_subghz);
+                furi_hal_spi_acquire(spi_handle);
+                cc1101_switch_to_idle(spi_handle);
                 frequency = cc1101_set_frequency(
-                    &furi_hal_spi_bus_handle_subghz,
+                    spi_handle,
                     subghz_setting_get_frequency(instance->setting, i));
 
-                cc1101_calibrate(&furi_hal_spi_bus_handle_subghz);
+                cc1101_calibrate(spi_handle);
 
-                furi_check(cc1101_wait_status_state(
-                    &furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000));
+                cc1101_wait_status_state(
+                    spi_handle, CC1101StateIDLE, 10000);
 
-                cc1101_switch_to_rx(&furi_hal_spi_bus_handle_subghz);
-                furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+                cc1101_switch_to_rx(spi_handle);
+                furi_hal_spi_release(spi_handle);
 
                 furi_delay_ms(2);
 
-                rssi = furi_hal_subghz_get_rssi();
+                rssi = subghz_frequency_analyzer_worker_get_rssi(instance);
 
                 rssi_avg += rssi;
                 rssi_avg_samples++;
@@ -161,28 +273,28 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
 
         // Second stage: fine scan
         if(frequency_rssi.rssi_coarse > instance->trigger_level) {
-            furi_hal_subghz_idle();
-            subghz_frequency_analyzer_worker_load_registers(subghz_preset_ook_58khz);
+            subghz_frequency_analyzer_worker_idle(instance);
+            subghz_frequency_analyzer_worker_load_registers(spi_handle, subghz_preset_ook_58khz);
             //for example -0.3 ... 433.92 ... +0.3 step 20KHz
             for(uint32_t i = frequency_rssi.frequency_coarse - 300000;
                 i < frequency_rssi.frequency_coarse + 300000;
                 i += 20000) {
                 if(furi_hal_subghz_is_frequency_valid(i)) {
-                    furi_hal_spi_acquire(&furi_hal_spi_bus_handle_subghz);
-                    cc1101_switch_to_idle(&furi_hal_spi_bus_handle_subghz);
-                    frequency = cc1101_set_frequency(&furi_hal_spi_bus_handle_subghz, i);
+                    furi_hal_spi_acquire(spi_handle);
+                    cc1101_switch_to_idle(spi_handle);
+                    frequency = cc1101_set_frequency(spi_handle, i);
 
-                    cc1101_calibrate(&furi_hal_spi_bus_handle_subghz);
+                    cc1101_calibrate(spi_handle);
 
-                    furi_check(cc1101_wait_status_state(
-                        &furi_hal_spi_bus_handle_subghz, CC1101StateIDLE, 10000));
+                    cc1101_wait_status_state(
+                        spi_handle, CC1101StateIDLE, 10000);
 
-                    cc1101_switch_to_rx(&furi_hal_spi_bus_handle_subghz);
-                    furi_hal_spi_release(&furi_hal_spi_bus_handle_subghz);
+                    cc1101_switch_to_rx(spi_handle);
+                    furi_hal_spi_release(spi_handle);
 
                     furi_delay_ms(2);
 
-                    rssi = furi_hal_subghz_get_rssi();
+                    rssi = subghz_frequency_analyzer_worker_get_rssi(instance);
 
                     FURI_LOG_T(TAG, "#:%lu:%f", frequency, (double)rssi);
 
@@ -259,8 +371,19 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
     }
 
     //Stop CC1101
-    furi_hal_subghz_idle();
-    furi_hal_subghz_sleep();
+    if(instance->is_ext_radio) {
+        furi_hal_spi_acquire(spi_handle);
+        cc1101_switch_to_idle(spi_handle);
+        cc1101_write_reg(spi_handle, CC1101_IOCFG0, CC1101IocfgHighImpedance);
+        cc1101_write_reg(spi_handle, CC1101_IOCFG2, CC1101IocfgHighImpedance);
+        cc1101_shutdown(spi_handle);
+        furi_hal_spi_release(spi_handle);
+        furi_hal_spi_bus_handle_deinit(spi_handle);
+        furi_hal_gpio_write(&gpio_ext_pc3, 0);
+    } else {
+        furi_hal_subghz_idle();
+        furi_hal_subghz_sleep();
+    }
 
     return 0;
 }
@@ -272,9 +395,23 @@ SubGhzFrequencyAnalyzerWorker* subghz_frequency_analyzer_worker_alloc(void* cont
     instance->thread = furi_thread_alloc_ex(
         "SubGhzFAWorker", 2048, subghz_frequency_analyzer_worker_thread, instance);
     SubGhz* subghz = context;
+    instance->subghz = subghz;
     instance->setting = subghz_txrx_get_setting(subghz->txrx);
     instance->trigger_level = subghz->last_settings->frequency_analyzer_trigger;
     //instance->trigger_level = SUBGHZ_FREQUENCY_ANALYZER_THRESHOLD;
+    instance->is_ext_radio =
+        (subghz_txrx_radio_device_get(subghz->txrx) != SubGhzRadioDeviceTypeInternal);
+    if(instance->is_ext_radio) {
+        // When using external radio, the analyzer drives the external SPI handle.
+        // The mapping matches cc1101_ext.c: SpiDefault -> external_extra (PA4),
+        // !SpiDefault -> external (PC3).
+        instance->spi_handle = (momentum_settings.spi_cc1101_handle == SpiDefault ?
+                                    &furi_hal_spi_bus_handle_external_extra :
+                                    &furi_hal_spi_bus_handle_external);
+    } else {
+        // When using internal radio, the analyzer drives the internal SPI handle.
+        instance->spi_handle = &furi_hal_spi_bus_handle_subghz;
+    }
     return instance;
 }
 

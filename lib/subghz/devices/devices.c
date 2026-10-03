@@ -253,3 +253,16 @@ SubGhzTx subghz_devices_check_tx(const SubGhzDevice* device, uint32_t frequency)
     }
     return ret;
 }
+
+SubGhzDeviceCapabilities subghz_devices_get_caps(const SubGhzDevice* device) {
+    furi_check(device);
+    return device->caps;
+}
+
+bool subghz_devices_check_connection(const SubGhzDevice* device) {
+    furi_check(device);
+    if(!device->interconnect->is_connect) {
+        return false;
+    }
+    return device->interconnect->is_connect();
+}

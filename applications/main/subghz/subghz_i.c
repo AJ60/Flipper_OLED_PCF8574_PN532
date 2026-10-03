@@ -22,17 +22,21 @@ void subghz_blink_stop(SubGhz* subghz) {
 }
 
 bool subghz_tx_start(SubGhz* subghz, FlipperFormat* flipper_format) {
-    switch(subghz_txrx_tx_start(subghz->txrx, flipper_format)) {
+    SubGhzTxRxStartTxState tx_result = subghz_txrx_tx_start(subghz->txrx, flipper_format);
+    switch(tx_result) {
     case SubGhzTxRxStartTxStateErrorParserOthers:
         dialog_message_show_storage_error(
             subghz->dialogs, "Error in protocol\nparameters\ndescription");
         break;
     case SubGhzTxRxStartTxStateErrorOnlyRx:
+    case SubGhzTxRxStartTxStateErrorRegionBlocked:
+    case SubGhzTxRxStartTxStateErrorExtendedBlocked:
+    case SubGhzTxRxStartTxStateErrorUnsupported: {
         uint32_t frequency = subghz_txrx_get_preset(subghz->txrx).frequency;
         SubGhzTx can_tx = subghz_txrx_radio_device_check_tx(subghz->txrx, frequency);
         subghz_dialog_message_freq_error(subghz, can_tx);
         break;
-
+    }
     default:
         return true;
         break;
@@ -262,7 +266,7 @@ bool subghz_key_load(SubGhz* subghz, const char* file_path, bool show_dialog) {
         return true;
 
     default:
-        furi_crash("SubGhz: Unknown load_key_state.");
+        FURI_LOG_W(TAG, "Unknown load_key_state %d", load_key_state);
         return false;
     }
 }

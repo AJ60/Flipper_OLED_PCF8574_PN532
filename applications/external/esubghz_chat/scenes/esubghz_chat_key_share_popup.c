@@ -81,6 +81,14 @@ void scene_on_enter_key_share_popup(void* context) {
 
     popup_disable_timeout(state->nfc_popup);
 
+    if(!state->nfc_available) {
+        popup_set_header(state->nfc_popup, "NFC Error", 64, 2, AlignCenter, AlignTop);
+        popup_set_icon(state->nfc_popup, 21, 13, &I_dolph_cry_49x54);
+        popup_set_text(state->nfc_popup, "NFC is not\navailable.", 78, 16, AlignLeft, AlignTop);
+        view_dispatcher_switch_to_view(state->view_dispatcher, ESubGhzChatView_NfcPopup);
+        return;
+    }
+
     popup_set_header(state->nfc_popup, "Sharing...", 67, 13, AlignLeft, AlignTop);
     popup_set_icon(state->nfc_popup, 0, 3, &I_NFC_dolphin_emulation_51x64);
     popup_set_text(state->nfc_popup, "Sharing\nKey via\nNFC", 90, 28, AlignCenter, AlignTop);
@@ -121,6 +129,10 @@ void scene_on_exit_key_share_popup(void* context) {
     ESubGhzChatState* state = context;
 
     popup_reset(state->nfc_popup);
+
+    if(!state->nfc_available) {
+        return;
+    }
 
     notification_message(state->notification, &sequence_blink_stop);
 

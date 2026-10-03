@@ -58,6 +58,7 @@ typedef struct {
     const SubGhzDevice* subghz_device;
 
     // for NFC
+    bool nfc_available;
     NfcWorker* nfc_worker;
     NfcDeviceData* nfc_dev_data;
 

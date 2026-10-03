@@ -173,7 +173,7 @@ ProtoViewApp* protoview_app_alloc() {
     // Init & set radio_device
     subghz_devices_init();
     app->radio_device =
-        radio_device_loader_set(app->radio_device, SubGhzRadioDeviceTypeExternalCC1101);
+        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
 
     subghz_devices_reset(app->radio_device);
     subghz_devices_idle(app->radio_device);

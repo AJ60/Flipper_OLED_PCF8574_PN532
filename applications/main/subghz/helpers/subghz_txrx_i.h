@@ -28,4 +28,5 @@ struct SubGhzTxRx {
     void* need_save_context;
 
     bool debug_pin_state;
+    volatile bool device_switched; // Set to true when radio device changes
 };

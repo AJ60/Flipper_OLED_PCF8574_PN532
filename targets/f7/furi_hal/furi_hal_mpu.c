@@ -12,8 +12,10 @@
 void furi_hal_mpu_init(void) {
     furi_hal_mpu_enable();
 
-    // NULL pointer dereference protection
+    // NULL pointer dereference protection (0-1MB)
     furi_hal_mpu_protect_no_access(FuriHalMpuRegionNULL, 0x00, FuriHalMPURegionSize1MB);
+
+    // Main stack protection (32B at top)
     furi_hal_mpu_protect_no_access(
         FuriHalMpuRegionMainStack,
         (uint32_t)(&_stack_end - &_stack_size),

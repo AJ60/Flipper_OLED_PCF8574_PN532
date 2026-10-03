@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <toolbox/level_duration.h>
 #include <furi_hal_gpio.h>
+#include <furi_hal_region.h>
 // #include <furi_hal_spi_types.h>
 
 #ifdef __cplusplus
@@ -166,6 +167,12 @@ bool furi_hal_subghz_is_frequency_valid(uint32_t value);
  */
 uint32_t furi_hal_subghz_set_frequency_and_path(uint32_t value);
 
+/** Get current frequency
+ *
+ * @return     current frequency in Hz
+ */
+uint32_t furi_hal_subghz_get_frequency(void);
+
 /** Сheck if and why transmission is blocked on this frequency with current config
  *
  * @param      value  frequency in Hz
@@ -187,6 +194,39 @@ bool furi_hal_subghz_is_tx_allowed(uint32_t value);
  * @return     true if CC1101 is alive (not in Init or Broken state)
  */
 bool furi_hal_subghz_is_alive(void);
+
+/** Consume tokens from duty cycle token bucket
+ * @param band  Region band to check
+ * @param tx_duration_ms  Estimated TX duration in ms
+ * @return true if tokens available and consumed
+ */
+bool furi_hal_subghz_consume_tokens(FuriHalRegionBand* band, uint32_t tx_duration_ms);
+
+/** Listen-Before-Talk check
+ * @param band  Region band to check
+ * @return true if channel clear, false if busy (caller should retry)
+ */
+bool furi_hal_subghz_lbt_check(FuriHalRegionBand* band);
+
+/** Set extended range mode (allows frequencies outside default region)
+ * @param enabled  true to enable extended range
+ */
+void furi_hal_subghz_set_extended_range(bool enabled);
+
+/** Get extended range mode
+ * @return true if extended range enabled
+ */
+bool furi_hal_subghz_get_extended_range(void);
+
+/** Set bypass region check (allows TX outside provisioned region)
+ * @param enabled  true to bypass region check
+ */
+void furi_hal_subghz_set_bypass_region(bool enabled);
+
+/** Get bypass region check
+ * @return true if region check bypassed
+ */
+bool furi_hal_subghz_get_bypass_region(void);
 
 /** Get the current rolling protocols counter ++/-- value
  * @return    int32_t current value

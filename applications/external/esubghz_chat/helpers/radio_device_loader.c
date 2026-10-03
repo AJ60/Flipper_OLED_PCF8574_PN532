@@ -35,21 +35,32 @@ bool radio_device_loader_is_connect_external(const char* name) {
     return is_connect;
 }
 
+#define TAG "RadioDeviceLoader"
+
 const SubGhzDevice* radio_device_loader_set(
     const SubGhzDevice* current_radio_device,
     SubGhzRadioDeviceType radio_device_type) {
-    const SubGhzDevice* radio_device;
+    const SubGhzDevice* radio_device = NULL;
 
-    if(radio_device_type == SubGhzRadioDeviceTypeExternalCC1101 &&
-       radio_device_loader_is_connect_external(SUBGHZ_DEVICE_CC1101_EXT_NAME)) {
+    if(radio_device_type == SubGhzRadioDeviceTypeExternalCC1101) {
         radio_device_loader_power_on();
-        radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
-        subghz_devices_begin(radio_device);
-    } else if(current_radio_device == NULL) {
-        radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
-    } else {
+        if(radio_device_loader_is_connect_external(SUBGHZ_DEVICE_CC1101_EXT_NAME)) {
+            radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
+            subghz_devices_begin(radio_device);
+            FURI_LOG_I(TAG, "External CC1101 detected and initialized");
+            return radio_device;
+        }
+        FURI_LOG_W(TAG, "External CC1101 not detected, falling back to internal");
+        radio_device_loader_power_off();
+    }
+
+    if(current_radio_device != NULL &&
+       current_radio_device == subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME)) {
         radio_device_loader_end(current_radio_device);
-        radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
+    }
+    radio_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
+    if(radio_device) {
+        FURI_LOG_I(TAG, "Using internal CC1101");
     }
 
     return radio_device;

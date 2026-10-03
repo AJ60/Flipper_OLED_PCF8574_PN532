@@ -214,7 +214,12 @@ bool subghz_scene_read_raw_on_event(void* context, SceneManagerEvent event) {
                     scene_manager_next_scene(subghz->scene_manager, SubGhzSceneMoreRAW);
                     consumed = true;
                 } else {
-                    furi_crash("SubGhz: RAW file name update error.");
+                    FURI_LOG_E(TAG, "RAW file name update error.");
+                    if(!scene_manager_search_and_switch_to_previous_scene(
+                           subghz->scene_manager, SubGhzSceneStart)) {
+                        scene_manager_stop(subghz->scene_manager);
+                        view_dispatcher_stop(subghz->view_dispatcher);
+                    }
                 }
             } else {
                 if(!scene_manager_search_and_switch_to_previous_scene(
@@ -366,6 +371,12 @@ bool subghz_scene_read_raw_on_event(void* context, SceneManagerEvent event) {
 
 void subghz_scene_read_raw_on_exit(void* context) {
     SubGhz* subghz = context;
+
+    SubGhzProtocolDecoderRAW* decoder_raw =
+        (SubGhzProtocolDecoderRAW*)subghz_txrx_get_decoder(subghz->txrx);
+    if(decoder_raw) {
+        subghz_protocol_raw_save_to_file_stop(decoder_raw);
+    }
 
     //Stop CC1101
     subghz_txrx_stop(subghz->txrx);

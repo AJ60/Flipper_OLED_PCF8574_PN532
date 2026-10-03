@@ -31,10 +31,14 @@ static int32_t subghz_chat_worker_thread(void* context) {
     event.event = SubGhzChatEventUserEntrance;
     furi_message_queue_put(instance->event_queue, &event, 0);
     while(instance->worker_running) {
-        if(pipe_receive(instance->pipe, (uint8_t*)&c, 1) == 1) {
-            event.event = SubGhzChatEventInputData;
-            event.c = c;
-            furi_message_queue_put(instance->event_queue, &event, FuriWaitForever);
+        if(pipe_bytes_available(instance->pipe) > 0) {
+            if(pipe_receive(instance->pipe, (uint8_t*)&c, 1) == 1) {
+                event.event = SubGhzChatEventInputData;
+                event.c = c;
+                furi_message_queue_put(instance->event_queue, &event, FuriWaitForever);
+            }
+        } else {
+            furi_delay_ms(20);
         }
     }
 
@@ -70,7 +74,9 @@ SubGhzChatWorker* subghz_chat_worker_alloc(PipeSide* pipe) {
 
 void subghz_chat_worker_free(SubGhzChatWorker* instance) {
     furi_assert(instance);
-    furi_assert(!instance->worker_running);
+    if(instance->worker_running) {
+        subghz_chat_worker_stop(instance);
+    }
     furi_message_queue_free(instance->event_queue);
     subghz_tx_rx_worker_free(instance->subghz_txrx);
     furi_thread_free(instance->thread);
@@ -101,9 +107,21 @@ bool subghz_chat_worker_start(
     return res;
 }
 
+// NOTE: Device-switch safety flag is not wired up here because the chat worker
+// is only used from the CLI context, which has no SubGhzTxRx instance.
+// The flag mechanism is available for future GUI use via:
+// subghz_chat_worker_set_device_switched_flag(instance, &txrx->device_switched);
+void subghz_chat_worker_set_device_switched_flag(
+    SubGhzChatWorker* instance,
+    volatile bool* flag) {
+    furi_assert(instance);
+    subghz_tx_rx_worker_set_device_switched_flag(instance->subghz_txrx, flag);
+}
+
 void subghz_chat_worker_stop(SubGhzChatWorker* instance) {
     furi_assert(instance);
-    furi_assert(instance->worker_running);
+    if(!instance->worker_running) return;
+
     if(subghz_tx_rx_worker_is_running(instance->subghz_txrx)) {
         subghz_tx_rx_worker_stop(instance->subghz_txrx);
     }

@@ -206,7 +206,7 @@ bool tpms_scene_receiver_on_event(void* context, SceneManagerEvent event) {
             tpms_scene_receiver_update_statusbar(app);
         }
         // Get current RSSI
-        float rssi = furi_hal_subghz_get_rssi();
+        float rssi = subghz_devices_get_rssi(app->txrx->radio_device);
         tpms_view_receiver_set_rssi(app->tpms_receiver, rssi);
 
         if(app->txrx->txrx_state == TPMSTxRxStateRx) {
