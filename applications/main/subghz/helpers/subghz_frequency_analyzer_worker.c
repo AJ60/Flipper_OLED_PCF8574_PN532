@@ -129,9 +129,8 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
     const FuriHalSpiBusHandle* spi_handle = instance->spi_handle;
 
     if(instance->is_ext_radio) {
-        // Ensure external amplifier TX is disabled on pin 7 (PC3)
-        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeOutputPushPull);
-        furi_hal_gpio_write(&gpio_ext_pc3, 0);
+        // Keep PC3 (PA5) in analog mode to prevent driving the LF-RFID coil stage
+        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
 
         furi_hal_spi_bus_handle_init(spi_handle);
 
@@ -140,7 +139,15 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
         furi_hal_subghz_sleep();
 
         furi_hal_spi_acquire(spi_handle);
-        cc1101_reset(spi_handle);
+        CC1101Status status = cc1101_reset(spi_handle);
+        if(status.CHIP_RDYn != 0) {
+            furi_hal_spi_release(spi_handle);
+            furi_hal_spi_bus_handle_deinit(spi_handle);
+            furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
+            instance->worker_running = false;
+            FURI_LOG_W(TAG, "External CC1101 not detected or not responding");
+            return -1;
+        }
         cc1101_flush_rx(spi_handle);
         cc1101_flush_tx(spi_handle);
         cc1101_write_reg(spi_handle, CC1101_IOCFG0, CC1101IocfgHW);
@@ -162,22 +169,8 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
             0b00110000); // 00 - No hysteresis, medium asymmetric dead zone, medium gain ; 11 - 64 samples agc; 00 - Normal AGC, 00 - 4dB boundary
         furi_hal_spi_release(spi_handle);
     } else {
-        // Explicitly put external CC1101 and its amplifier to sleep so it does NOT
-        // re-radiate or cross-couple RF into the internal CC1101 when connected.
-        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeOutputPushPull);
-        furi_hal_gpio_write(&gpio_ext_pc3, 0);
-
-        const FuriHalSpiBusHandle* ext_spi = (momentum_settings.spi_cc1101_handle == SpiDefault ?
-                                                 &furi_hal_spi_bus_handle_external_extra :
-                                                 &furi_hal_spi_bus_handle_external);
-        furi_hal_spi_bus_handle_init(ext_spi);
-        furi_hal_spi_acquire(ext_spi);
-        cc1101_switch_to_idle(ext_spi);
-        cc1101_write_reg(ext_spi, CC1101_IOCFG0, CC1101IocfgHighImpedance);
-        cc1101_write_reg(ext_spi, CC1101_IOCFG2, CC1101IocfgHighImpedance);
-        cc1101_shutdown(ext_spi);
-        furi_hal_spi_release(ext_spi);
-        furi_hal_spi_bus_handle_deinit(ext_spi);
+        // Keep PC3 (PA5) in analog mode
+        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
 
         // Start Internal CC1101
         furi_hal_subghz_reset();
@@ -228,6 +221,7 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
 
         // First stage: coarse scan
         for(size_t i = 0; i < subghz_setting_get_frequency_count(instance->setting); i++) {
+            if(!instance->worker_running) break;
             uint32_t current_frequency = subghz_setting_get_frequency(instance->setting, i);
             if(furi_hal_subghz_is_frequency_valid(current_frequency) &&
                (((current_frequency != 462750000) && (current_frequency != 467750000) &&
@@ -272,13 +266,14 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
             (double)rssi_min);
 
         // Second stage: fine scan
-        if(frequency_rssi.rssi_coarse > instance->trigger_level) {
+        if(frequency_rssi.rssi_coarse > instance->trigger_level && instance->worker_running) {
             subghz_frequency_analyzer_worker_idle(instance);
             subghz_frequency_analyzer_worker_load_registers(spi_handle, subghz_preset_ook_58khz);
             //for example -0.3 ... 433.92 ... +0.3 step 20KHz
             for(uint32_t i = frequency_rssi.frequency_coarse - 300000;
                 i < frequency_rssi.frequency_coarse + 300000;
                 i += 20000) {
+                if(!instance->worker_running) break;
                 if(furi_hal_subghz_is_frequency_valid(i)) {
                     furi_hal_spi_acquire(spi_handle);
                     cc1101_switch_to_idle(spi_handle);
@@ -379,12 +374,13 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
         cc1101_shutdown(spi_handle);
         furi_hal_spi_release(spi_handle);
         furi_hal_spi_bus_handle_deinit(spi_handle);
-        furi_hal_gpio_write(&gpio_ext_pc3, 0);
+        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
     } else {
         furi_hal_subghz_idle();
         furi_hal_subghz_sleep();
     }
 
+    instance->worker_running = false;
     return 0;
 }
 
@@ -434,20 +430,18 @@ void subghz_frequency_analyzer_worker_set_pair_callback(
 
 void subghz_frequency_analyzer_worker_start(SubGhzFrequencyAnalyzerWorker* instance) {
     furi_assert(instance);
-    furi_assert(!instance->worker_running);
-
-    instance->worker_running = true;
-
-    furi_thread_start(instance->thread);
+    if(!instance->worker_running) {
+        instance->worker_running = true;
+        furi_thread_start(instance->thread);
+    }
 }
 
 void subghz_frequency_analyzer_worker_stop(SubGhzFrequencyAnalyzerWorker* instance) {
     furi_assert(instance);
-    furi_assert(instance->worker_running);
-
-    instance->worker_running = false;
-
-    furi_thread_join(instance->thread);
+    if(instance->worker_running) {
+        instance->worker_running = false;
+        furi_thread_join(instance->thread);
+    }
 }
 
 bool subghz_frequency_analyzer_worker_is_running(SubGhzFrequencyAnalyzerWorker* instance) {

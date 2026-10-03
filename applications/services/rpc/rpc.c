@@ -478,7 +478,10 @@ void rpc_send(RpcSession* session, PB_Main* message) {
 #endif
 
     bool result = pb_encode_ex(&ostream, &PB_Main_msg, message, PB_ENCODE_DELIMITED);
-    furi_check(result && ostream.bytes_written);
+    if(!result || !ostream.bytes_written) {
+        FURI_LOG_E(TAG, "Failed to encode protobuf message: %s", PB_GET_ERROR(&ostream));
+        return;
+    }
 
     uint8_t* buffer = malloc(ostream.bytes_written);
     ostream = pb_ostream_from_buffer(buffer, ostream.bytes_written);

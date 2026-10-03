@@ -685,12 +685,14 @@ CanvasOrientation canvas_get_orientation(const Canvas* canvas) {
 
 void canvas_add_framebuffer_callback(Canvas* canvas, CanvasCommitCallback callback, void* context) {
     furi_check(canvas);
+    if(!callback) return;
 
     const CanvasCallbackPair p = {callback, context};
 
     canvas_lock(canvas);
-    furi_check(!CanvasCallbackPairArray_count(canvas->canvas_callback_pair, p));
-    CanvasCallbackPairArray_push_back(canvas->canvas_callback_pair, p);
+    if(CanvasCallbackPairArray_count(canvas->canvas_callback_pair, p) == 0) {
+        CanvasCallbackPairArray_push_back(canvas->canvas_callback_pair, p);
+    }
     canvas_unlock(canvas);
 }
 
@@ -699,11 +701,13 @@ void canvas_remove_framebuffer_callback(
     CanvasCommitCallback callback,
     void* context) {
     furi_check(canvas);
+    if(!callback) return;
 
     const CanvasCallbackPair p = {callback, context};
 
     canvas_lock(canvas);
-    furi_check(CanvasCallbackPairArray_count(canvas->canvas_callback_pair, p) == 1);
-    CanvasCallbackPairArray_remove_val(canvas->canvas_callback_pair, p);
+    if(CanvasCallbackPairArray_count(canvas->canvas_callback_pair, p) > 0) {
+        CanvasCallbackPairArray_remove_val(canvas->canvas_callback_pair, p);
+    }
     canvas_unlock(canvas);
 }
