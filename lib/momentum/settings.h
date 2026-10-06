@@ -47,9 +47,12 @@ typedef enum {
     ScreenColorModeCount,
 } ScreenColorMode;
 
-typedef struct {
-    ScreenColorMode mode;
-    RgbColor rgb;
+typedef union __attribute__((packed)) {
+    struct {
+        ScreenColorMode mode;
+        RgbColor rgb;
+    };
+    uint32_t value;
 } ScreenFrameColor;
 
 typedef enum {
