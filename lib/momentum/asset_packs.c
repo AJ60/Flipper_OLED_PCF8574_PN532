@@ -251,10 +251,14 @@ void asset_packs_init(void) {
 
         storage_file_free(f);
     } else {
-        // Pack directory not found - clear setting to prevent bootloop on restart
-        FURI_LOG_E(TAG, "Asset pack '%s' not found, clearing setting", pack);
+        // Pack directory not found. Clear the in-RAM selection so this boot falls
+        // back to built-in assets, but do NOT write the settings file here:
+        // asset_packs_init() runs from flipper_mount_callback() on the storage
+        // service's pubsub path, where file I/O is documented to deadlock the
+        // storage service (see the comment above flipper_mount_callback() in
+        // furi/flipper.c:123-130).
+        FURI_LOG_E(TAG, "Asset pack '%s' not found, clearing selection in RAM", pack);
         momentum_settings.asset_pack[0] = '\0';
-        momentum_settings_save();
     }
     furi_string_free(p);
     furi_record_close(RECORD_STORAGE);
