@@ -17,6 +17,11 @@ typedef enum {
     FuriHalMpuRegionMainStack = 0x01, // region 1 used to protect Main Stack
     FuriHalMpuRegionThreadStack =
         0x02, // region 2 used to protect currently executed RTOS Thread Stack
+    FuriHalMpuRegion3 = 0x03,
+    FuriHalMpuRegion4 = 0x04,
+    FuriHalMpuRegion5 = 0x05,
+    FuriHalMpuRegion6 = 0x06,
+    FuriHalMpuRegion7 = 0x07,
 } FuriHalMpuRegion;
 
 typedef enum {

@@ -224,19 +224,12 @@ void furi_hal_gpio_disable_int_callback(const GpioPin* gpio);
  */
 void furi_hal_gpio_remove_int_callback(const GpioPin* gpio);
 
-void furi_hal_gpio_write_pin0(const GpioPin* gpio, const bool state);
-bool furi_hal_gpio_read_pin0(const GpioPin* gpio);
-
 /**
  * GPIO write pin
  * @param gpio  GpioPin
  * @param state true / false
  */
 static inline void furi_hal_gpio_write(const GpioPin* gpio, const bool state) {
-    if(gpio->pin == 0) {
-        furi_hal_gpio_write_pin0(gpio, state);
-        return;
-    }
     // writing to BSSR is an atomic operation
     if(state == true) {
         gpio->port->BSRR = gpio->pin;
@@ -267,9 +260,6 @@ static inline void
  * @return true / false
  */
 static inline bool furi_hal_gpio_read(const GpioPin* gpio) {
-    if(gpio->pin == 0) {
-        return furi_hal_gpio_read_pin0(gpio);
-    }
     if((gpio->port->IDR & gpio->pin) != 0x00U) {
         return true;
     } else {

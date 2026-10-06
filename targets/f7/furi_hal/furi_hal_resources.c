@@ -37,14 +37,7 @@ const GpioPin gpio_nfc_miso = {.port = GPIOB, .pin = LL_GPIO_PIN_4};
 const GpioPin gpio_nfc_irq = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 // WARNING: gpio_nfc_irq_rfid_pull is aliased to the same physical pin as gpio_nfc_irq (PA2).
 // The RFID HAL drives it as OutputPushPull during LFRFID — this CONFLICTS with NFC IRQ mode.
-//
-// Bug #26: No runtime mutual exclusion is enforced here. The caller contract is:
-//   • furi_hal_lfrfid_start()  MUST call furi_hal_nfc_release() first if NFC is active.
-//   • furi_hal_nfc_acquire()   MUST NOT be called while RFID is emulating/reading.
-// Both conditions are currently upheld by the desktop app (NFC and RFID scenes are
-// mutually exclusive), but an external app bypassing the scene manager could
-// violate this. Any future automated guard should check a shared atomic:
-//   extern volatile bool g_rfid_pa2_in_use;   // set by RFID HAL, checked by NFC HAL
+// NFC and RFID cannot be used simultaneously without additional mutual exclusion on PA2.
 const GpioPin gpio_nfc_irq_rfid_pull = {.port = NFC_IRQ_GPIO_Port, .pin = NFC_IRQ_Pin};
 const GpioPin gpio_rfid_carrier_out = {.port = GPIOA, .pin = LL_GPIO_PIN_5};
 // WARNING: gpio_rfid_data_in (PA1) is aliased to gpio_cc1101_g0 (CC1101 GDO0).
@@ -76,18 +69,12 @@ const GpioPin gpio_ext_pa6 = {.port = PA6_GPIO_Port, .pin = PA6_Pin};
 // (gpio_ext_pc0): it is I2C3 SCL and also carries the PWM channel (TIM17_CH1).
 const GpioPin gpio_ext_pa7 = {.port = PA7_GPIO_Port, .pin = PA7_Pin};
 
-// Bug #24 fix: Button GPIOs do NOT exist on this board — inputs come from the
-// PCF8574 I/O expander via the input service. These sentinels (port=NULL, pin=0)
-// are kept for binary compatibility with app code that resolves GPIO symbols,
-// but any code that calls furi_hal_gpio_read/write on them will be caught by
-// the NULL-port guard in furi_hal_gpio.c.
-// NEVER pass these to furi_hal_gpio_*() — use the PCF8574 keypad API instead.
-const GpioPin gpio_button_up    = {.port = NULL, .pin = 0};
-const GpioPin gpio_button_down  = {.port = NULL, .pin = 0};
-const GpioPin gpio_button_right = {.port = NULL, .pin = 0};
-const GpioPin gpio_button_left  = {.port = NULL, .pin = 0};
-const GpioPin gpio_button_ok    = {.port = NULL, .pin = 0};
-const GpioPin gpio_button_back  = {.port = NULL, .pin = 0};
+const GpioPin gpio_button_up;
+const GpioPin gpio_button_down;
+const GpioPin gpio_button_right;
+const GpioPin gpio_button_left;
+const GpioPin gpio_button_ok;
+const GpioPin gpio_button_back;
 
 const GpioPin gpio_infrared_rx = {.port = IR_RX_GPIO_Port, .pin = IR_RX_Pin};
 const GpioPin gpio_infrared_tx = {.port = IR_TX_GPIO_Port, .pin = IR_TX_Pin};
@@ -149,14 +136,14 @@ const GpioPinRecord gpio_pins[] = {
      .channel = FuriHalAdcChannel15,
      .number = 6,
      .debug = false},
-    // Header "PC3" is wired to MCU PA5 (Pin 7).
-    // LF-RFID 125kHz carrier disabled; pin is now a fully functional, safe GPIO
-    // and ADC pin (MCU PA5 = ADC_IN10).
+    // Header "PC3" is wired to MCU PA5 = LF-RFID 125kHz carrier (TIM2_CH1);
+    // MCU PA5 = ADC_IN10, but it belongs to the RFID HAL -> hidden from the
+    // GPIO app.
     {.pin = &gpio_ext_pc3,
      .name = "PC3",
      .channel = FuriHalAdcChannel10,
      .number = 7,
-     .debug = false},
+     .debug = true},
     // GND: 8
     // Space
     // 3v3: 9
@@ -181,13 +168,13 @@ const GpioPinRecord gpio_pins[] = {
      .channel = FuriHalAdcChannelNone,
      .number = 14,
      .debug = true},
-    // Header "PC1" (Pin 15) is routed via PCF8574 Pin P7 (open-drain reset for ESP32/modules).
-    // Isolated from MCU PB4 (I2C3 SDA) to prevent bus collisions with PN532.
+    // Header "PC1" is wired to MCU PB4 = ST25R3916 NFC MISO (also I2C3 SDA).
+    // Not GPIO-safe while NFC/SPI is in use -> hidden from the GPIO app.
     {.pin = &gpio_ext_pc1,
      .name = "PC1",
      .channel = FuriHalAdcChannelNone,
      .number = 15,
-     .debug = false},
+     .debug = true},
     // Header "PC0" is wired to MCU PA7. I2C3 SCL (used by the I2C scanner / JS
     // i2c / CLI) and PWM-capable via TIM17_CH1 (AF14); MCU PA7 = ADC_IN12
     // (stock Flipper uses Ch12 for PA7 on the same MCU). One function at a
@@ -247,7 +234,7 @@ const size_t input_pins_count = COUNT_OF(input_pins);
 
 static void furi_hal_resources_init_gpio_pins(GpioMode mode) {
     for(size_t i = 0; i < gpio_pins_count; i++) {
-        if(!gpio_pins[i].debug && gpio_pins[i].pin->pin != 0) {
+        if(!gpio_pins[i].debug) {
             furi_hal_gpio_init(gpio_pins[i].pin, mode, GpioPullNo, GpioSpeedLow);
         }
     }
@@ -365,22 +352,6 @@ const GpioPinRecord* furi_hal_resources_pin_by_name(const char* name) {
         const GpioPinRecord* record = &gpio_pins[i];
         if(strcasecmp(name, record->name) == 0) return record;
     }
-    // Flipper Zero standard header label aliases
-    if(strcasecmp(name, "C3") == 0) return furi_hal_resources_pin_by_number(7);
-    if(strcasecmp(name, "C1") == 0) return furi_hal_resources_pin_by_number(15);
-    if(strcasecmp(name, "C0") == 0) return furi_hal_resources_pin_by_number(16);
-    if(strcasecmp(name, "A4") == 0) return furi_hal_resources_pin_by_number(4);
-    if(strcasecmp(name, "B2") == 0) return furi_hal_resources_pin_by_number(6);
-    if(strcasecmp(name, "TX") == 0) return furi_hal_resources_pin_by_number(13);
-    if(strcasecmp(name, "RX") == 0) return furi_hal_resources_pin_by_number(14);
-    if(strcasecmp(name, "1W") == 0 || strcasecmp(name, "iButton") == 0)
-        return furi_hal_resources_pin_by_number(17);
-    if(strcasecmp(name, "SWC") == 0 || strcasecmp(name, "SWCLK") == 0)
-        return furi_hal_resources_pin_by_number(10);
-    if(strcasecmp(name, "SWD") == 0 || strcasecmp(name, "SIO") == 0 ||
-       strcasecmp(name, "SWDIO") == 0)
-        return furi_hal_resources_pin_by_number(12);
-
     return NULL;
 }
 

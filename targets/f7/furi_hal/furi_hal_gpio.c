@@ -4,7 +4,6 @@
 #include <furi_hal_resources.h>
 #include <stm32wbxx_ll_comp.h>
 #include <stm32wbxx_ll_pwr.h>
-#include "furi_hal_pcf8574.h"
 
 static uint32_t furi_hal_gpio_invalid_argument_crash(void) {
     furi_crash("Invalid argument");
@@ -56,22 +55,6 @@ static uint8_t furi_hal_gpio_get_pin_num(const GpioPin* gpio) {
     return pin_num;
 }
 
-void furi_hal_gpio_write_pin0(const GpioPin* gpio, const bool state) {
-    if(gpio == &gpio_ext_pc1) {
-        furi_hal_pcf8574_write_pin(7, state);
-    }
-}
-
-bool furi_hal_gpio_read_pin0(const GpioPin* gpio) {
-    if(gpio == &gpio_ext_pc1) {
-        uint8_t port_val = 0xFF;
-        if(furi_hal_pcf8574_read_port(&port_val)) {
-            return (port_val & (1u << 7)) != 0;
-        }
-    }
-    return true;
-}
-
 void furi_hal_gpio_init_simple(const GpioPin* gpio, const GpioMode mode) {
     furi_hal_gpio_init(gpio, mode, GpioPullNo, GpioSpeedLow);
 }
@@ -94,15 +77,6 @@ void furi_hal_gpio_init_ex(
     const GpioPull pull,
     const GpioSpeed speed,
     const GpioAltFn alt_fn) {
-    if(!gpio || gpio->pin == 0) {
-        if(gpio == &gpio_ext_pc1) {
-            if(mode == GpioModeAnalog || mode == GpioModeInput) {
-                furi_hal_pcf8574_write_pin(7, true);
-            }
-        }
-        return;
-    }
-
     const uint32_t sys_exti_port = GET_SYSCFG_EXTI_PORT(gpio->port);
     const uint32_t sys_exti_line = GET_SYSCFG_EXTI_LINE(gpio->pin);
     const uint32_t exti_line = GET_EXTI_LINE(gpio->pin);
@@ -222,9 +196,6 @@ void furi_hal_gpio_init_ex(
 void furi_hal_gpio_add_int_callback(const GpioPin* gpio, GpioExtiCallback cb, void* ctx) {
     furi_check(gpio);
     furi_check(cb);
-    if(gpio == &gpio_ext_pc1 || gpio->pin == 0) {
-        return;
-    }
 
     FURI_CRITICAL_ENTER();
 
@@ -241,9 +212,6 @@ void furi_hal_gpio_add_int_callback(const GpioPin* gpio, GpioExtiCallback cb, vo
 
 void furi_hal_gpio_enable_int_callback(const GpioPin* gpio) {
     furi_check(gpio);
-    if(gpio == &gpio_ext_pc1 || gpio->pin == 0) {
-        return;
-    }
 
     FURI_CRITICAL_ENTER();
 
@@ -255,9 +223,6 @@ void furi_hal_gpio_enable_int_callback(const GpioPin* gpio) {
 
 void furi_hal_gpio_disable_int_callback(const GpioPin* gpio) {
     furi_check(gpio);
-    if(gpio == &gpio_ext_pc1 || gpio->pin == 0) {
-        return;
-    }
 
     FURI_CRITICAL_ENTER();
 
@@ -270,9 +235,6 @@ void furi_hal_gpio_disable_int_callback(const GpioPin* gpio) {
 
 void furi_hal_gpio_remove_int_callback(const GpioPin* gpio) {
     furi_check(gpio);
-    if(gpio == &gpio_ext_pc1 || gpio->pin == 0) {
-        return;
-    }
 
     FURI_CRITICAL_ENTER();
 
