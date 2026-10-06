@@ -42,6 +42,10 @@ static void
         if(ok) {
             AnimatedIconSwap* swap =
                 malloc(sizeof(AnimatedIconSwap) + (sizeof(uint8_t*) * meta.frame_count));
+            if(swap == NULL) {
+                FURI_LOG_E(TAG, "Icon %s: failed to alloc %ld frames", name, (long)meta.frame_count);
+                return;
+            }
             int i = 0;
             for(; i < meta.frame_count; i++) {
                 furi_string_printf(path, ICONS_FMT "/frame_%02d.bm", pack, name, i);
@@ -49,7 +53,8 @@ static void
                        file, furi_string_get_cstr(path), FSAM_READ, FSOM_OPEN_EXISTING)) {
                     uint64_t frame_size = storage_file_size(file);
                     swap->frames[i] = malloc(frame_size);
-                    ok = storage_file_read(file, swap->frames[i], frame_size) == frame_size;
+                    ok = swap->frames[i] != NULL &&
+                         storage_file_read(file, swap->frames[i], frame_size) == frame_size;
                     storage_file_close(file);
                     if(ok) continue;
                 } else {
@@ -107,6 +112,11 @@ static void
         }
         uint64_t frame_size = file_size - sizeof(header);
         StaticIconSwap* swap = malloc(sizeof(StaticIconSwap) + frame_size);
+        if(swap == NULL) {
+            FURI_LOG_E(TAG, "Icon %s: failed to alloc %llu bytes", name, frame_size);
+            storage_file_close(file);
+            return;
+        }
 
         if(storage_file_read(file, &header, sizeof(header)) == sizeof(header) &&
            storage_file_read(file, swap->frame, frame_size) == frame_size) {
@@ -150,10 +160,21 @@ static void load_font(Font font, const char* name, FuriString* path, File* file)
     if(storage_file_open(file, furi_string_get_cstr(path), FSAM_READ, FSOM_OPEN_EXISTING)) {
         uint64_t size = storage_file_size(file);
         uint8_t* swap = malloc(size);
+        if(swap == NULL) {
+            FURI_LOG_E(TAG, "Font %s: failed to alloc %llu bytes", name, size);
+            storage_file_close(file);
+            return;
+        }
 
         if(size >= U8G2_FONT_DATA_STRUCT_SIZE && storage_file_read(file, swap, size) == size) {
             asset_packs->fonts[font] = swap;
             CanvasFontParameters* params = malloc(sizeof(CanvasFontParameters));
+            if(params == NULL) {
+                free(swap);
+                asset_packs->fonts[font] = NULL;
+                storage_file_close(file);
+                return;
+            }
             // See lib/u8g2/u8g2_font.c
             params->leading_default = swap[10]; // max_char_height
             params->leading_min = params->leading_default - 2; // good enough
@@ -194,6 +215,12 @@ void asset_packs_init(void) {
     if(storage_common_stat(storage, furi_string_get_cstr(p), &info) == FSE_OK &&
        info.flags & FSF_DIRECTORY) {
         asset_packs = malloc(sizeof(AssetPacks));
+        if(asset_packs == NULL) {
+            FURI_LOG_E(TAG, "Failed to alloc asset packs");
+            furi_string_free(p);
+            furi_record_close(RECORD_STORAGE);
+            return;
+        }
         IconSwapList_init(asset_packs->icons);
 
         File* f = storage_file_alloc(storage);
