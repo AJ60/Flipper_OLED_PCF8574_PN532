@@ -216,6 +216,55 @@ static inline void sd_spi_deselect_card(void) {
     furi_hal_gpio_write(furi_hal_sd_spi_handle->cs, true);
 }
 
+static void sd_spi_bus_to_ground(void) {
+    furi_hal_gpio_init_ex(
+        furi_hal_sd_spi_handle->miso,
+        GpioModeOutputPushPull,
+        GpioPullNo,
+        GpioSpeedVeryHigh,
+        GpioAltFnUnused);
+    furi_hal_gpio_init_ex(
+        furi_hal_sd_spi_handle->mosi,
+        GpioModeOutputPushPull,
+        GpioPullNo,
+        GpioSpeedVeryHigh,
+        GpioAltFnUnused);
+    furi_hal_gpio_init_ex(
+        furi_hal_sd_spi_handle->sck,
+        GpioModeOutputPushPull,
+        GpioPullNo,
+        GpioSpeedVeryHigh,
+        GpioAltFnUnused);
+
+    sd_spi_select_card();
+    furi_hal_gpio_write(furi_hal_sd_spi_handle->miso, false);
+    furi_hal_gpio_write(furi_hal_sd_spi_handle->mosi, false);
+    furi_hal_gpio_write(furi_hal_sd_spi_handle->sck, false);
+}
+
+static void sd_spi_bus_rise_up(void) {
+    sd_spi_deselect_card();
+
+    furi_hal_gpio_init_ex(
+        furi_hal_sd_spi_handle->miso,
+        GpioModeAltFunctionPushPull,
+        GpioPullUp,
+        GpioSpeedVeryHigh,
+        GpioAltFn5SPI2);
+    furi_hal_gpio_init_ex(
+        furi_hal_sd_spi_handle->mosi,
+        GpioModeAltFunctionPushPull,
+        GpioPullUp,
+        GpioSpeedVeryHigh,
+        GpioAltFn5SPI2);
+    furi_hal_gpio_init_ex(
+        furi_hal_sd_spi_handle->sck,
+        GpioModeAltFunctionPushPull,
+        GpioPullUp,
+        GpioSpeedVeryHigh,
+        GpioAltFn5SPI2);
+}
+
 /* Set when a low-level SPI transfer to the card fails. SD shares the bus with
  * other peripherals on this board, so timeouts are expected. Propagate them as
  * errors instead of furi_check()-aborting, which would HardFault -> reset -> bootloop. */
@@ -903,16 +952,16 @@ FuriStatus furi_hal_sd_init(bool power_reset) {
     if(power_reset) {
         sd_spi_debug("Power reset");
 
-        /* NOTE: furi_hal_power_disable_external_3_3v() is a no-op on this board,
-         * so the original sd_spi_bus_to_ground()/rise_up() pair cycled no power --
-         * it only drove MISO/MOSI/SCK, which are SHARED with NFC, Sub-GHz, the
-         * display and the button shift-register. Keep a settle delay, leave the
-         * shared pins alone. */
-        sd_spi_deselect_card();
+        // disable power and set low on all bus pins
+        furi_hal_power_disable_external_3_3v();
+        sd_spi_bus_to_ground();
         furi_delay_ms(250);
 
         // reinit bus and enable power
-        (void)0;
+        sd_spi_bus_rise_up();
+        furi_hal_sd_presence_init();
+        furi_hal_power_enable_external_3_3v();
+        furi_delay_ms(100);
     }
 
     FuriStatus status = FuriStatusError;
