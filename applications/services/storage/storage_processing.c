@@ -124,9 +124,6 @@ bool storage_process_file_open(
 
             const char* path_cstr_no_vfs = cstr_path_without_vfs_prefix(path);
             FS_CALL(storage, file.open(storage, file, path_cstr_no_vfs, access_mode, open_mode));
-            if(!ret) {
-                storage_pop_storage_file(file, storage);
-            }
         }
     }
 
@@ -292,9 +289,6 @@ bool storage_process_dir_open(Storage* app, File* file, FuriString* path) {
         } else {
             storage_push_storage_file(file, path, storage);
             FS_CALL(storage, dir.open(storage, file, cstr_path_without_vfs_prefix(path)));
-            if(!ret) {
-                storage_pop_storage_file(file, storage);
-            }
         }
     }
 
