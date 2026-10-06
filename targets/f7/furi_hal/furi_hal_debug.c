@@ -9,6 +9,14 @@
 volatile bool furi_hal_debug_gdb_session_active = false;
 
 void furi_hal_debug_enable(void) {
+    // Enable ITM/SWO for ST-Link trace capture
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    ITM->LAR = 0xC5ACCE55;
+    ITM->TCR = ITM_TCR_ITMENA_Msk | ITM_TCR_SYNCENA_Msk | ITM_TCR_DWTENA_Msk;
+    ITM->TER = 1;   // Stimulus port 0
+    ITM->TPR = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
     // Low power mode debug
     LL_DBGMCU_EnableDBGSleepMode();
     LL_DBGMCU_EnableDBGStopMode();

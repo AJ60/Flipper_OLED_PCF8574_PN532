@@ -213,15 +213,3 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char* pcTaskName) {
     furi_log_puts("\r\n\r\n");
     furi_crash("StackOverflow");
 }
-
-void vApplicationIdleHook(void) {
-    // Refresh IWDG in idle hook
-    extern void furi_hal_watchdog_iwdg_refresh(void);
-    furi_hal_watchdog_iwdg_refresh();
-}
-
-void vApplicationTickHook(void) {
-    // Refresh WWDG in tick hook for task monitoring
-    extern void furi_hal_watchdog_wwdg_refresh(void);
-    furi_hal_watchdog_wwdg_refresh();
-}

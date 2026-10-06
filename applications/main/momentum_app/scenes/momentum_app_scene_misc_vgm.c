@@ -46,7 +46,10 @@ static void momentum_app_scene_misc_vgm_foreground_changed(VariableItem* item) {
     MomentumApp* app = variable_item_get_context(item);
     uint8_t index = variable_item_get_current_value_index(item);
     variable_item_set_current_value_text(item, vgm_colors[index].name);
-    momentum_settings.rpc_color_fg.rgb = vgm_colors[index].color;
+    momentum_settings.rpc_color_fg.mode = ScreenColorModeDefault;
+    momentum_settings.rpc_color_fg.rgb.r = 0;
+    momentum_settings.rpc_color_fg.rgb.g = 0;
+    momentum_settings.rpc_color_fg.rgb.b = 0;
 
     if(strcmp("Default", vgm_colors[index].name) == 0) {
         momentum_settings.rpc_color_fg.mode = ScreenColorModeDefault;
@@ -56,6 +59,9 @@ static void momentum_app_scene_misc_vgm_foreground_changed(VariableItem* item) {
         momentum_settings.rpc_color_fg.mode = ScreenColorModeRgbBacklight;
     } else {
         momentum_settings.rpc_color_fg.mode = ScreenColorModeCustom;
+        momentum_settings.rpc_color_fg.rgb.r = vgm_colors[index].color.r;
+        momentum_settings.rpc_color_fg.rgb.g = vgm_colors[index].color.g;
+        momentum_settings.rpc_color_fg.rgb.b = vgm_colors[index].color.b;
     }
 
     app->save_settings = true;
@@ -65,7 +71,10 @@ static void momentum_app_scene_misc_vgm_background_changed(VariableItem* item) {
     MomentumApp* app = variable_item_get_context(item);
     uint8_t index = variable_item_get_current_value_index(item);
     variable_item_set_current_value_text(item, vgm_colors[index].name);
-    momentum_settings.rpc_color_bg.rgb = vgm_colors[index].color;
+    momentum_settings.rpc_color_bg.mode = ScreenColorModeDefault;
+    momentum_settings.rpc_color_bg.rgb.r = 0;
+    momentum_settings.rpc_color_bg.rgb.g = 0;
+    momentum_settings.rpc_color_bg.rgb.b = 0;
 
     if(strcmp("Default", vgm_colors[index].name) == 0) {
         momentum_settings.rpc_color_bg.mode = ScreenColorModeDefault;
@@ -75,6 +84,9 @@ static void momentum_app_scene_misc_vgm_background_changed(VariableItem* item) {
         momentum_settings.rpc_color_bg.mode = ScreenColorModeRgbBacklight;
     } else {
         momentum_settings.rpc_color_bg.mode = ScreenColorModeCustom;
+        momentum_settings.rpc_color_bg.rgb.r = vgm_colors[index].color.r;
+        momentum_settings.rpc_color_bg.rgb.g = vgm_colors[index].color.g;
+        momentum_settings.rpc_color_bg.rgb.b = vgm_colors[index].color.b;
     }
 
     app->save_settings = true;

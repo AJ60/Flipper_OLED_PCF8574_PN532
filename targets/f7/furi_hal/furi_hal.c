@@ -1,7 +1,6 @@
 #include <furi_hal.h>
 #include <furi_hal_mpu.h>
 #include <furi_hal_memory.h>
-#include <furi_hal_watchdog.h>
 
 #include <stm32wbxx_ll_cortex.h>
 
@@ -43,7 +42,6 @@ void furi_hal_deinit_early(void) {
 
 void furi_hal_init(void) {
     furi_hal_mpu_init();
-    furi_hal_watchdog_init();
     furi_hal_adc_init();
     // furi_hal_i2c_init();
     furi_hal_clock_init();

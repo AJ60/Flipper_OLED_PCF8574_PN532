@@ -216,89 +216,71 @@ static inline void sd_spi_deselect_card(void) {
     furi_hal_gpio_write(furi_hal_sd_spi_handle->cs, true);
 }
 
-static void sd_spi_bus_to_ground(void) {
-    furi_hal_gpio_init_ex(
-        furi_hal_sd_spi_handle->miso,
-        GpioModeOutputPushPull,
-        GpioPullNo,
-        GpioSpeedVeryHigh,
-        GpioAltFnUnused);
-    furi_hal_gpio_init_ex(
-        furi_hal_sd_spi_handle->mosi,
-        GpioModeOutputPushPull,
-        GpioPullNo,
-        GpioSpeedVeryHigh,
-        GpioAltFnUnused);
-    furi_hal_gpio_init_ex(
-        furi_hal_sd_spi_handle->sck,
-        GpioModeOutputPushPull,
-        GpioPullNo,
-        GpioSpeedVeryHigh,
-        GpioAltFnUnused);
+/* Set when a low-level SPI transfer to the card fails. SD shares the bus with
+ * other peripherals on this board, so timeouts are expected. Propagate them as
+ * errors instead of furi_check()-aborting, which would HardFault -> reset -> bootloop. */
+static volatile bool sd_spi_io_error = false;
 
-    sd_spi_select_card();
-    furi_hal_gpio_write(furi_hal_sd_spi_handle->miso, false);
-    furi_hal_gpio_write(furi_hal_sd_spi_handle->mosi, false);
-    furi_hal_gpio_write(furi_hal_sd_spi_handle->sck, false);
+static inline void sd_spi_io_fail(void) {
+    sd_spi_io_error = true;
 }
 
-static void sd_spi_bus_rise_up(void) {
-    sd_spi_deselect_card();
+static inline bool sd_spi_io_ok(void) {
+    return !sd_spi_io_error;
+}
 
-    furi_hal_gpio_init_ex(
-        furi_hal_sd_spi_handle->miso,
-        GpioModeAltFunctionPushPull,
-        GpioPullUp,
-        GpioSpeedVeryHigh,
-        GpioAltFn5SPI2);
-    furi_hal_gpio_init_ex(
-        furi_hal_sd_spi_handle->mosi,
-        GpioModeAltFunctionPushPull,
-        GpioPullUp,
-        GpioSpeedVeryHigh,
-        GpioAltFn5SPI2);
-    furi_hal_gpio_init_ex(
-        furi_hal_sd_spi_handle->sck,
-        GpioModeAltFunctionPushPull,
-        GpioPullUp,
-        GpioSpeedVeryHigh,
-        GpioAltFn5SPI2);
+static inline void sd_spi_io_clear(void) {
+    sd_spi_io_error = false;
 }
 
 static inline uint8_t sd_spi_read_byte(void) {
-    uint8_t responce;
-    furi_check(furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, NULL, &responce, 1, SD_TIMEOUT_MS));
+    uint8_t responce = 0xFF;
+    if(!furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, NULL, &responce, 1, SD_TIMEOUT_MS)) {
+        sd_spi_io_fail();
+    }
     return responce;
 }
 
 static inline void sd_spi_write_byte(uint8_t data) {
-    furi_check(furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, &data, NULL, 1, SD_TIMEOUT_MS));
+    if(!furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, &data, NULL, 1, SD_TIMEOUT_MS)) {
+        sd_spi_io_fail();
+    }
 }
 
 static inline uint8_t sd_spi_write_and_read_byte(uint8_t data) {
-    uint8_t responce;
-    furi_check(furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, &data, &responce, 1, SD_TIMEOUT_MS));
+    uint8_t responce = 0xFF;
+    if(!furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, &data, &responce, 1, SD_TIMEOUT_MS)) {
+        sd_spi_io_fail();
+    }
     return responce;
 }
 
 static inline void sd_spi_write_bytes(uint8_t* data, uint32_t size) {
-    furi_check(furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, data, NULL, size, SD_TIMEOUT_MS));
+    if(!furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, data, NULL, size, SD_TIMEOUT_MS)) {
+        sd_spi_io_fail();
+    }
 }
 
 static inline void sd_spi_read_bytes(uint8_t* data, uint32_t size) {
-    furi_check(furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, NULL, data, size, SD_TIMEOUT_MS));
+    if(!furi_hal_spi_bus_trx(furi_hal_sd_spi_handle, NULL, data, size, SD_TIMEOUT_MS)) {
+        sd_spi_io_fail();
+    }
 }
 
 static inline void sd_spi_write_bytes_dma(uint8_t* data, uint32_t size) {
     uint32_t timeout_mul = (size / 512) + 1;
-    furi_check(furi_hal_spi_bus_trx_dma(
-        furi_hal_sd_spi_handle, data, NULL, size, SD_TIMEOUT_MS * timeout_mul));
+    if(!furi_hal_spi_bus_trx_dma(
+           furi_hal_sd_spi_handle, data, NULL, size, SD_TIMEOUT_MS * timeout_mul)) {
+        sd_spi_io_fail();
+    }
 }
 
 static inline void sd_spi_read_bytes_dma(uint8_t* data, uint32_t size) {
     uint32_t timeout_mul = (size / 512) + 1;
-    furi_check(furi_hal_spi_bus_trx_dma(
-        furi_hal_sd_spi_handle, NULL, data, size, SD_TIMEOUT_MS * timeout_mul));
+    if(!furi_hal_spi_bus_trx_dma(
+           furi_hal_sd_spi_handle, NULL, data, size, SD_TIMEOUT_MS * timeout_mul)) {
+        sd_spi_io_fail();
+    }
 }
 
 static uint8_t sd_spi_wait_for_data_and_read(void) {
@@ -515,6 +497,8 @@ static FuriStatus sd_spi_init_spi_mode(void) {
     SdSpiCmdAnswer response;
     uint8_t retry_count;
 
+    sd_spi_io_clear();
+
     // CMD0 (GO_IDLE_STATE) to put SD in SPI mode and
     // wait for In Idle State Response (R1 Format) equal to 0x01
     retry_count = 0;
@@ -560,7 +544,7 @@ static FuriStatus sd_spi_init_spi_mode(void) {
     }
 
     sd_spi_debug("SD card is %s", sd_high_capacity ? "SDHC or SDXC" : "SDSC");
-    return FuriStatusOk;
+    return sd_spi_io_ok() ? FuriStatusOk : FuriStatusError;
 }
 
 static FuriStatus sd_spi_get_csd(SD_CSD* csd) {
@@ -901,19 +885,13 @@ void furi_hal_sd_presence_init(void) {
     // furi_hal_gpio_init(&gpio_sdcard_cd, GpioModeInput, GpioPullUp, GpioSpeedLow);
 }
 
-static void furi_hal_sd_present_pin_set_low(void) {
-    // low speed input with pullup
-    //  furi_hal_gpio_init_simple(&gpio_sdcard_cd, GpioModeOutputOpenDrain);
-    //furi_hal_gpio_write(&gpio_sdcard_cd, 0);
-}
-
 bool furi_hal_sd_is_present(void) {
     //  bool result = !furi_hal_gpio_read(&gpio_sdcard_cd);
     return true;
 }
 
 uint8_t furi_hal_sd_max_mount_retry_count(void) {
-    return 3;
+    return 10;
 }
 
 FuriStatus furi_hal_sd_init(bool power_reset) {
@@ -925,17 +903,16 @@ FuriStatus furi_hal_sd_init(bool power_reset) {
     if(power_reset) {
         sd_spi_debug("Power reset");
 
-        // disable power and set low on all bus pins
-        furi_hal_power_disable_external_3_3v();
-        sd_spi_bus_to_ground();
-        furi_hal_sd_present_pin_set_low();
+        /* NOTE: furi_hal_power_disable_external_3_3v() is a no-op on this board,
+         * so the original sd_spi_bus_to_ground()/rise_up() pair cycled no power --
+         * it only drove MISO/MOSI/SCK, which are SHARED with NFC, Sub-GHz, the
+         * display and the button shift-register. Keep a settle delay, leave the
+         * shared pins alone. */
+        sd_spi_deselect_card();
         furi_delay_ms(250);
 
         // reinit bus and enable power
-        sd_spi_bus_rise_up();
-        furi_hal_sd_presence_init();
-        furi_hal_power_enable_external_3_3v();
-        furi_delay_ms(100);
+        (void)0;
     }
 
     FuriStatus status = FuriStatusError;
@@ -946,7 +923,7 @@ FuriStatus furi_hal_sd_init(bool power_reset) {
         sd_spi_write_byte(SD_DUMMY_BYTE);
     }
 
-    for(uint8_t i = 0; i < 3; i++) {
+    for(uint8_t i = 0; i < 32; i++) {
         status = sd_spi_init_spi_mode();
         if(status == FuriStatusOk) {
             // SD initialized and init to SPI mode properly
@@ -989,6 +966,9 @@ FuriStatus furi_hal_sd_read_blocks(uint32_t* buff, uint32_t sector, uint32_t cou
     }
 
     status = sd_device_read(buff, sector, count);
+    if(!sd_spi_io_ok()) {
+        status = FuriStatusError;
+    }
 
     if(status != FuriStatusOk) {
         uint8_t counter = furi_hal_sd_max_mount_retry_count();
@@ -1024,6 +1004,9 @@ FuriStatus furi_hal_sd_write_blocks(const uint32_t* buff, uint32_t sector, uint3
     sd_cache_invalidate_range(sector, sector + count);
 
     status = sd_device_write(buff, sector, count);
+    if(!sd_spi_io_ok()) {
+        status = FuriStatusError;
+    }
 
     if(status != FuriStatusOk) {
         uint8_t counter = furi_hal_sd_max_mount_retry_count();

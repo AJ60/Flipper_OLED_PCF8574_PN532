@@ -492,9 +492,19 @@ static bool emv_decode_response_tlv_internal(
             }
         } else {
             if(i + tlen <= len) {
-                if(emv_decode_tlv_tag(&buff[i], tag, tlen, app)) {
+                if(!emv_decode_tlv_tag(&buff[i], tag, tlen, app)) {
+                    // Critical tags like GPO_FMT1 (0x80) must decode successfully
+                    if(tag == EMV_TAG_GPO_FMT1 || tag == EMV_TAG_GPO_FMT2) {
+                        FURI_LOG_E(TAG, "Failed to decode critical tag 0x%04X", tag);
+                        return false;
+                    }
+                    FURI_LOG_W(TAG, "Failed to decode tag 0x%04X", tag);
+                } else {
                     success = true;
                 }
+            } else {
+                FURI_LOG_W(TAG, "TLV 0x%04X length exceeds buffer", tag);
+                return false;
             }
         }
         i += tlen;
@@ -569,11 +579,16 @@ EmvError emv_poller_select_ppse(EmvPoller* instance) {
 
         emv_trace(instance, "Select PPSE answer:");
 
+        size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
         const uint8_t* buff = bit_buffer_get_data(instance->rx_buffer);
+        // Strip ISO 14443-4 status bytes (SW1 SW2)
+        if(rx_len >= 2 && (buff[rx_len - 2] == 0x90 || (buff[rx_len - 2] >> 4) == 0x6)) {
+            rx_len -= 2;
+        }
 
         if(!emv_decode_response_tlv(
                buff,
-               bit_buffer_get_size_bytes(instance->rx_buffer),
+               rx_len,
                &instance->data->emv_application)) {
             error = EmvErrorProtocol;
             FURI_LOG_E(TAG, "Failed to parse application");
@@ -621,11 +636,16 @@ EmvError emv_poller_select_application(EmvPoller* instance) {
             break;
         }
 
+        size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
         const uint8_t* buff = bit_buffer_get_data(instance->rx_buffer);
+        // Strip ISO 14443-4 status bytes (SW1 SW2)
+        if(rx_len >= 2 && (buff[rx_len - 2] == 0x90 || (buff[rx_len - 2] >> 4) == 0x6)) {
+            rx_len -= 2;
+        }
 
         if(!emv_decode_response_tlv(
                buff,
-               bit_buffer_get_size_bytes(instance->rx_buffer),
+               rx_len,
                &instance->data->emv_application)) {
             error = EmvErrorProtocol;
             FURI_LOG_E(TAG, "Failed to parse application");
@@ -692,6 +712,11 @@ EmvError emv_poller_get_processing_options(EmvPoller* instance) {
             }
             buff = bit_buffer_get_data(instance->rx_buffer);
             rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
+        }
+
+        // Strip ISO 14443-4 status bytes (SW1 SW2)
+        if(rx_len >= 2 && (buff[rx_len - 2] == 0x90 || (buff[rx_len - 2] >> 4) == 0x6)) {
+            rx_len -= 2;
         }
 
         if(!emv_decode_response_tlv(
@@ -793,9 +818,16 @@ EmvError emv_poller_read_afl(EmvPoller* instance, bool bruteforce_sfi, uint16_t*
                     error = emv_poller_read_sfi_record(instance, sfi, record);
                     if(error != EmvErrorNone) break;
 
+                    size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
+                    const uint8_t* rx_data = bit_buffer_get_data(instance->rx_buffer);
+                    // Strip ISO 14443-4 status bytes (SW1 SW2)
+                    if(rx_len >= 2 && (rx_data[rx_len - 2] == 0x90 || (rx_data[rx_len - 2] >> 4) == 0x6)) {
+                        rx_len -= 2;
+                    }
+
                     if(!emv_decode_response_tlv(
-                           bit_buffer_get_data(instance->rx_buffer),
-                           bit_buffer_get_size_bytes(instance->rx_buffer),
+                           rx_data,
+                           rx_len,
                            &instance->data->emv_application)) {
                         error = EmvErrorProtocol;
                         FURI_LOG_T(TAG, "Failed to parse SFI 0x%X record %d", sfi, record);
@@ -818,10 +850,20 @@ EmvError emv_poller_read_afl(EmvPoller* instance, bool bruteforce_sfi, uint16_t*
                     error = emv_poller_read_sfi_record(instance, sfi, record);
                     if(error != EmvErrorNone) break;
 
-                    emv_decode_response_tlv(
-                        bit_buffer_get_data(instance->rx_buffer),
-                        bit_buffer_get_size_bytes(instance->rx_buffer),
-                        &instance->data->emv_application);
+                    size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
+                    const uint8_t* rx_data = bit_buffer_get_data(instance->rx_buffer);
+                    // Strip ISO 14443-4 status bytes (SW1 SW2)
+                    if(rx_len >= 2 && (rx_data[rx_len - 2] == 0x90 || (rx_data[rx_len - 2] >> 4) == 0x6)) {
+                        rx_len -= 2;
+                    }
+
+                    if(!emv_decode_response_tlv(
+                           rx_data,
+                           rx_len,
+                           &instance->data->emv_application)) {
+                        error = EmvErrorProtocol;
+                        FURI_LOG_T(TAG, "Failed to parse SFI 0x%X record %d", sfi, record);
+                    }
 
                     if(instance->data->emv_application.pan_len) {
                         pan_fetched = true;
@@ -843,9 +885,16 @@ EmvError emv_poller_read_afl(EmvPoller* instance, bool bruteforce_sfi, uint16_t*
                 error = emv_poller_read_sfi_record(instance, sfi, record);
                 if(error != EmvErrorNone) break;
 
+                size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
+                const uint8_t* rx_data = bit_buffer_get_data(instance->rx_buffer);
+                // Strip ISO 14443-4 status bytes (SW1 SW2)
+                if(rx_len >= 2 && (rx_data[rx_len - 2] == 0x90 || (rx_data[rx_len - 2] >> 4) == 0x6)) {
+                    rx_len -= 2;
+                }
+
                 if(!emv_decode_response_tlv(
-                       bit_buffer_get_data(instance->rx_buffer),
-                       bit_buffer_get_size_bytes(instance->rx_buffer),
+                       rx_data,
+                       rx_len,
                        &instance->data->emv_application)) {
                     error = EmvErrorProtocol;
                     FURI_LOG_T(TAG, "Failed to parse SFI 0x%X record %d", sfi, record);
@@ -889,11 +938,16 @@ static EmvError emv_poller_req_get_data(EmvPoller* instance, uint16_t tag) {
             break;
         }
 
+        size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
         const uint8_t* buff = bit_buffer_get_data(instance->rx_buffer);
+        // Strip ISO 14443-4 status bytes (SW1 SW2)
+        if(rx_len >= 2 && (buff[rx_len - 2] == 0x90 || (buff[rx_len - 2] >> 4) == 0x6)) {
+            rx_len -= 2;
+        }
 
         if(!emv_decode_response_tlv(
                buff,
-               bit_buffer_get_size_bytes(instance->rx_buffer),
+               rx_len,
                &instance->data->emv_application)) {
             error = EmvErrorProtocol;
             FURI_LOG_E(TAG, "Failed to parse get data");

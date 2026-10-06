@@ -99,7 +99,13 @@ static void
     furi_string_printf(path, ICONS_FMT ".bmx", momentum_settings.asset_pack, name);
     if(storage_file_open(file, furi_string_get_cstr(path), FSAM_READ, FSOM_OPEN_EXISTING)) {
         StaticIconBmxHeader header;
-        uint64_t frame_size = storage_file_size(file) - sizeof(header);
+        uint64_t file_size = storage_file_size(file);
+        if(file_size < sizeof(header)) {
+            FURI_LOG_E(TAG, "Invalid .bmx size %llu < header %zu", file_size, sizeof(header));
+            storage_file_close(file);
+            return;
+        }
+        uint64_t frame_size = file_size - sizeof(header);
         StaticIconSwap* swap = malloc(sizeof(StaticIconSwap) + frame_size);
 
         if(storage_file_read(file, &header, sizeof(header)) == sizeof(header) &&
@@ -145,7 +151,7 @@ static void load_font(Font font, const char* name, FuriString* path, File* file)
         uint64_t size = storage_file_size(file);
         uint8_t* swap = malloc(size);
 
-        if(size > U8G2_FONT_DATA_STRUCT_SIZE && storage_file_read(file, swap, size) == size) {
+        if(size >= U8G2_FONT_DATA_STRUCT_SIZE && storage_file_read(file, swap, size) == size) {
             asset_packs->fonts[font] = swap;
             CanvasFontParameters* params = malloc(sizeof(CanvasFontParameters));
             // See lib/u8g2/u8g2_font.c
@@ -213,6 +219,11 @@ void asset_packs_init(void) {
         }
 
         storage_file_free(f);
+    } else {
+        // Pack directory not found - clear setting to prevent bootloop on restart
+        FURI_LOG_E(TAG, "Asset pack '%s' not found, clearing setting", pack);
+        momentum_settings.asset_pack[0] = '\0';
+        momentum_settings_save();
     }
     furi_string_free(p);
     furi_record_close(RECORD_STORAGE);
