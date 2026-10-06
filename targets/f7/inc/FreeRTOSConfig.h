@@ -14,7 +14,7 @@
 #include <stm32wb55_linker.h>
 
 #define configENABLE_FPU 1
-#define configENABLE_MPU 1
+#define configENABLE_MPU 0
 
 #define configUSE_PREEMPTION             1
 #define configSUPPORT_STATIC_ALLOCATION  1
