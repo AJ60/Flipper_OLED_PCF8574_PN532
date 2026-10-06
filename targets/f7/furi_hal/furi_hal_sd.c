@@ -965,6 +965,7 @@ FuriStatus furi_hal_sd_read_blocks(uint32_t* buff, uint32_t sector, uint32_t cou
         }
     }
 
+    sd_spi_io_clear();
     status = sd_device_read(buff, sector, count);
     if(!sd_spi_io_ok()) {
         status = FuriStatusError;
@@ -1003,6 +1004,7 @@ FuriStatus furi_hal_sd_write_blocks(const uint32_t* buff, uint32_t sector, uint3
 
     sd_cache_invalidate_range(sector, sector + count);
 
+    sd_spi_io_clear();
     status = sd_device_write(buff, sector, count);
     if(!sd_spi_io_ok()) {
         status = FuriStatusError;
