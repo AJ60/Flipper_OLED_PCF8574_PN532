@@ -202,6 +202,10 @@ void asset_packs_init(void) {
         if(storage_common_stat(storage, furi_string_get_cstr(p), &info) == FSE_OK &&
            info.flags & FSF_DIRECTORY) {
             for(size_t i = 0; i < ICON_PATHS_COUNT; i++) {
+                // ICON_PATHS can contain NULL entries (see the JS binding, which
+                // already guards this); do not dereference them.
+                if(!ICON_PATHS[i].path || !ICON_PATHS[i].icon) continue;
+
                 if(ICON_PATHS[i].icon->frame_count > 1) {
                     load_icon_animated(ICON_PATHS[i].icon, ICON_PATHS[i].path, p, f);
                 } else {

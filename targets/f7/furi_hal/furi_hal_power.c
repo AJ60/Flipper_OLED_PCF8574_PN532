@@ -108,7 +108,10 @@ bool furi_hal_power_is_shutdown_requested(void) {
         return false;
     }
 
-    return furi_hal_power_get_pct() <= 3;
+    UNUSED(vbat);
+    // Battery ADC is not calibrated for this board; a misread could trigger a
+    // boot -> 90s -> shutdown -> reset loop. Never auto-request shutdown.
+    return false;
 }
 
 uint16_t furi_hal_power_insomnia_level(void) {

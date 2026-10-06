@@ -158,7 +158,7 @@ static int32_t rpc_system_gui_screen_stream_frame_transmit_thread(void* context)
                     rpc_gui->transmit_frame->content.gui_screen_frame.fg_color = fg_color.value;
                 } else {
                     rpc_gui->transmit_frame->content.gui_screen_frame.fg_color =
-                        momentum_settings.rpc_color_fg.value;
+                        momentum_settings.rpc_color_fg.rgb.value;
                 }
 
                 if(momentum_settings.rpc_color_bg.mode == ScreenColorModeRgbBacklight) {
@@ -172,7 +172,7 @@ static int32_t rpc_system_gui_screen_stream_frame_transmit_thread(void* context)
                     rpc_gui->transmit_frame->content.gui_screen_frame.bg_color = bg_color.value;
                 } else {
                     rpc_gui->transmit_frame->content.gui_screen_frame.bg_color =
-                        momentum_settings.rpc_color_bg.value;
+                        momentum_settings.rpc_color_bg.rgb.value;
                 }
 
                 transmit_time = furi_get_tick();
