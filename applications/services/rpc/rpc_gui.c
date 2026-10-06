@@ -155,7 +155,8 @@ static int32_t rpc_system_gui_screen_stream_frame_transmit_thread(void* context)
                     } else {
                         fg_color.mode = ScreenColorModeRainbow;
                     }
-                    rpc_gui->transmit_frame->content.gui_screen_frame.fg_color = fg_color.value;
+                    rpc_gui->transmit_frame->content.gui_screen_frame.fg_color =
+                        fg_color.rgb.value;
                 } else {
                     rpc_gui->transmit_frame->content.gui_screen_frame.fg_color =
                         momentum_settings.rpc_color_fg.rgb.value;
@@ -169,7 +170,8 @@ static int32_t rpc_system_gui_screen_stream_frame_transmit_thread(void* context)
                     } else {
                         bg_color.mode = ScreenColorModeRainbow;
                     }
-                    rpc_gui->transmit_frame->content.gui_screen_frame.bg_color = bg_color.value;
+                    rpc_gui->transmit_frame->content.gui_screen_frame.bg_color =
+                        bg_color.rgb.value;
                 } else {
                     rpc_gui->transmit_frame->content.gui_screen_frame.bg_color =
                         momentum_settings.rpc_color_bg.rgb.value;

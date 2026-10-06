@@ -45,8 +45,8 @@ MomentumSettings momentum_settings = {
     .uart_nmea_channel = FuriHalSerialIdUsart, // pin 13,14
     .file_naming_prefix_after = false, // Before
     .spoof_color = FuriHalVersionColorUnknown, // Real
-    .rpc_color_fg = {.mode = ScreenColorModeDefault, .rgb = {0, 0, 0}}, // Default Black
-    .rpc_color_bg = {.mode = ScreenColorModeDefault, .rgb = {255, 130, 0}}, // Default Orange
+    .rpc_color_fg = {.mode = ScreenColorModeDefault, .rgb = {{0, 0, 0}}}, // Default Black
+    .rpc_color_bg = {.mode = ScreenColorModeDefault, .rgb = {{255, 130, 0}}}, // Default Orange
     .subghz_calib = 0,
     .subghz_autocal = false, // Manual-only calibration by default (stable freq on cheap crystals)
 };
