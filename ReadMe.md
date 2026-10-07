@@ -580,6 +580,37 @@ graph TD
 
 ---
 
+### 📻 Supported Sub-GHz Applications & External Module Compatibility
+
+All Sub-GHz external applications are built to seamlessly integrate with both the onboard CC1101 and external high-power transceivers (such as the **Ebyte E07-900M10S / E07-400M10S** with PA/LNA or standard CC1101 modules connected to the 18-pin expansion header). 
+
+The table below outlines each app's role and its external hardware routing mechanism:
+
+| Application | Category | Primary Function | External CC1101 Compatibility & Mechanism |
+|---|---|---|---|
+| **Sub-GHz RAW Edit** (`subghz_raw_edit`) | 🛠️ Signal Utility | On-device waveform editor; trims noise and zooms into pulse trains | 💾 File-based processor (acts on captured `.sub` files) |
+| **Sub Analyzer** (`sub_analyzer`) | 🛠️ Signal Utility | Deeply parses `.sub` captures, extracts protocol bits and timing | 💾 File-based analyzer (acts on captured `.sub` files) |
+| **Sub Duplicate Finder** (`sub_dup_finder`) | 🛠️ Signal Utility | Scans SD card to identify and delete duplicate Sub-GHz captures | 💾 Storage utility (manages `.sub` file duplicates) |
+| **Radio Scanner** (`radio_scanner`) | 🛠️ Signal Utility | Real-time scanner piping raw analog demodulation to piezo speaker | 🔌 **Automatic** via `subghz_radio_device_loader` with `[Ext]` OLED indicator |
+| **Spectrum Analyzer** (`spectrum_analyzer`) | 🛠️ Signal Utility | Live graphical RF signal strength & band activity visualizer | 🔌 **Automatic** via `subghz_radio_device_loader` (`cc1101_int` / `cc1101_ext`) |
+| **Weather Station** (`weather_station`) | 🚗 Sensor Decoder | Decodes outdoor weather sensors (Acurite, Oregon, Nexus 433/868/915 MHz) | 🔌 **Automatic** via `subghz_radio_device_loader` |
+| **TPMS Reader** (`tpms_reader`) | 🚗 Sensor Decoder | Tire Pressure Monitoring System sensor decoder and RF bridge | 🔌 **Automatic** via `subghz_radio_device_loader` |
+| **Genie Door Recorder** (`genie_record`) | 🚗 Vehicle Decoder | Decodes and replays Genie garage door rolling codes (`.gne`) | 🔌 **Automatic** via `radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto)` |
+| **Enhanced Sub-GHz Chat** (`esubghz_chat`)| 📡 Comm & Remote | Point-to-point encrypted Sub-GHz two-way text messaging | 🔌 **Native** auto-loader with external CC1101 pin routing & fallback |
+| **Flipper Share** (`flipper_share`) | 📡 Comm & Remote | Ad-hoc wireless file transfer system over Sub-GHz channels | 🔌 **Automatic** via `radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto)` |
+| **Sub-GHz Remote** (`subghz_remote`) | 📡 Comm & Remote | Quick-action remote mapping 5 `.sub` files to hardware buttons | 🔌 **Native** `SubGhzRadioDeviceTypeExternalCC1101` selector |
+| **Sub-GHz Scheduler** (`subghz_scheduler`) | 📡 Comm & Remote | Automated and periodic transmission of `.sub` trigger files | 🔌 **Native** `SubGhzRadioDeviceTypeExternalCC1101` selector |
+| **Morse Flipper** (`morse_flipper`) | 📡 Comm & Remote | CW/Morse trainer, ARDF direction finding, and Sub-GHz transmitter | 🔌 **Automatic** radio transmission engine |
+| **APRS Transmitter** (`aprstx`) | 📡 Comm & Remote | Automatic Packet Reporting System telemetry & AX.25 beaconing | 🔌 **Native** internal / external CC1101 hardware switcher |
+| **Subdriving / Wardriver** (`wardriver`) | 📡 Comm & Remote | RF mapping tool pairing Sub-GHz captures with GPS coordinates | 🔌 **Automatic** Sub-GHz receiver pipeline |
+| **Quac! Remote** (`quac`) | 📡 Comm & Remote | Universal multi-protocol macro controller (Sub-GHz, IR, RFID) | 🔌 **Native** `SubGhzRadioDeviceTypeExternalCC1101` support |
+| **Music to Sub-GHz Radio** (`fmf_to_sub`) | 📡 Comm & Remote | Converts `.fmf` ringtones/audio layouts to broadcast-ready `.sub` files | 💾 File converter (prepares `.sub` files for RF broadcast) |
+
+> [!TIP]
+> **Radio Selection**: When using an external CC1101 or Ebyte E07 module, go to **Settings ➔ Radio** in the firmware and select **External** (or **Auto**). All apps using `subghz_radio_device_loader` will automatically route through the external module on the 18-pin expansion header, unlocking full transmission range and extended frequencies!
+
+---
+
 ### 📚 Deep-Dive Documentation Index
 * 🏛️ [**System & Firmware Architecture Guide**](documentation/ARCHITECTURE.md) — FreeRTOS task scheduling, memory maps, and Furi OS primitives.
 * 🌊 [**Firmware Boot & System Lifecycle Guide**](documentation/BOOT_AND_LIFECYCLE.md) — Waterfall boot sequence, OTP validation, bus recovery, and sleep/wake state machines.
