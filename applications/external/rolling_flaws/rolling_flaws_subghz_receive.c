@@ -92,9 +92,18 @@ void start_listening(
     context->callback = callback;
     context->callback_context = callback_context;
     subghz_devices_init();
-    const SubGhzDevice* device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
+    const SubGhzDevice* device = radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
+    if(!device) {
+        FURI_LOG_E(TAG, "Failed to get SubGhzDevice\r\n");
+        subghz_devices_deinit();
+        return;
+    }
+    context->radio_device = device;
+
     if(!subghz_devices_is_frequency_valid(device, frequency)) {
         FURI_LOG_E(TAG, "Frequency not in range. %lu\r\n", frequency);
+        radio_device_loader_end(context->radio_device);
+        context->radio_device = NULL;
         subghz_devices_deinit();
         return;
     }
@@ -129,8 +138,12 @@ void stop_listening(RollingFlawsSubGhz* context) {
     furi_thread_free(context->thread);
     furi_hal_power_suppress_charge_exit();
 
-    const SubGhzDevice* device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
-    subghz_devices_stop_async_rx(device);
+    if(context->radio_device) {
+        subghz_devices_stop_async_rx(context->radio_device);
+        subghz_devices_sleep(context->radio_device);
+        radio_device_loader_end(context->radio_device);
+        context->radio_device = NULL;
+    }
 
     subghz_receiver_free(context->receiver);
     subghz_devices_deinit();

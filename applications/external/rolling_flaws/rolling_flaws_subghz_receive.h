@@ -5,7 +5,7 @@
 
 #include <lib/subghz/receiver.h>
 #include <lib/subghz/protocols/protocol_items.h>
-#include <lib/subghz/devices/cc1101_int/cc1101_int_interconnect.h>
+#include <lib/subghz/subghz_radio_device_loader.h>
 #include <lib/subghz/devices/devices.h>
 
 #include "./rolling_flaws_utils.h"
@@ -31,6 +31,7 @@ typedef struct {
     FuriStreamBuffer* stream;
     FuriThread* thread;
     SubGhzReceiver* receiver;
+    const SubGhzDevice* radio_device;
     bool overrun;
     SubghzReceiverState status;
     SubghzPacketCallback callback;

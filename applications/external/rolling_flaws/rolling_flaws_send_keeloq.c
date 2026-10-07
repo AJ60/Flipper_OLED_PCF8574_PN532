@@ -1,7 +1,7 @@
 #include "rolling_flaws_send_keeloq.h"
 
 #include <lib/subghz/transmitter.h>
-#include <lib/subghz/devices/cc1101_int/cc1101_int_interconnect.h>
+#include <lib/subghz/subghz_radio_device_loader.h>
 #include <lib/subghz/protocols/protocol_items.h>
 #include <lib/subghz/devices/devices.h>
 
@@ -39,8 +39,13 @@ static void send_keeloq(
     // Populate the CC101 device list.
     subghz_devices_init();
 
-    // Get the internal radio device.
-    const SubGhzDevice* device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
+    // Get the radio device.
+    const SubGhzDevice* device = radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
+    if(!device) {
+        FURI_LOG_E(TAG, "Failed to get SubGhzDevice");
+        subghz_devices_deinit();
+        return;
+    }
 
     // Get the Princeton SubGhzTransmitter (for decoding our file format).
     SubGhzEnvironment* environment = load_environment();
@@ -103,6 +108,8 @@ static void send_keeloq(
 
     // also does a shutdown of cc1101
     subghz_devices_end(device);
+
+    radio_device_loader_end(device);
 
     // remove the devices from the registry
     subghz_devices_deinit();
