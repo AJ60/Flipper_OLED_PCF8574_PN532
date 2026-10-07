@@ -175,3 +175,36 @@ The checksum is calculated by bitwise XOR-ing every byte in the frame (excluding
 
 In the event of a detected error, the concerned side MUST cease all communications and reset to initial state. The other side will then experience
 a communication timeout and the connection will be re-established automatically.
+
+---
+
+## 🛠️ DIY Flipper Zero (OLED Edition) 18-Pin Expansion Header Mapping
+
+On the DIY Flipper Zero (WeAct STM32WB55CGU6 core), the official 18-pin GPIO expansion header is routed as follows:
+
+| Flipper Pin # | Flipper Label | Actual MCU Pin | WeAct Silkscreen Label | Direction | Primary Function & Peripherals |
+|:---:|:---:|:---:|:---:|:---:|---|
+| **1** | **5V** | `5V` (VBUS/Boost) | **`5V`** | Power OUT/IN | 5.0V DC regulated rail (from USB-C or boost converter) |
+| **2** | **A7** | `PB5` | **`A7`** *(MCU PB5)* | Output | **SPI1 MOSI** (Shared high-speed bus data output) |
+| **3** | **A6** | `PA6` | **`A6`** | Input | **SPI1 MISO** (Shared high-speed bus data input) |
+| **4** | **A4** | `PA4` | **`A4`** | Output | **External SPI1 CS / CSN** (Active-Low chip select) |
+| **5** | **B3** | `PB3` | **`B3`** | Output | **SPI1 SCK** (Shared high-speed SPI clock, up to 32 MHz) |
+| **6** | **B2** | `PB2` | **`B2`** | In / Out | **Ext CC1101 GDO0 IRQ** / **NRF24 CE** / General GPIO |
+| **7** | **C3** | `PA5` | **`C3`** *(Board `A5`)* | Output | **E07 CC1101 TXEN** / LF-RFID 125 kHz Carrier PWM |
+| **8** | **GND** | `GND` | **`G` / `GND`** | Ground | Common system ground reference |
+| **9** | **3V3** | `3.3V` | **`3V3`** | Power OUT | 3.3V DC regulated rail (from onboard LDO) |
+| **10** | **SWC** | `PA14` | **`SWC`** | Input | SWD Hardware Clock (for ST-Link debugging) |
+| **11** | **GND** | `GND` | **`G` / `GND`** | Ground | Common system ground reference |
+| **12** | **SWD** | `PA13` | **`SWD`** | Bidirectional | SWD Hardware Data (for ST-Link debugging) |
+| **13** | **TX** | `PB6` | **`B6`** | Output | **USART1 TX** (Expansion protocol TX / CLI serial) |
+| **14** | **RX** | `PB7` | **`B7`** | Input | **USART1 RX** (Expansion protocol RX / CLI serial) |
+| **15** | **C1** | `PB4` | **`C1`** *(MCU PB4)* | Bidirectional | **Dedicated I2C3 SDA** (NXP PN532 NFC Data line) |
+| **16** | **C0** | `PA7` | **`C0`** *(MCU PA7)* | Bidirectional | **Dedicated I2C3 SCL** (NXP PN532 NFC Clock line) |
+| **17** | **iBtn** | `PA3` | **`A3`** | Bidirectional | **1-Wire iButton Probe** (requires external 4.7 kΩ pull-up) |
+| **18** | **GND** | `GND` | **`G` / `GND`** | Ground | Common system ground reference |
+
+### Supported Module Categories:
+* **External Sub-GHz Transceivers (CC1101 / E07-433M20S / E07-900M20S)**: Connected via SPI1 pins (`PB3`, `PB5`, `PA6`), CS (`PA4`), GDO0 (`PB2`), and TXEN (`PA5`). See [**External CC1101 Reference**](EXTERNAL_CC1101.md).
+* **2.4 GHz Transceivers (NRF24L01+)**: Connected via SPI1 pins (`PB3`, `PB5`, `PA6`), CSN (`PA4`), and CE (`PB2`). See [**NRF24 Reference**](NRF24.md).
+* **Hardware UART Expansion Boards (ESP32 / ESP8266 / GPS)**: Connected via USART1 pins 13 (`PB6`) and 14 (`PB7`).
+

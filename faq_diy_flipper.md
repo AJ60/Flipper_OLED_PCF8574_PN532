@@ -180,8 +180,84 @@
 
 ---
 
+## 📡 External Sub-GHz CC1101 & High-Power E07 Modules
+
+### **Q16: How do I connect and enable an external CC1101 (or high-power Ebyte E07-433M20S)?**
+The firmware includes full native driver support for external CC1101 transceivers and high-power PA/LNA modules:
+
+| Header Pin # | MCU Pin | E07 / CC1101 Module Pin | Function |
+|:---:|:---:|:---:|---|
+| **Pin 9** | `3.3V` | `VCC` | 3.3V DC (do NOT connect to 5V) |
+| **Pin 8** | `GND` | `GND` | Common ground reference |
+| **Pin 4** | `PA4` | `CSN` | External SPI Chip Select |
+| **Pin 5** | `PB3` | `SCK` | SPI1 Clock |
+| **Pin 2** | `PB5` (Silkscreen "A7") | `MOSI` | SPI1 Data Input to Module |
+| **Pin 3** | `PA6` | `MISO` | SPI1 Data Output from Module |
+| **Pin 6** | `PB2` | `GDO0` | Demodulated sample capture IRQ (`EXTI2`) |
+| *Internal* | *CC1101 GDO2* | `RXEN` | Controlled via CC1101 `IOCFG2` register |
+| **Pin 7** | `PA5` (Silkscreen "C3") | `TXEN` | Power amplifier TX enable (Active-High) |
+
+**Enabling the External Radio:**
+1. Navigate to **Settings > Radio Settings** (or **Momentum > Radio Settings**).
+2. Set **Sub-GHz Radio** to **`External`**.
+3. The setting is automatically saved to `/int/radio.settings` (v4 format) and persists across reboots. All Sub-GHz apps and FAPs (like *Sub-GHz Bruteforcer*) will now route to the external radio automatically.
+
+---
+
+### **Q17: The external CC1101 reports "Radio Device Not Found" or SPI timeout. How do I fix it?**
+1. **Verify the MOSI Pin:** On the WeAct core board, MCU pin `PB5` is silkscreened as **`A7`**. Do not connect MOSI to MCU `PA7` (which is labeled `C0` and used for PN532 SCL).
+2. **Verify the SPI CS Pin:** The external module MUST be connected to `PA4` (Flipper Header Pin 4), NOT to `PA15` (which is reserved for the internal radio).
+3. **Verify the GDO0 Pin:** External GDO0 must connect to `PB2` (Flipper Header Pin 6), NOT to `PA1` (internal radio GDO0).
+4. **Power Supply & Decoupling:** When transmitting at +20 dBm (100 mW), the E07 module draws up to 120 mA peak. Place a 100 nF ceramic capacitor close to the module's VCC and GND pins.
+
+---
+
+### **Q18: How does the RF front-end switch work on Ebyte E07 (TXEN / RXEN)?**
+The firmware driver automatically coordinates the RF front-end amplifiers without needing external logic gates:
+* **RX Mode:** `GDO2 (RXEN)` is driven HIGH by the CC1101 hardware (`IOCFG2 = 0x2F`), enabling the LNA. `PA5 (TXEN)` is driven LOW.
+* **TX Mode:** `GDO2 (RXEN)` is driven LOW (`IOCFG2 = 0x2E`), disabling the LNA. `PA5 (TXEN)` is driven HIGH, enabling the +20 dBm power amplifier.
+* **Idle / Standby:** Both `RXEN` and `TXEN` are parked LOW so the RF front-end never floats or draws unnecessary power.
+* **Coexistence with 125 kHz RFID:** Pin `PA5` is also connected to the discrete LF-RFID carrier driver. Because `PA5` is kept LOW in standby, the Sub-GHz driver causes zero interference with RFID operations.
+
+---
+
+## 📶 Nordic NRF24L01+ 2.4 GHz Subsystem
+
+### **Q19: How do I connect an NRF24L01+ module and which applications work with it?**
+The NRF24L01+ transceiver connects to the 18-pin expansion header:
+
+| Header Pin # | MCU Pin | NRF24 Pin # | Pin Name | Description |
+|:---:|:---:|:---:|:---:|---|
+| **Pin 9** | `3.3V` | **Pin 2** | `VCC` | **3.3V ONLY** (5V will destroy the chip) |
+| **Pin 8** | `GND` | **Pin 1** | `GND` | Common ground return |
+| **Pin 4** | `PA4` | **Pin 4** | `CSN` | SPI Chip Select (Active-Low) |
+| **Pin 6** | `PB2` | **Pin 3** | `CE` | Chip Enable (Active-High) |
+| **Pin 5** | `PB3` | **Pin 5** | `SCK` | SPI1 Clock |
+| **Pin 2** | `PB5` (Silkscreen "A7") | **Pin 6** | `MOSI` | SPI1 Master-Out Slave-In |
+| **Pin 3** | `PA6` | **Pin 7** | `MISO` | SPI1 Master-In Slave-Out |
+
+**Supported Applications:**
+* **MouseJacker**: Wireless mouse/keyboard injection.
+* **NRF24 Sniffer**: 2.4 GHz packet capture and promiscuous sniffing.
+* **BLE Beacon**: Bluetooth Low Energy advertisement transmitter.
+* **Spectrum Analyzer**: 2.4 GHz channel activity visualizer.
+
+---
+
+### **Q20: Why does the NRF24 module crash, drop packets, or reboot the Flipper during transmission?**
+> [!CAUTION]
+> **NRF24L01+ modules require dedicated power decoupling.**
+> During transmission bursts, the radio's power consumption surges rapidly. Because breakout jumper wires introduce parasitic inductance, the supply voltage dips and crashes the module or causes MCU brownouts.
+
+**Fix:**
+* Solder a **10 µF electrolytic or tantalum capacitor** in parallel with a **100 nF ceramic capacitor** directly across `VCC` (Pin 2) and `GND` (Pin 1) of the NRF24 module.
+* Keep jumper wires between the Flipper and NRF24 under 10 cm in length.
+
+---
+
 ## 🤝 Project Links & Community
 
 * **GitHub Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 * **Bug Reports & Discussions**: [GitHub Issues](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/issues)
 * **License**: [GNU General Public License v3.0](LICENSE)
+

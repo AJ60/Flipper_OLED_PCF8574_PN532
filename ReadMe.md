@@ -150,25 +150,164 @@ Follow the authoritative wiring schematic below for the core human-interface per
 
 ### Part 2: 📻 Wireless, NFC & Storage Subsystem
 
-The MicroSD card and CC1101 sub-GHz radio share the high-speed **SPI1** bus, while the PN532 NFC reader is isolated on hardware **I2C3** to prevent bus contention:
+The MicroSD card and internal CC1101 sub-GHz radio share the high-speed **SPI1** bus, while the PN532 NFC reader is isolated on hardware **I2C3** to prevent bus contention:
 
+#### 📋 Onboard Peripherals Pin Table
 | Module | Module Pin | Connects to MCU Pin | Purpose / Notes |
 |---|---|---|---|
-| **Shared SPI1 Clock** | `SCK` | **PB3** | SPI1 Clock |
-| **Shared SPI1 MOSI** | `MOSI` | **PB5** | Data Out from MCU |
-| **Shared SPI1 MISO** | `MISO` | **PA6** | Data In to MCU |
-| **MicroSD Card** | `CS` | **PA10** | SD Card Chip Select (Active-Low) |
-| | `CD` (Detect) | *Not Connected (NC)* | Optional (firmware detects automatically) |
-| **CC1101 Sub-GHz Radio**| `CSN / CS` | **PA15** | Radio Chip Select (Active-Low) |
-| | `GDO0 / G0` | **PA1** | Radio Demodulated Data IRQ |
-| | `VCC` / `GND` | **3.3V** / **GND** | **3.3V only!** (5V will permanently burn the CC1101) |
+| **Shared SPI1 Clock** | `SCK` | **PB3** | SPI1 Clock (up to 32 MHz) |
+| **Shared SPI1 MOSI** | `MOSI` | **PB5** (Header "A7") | Data Out from MCU |
+| **Shared SPI1 MISO** | `MISO` | **PA6** (Header "A6") | Data In to MCU |
+| **MicroSD Card Module** | `CS` | **PA10** | SD Card Chip Select (Active-Low) |
+| | `CD` (Detect) | *Not Connected (NC)* | Optional (firmware detects automatically via software) |
+| **Internal CC1101 Radio** | `CSN / CS` | **PA15** | Internal Radio Chip Select (Active-Low) |
+| | `GDO0 / G0` | **PA1** | Internal Radio Demodulated Data IRQ (`EXTI1`) |
+| | `VCC` / `GND` | **3.3V** / **GND** | **3.3V only!** (5V will permanently damage the CC1101) |
 | **PN532 NFC Module** | `SCL` | **PA7** (Header "C0") | Dedicated I2C3 Clock (400 kHz) |
 | | `SDA` | **PB4** (Header "C1") | Dedicated I2C3 Data (400 kHz) |
-| | `IRQ` | **PA2** | Card Detection Interrupt (`EXTI2`, Active-Low) |
-| **1-Wire / iButton** | `Data` | **PA3** | Dallas iButton probe with external 4.7 kΩ pull-up |
-| **LF-RFID (125 kHz)** | Carrier TX | **PA5** | TIM2_CH1 coil push-pull driver stage *(Experimental)* |
+| | `IRQ` | **PA2** (Header "A2") | Card Detection Interrupt (`EXTI2`, Active-Low) |
+| **1-Wire / iButton** | `Data` | **PA3** (Header "A3") | Dallas iButton probe with external 4.7 kΩ pull-up |
+| **LF-RFID (125 kHz)** | Carrier TX | **PA5** (Header "C3"/"A5") | TIM2_CH1 coil push-pull driver stage *(Experimental)* |
 | | Envelope RX | **PA1** | TIM1_CH1 demodulated envelope input *(Experimental)* |
 | | Emulate | **PA2** | TIM2_CH3 tag emulation pulse switch *(Experimental)* |
+
+---
+
+### 🌐 Flipper-Compatible 18-Pin Expansion Header
+
+The DIY Flipper Zero exposes a pinout compatible with the official Flipper Zero 18-pin GPIO expansion header, allowing plug-and-play connection of external CC1101 modules, NRF24L01+ transceivers, GPS, ESP32/ESP8266 Wi-Fi boards, and sensors:
+
+| Flipper Pin # | Flipper Label | Actual MCU Pin | WeAct Silkscreen Label | Direction | Primary Function & Peripherals |
+|:---:|:---:|:---:|:---:|:---:|---|
+| **1** | **5V** | `5V` (VBUS/Boost) | **`5V`** | Power OUT/IN | 5.0V DC regulated rail (from USB-C or boost converter) |
+| **2** | **A7** | `PB5` | **`A7`** *(MCU PB5)* | Output | **SPI1 MOSI** (Shared high-speed bus data output) |
+| **3** | **A6** | `PA6` | **`A6`** | Input | **SPI1 MISO** (Shared high-speed bus data input) |
+| **4** | **A4** | `PA4` | **`A4`** | Output | **External SPI1 CS / CSN** (Active-Low chip select) |
+| **5** | **B3** | `PB3` | **`B3`** | Output | **SPI1 SCK** (Shared high-speed SPI clock, up to 32 MHz) |
+| **6** | **B2** | `PB2` | **`B2`** | In / Out | **Ext CC1101 GDO0 IRQ** / **NRF24 CE** / General GPIO |
+| **7** | **C3** | `PA5` | **`C3`** *(Board `A5`)* | Output | **E07 CC1101 TXEN** / LF-RFID 125 kHz Carrier PWM |
+| **8** | **GND** | `GND` | **`G` / `GND`** | Ground | Common system ground reference |
+| **9** | **3V3** | `3.3V` | **`3V3`** | Power OUT | 3.3V DC regulated rail (from onboard LDO) |
+| **10** | **SWC** | `PA14` | **`SWC`** | Input | SWD Hardware Clock (for ST-Link debugging) |
+| **11** | **GND** | `GND` | **`G` / `GND`** | Ground | Common system ground reference |
+| **12** | **SWD** | `PA13` | **`SWD`** | Bidirectional | SWD Hardware Data (for ST-Link debugging) |
+| **13** | **TX** | `PB6` | **`B6`** | Output | USART1 TX (Debug console / CLI serial) |
+| **14** | **RX** | `PB7` | **`B7`** | Input | USART1 RX (Debug console / CLI serial) |
+| **15** | **C1** | `PB4` | **`C1`** *(MCU PB4)* | Bidirectional | **Dedicated I2C3 SDA** (NXP PN532 NFC Data line) |
+| **16** | **C0** | `PA7` | **`C0`** *(MCU PA7)* | Bidirectional | **Dedicated I2C3 SCL** (NXP PN532 NFC Clock line) |
+| **17** | **iBtn** | `PA3` | **`A3`** | Bidirectional | **1-Wire iButton Probe** (requires external 4.7 kΩ pull-up) |
+| **18** | **GND** | `GND` | **`G` / `GND`** | Ground | Common system ground reference |
+
+> [!IMPORTANT]
+> **WeAct Header Label vs MCU Pin Mapping Quirks**:
+> On the WeAct STM32WB55CGU6 core board, several header silkscreen labels differ from their physical STM32 GPIO mappings:
+> - Header pin labeled **`A7`** is physically routed to MCU pin **`PB5`** (`SPI1 MOSI`).
+> - Header pin labeled **`C0`** is physically routed to MCU pin **`PA7`** (`I2C3 SCL`).
+> - Header pin labeled **`C1`** is physically routed to MCU pin **`PB4`** (`I2C3 SDA`).
+> - Header pin labeled **`C3`** (or board **`A5`**) is physically routed to MCU pin **`PA5`** (`E07 TXEN`).
+
+---
+
+### 📡 External CC1101 & High-Power Ebyte E07 Modules
+
+The firmware provides full, first-class support for external Sub-GHz CC1101 modules, including high-power **Ebyte E07-433M20S** and **E07-900M20S** transceivers equipped with +20 dBm (100 mW) power amplifiers (PA) and low-noise amplifiers (LNA).
+
+```text
+  WeAct STM32WB55 (Expansion Header)             Ebyte E07-433M20S Module
+  ┌────────────────────────────┐                  ┌────────────────────────┐
+  │ Pin 9 (3.3V Rail)          ├─────[ 3.3V ]─────┤ VCC (3.3V DC)          │
+  │ Pin 8 (GND Rail)           ├─────[ GND ]──────┤ GND                    │
+  │ Pin 4 (PA4 - Ext SPI CS)   ├─────[ CSN ]──────┤ CSN (Chip Select)      │
+  │ Pin 5 (PB3 - SPI1 SCK)     ├─────[ SCK ]──────┤ SCK (SPI Clock)        │
+  │ Pin 2 (PB5 - SPI1 MOSI)    ├─────[ MOSI ]─────┤ MOSI (Data In)         │
+  │ Pin 3 (PA6 - SPI1 MISO)    ├─────[ MISO ]─────┤ MISO (Data Out)        │
+  │ Pin 6 (PB2 - Ext GDO0)     ├─────[ GDO0 ]─────┤ GDO0 (Demod Data IRQ)  │
+  │ Onboard CC1101 GDO2        │═════[ RXEN ]═════│ GDO2 (Internal Switch) │
+  │ Pin 7 (PA5 - Header C3/A5) ├─────[ TXEN ]─────┤ TXEN (PA Amp Enable)   │
+  └────────────────────────────┘                  └────────────────────────┘
+```
+
+#### Ebyte E07 Connection Table:
+| Header Pin # | MCU Pin | E07 Module Pin | Description & Hardware Function |
+|:---:|:---:|:---:|---|
+| **Pin 9** | `3.3V` | `VCC` | 3.3V power (do NOT connect to 5V; peak current during TX is ~120 mA) |
+| **Pin 8** | `GND` | `GND` | Common ground reference |
+| **Pin 4** | `PA4` | `CSN` | Dedicated External SPI1 Chip Select (`furi_hal_spi_bus_handle_external_cc1101`) |
+| **Pin 5** | `PB3` | `SCK` | SPI1 Clock (up to 32 MHz) |
+| **Pin 2** | `PB5` (Silkscreen "A7") | `MOSI` | SPI1 Master-Out Slave-In |
+| **Pin 3** | `PA6` | `MISO` | SPI1 Master-In Slave-Out |
+| **Pin 6** | `PB2` | `GDO0` | Async sample capture interrupt line (`EXTI2`) |
+| *Internal* | *CC1101 GDO2* | `RXEN` | Controlled via `IOCFG2`: driven HIGH (`0x2F`) in RX, driven LOW (`0x2E`) in TX/idle |
+| **Pin 7** | `PA5` (Silkscreen "C3") | `TXEN` | Driven HIGH (`1`) during active TX, parked LOW (`0`) in idle/sleep/RX |
+
+#### How to Switch Between Internal and External Radio:
+1. Open **Settings > Radio Settings** (or **Momentum > Radio Settings**).
+2. Set **Sub-GHz Radio** to **`Internal`** or **`External`**.
+3. The selection is automatically saved to `/int/radio.settings` (v4 format) and persists across reboots.
+4. All Sub-GHz features — including Frequency Analyzer, Read, Transmit, and FAP apps like **Sub-GHz Bruteforcer** — automatically route commands to the active radio device without requiring separate app builds!
+5. 📖 **Full Engineering Guide**: See [**External CC1101 Technical Reference**](documentation/EXTERNAL_CC1101.md).
+
+---
+
+### 📶 Nordic NRF24L01+ 2.4 GHz Module
+
+The NRF24L01+ module enables 2.4 GHz sniffing, packet injection, BLE beaconing, and MouseJacker attacks:
+
+```text
+  WeAct STM32WB55 (Expansion Header)             Nordic NRF24L01+ Transceiver
+  ┌────────────────────────────┐                  ┌────────────────────────┐
+  │ Pin 9 (3.3V Rail)          ├─────[ 3.3V ]─────┤ Pin 2: VCC (3.3V ONLY!)│
+  │ Pin 8 (GND Rail)           ├─────[ GND ]──────┤ Pin 1: GND             │
+  │ Pin 4 (PA4 - Ext SPI CS)   ├─────[ CSN ]──────┤ Pin 4: CSN (SPI CS)    │
+  │ Pin 6 (PB2 - GPIO)         ├─────[ CE ]───────┤ Pin 3: CE (Chip Enable)│
+  │ Pin 5 (PB3 - SPI1 SCK)     ├─────[ SCK ]──────┤ Pin 5: SCK (SPI Clock) │
+  │ Pin 2 (PB5 - SPI1 MOSI)    ├─────[ MOSI ]─────┤ Pin 6: MOSI (Data In)  │
+  │ Pin 3 (PA6 - SPI1 MISO)    ├─────[ MISO ]─────┤ Pin 7: MISO (Data Out) │
+  │ *(Unconnected / Optional)* │                  │ Pin 8: IRQ (Interrupt) │
+  └────────────────────────────┘                  └────────────────────────┘
+```
+
+#### NRF24 Connection Table:
+| Header Pin # | MCU Pin | NRF24 Pin # | Pin Name | Description / Requirements |
+|:---:|:---:|:---:|:---:|---|
+| **Pin 9** | `3.3V` | **Pin 2** | `VCC` | **3.3V ONLY**. Never connect to 5V! |
+| **Pin 8** | `GND` | **Pin 1** | `GND` | Common ground reference |
+| **Pin 4** | `PA4` | **Pin 4** | `CSN` | SPI Chip Select (Active-Low) |
+| **Pin 6** | `PB2` | **Pin 3** | `CE` | Chip Enable (Active-High RX/TX enable) |
+| **Pin 5** | `PB3` | **Pin 5** | `SCK` | SPI1 Clock |
+| **Pin 2** | `PB5` (Silkscreen "A7") | **Pin 6** | `MOSI` | SPI1 Master-Out Slave-In |
+| **Pin 3** | `PA6` | **Pin 7** | `MISO` | SPI1 Master-In Slave-Out |
+
+> [!CAUTION]
+> **Power Decoupling Capacitor is Mandatory**:
+> NRF24L01+ modules suffer from extreme RF supply ripple and current transients during transmission bursts. You **MUST solder a 10 µF electrolytic capacitor + a 100 nF ceramic capacitor** directly across `VCC` (Pin 2) and `GND` (Pin 1) of the NRF24 module. Without this capacitor, the module will freeze, fail to transmit, or cause MCU brownouts.
+> 📖 **Full Engineering Guide**: See [**NRF24 Transceiver Guide**](documentation/NRF24.md).
+
+---
+
+### 💳 NXP PN532 NFC Subsystem (Dedicated I2C3)
+
+The PN532 operates over hardware **I2C3**, completely isolated from the display and keypad I2C1 bus:
+
+| PN532 Pin | Connects to | MCU Pin | Function / Description |
+|---|---|---|---|
+| **VCC** | **3.3V Rail** | `3.3V` | Logic power (3.3V only) |
+| **GND** | **GND Rail** | `GND` | System ground reference |
+| **SCL** | **Pin 16** (Header "C0") | `PA7` | Dedicated I2C3 Clock (400 kHz) |
+| **SDA** | **Pin 15** (Header "C1") | `PB4` | Dedicated I2C3 Data (400 kHz) |
+| **IRQ** | **Header Pin "A2"** | `PA2` | Card Detect Interrupt (`EXTI2`, Active-Low) |
+
+#### Hardware DIP Switch Configuration (I2C Mode):
+| Switch | Setting | Description |
+|:---:|:---:|---|
+| **I0** (or `CH1`) | **OFF (`0`)** | Selects I2C protocol mode |
+| **I1** (or `CH2`) | **ON (`1`)** | Selects I2C protocol mode |
+
+- **Features Supported**:
+  - **MIFARE Classic 1K / 4K**: Hardware Crypto1 cipher authentication (`InAuth 0x40`) with dictionary attack recovery.
+  - **NTAG Series (213 / 215 / 216 / Ultralight)**: Direct page reading and payload dumping.
+  - **Contactless EMV Bank / ATM Cards**: ISO 14443-4 APDU frame tunneling (`InDataExchange 0x42`) for reading cardholder PAN and expiry dates.
+- 📖 **Full Engineering Guide**: See [**PN532 NFC Protocol & Hardware Acceleration Guide**](documentation/NFC_PN532_ENGINEERING.md).
 
 ---
 
@@ -444,8 +583,11 @@ graph TD
 ### 📚 Deep-Dive Documentation Index
 * 🏛️ [**System & Firmware Architecture Guide**](documentation/ARCHITECTURE.md) — FreeRTOS task scheduling, memory maps, and Furi OS primitives.
 * 🌊 [**Firmware Boot & System Lifecycle Guide**](documentation/BOOT_AND_LIFECYCLE.md) — Waterfall boot sequence, OTP validation, bus recovery, and sleep/wake state machines.
+* 📡 [**External CC1101 & Ebyte E07 Technical Reference**](documentation/EXTERNAL_CC1101.md) — Transceiver connection, E07 PA/LNA RF switch sequencing, and Radio Settings v4 integration.
+* 📶 [**NRF24L01+ 2.4 GHz Transceiver Guide**](documentation/NRF24.md) — Pinout wiring, decoupling capacitor power filtration, and MouseJacker/Sniffer FAP apps.
 * ⚡ [**PN532 NFC Protocol & Hardware Acceleration Guide**](documentation/NFC_PN532_ENGINEERING.md) — Hardware Crypto1 acceleration, ISO 14443-4 APDU tunneling for bank cards, and retry mechanisms.
-* 📐 [**Hardware & Electrical Engineering Guide**](documentation/HARDWARE_DESIGN.md) — Complete schematic analysis, I2C pull-up calculations, and decoupling guidelines.
+* 🔌 [**Expansion Modules & GPIO Protocol Guide**](documentation/ExpansionModules.md) — Serial expansion protocol, RPC framing, and 18-pin expansion header pinout.
+* 📐 [**Hardware & Electrical Engineering Guide**](documentation/HARDWARE_DESIGN.md) — Complete schematic analysis, 18-pin header matrix, I2C pull-up calculations, and decoupling guidelines.
 * ❓ [**FAQ & Troubleshooting Guide**](faq_diy_flipper.md) — Common boot issues, I2C freeze recovery, CC1101 calibration, and power troubleshooting.
 
 ---
