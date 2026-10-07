@@ -11,6 +11,7 @@
 #include <lib/subghz/devices/cc1101_configs.h>
 
 #include <toolbox/pipe.h>
+#include <lib/subghz/subghz_radio_device_loader.h>
 
 #include "subghz_share.h"
 #include "flipper_share.h"
@@ -26,6 +27,7 @@ typedef struct Power Power;
 struct SubGhzChatWorker {
     FuriThread* thread;
     SubGhzTxRxWorker* subghz_txrx;
+    const SubGhzDevice* radio_device;
 
     volatile bool worker_running;
     volatile bool worker_stoping;
@@ -82,6 +84,11 @@ uint8_t ss_subghz_deinit() {
     }
 
     subghz_chat->worker_running = false;
+
+    if(subghz_chat->radio_device) {
+        radio_device_loader_end(subghz_chat->radio_device);
+        subghz_chat->radio_device = NULL;
+    }
 
     /* try to deinit devices (safe to call repeatedly) */
     subghz_devices_deinit();
@@ -150,14 +157,14 @@ uint8_t ss_subghz_init() {
     // FURI_LOG_I(TAG, "ss_subghz_init: subghz_devices_init");
     subghz_devices_init();
     
-    // FURI_LOG_I(TAG, "ss_subghz_init: subghz_devices_get_by_name");
-    const SubGhzDevice* device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
-    // FURI_LOG_I(TAG, "ss_subghz_init: check if the device is connected");
-    if(!subghz_devices_is_connect(device)) {
-        subghz_cli_radio_device_power_off();
-        device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
+    const SubGhzDevice* device = radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
+    if(!device) {
+        FURI_LOG_E(TAG, "ss_subghz_init: failed to get SubGhzDevice");
+        free(subghz_chat);
+        subghz_chat = NULL;
+        return 1;
     }
-    furi_assert(device);
+    subghz_chat->radio_device = device;
 
     // FURI_LOG_I(TAG, "ss_subghz_init: furi_message_queue_alloc");
     subghz_chat->event_queue = furi_message_queue_alloc(80, sizeof(SubGhzChatEvent));

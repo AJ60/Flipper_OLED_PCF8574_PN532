@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  # Only main: an unfiltered push trigger fires a second, identical run for every
+  # branch push that already has a pull_request run.
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cppcheck clang-format
+      - name: Run linter
+        run: make linter
+      - name: Check format
+        run: clang-format --dry-run --Werror *.c *.h tests/*.c
+      - name: Run tests
+        run: make test
+      - name: Build FAP
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.4
+        with:
+          sdk-channel: release

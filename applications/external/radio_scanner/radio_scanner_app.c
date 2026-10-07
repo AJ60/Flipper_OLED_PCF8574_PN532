@@ -5,6 +5,7 @@
 #include <gui/elements.h>
 #include <furi_hal_speaker.h>
 #include <subghz/devices/devices.h>
+#include <lib/subghz/subghz_radio_device_loader.h>
 
 #define TAG "RadioScannerApp"
 
@@ -100,7 +101,7 @@ static bool radio_scanner_init_subghz(RadioScannerApp* app) {
     FURI_LOG_D(TAG, "SubGHz devices initialized");
 #endif
 
-    const SubGhzDevice* device = subghz_devices_get_by_name(SUBGHZ_DEVICE_NAME);
+    const SubGhzDevice* device = radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
     if(!device) {
         FURI_LOG_E(TAG, "Failed to get SubGhzDevice");
         return false;
@@ -313,7 +314,8 @@ void radio_scanner_app_free(RadioScannerApp* app) {
 #endif
         subghz_devices_idle(app->radio_device);
         subghz_devices_sleep(app->radio_device);
-        subghz_devices_end(app->radio_device);
+        radio_device_loader_end(app->radio_device);
+        app->radio_device = NULL;
 #ifdef FURI_DEBUG
         FURI_LOG_D(TAG, "SubGhzDevice stopped and ended");
 #endif

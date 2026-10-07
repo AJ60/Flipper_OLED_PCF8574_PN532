@@ -1,0 +1,29 @@
+name: Dependabot auto-merge
+
+# pull_request_target so the run is handed the Actions secrets: a `pull_request`
+# from Dependabot only ever sees the Dependabot secret store, where the PAT does
+# not exist. Nothing here checks out the pull request's code, so this stays safe.
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    # This job holds the PAT: only same-repo pull requests opened by Dependabot itself.
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]'
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v3
+      # The PAT, not GITHUB_TOKEN: a merge authored by GITHUB_TOKEN is a push that
+      # triggers no workflow at all, so release-please would never run for an
+      # auto-merged bump. Major bumps are left for a human.
+      - if: steps.meta.outputs.update-type == 'version-update:semver-minor' || steps.meta.outputs.update-type == 'version-update:semver-patch'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --rebase --auto "$PR_URL"
