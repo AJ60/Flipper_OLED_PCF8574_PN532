@@ -239,6 +239,8 @@ Header,+,lib/subghz/receiver.h,,
 Header,+,lib/subghz/registry.h,,
 Header,+,lib/subghz/subghz_file_encoder_worker.h,,
 Header,+,lib/subghz/subghz_protocol_registry.h,,
+Header,+,lib/subghz/subghz_radio_device_global.h,,
+Header,+,lib/subghz/subghz_radio_device_loader.h,,
 Header,+,lib/subghz/subghz_setting.h,,
 Header,+,lib/subghz/subghz_tx_rx_worker.h,,
 Header,+,lib/subghz/subghz_worker.h,,
@@ -3274,6 +3276,9 @@ Function,-,putw,int,"int, FILE*"
 Function,-,qsort,void,"void*, size_t, size_t, __compar_fn_t"
 Function,-,qsort_r,void,"void*, size_t, size_t, int (*)(const void*, const void*, void*), void*"
 Function,-,quick_exit,void,int
+Function,+,radio_device_loader_end,void,const SubGhzDevice*
+Function,+,radio_device_loader_is_external,_Bool,const SubGhzDevice*
+Function,+,radio_device_loader_set,const SubGhzDevice*,"const SubGhzDevice*, SubGhzRadioDeviceType"
 Function,+,rand,int,
 Function,-,rand_r,int,unsigned*
 Function,+,random,long,
@@ -3711,6 +3716,7 @@ Function,+,subghz_file_encoder_worker_get_text_progress,void,"SubGhzFileEncoderW
 Function,+,subghz_file_encoder_worker_is_running,_Bool,SubGhzFileEncoderWorker*
 Function,+,subghz_file_encoder_worker_start,_Bool,"SubGhzFileEncoderWorker*, const char*, const char*"
 Function,+,subghz_file_encoder_worker_stop,void,SubGhzFileEncoderWorker*
+Function,+,subghz_global_radio_device_load,uint32_t,
 Function,+,subghz_keystore_alloc,SubGhzKeystore*,
 Function,+,subghz_keystore_free,void,SubGhzKeystore*
 Function,+,subghz_keystore_get_data,SubGhzKeyArray_t*,SubGhzKeystore*

@@ -1,5 +1,5 @@
 #include "../../js_modules.h"
-#include "radio_device_loader.h"
+#include <lib/subghz/subghz_radio_device_loader.h>
 
 #include <lib/subghz/transmitter.h>
 #include <lib/subghz/devices/devices.h>
@@ -446,6 +446,11 @@ static void js_subghz_setup(struct mjs* mjs) {
 
     js_subghz->radio_device =
         radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
+    if(!js_subghz->radio_device) {
+        mjs_prepend_errorf(mjs, MJS_INTERNAL_ERROR, "External radio selected but module not detected");
+        mjs_return(mjs, MJS_UNDEFINED);
+        return;
+    }
 
     js_subghz->is_external = radio_device_loader_is_external(js_subghz->radio_device);
 
@@ -483,6 +488,14 @@ static void js_subghz_end(struct mjs* mjs) {
 static void* js_subghz_create(struct mjs* mjs, mjs_val_t* object, JsModules* modules) {
     UNUSED(modules);
     JsSubghzInst* js_subghz = malloc(sizeof(JsSubghzInst));
+    // Explicit init: setup()'s "already setup" check reads radio_device.
+    // (Heap OOM cannot return NULL here — the allocator furi_checks — but
+    // malloc leaves garbage that must not be observed on any path.)
+    furi_check(js_subghz);
+    js_subghz->radio_device = NULL;
+    js_subghz->frequency = 0;
+    js_subghz->is_external = false;
+    js_subghz->state = JsSubghzRadioStateIDLE;
     mjs_val_t subghz_obj = mjs_mk_object(mjs);
 
     subghz_devices_init();

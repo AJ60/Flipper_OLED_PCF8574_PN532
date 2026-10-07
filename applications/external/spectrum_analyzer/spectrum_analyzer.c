@@ -405,6 +405,14 @@ SpectrumAnalyzer* spectrum_analyzer_alloc() {
     instance->event_queue = furi_message_queue_alloc(8, sizeof(InputEvent));
 
     instance->worker = spectrum_analyzer_worker_alloc();
+    if(instance->worker == NULL) {
+        FURI_LOG_E("Spectrum", "External selected but module not detected");
+        furi_message_queue_free(instance->event_queue);
+        furi_mutex_free(instance->model_mutex);
+        free(instance->model);
+        free(instance);
+        return NULL;
+    }
 
     spectrum_analyzer_worker_set_callback(
         instance->worker, spectrum_analyzer_worker_callback, instance);
@@ -441,6 +449,7 @@ int32_t spectrum_analyzer_app(void* p) {
     UNUSED(p);
 
     SpectrumAnalyzer* spectrum_analyzer = spectrum_analyzer_alloc();
+    if(spectrum_analyzer == NULL) return 255;
     InputEvent input;
 
     furi_hal_power_suppress_charge_enter();

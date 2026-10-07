@@ -110,9 +110,19 @@ static void subghz_scene_radio_settings_set_device(VariableItem* item) {
     SubGhz* subghz = variable_item_get_context(item);
     uint8_t index = variable_item_get_current_value_index(item);
 
-    if(!subghz_txrx_radio_device_is_external_connected(
-           subghz->txrx, SUBGHZ_DEVICE_CC1101_EXT_NAME) &&
-       radio_device_value[index] == SubGhzRadioDeviceTypeExternalCC1101) {
+    // Probing the external module costs a full SPI transaction batch, so cache it
+    // instead of re-probing for every use below.
+    bool external_connected = subghz_txrx_radio_device_is_external_connected(
+        subghz->txrx, SUBGHZ_DEVICE_CC1101_EXT_NAME);
+
+    FURI_LOG_I(
+        "SubGhzRadioSettings",
+        "Device selector changed: index=%u text=%s external_connected=%u",
+        index,
+        radio_device_text[index],
+        external_connected);
+
+    if(!external_connected && radio_device_value[index] == SubGhzRadioDeviceTypeExternalCC1101) {
         FURI_LOG_E("SubGhzRadioSettings", "External CC1101 not detected or plugin missing");
         index = 0;
         variable_item_set_current_value_index(item, 0);
@@ -123,6 +133,10 @@ static void subghz_scene_radio_settings_set_device(VariableItem* item) {
         index = 0;
         variable_item_set_current_value_index(item, 0);
     }
+    // Persist global selection so external SubGHz apps honor it.
+    // Canonical values: 1=Internal, 2=ExternalCC1101.
+    subghz->last_settings->radio_device = (uint32_t)radio_device_value[index];
+    subghz_last_settings_save(subghz->last_settings);
     variable_item_set_current_value_text(item, radio_device_text[index]);
 }
 

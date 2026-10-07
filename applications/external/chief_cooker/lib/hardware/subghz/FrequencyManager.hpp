@@ -12,11 +12,17 @@ private:
 
     FrequencyManager() {
         SubGhzSetting* setting = subghz_setting_alloc();
+        furi_check(setting);
         subghz_setting_load(setting, EXT_PATH("subghz/assets/setting_user"));
 
         frequencyCount = subghz_setting_get_frequency_count(setting);
         defaultFreqIndex = subghz_setting_get_frequency_default_index(setting);
-        frequencies = new uint32_t[frequencyCount];
+        if(frequencyCount == 0) {
+            frequencies = NULL;
+        } else {
+            frequencies = new uint32_t[frequencyCount];
+            furi_check(frequencies);
+        }
 
         for(int i = 0; i < frequencyCount; i++) {
             frequencies[i] = subghz_setting_get_frequency(setting, i);
@@ -29,8 +35,16 @@ public:
     static FrequencyManager* GetInstance() {
         if(__freq_manager_instance == NULL) {
             __freq_manager_instance = new FrequencyManager();
+            furi_check(__freq_manager_instance);
         }
         return (FrequencyManager*)__freq_manager_instance;
+    }
+
+    static void DestroyInstance() {
+        if(__freq_manager_instance != NULL) {
+            delete(FrequencyManager*)__freq_manager_instance;
+            __freq_manager_instance = NULL;
+        }
     }
 
     uint32_t GetFrequency(size_t index) {

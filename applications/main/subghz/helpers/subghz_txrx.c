@@ -114,7 +114,14 @@ void subghz_txrx_free(SubGhzTxRx* instance) {
 #ifndef SUBGHZ_ADD_MANUALLY
     if(instance->radio_device_type != SubGhzRadioDeviceTypeInternal) {
         subghz_txrx_radio_device_power_off(instance);
-        subghz_devices_end(instance->radio_device);
+    }
+
+    // The SubGhzDevice struct is heap-allocated by the .fal plugin; without this
+    // the registry keeps a dangling pointer after the app exits, and the next
+    // probe leaks the allocation (plugins are not unloaded on exit).
+    const SubGhzDevice* ext_device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
+    if(ext_device) {
+        subghz_devices_end(ext_device);
     }
 
     subghz_devices_deinit();

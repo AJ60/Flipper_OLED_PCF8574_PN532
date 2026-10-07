@@ -27,9 +27,11 @@
 
 #define KEY_READ_POPUP_MS 3000
 
-#define RX_TX_BUFFER_SIZE 1024
+// Halved for heap: worst TX is TEXT_INPUT(256)+name(~32)+overhead(40) < 512,
+// worker drains in <=60B chunks; furi_checks below still enforce the bounds.
+#define RX_TX_BUFFER_SIZE 512
 
-#define CHAT_BOX_STORE_SIZE   4096
+#define CHAT_BOX_STORE_SIZE   2048
 #define TEXT_INPUT_STORE_SIZE 256
 #define MSG_PREVIEW_SIZE      32
 

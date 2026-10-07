@@ -23,7 +23,13 @@ static void subbrute_tick_event_callback(void* context) {
 
 SubBruteState* subbrute_alloc() {
     SubBruteState* instance = malloc(sizeof(SubBruteState));
+    if(instance == NULL) {
+        return NULL;
+    }
 
+    // radio_device is read by the early-fail path below; init it before any
+    // use since malloc leaves garbage.
+    instance->radio_device = NULL;
     memset(instance->text_store, 0, sizeof(instance->text_store));
     instance->file_path = furi_string_alloc();
 
@@ -44,13 +50,25 @@ SubBruteState* subbrute_alloc() {
     instance->dialogs = furi_record_open(RECORD_DIALOGS);
 
     // Notifications
-    instance->notifications = furi_record_open(RECORD_NOTIFICATION);
+        instance->notifications = furi_record_open(RECORD_NOTIFICATION);
 
-    subghz_devices_init();
+        subghz_devices_init();
 
-    // init radio device
-    instance->radio_device = subbrute_radio_device_loader_set(
-        instance->radio_device, SubGhzRadioDeviceTypeExternalCC1101);
+        // init radio device
+        instance->radio_device = radio_device_loader_set(
+            instance->radio_device, SubGhzRadioDeviceTypeAuto);
+        if(instance->radio_device == NULL) {
+            FURI_LOG_E(TAG, "No Sub-GHz radio detected (check global setting)");
+            subghz_devices_deinit();
+            furi_string_free(instance->file_path);
+            scene_manager_free(instance->scene_manager);
+            view_dispatcher_free(instance->view_dispatcher);
+            furi_record_close(RECORD_GUI);
+            furi_record_close(RECORD_DIALOGS);
+            furi_record_close(RECORD_NOTIFICATION);
+            free(instance);
+            return NULL;
+        }
 
     subghz_devices_reset(instance->radio_device);
     subghz_devices_idle(instance->radio_device);
@@ -203,6 +221,10 @@ int32_t subbrute_app(void* p) {
     furi_hal_power_suppress_charge_enter();
 
     SubBruteState* instance = subbrute_alloc();
+    if(instance == NULL) {
+        furi_hal_power_suppress_charge_exit();
+        return 255;
+    }
     view_dispatcher_attach_to_gui(
         instance->view_dispatcher, instance->gui, ViewDispatcherTypeFullscreen);
     scene_manager_next_scene(instance->scene_manager, SubBruteSceneStart);

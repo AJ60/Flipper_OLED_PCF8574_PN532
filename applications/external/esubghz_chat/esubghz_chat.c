@@ -2,7 +2,7 @@
 #include <gui/elements.h>
 #include <gui/gui.h>
 
-#include "helpers/radio_device_loader.h"
+#include <lib/subghz/subghz_radio_device_loader.h>
 #include "esubghz_chat_i.h"
 
 #include "bgloader_api.h"
@@ -644,32 +644,41 @@ int32_t esubghz_chat(const char* args) {
     //memset(state->nfc_dev_data, 0, sizeof(NfcDeviceData));
 
     state->crypto_ctx = crypto_ctx_alloc();
-    if(state->crypto_ctx == NULL) {
-        goto err_alloc_crypto;
-    }
+        if(state->crypto_ctx == NULL) {
+            goto err_alloc_crypto;
+        }
 
-    /* set the default frequency */
-    state->frequency = DEFAULT_FREQ;
+        /* set the default frequency */
+        state->frequency = DEFAULT_FREQ;
 
-    /* in the first few views there is no background support */
-    state->exit_for_real = true;
+        /* in the first few views there is no background support */
+        state->exit_for_real = true;
 
-    /* set the have_read callback of the Sub-GHz worker */
-    subghz_tx_rx_worker_set_callback_have_read(state->subghz_worker, have_read_cb, state);
+        /* set the have_read callback of the Sub-GHz worker */
+        subghz_tx_rx_worker_set_callback_have_read(state->subghz_worker, have_read_cb, state);
 
-    /* enter suppress charge mode */
-    furi_hal_power_suppress_charge_enter();
+        /* enter suppress charge mode */
+        furi_hal_power_suppress_charge_enter();
 
-    /* init internal device */
-    subghz_devices_init();
+        /* init internal device */
+        subghz_devices_init();
 
-    state->subghz_device =
-        radio_device_loader_set(state->subghz_device, SubGhzRadioDeviceTypeExternalCC1101);
+        state->subghz_device =
+            radio_device_loader_set(state->subghz_device, SubGhzRadioDeviceTypeAuto);
+        if(state->subghz_device == NULL) {
+            // Global selection is External but the module is absent: fail loudly
+            // instead of silently using internal or dereferencing NULL below.
+            FURI_LOG_E(APPLICATION_NAME, "No Sub-GHz radio detected (check global setting)");
+            furi_hal_power_suppress_charge_exit();
+            subghz_devices_deinit();
+            crypto_ctx_free(state->crypto_ctx);
+            goto err_alloc_crypto;
+        }
 
-    subghz_devices_reset(state->subghz_device);
-    subghz_devices_idle(state->subghz_device);
+        subghz_devices_reset(state->subghz_device);
+        subghz_devices_idle(state->subghz_device);
 
-    /* set chat name prefix */
+        /* set chat name prefix */
     furi_string_printf(state->name_prefix, "%s", furi_hal_version_get_name_ptr());
 
     /* get notification record, we use this to make the flipper vibrate */

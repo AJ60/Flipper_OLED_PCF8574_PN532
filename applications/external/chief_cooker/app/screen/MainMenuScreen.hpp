@@ -34,7 +34,13 @@ public:
 private:
     void scanStationsMenuPressed(uint32_t) {
         UiManager::GetInstance()->ShowLoading();
-        UiManager::GetInstance()->PushView((new ScanStationsScreen(config))->GetView());
+        ScanStationsScreen* screen = new ScanStationsScreen(config);
+        furi_check(screen);
+        UiManager::GetInstance()->PushView(screen->GetView());
+        // RX starts after the view is shown: Loading is freed by PushView and
+        // construction is complete, so the heap is at its calmest and the
+        // worker callback cannot race ctor state.
+        screen->StartScan();
     }
 
     void stationDatabasePressed(uint32_t) {

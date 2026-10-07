@@ -32,6 +32,11 @@ typedef struct {
     bool autosave;
     float hopping_threshold;
     uint8_t tx_power;
+    // Global radio module selection, canonical SubGhzRadioDeviceType values:
+    // 0=Auto, 1=Internal, 2=ExternalCC1101. Default Internal. Persisted so
+    // external SubGHz apps honor the same selection (External => use EXT or
+    // fail loudly, never silent internal fallback).
+    uint32_t radio_device;
 } SubGhzLastSettings;
 
 SubGhzLastSettings* subghz_last_settings_alloc(void);

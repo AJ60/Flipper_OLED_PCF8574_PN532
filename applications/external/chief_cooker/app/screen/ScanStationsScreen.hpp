@@ -77,6 +77,7 @@ public:
 
         FURI_LOG_I("SCAN", "Step 1: creating PagerReceiver");
         pagerReceiver = new PagerReceiver(config);
+        furi_check(pagerReceiver);
         FURI_LOG_I("SCAN", "Step 2: PagerReceiver created");
         if(categoryType == User) {
             pagerReceiver->SetUserCategory(category);
@@ -85,10 +86,15 @@ public:
             if(category != NULL) {
                 menuView->SetRightButton("Delete category", HANDLER_1ARG(&ScanStationsScreen::deleteCategory));
             }
-        } else {
+        } else if(!receiveNew) {
+            // Live scan doesn't need the saved-station DB up front; loading
+            // it here fragments the heap right before the ~40KB RX burst.
+            // Matching is unaffected (IsKnown safely returns false).
             FURI_LOG_I("SCAN", "Step 3: ReloadKnownStations");
             pagerReceiver->ReloadKnownStations();
             FURI_LOG_I("SCAN", "Step 4: ReloadKnownStations done");
+        } else {
+            FURI_LOG_I("SCAN", "Step 3-4: skipped ReloadKnownStations (live scan)");
         }
 
         if(!receiveNew) {
@@ -104,23 +110,47 @@ public:
 
         FURI_LOG_I("SCAN", "Step 5: creating SubGhzModule(%lu)", config->Frequency);
         subghz = new SubGhzModule(config->Frequency);
+        furi_check(subghz);
         FURI_LOG_I("SCAN", "Step 6: setting receive handler");
         subghz->SetReceiveHandler(HANDLER_1ARG(&ScanStationsScreen::receive));
 
-        if(receiveNew) {
+        if(!subghz->IsReady()) {
+            // Global selection is External but the module is absent (or begin
+            // failed): show it loudly instead of starting RX on nothing.
+            menuView->SetNoElementCaption("External required!");
+            FURI_LOG_E("SCAN", "Step 7: skipped, no radio device");
+        } else if(receiveNew) {
             if(subghz->IsExternal()) {
                 menuView->SetNoElementCaption("Receiving via EXT...");
             } else {
                 menuView->SetNoElementCaption("Receiving...");
             }
-            FURI_LOG_I("SCAN", "Step 7: calling ReceiveAsync()");
-            subghz->SetReceiveAfterTransmission(true);
-            subghz->ReceiveAsync();
-            FURI_LOG_I("SCAN", "Step 8: ReceiveAsync() completed");
+            // RX starts in StartScan(), called after PushView: by then the
+            // Loading popup is freed and construction is complete, so the
+            // worker callback can never race ctor state.
+            FURI_LOG_I("SCAN", "Step 7: RX deferred to StartScan()");
         }
 
         receiveMode = receiveNew;
         FURI_LOG_I("SCAN", "ScanStationsScreen constructor fully completed");
+    }
+
+    // Starts live RX. Must be called once, after PushView shows this view.
+    void StartScan() {
+        if(subghz == nullptr || !subghz->IsReady() || !receiveMode) {
+            return;
+        }
+        FURI_LOG_I("SCAN", "Step 8: calling ReceiveAsync()");
+        subghz->SetReceiveAfterTransmission(true);
+        if(!subghz->ReceiveAsync()) {
+            menuView->SetNoElementCaption("Low memory!");
+            if(menuView->IsOnTop()) {
+                menuView->Refresh();
+            }
+            FURI_LOG_E("SCAN", "Step 8: ReceiveAsync failed (low memory?)");
+        } else {
+            FURI_LOG_I("SCAN", "Step 8: ReceiveAsync() completed");
+        }
     }
 
     UiView* GetView() {
@@ -129,7 +159,9 @@ public:
 
 private:
     void receive(SubGhzReceivedData* data) {
-        pagerAdded(pagerReceiver->Receive(data));
+        if(pagerReceiver != nullptr) {
+            pagerAdded(pagerReceiver->Receive(data));
+        }
         delete data;
     }
 
@@ -161,8 +193,17 @@ private:
     }
 
     void getElementColumnName(int index, int column, String* str) {
+        if(pagerReceiver == nullptr || str == nullptr) {
+            return;
+        }
         StoredPagerData* pagerData = pagerReceiver->PagerGetter(index)();
+        if(pagerData == nullptr || pagerData->decoder >= PagerReceiver::decodersCount) {
+            return;
+        }
         PagerDecoder* decoder = pagerReceiver->decoders[pagerData->decoder];
+        if(decoder == nullptr) {
+            return;
+        }
         String* name = pagerReceiver->GetName(pagerData);
 
         if(index == scanForMoreButtonIndex) {
@@ -234,17 +275,31 @@ private:
         if((int)index == scanForMoreButtonIndex) {
             return;
         }
+        if(pagerReceiver == nullptr || subghz == nullptr) {
+            return;
+        }
 
         PagerDataGetter getPager = pagerReceiver->PagerGetter(index);
+        if(getPager() == nullptr) {
+            return;
+        }
         EditPagerScreen* screen = new EditPagerScreen(config, subghz, pagerReceiver, getPager, index < fromFilePagersCount);
         UiManager::GetInstance()->PushView(screen->GetView());
     }
 
     void showActions(uint32_t index) {
+        if(subghz == nullptr || pagerReceiver == nullptr) {
+            return;
+        }
         if((int)index == scanForMoreButtonIndex) {
             if(!receiveMode) {
                 subghz->SetReceiveAfterTransmission(true);
-                subghz->ReceiveAsync();
+                if(!subghz->ReceiveAsync()) {
+                    menuView->SetNoElementCaption("Low memory!");
+                    if(menuView->IsOnTop()) {
+                        menuView->Refresh();
+                    }
+                }
 
                 receiveMode = true;
             }
@@ -253,8 +308,15 @@ private:
 
         PagerDataGetter getPager = pagerReceiver->PagerGetter(index);
         StoredPagerData* pagerData = getPager();
+        if(pagerData == nullptr || pagerData->decoder >= PagerReceiver::decodersCount ||
+           pagerData->protocol >= PagerReceiver::protocolsCount) {
+            return;
+        }
         PagerDecoder* decoder = pagerReceiver->decoders[pagerData->decoder];
         PagerProtocol* protocol = pagerReceiver->protocols[pagerData->protocol];
+        if(decoder == nullptr || protocol == nullptr) {
+            return;
+        }
 
         PagerActionsScreen* screen = new PagerActionsScreen(config, getPager, decoder, protocol, subghz);
         UiManager::GetInstance()->PushView(screen->GetView());
@@ -284,8 +346,20 @@ private:
     }
 
     void destroy() {
-        delete subghz;
-        delete pagerReceiver;
+        // Stop RX and unhook before deleting: the worker callback may still
+        // be in flight when Back is pressed.
+        // Delete pagerReceiver FIRST (matches reference) — it may hold
+        // callbacks that reference subghz indirectly.
+        if(pagerReceiver != nullptr) {
+            delete pagerReceiver;
+            pagerReceiver = nullptr;
+        }
+        if(subghz != nullptr) {
+            subghz->StopReceive();
+            subghz->SetReceiveHandler(nullptr);
+            delete subghz;
+            subghz = nullptr;
+        }
         delete this;
     }
 };

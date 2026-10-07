@@ -11,7 +11,7 @@
 #include <lib/subghz/protocols/princeton.h>
 #include <lib/subghz/subghz_tx_rx_worker.h>
 #include <tanks_icons.h>
-#include "helpers/radio_device_loader.h"
+#include <lib/subghz/subghz_radio_device_loader.h>
 
 #include "constants.h"
 
@@ -1187,6 +1187,13 @@ int32_t tanks_game_app(void* p) {
     FuriMessageQueue* event_queue = furi_message_queue_alloc(8, sizeof(TanksEvent));
 
     TanksState* tanks_state = malloc(sizeof(TanksState));
+    if(tanks_state == NULL) {
+        furi_message_queue_free(event_queue);
+        return 255;
+    }
+    // Zero-init: p1/p2/projectiles/bots are checked/freed on both normal
+    // and early radio-fail exits; garbage would UAF or leak there.
+    memset(tanks_state, 0, sizeof(TanksState));
 
     tanks_state->state = GameStateMenu;
     tanks_state->menu_state = MenuStateSingleMode;
@@ -1214,14 +1221,28 @@ int32_t tanks_game_app(void* p) {
     TanksEvent event;
 
     // Initialize network thing.
-    uint32_t frequency = 433920000;
-    size_t message_max_len = 180;
-    uint8_t incomingMessage[180] = {0};
-    SubGhzTxRxWorker* subghz_txrx = subghz_tx_rx_worker_alloc();
+        uint32_t frequency = 433920000;
+        size_t message_max_len = 180;
+        uint8_t incomingMessage[180] = {0};
+        SubGhzTxRxWorker* subghz_txrx = subghz_tx_rx_worker_alloc();
 
-    subghz_devices_init();
-    const SubGhzDevice* subghz_device =
-        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
+        subghz_devices_init();
+        const SubGhzDevice* subghz_device =
+            radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
+        if(subghz_device == NULL) {
+            FURI_LOG_E("Tanks", "No Sub-GHz radio detected (check global setting)");
+            subghz_tx_rx_worker_free(subghz_txrx);
+            subghz_devices_deinit();
+            furi_timer_free(timer);
+            view_port_enabled_set(view_port, false);
+            gui_remove_view_port(gui, view_port);
+            furi_record_close(RECORD_GUI);
+            view_port_free(view_port);
+            furi_message_queue_free(event_queue);
+            furi_mutex_free(tanks_state->mutex);
+            free(tanks_state);
+            return 255;
+        }
 
     subghz_devices_reset(subghz_device);
     subghz_devices_load_preset(subghz_device, FuriHalSubGhzPresetOok650Async, NULL);
@@ -1451,7 +1472,9 @@ int32_t tanks_game_app(void* p) {
     }
     subghz_tx_rx_worker_free(subghz_txrx);
 
-    radio_device_loader_end(subghz_device);
+    if(subghz_device) {
+        radio_device_loader_end(subghz_device);
+    }
     subghz_devices_deinit();
 
     furi_timer_free(timer);

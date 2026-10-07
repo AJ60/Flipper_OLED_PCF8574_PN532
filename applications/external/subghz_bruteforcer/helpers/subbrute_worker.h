@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../subbrute_protocols.h"
-#include "subbrute_radio_device_loader.h"
+#include <lib/subghz/subghz_radio_device_loader.h>
 
 /**
  * @enum SubBruteWorkerState

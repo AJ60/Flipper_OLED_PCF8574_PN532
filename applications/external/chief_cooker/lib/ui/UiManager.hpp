@@ -69,8 +69,16 @@ public:
     static UiManager* GetInstance() {
         if(__ui_manager_instance == NULL) {
             __ui_manager_instance = new UiManager();
+            furi_check(__ui_manager_instance);
         }
         return (UiManager*)__ui_manager_instance;
+    }
+
+    static void DestroyInstance() {
+        if(__ui_manager_instance != NULL) {
+            delete(UiManager*)__ui_manager_instance;
+            __ui_manager_instance = NULL;
+        }
     }
 
     void InitGui() {

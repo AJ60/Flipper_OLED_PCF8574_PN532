@@ -106,6 +106,16 @@ static uint32_t subghz_frequency_analyzer_worker_expRunningAverageAdaptive(
     return (uint32_t)instance->filVal;
 }
 
+/** Drive the E07 module's TXEN (PA5 = gpio_ext_pc3) low.
+ *
+ * TXEN must never float: analog mode leaves the module's TX enable undefined,
+ * and TXEN high with RXEN low would enable the PA. Driven low = module idle.
+ */
+static void subghz_frequency_analyzer_txen_off(void) {
+    furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeOutputPushPull);
+    furi_hal_gpio_write(&gpio_ext_pc3, false);
+}
+
 /** Worker thread
  * 
  * @param context 
@@ -129,8 +139,7 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
     const FuriHalSpiBusHandle* spi_handle = instance->spi_handle;
 
     if(instance->is_ext_radio) {
-        // Keep PC3 (PA5) in analog mode to prevent driving the LF-RFID coil stage
-        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
+        subghz_frequency_analyzer_txen_off();
 
         furi_hal_spi_bus_handle_init(spi_handle);
 
@@ -143,7 +152,7 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
         if(status.CHIP_RDYn != 0) {
             furi_hal_spi_release(spi_handle);
             furi_hal_spi_bus_handle_deinit(spi_handle);
-            furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
+            subghz_frequency_analyzer_txen_off();
             instance->worker_running = false;
             FURI_LOG_W(TAG, "External CC1101 not detected or not responding");
             return -1;
@@ -169,8 +178,7 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
             0b00110000); // 00 - No hysteresis, medium asymmetric dead zone, medium gain ; 11 - 64 samples agc; 00 - Normal AGC, 00 - 4dB boundary
         furi_hal_spi_release(spi_handle);
     } else {
-        // Keep PC3 (PA5) in analog mode
-        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
+        subghz_frequency_analyzer_txen_off();
 
         // Start Internal CC1101
         furi_hal_subghz_reset();
@@ -370,11 +378,12 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
         furi_hal_spi_acquire(spi_handle);
         cc1101_switch_to_idle(spi_handle);
         cc1101_write_reg(spi_handle, CC1101_IOCFG0, CC1101IocfgHighImpedance);
-        cc1101_write_reg(spi_handle, CC1101_IOCFG2, CC1101IocfgHighImpedance);
+        // GDO2 drives the module's RXEN: keep it driven low, never tri-stated
+        cc1101_write_reg(spi_handle, CC1101_IOCFG2, CC1101IocfgHW);
         cc1101_shutdown(spi_handle);
         furi_hal_spi_release(spi_handle);
         furi_hal_spi_bus_handle_deinit(spi_handle);
-        furi_hal_gpio_init_simple(&gpio_ext_pc3, GpioModeAnalog);
+        subghz_frequency_analyzer_txen_off();
     } else {
         furi_hal_subghz_idle();
         furi_hal_subghz_sleep();
@@ -387,10 +396,18 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
 SubGhzFrequencyAnalyzerWorker* subghz_frequency_analyzer_worker_alloc(void* context) {
     furi_assert(context);
     SubGhzFrequencyAnalyzerWorker* instance = malloc(sizeof(SubGhzFrequencyAnalyzerWorker));
+    if(instance == NULL) {
+        return NULL;
+    }
+    SubGhz* subghz = context;
+    if(subghz->txrx == NULL) {
+        FURI_LOG_E(TAG, "analyzer alloc: no txrx");
+        free(instance);
+        return NULL;
+    }
 
     instance->thread = furi_thread_alloc_ex(
         "SubGhzFAWorker", 2048, subghz_frequency_analyzer_worker_thread, instance);
-    SubGhz* subghz = context;
     instance->subghz = subghz;
     instance->setting = subghz_txrx_get_setting(subghz->txrx);
     instance->trigger_level = subghz->last_settings->frequency_analyzer_trigger;
@@ -412,7 +429,9 @@ SubGhzFrequencyAnalyzerWorker* subghz_frequency_analyzer_worker_alloc(void* cont
 }
 
 void subghz_frequency_analyzer_worker_free(SubGhzFrequencyAnalyzerWorker* instance) {
-    furi_assert(instance);
+    if(instance == NULL) {
+        return;
+    }
 
     furi_thread_free(instance->thread);
     free(instance);
@@ -429,7 +448,9 @@ void subghz_frequency_analyzer_worker_set_pair_callback(
 }
 
 void subghz_frequency_analyzer_worker_start(SubGhzFrequencyAnalyzerWorker* instance) {
-    furi_assert(instance);
+    if(instance == NULL) {
+        return;
+    }
     if(!instance->worker_running) {
         instance->worker_running = true;
         furi_thread_start(instance->thread);
@@ -437,7 +458,9 @@ void subghz_frequency_analyzer_worker_start(SubGhzFrequencyAnalyzerWorker* insta
 }
 
 void subghz_frequency_analyzer_worker_stop(SubGhzFrequencyAnalyzerWorker* instance) {
-    furi_assert(instance);
+    if(instance == NULL) {
+        return;
+    }
     if(instance->worker_running) {
         instance->worker_running = false;
         furi_thread_join(instance->thread);
@@ -445,23 +468,34 @@ void subghz_frequency_analyzer_worker_stop(SubGhzFrequencyAnalyzerWorker* instan
 }
 
 bool subghz_frequency_analyzer_worker_is_running(SubGhzFrequencyAnalyzerWorker* instance) {
-    furi_assert(instance);
+    if(instance == NULL) {
+        return false;
+    }
     return instance->worker_running;
 }
 
 void subghz_frequency_analyzer_worker_set_trigger_level(
     SubGhzFrequencyAnalyzerWorker* instance,
     float value) {
+    if(instance == NULL) {
+        return;
+    }
     instance->trigger_level = value;
 }
 
 float subghz_frequency_analyzer_worker_get_trigger_level(SubGhzFrequencyAnalyzerWorker* instance) {
+    if(instance == NULL) {
+        return (float)SUBGHZ_FREQUENCY_ANALYZER_THRESHOLD;
+    }
     return instance->trigger_level;
 }
 
 uint32_t subghz_frequency_analyzer_get_nearest_frequency(
     SubGhzFrequencyAnalyzerWorker* instance,
     uint32_t input) {
+    if(instance == NULL) {
+        return 0;
+    }
     uint32_t prev_freq = 0;
     uint32_t result = 0;
     uint32_t current;

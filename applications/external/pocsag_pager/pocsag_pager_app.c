@@ -23,6 +23,7 @@ static void pocsag_pager_app_tick_event_callback(void* context) {
     scene_manager_handle_tick_event(app->scene_manager);
 }
 
+void pocsag_pager_app_free(POCSAGPagerApp* app);
 POCSAGPagerApp* pocsag_pager_app_alloc() {
     POCSAGPagerApp* app = malloc(sizeof(POCSAGPagerApp));
 
@@ -88,15 +89,28 @@ POCSAGPagerApp* pocsag_pager_app_alloc() {
     //init Worker & Protocol & History
     app->lock = PCSGLockOff;
     app->txrx = malloc(sizeof(POCSAGPagerTxRx));
+    // NULL-init: the early radio-fail path below calls pocsag_pager_app_free()
+    // before history/worker/environment/receiver are allocated.
+    app->txrx->history = NULL;
+    app->txrx->worker = NULL;
+    app->txrx->environment = NULL;
+    app->txrx->receiver = NULL;
     app->txrx->preset = malloc(sizeof(SubGhzRadioPreset));
     app->txrx->preset->name = furi_string_alloc();
 
     furi_hal_power_suppress_charge_enter();
 
     // Radio Devices init & load
-    subghz_devices_init();
-    app->txrx->radio_device =
-        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
+        subghz_devices_init();
+        app->txrx->radio_device =
+            radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
+        if(app->txrx->radio_device == NULL) {
+            FURI_LOG_E("RadioDeviceLoader", "No Sub-GHz radio detected (check global setting)");
+            // pocsag_pager_app_free() exits suppress-charge exactly once,
+            // balancing the enter at alloc start.
+            pocsag_pager_app_free(app);
+            return NULL;
+        }
 
     subghz_devices_reset(app->txrx->radio_device);
     subghz_devices_idle(app->txrx->radio_device);
@@ -141,8 +155,10 @@ void pocsag_pager_app_free(POCSAGPagerApp* app) {
     furi_assert(app);
 
     // Radio Devices sleep & off
-    pcsg_sleep(app);
-    radio_device_loader_end(app->txrx->radio_device);
+    if(app->txrx->radio_device) {
+        pcsg_sleep(app);
+        radio_device_loader_end(app->txrx->radio_device);
+    }
 
     subghz_devices_deinit();
 
@@ -169,11 +185,12 @@ void pocsag_pager_app_free(POCSAGPagerApp* app) {
     //setting
     subghz_setting_free(app->setting);
 
-    //Worker & Protocol & History
-    subghz_receiver_free(app->txrx->receiver);
-    subghz_environment_free(app->txrx->environment);
-    pcsg_history_free(app->txrx->history);
-    subghz_worker_free(app->txrx->worker);
+    //Worker & Protocol & History (NULL-tolerant: early radio-fail calls
+    // free() before these are allocated)
+    if(app->txrx->receiver) subghz_receiver_free(app->txrx->receiver);
+    if(app->txrx->environment) subghz_environment_free(app->txrx->environment);
+    if(app->txrx->history) pcsg_history_free(app->txrx->history);
+    if(app->txrx->worker) subghz_worker_free(app->txrx->worker);
     furi_string_free(app->txrx->preset->name);
     free(app->txrx->preset);
     free(app->txrx);
@@ -197,6 +214,7 @@ void pocsag_pager_app_free(POCSAGPagerApp* app) {
 int32_t pocsag_pager_app(void* p) {
     UNUSED(p);
     POCSAGPagerApp* pocsag_pager_app = pocsag_pager_app_alloc();
+    if(pocsag_pager_app == NULL) return 255;
 
     view_dispatcher_run(pocsag_pager_app->view_dispatcher);
 

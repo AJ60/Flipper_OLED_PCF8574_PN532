@@ -15,6 +15,7 @@
 #include <lib/subghz/devices/cc1101_configs.h>
 #include <lib/subghz/subghz_protocol_registry.h>
 #include <lib/subghz/subghz_worker.h>
+#include <lib/subghz/subghz_radio_device_global.h>
 
 #include "SubGhzState.hpp"
 #include "data/SubGhzReceivedDataImpl.hpp"
@@ -43,6 +44,12 @@ private:
     bool isExternal = false;
     SubGhzState state = IDLE;
     bool receiveAfterTransmission = false;
+    // True once subghz_devices_begin() succeeded. All RX/TX/idle paths
+    // require it; without it the device pointer must be treated as unusable.
+    bool begun = false;
+    // True only if this instance enabled OTG itself: destructor disables OTG
+    // only in that case, never killing a pre-existing OTG session.
+    bool otgWeEnabled = false;
 
     static void captureCallback(SubGhzReceiver* receiver, SubGhzProtocolDecoderBase* decoderBase, void* context) {
         UNUSED(receiver);
@@ -59,13 +66,18 @@ private:
 
     static void txCompleteCheckCallback(void* context) {
         SubGhzModule* subghz = (SubGhzModule*)context;
-        if(subghz->device != nullptr && subghz_devices_is_async_complete_tx(subghz->device)) {
+        if(subghz == nullptr || subghz->device == nullptr || !subghz->begun) {
+            return;
+        }
+        if(subghz_devices_is_async_complete_tx(subghz->device)) {
             if(subghz->repeatsLeft-- > 0 && subghz->currentPayload != NULL) {
                 subghz->startTransmission(0);
                 return;
             }
 
-            furi_timer_stop(subghz->txCompleteCheckTimer);
+            if(subghz->txCompleteCheckTimer != NULL) {
+                furi_timer_stop(subghz->txCompleteCheckTimer);
+            }
 
             if(subghz->txCompleteHandler != NULL) {
                 subghz->txCompleteHandler();
@@ -75,15 +87,35 @@ private:
         }
     }
 
-    void prepareReceiver() {
+    // Largest single heap block the RX path needs: worker stream
+    // (~8KB after the 2048-entry halving) + decoder burst headroom. Total
+    // free is irrelevant; max_free_block is what matters (cf. preload check).
+    static const size_t RX_MIN_FREE_BLOCK = 24U * 1024U;
+
+    bool prepareReceiver() {
+        if(memmgr_heap_get_max_free_block() < RX_MIN_FREE_BLOCK) {
+            FURI_LOG_E(LOG_TAG, "prepareReceiver: low memory, need 24KB block");
+            return false;
+        }
         receiver = subghz_receiver_alloc_init(environment);
+        if(receiver == nullptr) {
+            FURI_LOG_E(LOG_TAG, "prepareReceiver: receiver alloc failed");
+            return false;
+        }
         subghz_receiver_set_filter(receiver, SubGhzProtocolFlag_Decodable);
         subghz_receiver_set_rx_callback(receiver, captureCallback, this);
 
         worker = subghz_worker_alloc();
+        if(worker == nullptr) {
+            FURI_LOG_E(LOG_TAG, "prepareReceiver: worker alloc failed");
+            subghz_receiver_free(receiver);
+            receiver = nullptr;
+            return false;
+        }
         subghz_worker_set_overrun_callback(worker, (SubGhzWorkerOverrunCallback)subghz_receiver_reset);
         subghz_worker_set_pair_callback(worker, (SubGhzWorkerPairCallback)subghz_receiver_decode);
         subghz_worker_set_context(worker, receiver);
+        return true;
     }
 
     void setFrequencyIgnoringStateChecks(uint32_t frequency) {
@@ -96,28 +128,55 @@ private:
 public:
     SubGhzModule(uint32_t frequency) {
         environment = subghz_environment_alloc();
+        furi_check(environment);
         subghz_environment_set_protocol_registry(environment, &subghz_protocol_registry);
 
         subghz_devices_init();
-        furi_hal_power_enable_otg();
-        device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
-        if(!device || !subghz_devices_is_connect(device)) {
-            furi_hal_power_disable_otg();
-            // The is_connect probe manipulates the external SPI bus and GPIO lines.
-            // Give the internal CC1101's MISO line 10ms to settle before the first
-            // SPI transaction, otherwise cc1101_spi_trx may see MISO stuck high.
-            furi_delay_ms(10);
+
+        // Honor the global module selection persisted by main SubGHz Radio
+        // Settings (last_subghz.settings RadioDevice: 1=Internal, 2=External).
+        // External selected => use EXT or fail loudly (device stays nullptr,
+        // IsReady() false); never silently fall back to internal.
+        uint32_t global = subghz_global_radio_device_load();
+        bool wantExternal = (global == SUBGHZ_GLOBAL_RADIO_DEVICE_EXTERNAL);
+
+        if(wantExternal) {
+            if(!furi_hal_power_is_otg_enabled()) {
+                furi_hal_power_enable_otg();
+                otgWeEnabled = true;
+                // E07 needs a few ms after VCC before CC1101 drives MISO.
+                furi_delay_ms(10);
+            }
+            device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_EXT_NAME);
+            if(device && subghz_devices_is_connect(device)) {
+                isExternal = true;
+            } else {
+                FURI_LOG_E(LOG_TAG, "External selected but CC1101 not detected");
+                if(otgWeEnabled) {
+                    furi_hal_power_disable_otg();
+                    otgWeEnabled = false;
+                }
+                device = nullptr;
+                isExternal = false;
+            }
+        } else {
             device = subghz_devices_get_by_name(SUBGHZ_DEVICE_CC1101_INT_NAME);
             isExternal = false;
-        } else {
-            isExternal = true;
         }
 
         if(device != nullptr) {
-            subghz_devices_reset(device);
-            subghz_devices_idle(device);
-            subghz_devices_begin(device);
-            subghz_devices_load_preset(device, FuriHalSubGhzPresetOok650Async, NULL);
+            // begin() allocates/initializes the driver and must come BEFORE
+            // reset/idle: calling reset/idle first dereferences an
+            // uninitialized driver and hard-faults.
+            if(subghz_devices_begin(device)) {
+                begun = true;
+                subghz_devices_reset(device);
+                subghz_devices_idle(device);
+                subghz_devices_load_preset(device, FuriHalSubGhzPresetOok650Async, NULL);
+            } else {
+                FURI_LOG_E(LOG_TAG, "SubGhzModule: device begin failed");
+                device = nullptr;
+            }
         }
 
         FURI_LOG_I(LOG_TAG, "SubGhzModule: calling SetReceiveFrequency(%lu)", frequency);
@@ -125,10 +184,21 @@ public:
         FURI_LOG_I(LOG_TAG, "SubGhzModule: SetReceiveFrequency done");
 
         txCompleteCheckTimer = furi_timer_alloc(txCompleteCheckCallback, FuriTimerTypePeriodic, this);
+        furi_check(txCompleteCheckTimer);
         FURI_LOG_I(LOG_TAG, "SubGhzModule: constructor completed");
     }
 
+    bool IsReady() {
+        return begun && device != nullptr;
+    }
+
     void SetReceiveFrequency(uint32_t frequency) {
+        if(device == nullptr || !begun) {
+            // No usable radio (e.g. External selected but absent): remember
+            // the frequency so a later retry can apply it, but touch nothing.
+            receiveFrequency = frequency;
+            return;
+        }
         if(receiveFrequency == frequency) {
             return;
         } else {
@@ -161,10 +231,17 @@ public:
         receiveHandler = handler;
     }
 
-    void ReceiveAsync() {
+    bool ReceiveAsync() {
         FURI_LOG_I(LOG_TAG, "ReceiveAsync: entering, state=%d", state);
+        if(device == nullptr || !begun) {
+            FURI_LOG_E(LOG_TAG, "ReceiveAsync: no radio device, ignoring");
+            return false;
+        }
         if(receiver == NULL) {
-            prepareReceiver();
+            if(!prepareReceiver()) {
+                state = IDLE;
+                return false;
+            }
         }
 
         PutToIdle();
@@ -177,10 +254,13 @@ public:
             subghz_devices_start_async_rx(device, (void*)subghz_worker_rx_callback, worker);
             subghz_worker_start(worker);
             FURI_LOG_I(LOG_TAG, "ReceiveAsync: RX worker started");
+            state = RECEIVING;
+        } else {
+            state = IDLE;
+            return false;
         }
-
-        state = RECEIVING;
         FURI_LOG_I(LOG_TAG, "ReceiveAsync: completed");
+        return true;
     }
 
     void SetTransmitCompleteHandler(function<void()> txCompleteHandler) {
@@ -188,6 +268,11 @@ public:
     }
 
     void Transmit(SubGhzPayload* payload, uint32_t frequency) {
+        if(device == nullptr || !begun) {
+            FURI_LOG_E(LOG_TAG, "Transmit: no radio device, dropping payload");
+            delete payload;
+            return;
+        }
         if(state != TRANSMITTING) {
             PutToIdle();
             state = TRANSMITTING;
@@ -287,7 +372,7 @@ public:
             break;
         }
 
-        if(device != nullptr) {
+        if(device != nullptr && begun) {
             subghz_devices_idle(device);
         }
     }
@@ -297,15 +382,25 @@ public:
     }
 
     ~SubGhzModule() {
+        FURI_LOG_I(LOG_TAG, "SubGhzModule: destructor enter");
+        // Unhook first so the RX worker callback cannot fire during teardown.
+        receiveHandler = nullptr;
         PutToIdle();
+
+        // Ensure worker is fully stopped before freeing — PutToIdle() calls
+        // subghz_worker_stop() which waits, but be explicit about the invariant.
+        furi_check(!(worker != nullptr && subghz_worker_is_running(worker)));
 
         if(txCompleteCheckTimer != NULL) {
             furi_timer_free(txCompleteCheckTimer);
             txCompleteCheckTimer = NULL;
         }
 
-        if(furi_hal_power_is_otg_enabled()) {
+        // Only disable OTG if this instance enabled it: never kill a
+        // pre-existing OTG session owned by another app/driver.
+        if(otgWeEnabled && furi_hal_power_is_otg_enabled()) {
             furi_hal_power_disable_otg();
+            otgWeEnabled = false;
         }
 
         if(worker != NULL) {
@@ -323,10 +418,18 @@ public:
             environment = NULL;
         }
 
-        if(device != NULL) {
+        if(device != nullptr && begun) {
+            FURI_LOG_I(LOG_TAG, "SubGhzModule: calling subghz_devices_sleep");
+            subghz_devices_sleep(device);
+            FURI_LOG_I(LOG_TAG, "SubGhzModule: calling subghz_devices_end");
             subghz_devices_end(device);
-            subghz_devices_deinit();
-            device = NULL;
         }
+        // Balances the subghz_devices_init() in the constructor exactly once,
+        // whether or not begin() succeeded.
+        FURI_LOG_I(LOG_TAG, "SubGhzModule: calling subghz_devices_deinit");
+        subghz_devices_deinit();
+        device = nullptr;
+        begun = false;
+        FURI_LOG_I(LOG_TAG, "SubGhzModule: destructor exit");
     }
 };

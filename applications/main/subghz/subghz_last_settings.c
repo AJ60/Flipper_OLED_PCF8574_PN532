@@ -4,7 +4,7 @@
 #define TAG "SubGhzLastSettings"
 
 #define SUBGHZ_LAST_SETTING_FILE_TYPE    "Flipper SubGhz Last Setting File"
-#define SUBGHZ_LAST_SETTING_FILE_VERSION 3
+#define SUBGHZ_LAST_SETTING_FILE_VERSION 4
 #define SUBGHZ_LAST_SETTINGS_PATH        EXT_PATH("subghz/assets/last_subghz.settings")
 
 #define SUBGHZ_LAST_SETTING_FIELD_FREQUENCY                         "Frequency"
@@ -25,6 +25,7 @@
 #define SUBGHZ_LAST_SETTING_FIELD_AUTOSAVE          "Autosave"
 #define SUBGHZ_LAST_SETTING_FIELD_HOPPING_THRESHOLD "HoppingThreshold"
 #define SUBGHZ_LAST_SETTING_FIELD_TX_POWER          "TXPower"
+#define SUBGHZ_LAST_SETTING_FIELD_RADIO_DEVICE      "RadioDevice"
 
 SubGhzLastSettings* subghz_last_settings_alloc(void) {
     SubGhzLastSettings* instance = malloc(sizeof(SubGhzLastSettings));
@@ -40,6 +41,9 @@ void subghz_last_settings_load(SubGhzLastSettings* instance, size_t preset_count
     furi_assert(instance);
 
     // Default values (all others set to 0, if read from file fails these are used)
+    // Canonical SubGhzRadioDeviceTypeInternal == 1. Keep numeric literal here
+    // so this file does not depend on helpers/subghz_types.h.
+    instance->radio_device = 1;
     instance->frequency = SUBGHZ_LAST_SETTING_DEFAULT_FREQUENCY;
     instance->preset_index = SUBGHZ_LAST_SETTING_DEFAULT_PRESET;
     instance->frequency_analyzer_feedback_level =
@@ -61,7 +65,8 @@ void subghz_last_settings_load(SubGhzLastSettings* instance, size_t preset_count
         do {
             if(!flipper_format_read_header(fff_data_file, temp_str, &config_version)) break;
             if((strcmp(furi_string_get_cstr(temp_str), SUBGHZ_LAST_SETTING_FILE_TYPE) != 0) ||
-               (config_version != SUBGHZ_LAST_SETTING_FILE_VERSION)) {
+               ((config_version != SUBGHZ_LAST_SETTING_FILE_VERSION) &&
+                (config_version != (SUBGHZ_LAST_SETTING_FILE_VERSION - 1)))) {
                 break;
             }
 
@@ -165,10 +170,23 @@ void subghz_last_settings_load(SubGhzLastSettings* instance, size_t preset_count
             }
             uint32_t tx_power = 0;
             if(!flipper_format_read_uint32(
-                   fff_data_file, SUBGHZ_LAST_SETTING_FIELD_TX_POWER, &tx_power, 1)) {
+                    fff_data_file, SUBGHZ_LAST_SETTING_FIELD_TX_POWER, &tx_power, 1)) {
                 flipper_format_rewind(fff_data_file);
             }
             instance->tx_power = (uint8_t)(tx_power & 0xFF);
+            // RadioDevice only exists in v4+. v3 files keep default Internal.
+            if(config_version >= SUBGHZ_LAST_SETTING_FILE_VERSION) {
+                uint32_t radio_device = 1;
+                if(!flipper_format_read_uint32(
+                       fff_data_file,
+                       SUBGHZ_LAST_SETTING_FIELD_RADIO_DEVICE,
+                       &radio_device,
+                       1)) {
+                    flipper_format_rewind(fff_data_file);
+                } else {
+                    instance->radio_device = radio_device;
+                }
+            }
         } while(0);
     } else if(FSE_OK == storage_sd_status(storage)) {
         FURI_LOG_I(TAG, "File is not used %s", SUBGHZ_LAST_SETTINGS_PATH);
@@ -186,6 +204,12 @@ void subghz_last_settings_load(SubGhzLastSettings* instance, size_t preset_count
 
     if(instance->preset_index > (uint32_t)preset_count - 1) {
         instance->preset_index = SUBGHZ_LAST_SETTING_DEFAULT_PRESET;
+    }
+
+    // Clamp to known canonical values: 1=Internal, 2=External. Anything else
+    // (0=Auto, erased flash, corruption) falls back to Internal.
+    if(instance->radio_device != 1 && instance->radio_device != 2) {
+        instance->radio_device = 1;
     }
 }
 
@@ -290,6 +314,10 @@ bool subghz_last_settings_save(SubGhzLastSettings* instance) {
         }
         uint32_t tx_power = instance->tx_power;
         if(!flipper_format_write_uint32(file, SUBGHZ_LAST_SETTING_FIELD_TX_POWER, &tx_power, 1)) {
+            break;
+        }
+        if(!flipper_format_write_uint32(
+               file, SUBGHZ_LAST_SETTING_FIELD_RADIO_DEVICE, &instance->radio_device, 1)) {
             break;
         }
         saved = true;

@@ -117,6 +117,7 @@ static void app_switch_view(ProtoViewApp* app, ProtoViewCurrentView switchto) {
 
 /* Allocate the application state and initialize a number of stuff.
  * This is called in the entry point to create the application state. */
+void protoview_app_free(ProtoViewApp* app);
 ProtoViewApp* protoview_app_alloc() {
     furi_hal_power_suppress_charge_enter();
 
@@ -171,9 +172,16 @@ ProtoViewApp* protoview_app_alloc() {
     app->modulation = 0; /* Defaults to ProtoViewModulations[0]. */
 
     // Init & set radio_device
-    subghz_devices_init();
-    app->radio_device =
-        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
+        subghz_devices_init();
+        app->radio_device =
+            radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
+        if(app->radio_device == NULL) {
+            FURI_LOG_E(TAG, "No Sub-GHz radio detected (check global setting)");
+            // protoview_app_free() exits suppress-charge exactly once, balancing
+            // the enter at alloc start.
+            protoview_app_free(app);
+            return NULL;
+        }
 
     subghz_devices_reset(app->radio_device);
     subghz_devices_idle(app->radio_device);
@@ -189,8 +197,10 @@ ProtoViewApp* protoview_app_alloc() {
 void protoview_app_free(ProtoViewApp* app) {
     furi_assert(app);
 
-    subghz_devices_sleep(app->radio_device);
-    radio_device_loader_end(app->radio_device);
+    if(app->radio_device) {
+        subghz_devices_sleep(app->radio_device);
+        radio_device_loader_end(app->radio_device);
+    }
 
     subghz_devices_deinit();
 
@@ -259,6 +269,7 @@ static bool keyboard_view_dispatcher_navigation_callback(void* ctx) {
 int32_t protoview_app_entry(void* p) {
     UNUSED(p);
     ProtoViewApp* app = protoview_app_alloc();
+    if(app == NULL) return 255;
 
     /* Create a timer. We do data analysis in the callback. */
     FuriTimer* timer = furi_timer_alloc(timer_callback, FuriTimerTypePeriodic, app);

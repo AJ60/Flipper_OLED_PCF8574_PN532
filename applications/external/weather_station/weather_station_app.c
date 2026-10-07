@@ -22,6 +22,7 @@ static void weather_station_app_tick_event_callback(void* context) {
     scene_manager_handle_tick_event(app->scene_manager);
 }
 
+void weather_station_app_free(WeatherStationApp* app);
 WeatherStationApp* weather_station_app_alloc() {
     WeatherStationApp* app = malloc(sizeof(WeatherStationApp));
 
@@ -97,10 +98,19 @@ WeatherStationApp* weather_station_app_alloc() {
         app->txrx->environment, (void*)&weather_station_protocol_registry);
     app->txrx->receiver = subghz_receiver_alloc_init(app->txrx->environment);
 
-    subghz_devices_init();
+    // Enter suppress-charge BEFORE radio init so the early-fail path below
+        // stays balanced (weather_station_app_free exits exactly once).
+        furi_hal_power_suppress_charge_enter();
 
-    app->txrx->radio_device =
-        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
+        subghz_devices_init();
+
+        app->txrx->radio_device =
+            radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
+        if(app->txrx->radio_device == NULL) {
+            FURI_LOG_E("RadioDeviceLoader", "No Sub-GHz radio detected (check global setting)");
+            weather_station_app_free(app);
+            return NULL;
+        }
 
     subghz_devices_reset(app->txrx->radio_device);
     subghz_devices_idle(app->txrx->radio_device);
@@ -112,8 +122,6 @@ WeatherStationApp* weather_station_app_alloc() {
         app->txrx->worker, (SubGhzWorkerPairCallback)subghz_receiver_decode);
     subghz_worker_set_context(app->txrx->worker, app->txrx->receiver);
 
-    furi_hal_power_suppress_charge_enter();
-
     scene_manager_next_scene(app->scene_manager, WeatherStationSceneStart);
 
     return app;
@@ -122,8 +130,10 @@ WeatherStationApp* weather_station_app_alloc() {
 void weather_station_app_free(WeatherStationApp* app) {
     furi_assert(app);
 
-    subghz_devices_sleep(app->txrx->radio_device);
-    radio_device_loader_end(app->txrx->radio_device);
+    if(app->txrx->radio_device) {
+        subghz_devices_sleep(app->txrx->radio_device);
+        radio_device_loader_end(app->txrx->radio_device);
+    }
 
     subghz_devices_deinit();
 
@@ -178,6 +188,7 @@ void weather_station_app_free(WeatherStationApp* app) {
 int32_t weather_station_app(void* p) {
     UNUSED(p);
     WeatherStationApp* weather_station_app = weather_station_app_alloc();
+    if(weather_station_app == NULL) return 255;
 
     view_dispatcher_run(weather_station_app->view_dispatcher);
 

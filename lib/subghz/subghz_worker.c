@@ -85,8 +85,11 @@ SubGhzWorker* subghz_worker_alloc(void) {
     instance->thread =
         furi_thread_alloc_ex("SubGhzWorker", 2048, subghz_worker_thread_callback, instance);
 
+    // Halved from 4096 entries: decode is per-edge streaming with reset on
+    // overrun, so a shorter window only raises the overrun rate under dense
+    // noise instead of truncating packets. Saves ~8KB contiguous heap.
     instance->stream =
-        furi_stream_buffer_alloc(sizeof(LevelDuration) * 4096, sizeof(LevelDuration));
+        furi_stream_buffer_alloc(sizeof(LevelDuration) * 2048, sizeof(LevelDuration));
 
     //setting default filter in us
     instance->filter_duration = 30;

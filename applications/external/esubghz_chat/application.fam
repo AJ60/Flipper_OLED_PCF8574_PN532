@@ -18,4 +18,7 @@ App(
     fap_description="Send text messages over Sub-GHz radio to another Flippers",
     fap_icon_assets="assets",
     fap_icon_assets_symbol="esubghz_chat",
+    # Free icon/asset packs before ELF preload (large private libs need the
+    # contiguous heap); restored on exit/fail.
+    flags=["UnloadAssetPacks"],
 )

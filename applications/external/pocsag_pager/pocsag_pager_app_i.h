@@ -1,7 +1,7 @@
 #pragma once
 
 #include "helpers/pocsag_pager_types.h"
-#include "helpers/radio_device_loader.h"
+#include <lib/subghz/subghz_radio_device_loader.h>
 
 #include "scenes/pocsag_pager_scene.h"
 #include <gui/gui.h>

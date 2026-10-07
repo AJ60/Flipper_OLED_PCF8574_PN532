@@ -67,6 +67,7 @@ private:
 
         if(count > 0) {
             knownStations = new KnownStationData[count];
+            furi_check(knownStations);
             for(size_t i = 0; i < count; i++) {
                 knownStations[i] = buildKnownStationWithName(stations.front());
                 stations.pop_front();
@@ -95,40 +96,55 @@ private:
         knownStationsSize = 0;
     }
 
+    PagerDecoder* safeDecoder(uint8_t id) {
+        if(id >= decodersCount || decoders[id] == nullptr) {
+            return decoders[0];
+        }
+        return decoders[id];
+    }
+
     KnownStationData buildKnownStationWithName(NamedPagerData pager) {
         KnownStationData data = KnownStationData();
         data.frequency = pager.storedData.frequency;
         data.protocol = pager.storedData.protocol;
         data.decoder = pager.storedData.decoder;
-        data.station = decoders[pager.storedData.decoder]->GetStation(pager.storedData.data);
+        PagerDecoder* decoder = safeDecoder(pager.storedData.decoder);
+        furi_check(decoder);
+        data.station = decoder->GetStation(pager.storedData.data);
         data.name = pager.name;
         return data;
     }
 
     KnownStationData buildKnownStationWithoutName(StoredPagerData* pager) {
         KnownStationData data = KnownStationData();
+        furi_check(pager);
         data.frequency = pager->frequency;
         data.protocol = pager->protocol;
         data.decoder = pager->decoder;
-        data.station = decoders[pager->decoder]->GetStation(pager->data);
+        PagerDecoder* decoder = safeDecoder(pager->decoder);
+        furi_check(decoder);
+        data.station = decoder->GetStation(pager->data);
         data.name = NULL;
         return data;
     }
 
     PagerDecoder* getDecoder(StoredPagerData* pagerData) {
+        furi_check(pagerData);
         for(size_t i = 0; i < decodersCount; i++) {
             pagerData->decoder = i;
-            if(IsKnown(pagerData)) {
+            if(decoders[i] != nullptr && IsKnown(pagerData)) {
                 return decoders[i];
             }
         }
 
         for(size_t i = 0; i < decodersCount; i++) {
-            if(decoders[i]->GetPager(pagerData->data) <= config->MaxPagerForBatchOrDetection) {
+            if(decoders[i] != nullptr &&
+               decoders[i]->GetPager(pagerData->data) <= config->MaxPagerForBatchOrDetection) {
                 return decoders[i];
             }
         }
 
+        furi_check(decoders[0]);
         return decoders[0];
     }
 
@@ -136,6 +152,7 @@ private:
         if(nextPagerIndex == pagersArraySize) {
             pagersArraySize += PAGERS_ARRAY_SIZE_MULTIPLIER;
             StoredPagerData* newPagers = new StoredPagerData[pagersArraySize];
+            furi_check(newPagers);
             for(int i = 0; i < nextPagerIndex; i++) {
                 newPagers[i] = pagers[i];
             }
@@ -148,14 +165,18 @@ private:
 public:
     PagerReceiver(AppConfig* config) {
         this->config = config;
+        furi_check(config);
 
         for(size_t i = 0; i < protocolsCount; i++) {
+            furi_check(protocols[i]);
             protocols[i]->id = i;
         }
 
         for(size_t i = 0; i < decodersCount; i++) {
+            furi_check(decoders[i]);
             decoders[i]->id = i;
         }
+        furi_check(pagers);
 
         SetUserCategory(config->CurrentUserCategory);
     }
@@ -164,12 +185,28 @@ public:
         SetUserCategory(category != NULL ? category->cstr() : NULL);
     }
 
+    void FreeUserCategory() {
+        if(userCategory != nullptr) {
+            delete[] userCategory;
+            userCategory = nullptr;
+        }
+    }
+
     const char* GetCurrentUserCategory() {
         return userCategory;
     }
 
     void SetUserCategory(const char* category) {
-        userCategory = category;
+        // Own the string: callers pass cstr() pointers owned by other objects
+        // that may be freed while the receiver still needs the category.
+        FreeUserCategory();
+        if(category != nullptr) {
+            size_t len = strlen(category) + 1;
+            char* copy = new char[len];
+            furi_check(copy);
+            memcpy(copy, category, len);
+            userCategory = copy;
+        }
     }
 
     PagerProtocol* GetProtocolByName(const char* systemProtocolName) {
@@ -211,10 +248,12 @@ public:
         delete[] pagers;
         pagersArraySize = (count > 0) ? count : PAGERS_ARRAY_SIZE_MULTIPLIER;
         pagers = new StoredPagerData[pagersArraySize];
+        furi_check(pagers);
 
         if(!knownStationsLoaded) {
             if(count > 0) {
                 knownStations = new KnownStationData[count];
+                furi_check(knownStations);
             } else {
                 knownStations = nullptr;
             }
@@ -240,7 +279,12 @@ public:
     }
 
     PagerDataGetter PagerGetter(size_t index) {
-        return [this, index]() { return &pagers[index]; };
+        if(pagers == nullptr || index >= nextPagerIndex) {
+            return []() -> StoredPagerData* { return nullptr; };
+        }
+        return [this, index]() -> StoredPagerData* {
+            return (index < nextPagerIndex) ? &pagers[index] : nullptr;
+        };
     }
 
     String* GetName(StoredPagerData* pager) {
@@ -332,5 +376,6 @@ public:
 
         delete[] pagers;
         unloadKnownStations();
+        FreeUserCategory();
     }
 };

@@ -216,6 +216,24 @@ SubGhz* subghz_alloc(bool alloc_for_tx_only) {
     subghz->last_settings = subghz_last_settings_alloc();
     size_t preset_count = subghz_setting_get_preset_count(setting);
     subghz_last_settings_load(subghz->last_settings, preset_count);
+    // Apply persisted global radio module selection (External => use EXT or
+    // fall back for this session; never silently stick to whatever the
+    // previous session left in the txrx instance).
+    if(!alloc_for_tx_only) {
+        if(subghz->last_settings->radio_device == (uint32_t)SubGhzRadioDeviceTypeExternalCC1101) {
+            SubGhzRadioDeviceType actual = subghz_txrx_radio_device_set(
+                subghz->txrx, SubGhzRadioDeviceTypeExternalCC1101);
+            if(actual != SubGhzRadioDeviceTypeExternalCC1101) {
+                // RAM-only fallback: keep the file at External so re-attaching
+                // the module needs no re-selection; the Radio Settings scene
+                // shows the miss visibly on next open.
+                FURI_LOG_W(
+                    "SubGhz",
+                    "Persisted External selection not detected, staying on Internal for this session");
+                subghz->last_settings->radio_device = (uint32_t)SubGhzRadioDeviceTypeInternal;
+            }
+        }
+    }
     if(!alloc_for_tx_only) {
         // Make sure we select a frequency available in loaded setting configuration
         uint32_t last_frequency = subghz->last_settings->frequency;

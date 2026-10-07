@@ -5,7 +5,9 @@ App(
     name="Chief Cooker",  # Displayed in menus
     apptype=DIYAppType.EXTERNAL,
     entry_point="chief_cooker_app",
-    stack_size=4 * 1024,
+    # 8K: C++ SubGhzModule (env+receiver+worker) + PagerReceiver protocols/decoders
+    # overflowed 4K and hard-faulted inside scan startup.
+    stack_size=8 * 1024,
     fap_category="Sub-GHz",
     # Optional values
     # fap_version="0.1",
@@ -14,4 +16,7 @@ App(
     fap_author="Denr01",
     fap_weburl="https://github.com/denr01/FZ-ChiefCooker",
     fap_icon_assets="images",  # Image assets to compile for this application
+    # Free icon/asset packs before ELF preload: the RX path needs a ~40KB
+    # contiguous block and packs are restored on exit/fail (cf. mfkey).
+    flags=["UnloadAssetPacks"],
 )

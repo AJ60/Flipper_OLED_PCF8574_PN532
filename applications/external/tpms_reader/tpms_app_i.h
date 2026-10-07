@@ -20,7 +20,7 @@
 #include <lib/subghz/transmitter.h>
 #include <lib/subghz/registry.h>
 
-#include "helpers/radio_device_loader.h"
+#include <lib/subghz/subghz_radio_device_loader.h>
 
 typedef struct TPMSApp TPMSApp;
 

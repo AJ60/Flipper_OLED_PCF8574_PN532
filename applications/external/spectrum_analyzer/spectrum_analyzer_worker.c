@@ -4,7 +4,7 @@
 #include <furi_hal.h>
 #include <furi.h>
 
-#include "helpers/radio_device_loader.h"
+#include <lib/subghz/subghz_radio_device_loader.h>
 
 #include <lib/drivers/cc1101_regs.h>
 
@@ -259,20 +259,27 @@ SpectrumAnalyzerWorker* spectrum_analyzer_worker_alloc() {
 
     SpectrumAnalyzerWorker* instance = malloc(sizeof(SpectrumAnalyzerWorker));
 
-    instance->thread = furi_thread_alloc();
-    furi_thread_set_name(instance->thread, "SpectrumWorker");
-    furi_thread_set_stack_size(instance->thread, 2048);
-    furi_thread_set_context(instance->thread, instance);
-    furi_thread_set_callback(instance->thread, spectrum_analyzer_worker_thread);
+        instance->thread = furi_thread_alloc();
+        furi_thread_set_name(instance->thread, "SpectrumWorker");
+        furi_thread_set_stack_size(instance->thread, 2048);
+        furi_thread_set_context(instance->thread, instance);
+        furi_thread_set_callback(instance->thread, spectrum_analyzer_worker_thread);
 
-    subghz_devices_init();
+        subghz_devices_init();
 
-    instance->radio_device =
-        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
+        instance->radio_device =
+            radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
+        if(instance->radio_device == NULL) {
+            FURI_LOG_E("Spectrum", "No Sub-GHz radio detected (check global setting)");
+            furi_thread_free(instance->thread);
+            subghz_devices_deinit();
+            free(instance);
+            return NULL;
+        }
 
-    FURI_LOG_D("Spectrum", "spectrum_analyzer_worker_alloc: End");
+        FURI_LOG_D("Spectrum", "spectrum_analyzer_worker_alloc: End");
 
-    return instance;
+        return instance;
 }
 
 void spectrum_analyzer_worker_free(SpectrumAnalyzerWorker* instance) {
@@ -280,8 +287,10 @@ void spectrum_analyzer_worker_free(SpectrumAnalyzerWorker* instance) {
     furi_assert(instance);
     furi_thread_free(instance->thread);
 
-    subghz_devices_sleep(instance->radio_device);
-    radio_device_loader_end(instance->radio_device);
+    if(instance->radio_device) {
+        subghz_devices_sleep(instance->radio_device);
+        radio_device_loader_end(instance->radio_device);
+    }
 
     subghz_devices_deinit();
 

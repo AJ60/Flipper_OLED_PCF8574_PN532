@@ -22,6 +22,7 @@ static void tpms_app_tick_event_callback(void* context) {
     scene_manager_handle_tick_event(app->scene_manager);
 }
 
+void tpms_app_free(TPMSApp* app);
 TPMSApp* tpms_app_alloc() {
     TPMSApp* app = malloc(sizeof(TPMSApp));
 
@@ -95,10 +96,19 @@ TPMSApp* tpms_app_alloc() {
         app->txrx->environment, (void*)&tpms_protocol_registry);
     app->txrx->receiver = subghz_receiver_alloc_init(app->txrx->environment);
 
+    // Enter suppress-charge BEFORE radio init so the early-fail path below
+    // stays balanced (tpms_app_free exits exactly once).
+    furi_hal_power_suppress_charge_enter();
+
     subghz_devices_init();
 
     app->txrx->radio_device =
-        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
+        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto);
+    if(app->txrx->radio_device == NULL) {
+        FURI_LOG_E("RadioDeviceLoader", "No Sub-GHz radio detected (check global setting)");
+        tpms_app_free(app);
+        return NULL;
+    }
 
     subghz_devices_reset(app->txrx->radio_device);
     subghz_devices_idle(app->txrx->radio_device);
@@ -110,8 +120,6 @@ TPMSApp* tpms_app_alloc() {
         app->txrx->worker, (SubGhzWorkerPairCallback)subghz_receiver_decode);
     subghz_worker_set_context(app->txrx->worker, app->txrx->receiver);
 
-    furi_hal_power_suppress_charge_enter();
-
     scene_manager_next_scene(app->scene_manager, TPMSSceneReceiver);
 
     return app;
@@ -120,8 +128,10 @@ TPMSApp* tpms_app_alloc() {
 void tpms_app_free(TPMSApp* app) {
     furi_assert(app);
 
-    subghz_devices_sleep(app->txrx->radio_device);
-    radio_device_loader_end(app->txrx->radio_device);
+    if(app->txrx->radio_device) {
+        subghz_devices_sleep(app->txrx->radio_device);
+        radio_device_loader_end(app->txrx->radio_device);
+    }
 
     subghz_devices_deinit();
 
@@ -176,6 +186,7 @@ void tpms_app_free(TPMSApp* app) {
 int32_t tpms_app(void* p) {
     UNUSED(p);
     TPMSApp* tpms_app = tpms_app_alloc();
+    if(tpms_app == NULL) return 255;
 
     view_dispatcher_run(tpms_app->view_dispatcher);
 
