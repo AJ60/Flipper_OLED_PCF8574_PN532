@@ -165,21 +165,28 @@ inline static void furi_hal_spi_bus_external_handle_event_callback(
         furi_hal_gpio_init_ex(
             handle->miso,
             GpioModeAltFunctionPushPull,
-            GpioPullNo,
+            GpioPullDown,
             GpioSpeedVeryHigh,
             GpioAltFn5SPI1);
         furi_hal_gpio_init_ex(
             handle->mosi,
             GpioModeAltFunctionPushPull,
-            GpioPullNo,
+            GpioPullDown,
             GpioSpeedVeryHigh,
             GpioAltFn5SPI1);
         furi_hal_gpio_init_ex(
             handle->sck,
             GpioModeAltFunctionPushPull,
-            GpioPullNo,
+            GpioPullDown,
             GpioSpeedVeryHigh,
             GpioAltFn5SPI1);
+
+        // Select the external device for the whole acquire/release window.
+        // Without this the module never sees CS low, so it keeps MISO tri-stated
+        // (reads as high) and every transaction times out with
+        // "SPI timeout (MISO stuck high)". The internal subghz handle asserts its
+        // own CS in furi_hal_spi_bus_handle_subghz_event_callback.
+        furi_hal_gpio_write(handle->cs, false);
     } else if(event == FuriHalSpiBusHandleEventDeactivate) {
         furi_hal_gpio_write(handle->cs, true);
 

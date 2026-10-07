@@ -37,6 +37,11 @@ bool subghz_devices_begin(const SubGhzDevice* device) {
             .ver = 1,
             .extended_range = furi_hal_subghz_get_extended_range(),
             .bypass_region = furi_hal_subghz_get_bypass_region(),
+            // E07-433M20S control wiring (user-confirmed): TXEN is on board A5
+            // == MCU PA5 == header PC3 (gpio_ext_pc3 "amp" pin). Keep true so
+            // cc1101_ext drives TXEN low in idle/sleep/rx and high during tx.
+            // TXEN is parked low unconditionally in cc1101_ext alloc/fail/free
+            // paths so it never floats (PA5 is shared with LF-RFID carrier).
             .amp_and_leds = true,
         };
 
@@ -57,6 +62,8 @@ bool subghz_devices_is_connect(const SubGhzDevice* device) {
     bool ret = false;
     if(device->interconnect->is_connect) {
         ret = device->interconnect->is_connect();
+    } else {
+        FURI_LOG_W("SubGhzDeviceRegistry", "Device '%s' has no is_connect()", device->name);
     }
     return ret;
 }
