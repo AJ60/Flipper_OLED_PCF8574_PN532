@@ -98,3 +98,6 @@ telegram_bot/
 *.otp.bin
 mics/FlipperOTP/*.bin
 scripts/diy_otp_*.bin
+/analyze_map.py
+/get_cmds.py
+nm_*.txt

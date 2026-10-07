@@ -34,6 +34,11 @@ coreenv = SConscript(
 )
 SConscript("site_scons/cc.scons", exports={"ENV": coreenv})
 
+# Forward OS environment variables for subprocesses (PATH, etc.)
+forward_os_env = {
+    "PATH": os.environ["PATH"],
+}
+
 # Create a separate "dist" environment and add construction envs to it
 distenv = coreenv.Clone(
     tools=[
@@ -45,7 +50,7 @@ distenv = coreenv.Clone(
         "doxygen",
         "textfile",
     ],
-    ENV=os.environ,
+    ENV=forward_os_env,
     UPDATE_BUNDLE_DIR="dist/${DIST_DIR}/f${TARGET_HW}-update-${DIST_SUFFIX}",
 )
 

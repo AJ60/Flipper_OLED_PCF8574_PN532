@@ -7,11 +7,15 @@ __NM_ARM_BIN = "arm-none-eabi-nm"
 
 
 def generate(env):
+    # Use the already-resolved tool paths from crosscc tool
+    objcopy_bin = env.get("OBJCOPY", "arm-none-eabi-objcopy")
+    nm_bin = env.get("NM", "arm-none-eabi-nm")
+
     env.SetDefault(
         BIN2DFU="${FBT_SCRIPT_DIR}/bin2dfu.py",
         BIN_SIZE_SCRIPT="${FBT_SCRIPT_DIR}/fwsize.py",
-        OBJCOPY=__OBJCOPY_ARM_BIN,  # FIXME
-        NM=__NM_ARM_BIN,  # FIXME
+        OBJCOPY=objcopy_bin,
+        NM=nm_bin,
     )
 
     if not env["VERBOSE"]:
@@ -70,7 +74,8 @@ def exists(env):
     except KeyError:
         pass
 
-    if objcopy := env.WhereIs(__OBJCOPY_ARM_BIN):
+    # Try the resolved path from crosscc
+    if objcopy := env.WhereIs("arm-none-eabi-objcopy"):
         return objcopy
 
     raise SCons.Errors.StopError("Could not detect objcopy for arm")

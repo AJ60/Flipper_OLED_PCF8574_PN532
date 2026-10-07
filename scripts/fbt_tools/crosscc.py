@@ -12,11 +12,13 @@ def prefix_commands(env, command_prefix, cmd_list):
     for command in cmd_list:
         if command in env:
             prefixed_binary = command_prefix + env[command]
-            if not env.WhereIs(prefixed_binary):
+            full_path = env.WhereIs(prefixed_binary)
+            if not full_path:
                 raise StopError(
                     f"Toolchain binary {prefixed_binary} not found in PATH."
                 )
-            env.Replace(**{command: prefixed_binary})
+            # Use full path to avoid PATH issues in subprocesses
+            env.Replace(**{command: full_path})
 
 
 def _get_tool_version(env, tool):
@@ -58,9 +60,16 @@ def generate(env, **kw):
     env.SetDefault(
         TOOLCHAIN_PREFIX=kw.get("toolchain_prefix"),
     )
+    # Set defaults for extra toolchain commands before prefixing
+    toolchain_prefix = env.subst("$TOOLCHAIN_PREFIX")
+    env.SetDefault(
+        OBJCOPY="objcopy",
+        NM="nm",
+        SIZE="size",
+    )
     prefix_commands(
         env,
-        env.subst("$TOOLCHAIN_PREFIX"),
+        toolchain_prefix,
         [
             "AR",
             "AS",
@@ -72,6 +81,8 @@ def generate(env, **kw):
             "GDB",
             "GDBPY",
             "OBJDUMP",
+            "NM",
+            "SIZE",
         ],
     )
     # Call CC to check version
