@@ -589,13 +589,18 @@ The table below outlines each app's role and its external hardware routing mecha
 | Application | Category | Primary Function | External CC1101 Compatibility & Mechanism |
 |---|---|---|---|
 | **Sub-GHz RAW Edit** (`subghz_raw_edit`) | 🛠️ Signal Utility | On-device waveform editor; trims noise and zooms into pulse trains | 💾 File-based processor (acts on captured `.sub` files) |
+| **Subhound** (`subhound`) | 🛠️ Signal Utility | On-device classifier for BinRAW captures; classifies 17 ISM signal protocols | 💾 File-based analyzer (acts on `.sub` files) |
 | **Sub Analyzer** (`sub_analyzer`) | 🛠️ Signal Utility | Deeply parses `.sub` captures, extracts protocol bits and timing | 💾 File-based analyzer (acts on captured `.sub` files) |
 | **Sub Duplicate Finder** (`sub_dup_finder`) | 🛠️ Signal Utility | Scans SD card to identify and delete duplicate Sub-GHz captures | 💾 Storage utility (manages `.sub` file duplicates) |
 | **Radio Scanner** (`radio_scanner`) | 🛠️ Signal Utility | Real-time scanner piping raw analog demodulation to piezo speaker | 🔌 **Automatic** via `subghz_radio_device_loader` with `[Ext]` OLED indicator |
 | **Spectrum Analyzer** (`spectrum_analyzer`) | 🛠️ Signal Utility | Live graphical RF signal strength & band activity visualizer | 🔌 **Automatic** via `subghz_radio_device_loader` (`cc1101_int` / `cc1101_ext`) |
 | **Weather Station** (`weather_station`) | 🚗 Sensor Decoder | Decodes outdoor weather sensors (Acurite, Oregon, Nexus 433/868/915 MHz) | 🔌 **Automatic** via `subghz_radio_device_loader` |
 | **TPMS Reader** (`tpms_reader`) | 🚗 Sensor Decoder | Tire Pressure Monitoring System sensor decoder and RF bridge | 🔌 **Automatic** via `subghz_radio_device_loader` |
+| **RS41 Tracker** (`rs41_tracker`) | 🚗 Sensor Decoder | Receives & decodes Vaisala RS41 radiosondes (GPS, altitude, PTU weather data) | 🔌 **Native** external CC1101 SPI (PA4 CS) toggle with INT/EXT indicator |
+| **Walkie Talkie** (`walkie_talkie`) | 📡 Comm & Remote | FRS 22-channel activity monitor, auto-squelch, and live RSSI scanner | 🔌 **Automatic** via `subghz_radio_device_loader` with `[Ext]` OLED indicator |
 | **Genie Door Recorder** (`genie_record`) | 🚗 Vehicle Decoder | Decodes and replays Genie garage door rolling codes (`.gne`) | 🔌 **Automatic** via `radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto)` |
+| **Rolling Flaws** (`rolling_flaws`) | 🚗 Vehicle Decoder | Keeloq and rolling-code flaw vulnerability tester & transmitter | 🔌 **Automatic** via `radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto)` |
+| **Meal Pager Tool** (`meal_pager`) | 📡 Comm & Remote | Simulates and tests restaurant paging systems (Retekess T119 coaster pagers) | 🔌 **Native** internal & external CC1101 switching |
 | **Enhanced Sub-GHz Chat** (`esubghz_chat`)| 📡 Comm & Remote | Point-to-point encrypted Sub-GHz two-way text messaging | 🔌 **Native** auto-loader with external CC1101 pin routing & fallback |
 | **Flipper Share** (`flipper_share`) | 📡 Comm & Remote | Ad-hoc wireless file transfer system over Sub-GHz channels | 🔌 **Automatic** via `radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto)` |
 | **Sub-GHz Remote** (`subghz_remote`) | 📡 Comm & Remote | Quick-action remote mapping 5 `.sub` files to hardware buttons | 🔌 **Native** `SubGhzRadioDeviceTypeExternalCC1101` selector |
