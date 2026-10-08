@@ -156,10 +156,7 @@ static void subghz_scene_radio_settings_set_tx_power(VariableItem* item) {
     // Apply TX power to current preset data immediately so it takes effect
     // on the next TX without requiring a preset reload.
     subghz_txrx_set_preset_internal(
-        subghz->txrx,
-        subghz->last_settings->frequency,
-        subghz->last_settings->preset_index,
-        index);
+        subghz->txrx, subghz->last_settings->frequency, subghz->last_settings->preset_index, index);
 }
 
 static void subghz_scene_receiver_config_set_debug_pin(VariableItem* item) {
@@ -354,18 +351,17 @@ void subghz_scene_radio_settings_on_enter(void* context) {
 
     // Add Region selection
     item = variable_item_list_add(
-        variable_item_list,
-        "Region",
-        REGION_COUNT,
-        subghz_scene_radio_settings_set_region,
-        subghz);
-    const char* current_region =
-        subghz_setting_get_region(subghz_txrx_get_setting(subghz->txrx));
+        variable_item_list, "Region", REGION_COUNT, subghz_scene_radio_settings_set_region, subghz);
+    const char* current_region = subghz_setting_get_region(subghz_txrx_get_setting(subghz->txrx));
     uint8_t region_index = 0;
-    if(strcmp(current_region, "EU") == 0) region_index = 1;
-    else if(strcmp(current_region, "US") == 0) region_index = 2;
-    else if(strcmp(current_region, "JP") == 0) region_index = 3;
-    else if(strcmp(current_region, "CUSTOM") == 0) region_index = 4;
+    if(strcmp(current_region, "EU") == 0)
+        region_index = 1;
+    else if(strcmp(current_region, "US") == 0)
+        region_index = 2;
+    else if(strcmp(current_region, "JP") == 0)
+        region_index = 3;
+    else if(strcmp(current_region, "CUSTOM") == 0)
+        region_index = 4;
     variable_item_set_current_value_index(item, region_index);
     variable_item_set_current_value_text(item, region_text[region_index]);
 

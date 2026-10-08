@@ -78,7 +78,8 @@ bool furi_hal_ina219_init(void) {
             bool ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, addr8, 10);
             bool ok = false;
             if(ready) {
-                ok = furi_hal_i2c_read_reg_16(&furi_hal_i2c_handle_power, addr8, INA_REG_CONFIG, &cfg, 20);
+                ok = furi_hal_i2c_read_reg_16(
+                    &furi_hal_i2c_handle_power, addr8, INA_REG_CONFIG, &cfg, 20);
             }
 
             if(ok) {
@@ -86,16 +87,24 @@ bool furi_hal_ina219_init(void) {
                 // Check if device is INA226 by reading Manufacturer ID and Die ID
                 uint16_t mfg_id = 0, die_id = 0;
                 bool is_226 =
-                    furi_hal_i2c_read_reg_16(&furi_hal_i2c_handle_power, addr8, INA226_REG_MANUFACTURER_ID, &mfg_id, 20) &&
-                    furi_hal_i2c_read_reg_16(&furi_hal_i2c_handle_power, addr8, INA226_REG_DIE_ID, &die_id, 20);
+                    furi_hal_i2c_read_reg_16(
+                        &furi_hal_i2c_handle_power,
+                        addr8,
+                        INA226_REG_MANUFACTURER_ID,
+                        &mfg_id,
+                        20) &&
+                    furi_hal_i2c_read_reg_16(
+                        &furi_hal_i2c_handle_power, addr8, INA226_REG_DIE_ID, &die_id, 20);
                 furi_hal_i2c_release(&furi_hal_i2c_handle_power);
 
                 if(is_226 && mfg_id == INA226_MANUFACTURER_ID_VAL && die_id == INA226_DIE_ID_VAL) {
                     s_is_ina226 = true;
                     // Configure INA226: 64x averaging (0x4727) and calibrate for 0.1 Ohm shunt (CAL = 0x0200)
                     furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-                    furi_hal_i2c_write_reg_16(&furi_hal_i2c_handle_power, addr8, INA_REG_CONFIG, 0x4727, 20);
-                    furi_hal_i2c_write_reg_16(&furi_hal_i2c_handle_power, addr8, INA_REG_CALIBRATION, 0x0200, 20);
+                    furi_hal_i2c_write_reg_16(
+                        &furi_hal_i2c_handle_power, addr8, INA_REG_CONFIG, 0x4727, 20);
+                    furi_hal_i2c_write_reg_16(
+                        &furi_hal_i2c_handle_power, addr8, INA_REG_CALIBRATION, 0x0200, 20);
                     furi_hal_i2c_release(&furi_hal_i2c_handle_power);
                     FURI_LOG_I(
                         TAG,

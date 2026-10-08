@@ -97,11 +97,11 @@ bool furi_hal_subghz_is_alive(void) {
 }
 
 // Token bucket for duty cycle enforcement
-#define DUTY_CYCLE_TOKEN_SCALE 1000  // ms * 1000 for sub-ms precision
+#define DUTY_CYCLE_TOKEN_SCALE 1000 // ms * 1000 for sub-ms precision
 
 static uint32_t furi_hal_subghz_max_tokens_ms(const FuriHalRegionBand* band) {
     if(band->duty_cycle == 0 || band->duty_cycle >= 100) return UINT32_MAX;
-    return (band->duty_cycle * 3600000UL) / 100;  // Max tokens = duty% * 1 hour in ms
+    return (band->duty_cycle * 3600000UL) / 100; // Max tokens = duty% * 1 hour in ms
 }
 
 static void furi_hal_subghz_refill_tokens(FuriHalRegionBand* band) {
@@ -115,8 +115,10 @@ static void furi_hal_subghz_refill_tokens(FuriHalRegionBand* band) {
     // Tokens replenish at rate: duty_cycle% per ms
     uint32_t refill = (elapsed_ms * band->duty_cycle * DUTY_CYCLE_TOKEN_SCALE) / 100;
     uint32_t max_tokens = furi_hal_subghz_max_tokens_ms(band) * DUTY_CYCLE_TOKEN_SCALE;
-    if(band->tokens_ms + refill > max_tokens) band->tokens_ms = max_tokens;
-    else band->tokens_ms += refill;
+    if(band->tokens_ms + refill > max_tokens)
+        band->tokens_ms = max_tokens;
+    else
+        band->tokens_ms += refill;
     band->last_update_tick = now;
 }
 
@@ -135,17 +137,18 @@ bool furi_hal_subghz_consume_tokens(FuriHalRegionBand* band, uint32_t tx_duratio
 // Listen-Before-Talk check
 bool furi_hal_subghz_lbt_check(FuriHalRegionBand* band) {
     if(!band->lbt_required) return true;
-    
+
     // Switch to RX briefly to measure RSSI
     furi_hal_subghz_rx();
     furi_delay_ms(1); // Settle
-    
+
     float rssi = furi_hal_subghz_get_rssi();
     furi_hal_subghz_idle();
-    
+
     if(rssi > band->lbt_rssi_threshold) {
         // Channel busy: random backoff
-        uint32_t backoff = band->lbt_min_backoff_ms + 
+        uint32_t backoff =
+            band->lbt_min_backoff_ms +
             (furi_hal_random_get() % (band->lbt_max_backoff_ms - band->lbt_min_backoff_ms + 1));
         furi_delay_ms(backoff);
         return false; // Caller should retry
@@ -189,7 +192,11 @@ void furi_hal_subghz_init(void) {
         // Normal CC1101: part=0, ver=20 / 0x14.
         // If SPI is bad, do not continue to GDO0/RX/TX tests.
         if((part != 0) || (ver != 20)) {
-            FURI_LOG_E(TAG, "CC1101 SPI test FAILED: expected part=0 ver=20, got part=%u ver=%u", part, ver);
+            FURI_LOG_E(
+                TAG,
+                "CC1101 SPI test FAILED: expected part=0 ver=20, got part=%u ver=%u",
+                part,
+                ver);
             break;
         }
 
@@ -422,13 +429,17 @@ bool furi_hal_subghz_tx(void) {
     const FuriHalRegion* region = furi_hal_region_get();
     if(region && !furi_hal_subghz.bypass_region) {
         for(size_t i = 0; i < region->bands_count; i++) {
-            if(region->bands[i].start <= furi_hal_subghz_get_frequency() && 
+            if(region->bands[i].start <= furi_hal_subghz_get_frequency() &&
                region->bands[i].end >= furi_hal_subghz_get_frequency()) {
                 // Estimate TX duration (conservative 10ms for typical packet)
                 uint32_t est_tx_ms = 10;
-                if(!furi_hal_subghz_consume_tokens((FuriHalRegionBand*)&region->bands[i], est_tx_ms)) {
-                    FURI_LOG_W(TAG, "TX blocked: duty cycle exceeded for band %lu-%lu",
-                               region->bands[i].start, region->bands[i].end);
+                if(!furi_hal_subghz_consume_tokens(
+                       (FuriHalRegionBand*)&region->bands[i], est_tx_ms)) {
+                    FURI_LOG_W(
+                        TAG,
+                        "TX blocked: duty cycle exceeded for band %lu-%lu",
+                        region->bands[i].start,
+                        region->bands[i].end);
                     return false;
                 }
                 // Listen-Before-Talk
@@ -931,7 +942,7 @@ bool furi_hal_subghz_start_async_tx(FuriHalSubGhzAsyncTxCallback callback, void*
     const FuriHalRegion* region = furi_hal_region_get();
     if(region && !furi_hal_subghz.bypass_region) {
         for(size_t i = 0; i < region->bands_count; i++) {
-            if(region->bands[i].start <= furi_hal_subghz_get_frequency() && 
+            if(region->bands[i].start <= furi_hal_subghz_get_frequency() &&
                region->bands[i].end >= furi_hal_subghz_get_frequency()) {
                 // Async TX: check if we have tokens for at least 100ms burst
                 if(!furi_hal_subghz_consume_tokens((FuriHalRegionBand*)&region->bands[i], 100)) {

@@ -90,7 +90,7 @@ App(
         "src/firmware/morse_flipper_tx_groups_runtime.c",
         "src/firmware/trainer.c",
         "src/firmware/trainer_files.c",
-        "src/firmware/usb/*.c",
+        "src/firmware/usb/morse_usb_midi.c",
     ],
     targets=["f7"],
     fap_category="Tools",

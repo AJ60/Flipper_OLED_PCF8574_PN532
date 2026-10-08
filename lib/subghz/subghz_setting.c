@@ -96,29 +96,93 @@ static const uint32_t subghz_hopper_frequency_list[] = {
 // Extended frequency lists for World mode / Extended range
 static const uint32_t subghz_extended_frequency_list[] = {
     /* 300 - 361 (315 MHz band - Yard Stick One) */
-    300000000, 302757000, 303000000, 303875000, 303900000, 304250000,
-    307000000, 307500000, 307800000, 309000000, 310000000,
-    312000000, 312100000, 312200000, 313000000, 313850000, 314000000,
-    314350000, 314980000, 315000000, 318000000, 320000000, 320150000,
-    330000000, 345000000, 348000000, 350000000, 360000000,
-    
+    300000000,
+    302757000,
+    303000000,
+    303875000,
+    303900000,
+    304250000,
+    307000000,
+    307500000,
+    307800000,
+    309000000,
+    310000000,
+    312000000,
+    312100000,
+    312200000,
+    313000000,
+    313850000,
+    314000000,
+    314350000,
+    314980000,
+    315000000,
+    318000000,
+    320000000,
+    320150000,
+    330000000,
+    345000000,
+    348000000,
+    350000000,
+    360000000,
+
     /* 378 - 481 (433 MHz extended) */
-    378000000, 387000000, 390000000, 418000000, 420000000, 425000000,
-    430000000, 430500000, 431000000, 431500000, 433075000,
-    433220000, 433420000, 433657070, 433889000, 433920000 | FREQUENCY_FLAG_DEFAULT,
-    434075000, 434176948, 434190000, 434390000, 434420000,
-    434620000, 434775000, 438900000, 440175000, 450000000, 460000000,
-    464000000, 467750000, 470000000, 480000000,
-    
+    378000000,
+    387000000,
+    390000000,
+    418000000,
+    420000000,
+    425000000,
+    430000000,
+    430500000,
+    431000000,
+    431500000,
+    433075000,
+    433220000,
+    433420000,
+    433657070,
+    433889000,
+    433920000 | FREQUENCY_FLAG_DEFAULT,
+    434075000,
+    434176948,
+    434190000,
+    434390000,
+    434420000,
+    434620000,
+    434775000,
+    438900000,
+    440175000,
+    450000000,
+    460000000,
+    464000000,
+    467750000,
+    470000000,
+    480000000,
+
     /* 749 - 962 (868/915 MHz extended) */
-    749000000, 779000000, 863000000, 868350000, 868400000, 868460000,
-    868800000, 868950000, 869000000, 902000000, 906400000, 915000000,
-    920000000, 923000000, 928000000, 960000000,
+    749000000,
+    779000000,
+    863000000,
+    868350000,
+    868400000,
+    868460000,
+    868800000,
+    868950000,
+    869000000,
+    902000000,
+    906400000,
+    915000000,
+    920000000,
+    923000000,
+    928000000,
+    960000000,
     0,
 };
 
 static const uint32_t subghz_extended_hopper_frequency_list[] = {
-    315000000, 433920000, 868350000, 915000000,
+    315000000,
+    433920000,
+    868350000,
+    915000000,
     0,
 };
 
@@ -141,7 +205,7 @@ struct SubGhzSetting {
     FrequencyList_t frequencies;
     FrequencyList_t hopper_frequencies;
     SubGhzSettingCustomPresetStruct* preset;
-    FuriString* region_code;  // "00"=World, "EU", "US", "JP", or custom file path
+    FuriString* region_code; // "00"=World, "EU", "US", "JP", or custom file path
 };
 
 SubGhzSetting* subghz_setting_alloc(void) {
@@ -150,7 +214,7 @@ SubGhzSetting* subghz_setting_alloc(void) {
     FrequencyList_init(instance->hopper_frequencies);
     instance->preset = malloc(sizeof(SubGhzSettingCustomPresetStruct));
     SubGhzSettingCustomPresetItemArray_init(instance->preset->data);
-    instance->region_code = furi_string_alloc_set("00");  // Default World
+    instance->region_code = furi_string_alloc_set("00"); // Default World
     return instance;
 }
 
@@ -237,8 +301,7 @@ static void subghz_setting_load_default_region(SubGhzSetting* instance) {
         instance, "FM12K", subghz_device_cc1101_preset_2fsk_dev12khz_async_regs);
 
     subghz_setting_load_frequencies(instance->frequencies, subghz_frequency_list);
-    subghz_setting_load_frequencies(
-        instance->hopper_frequencies, subghz_hopper_frequency_list);
+    subghz_setting_load_frequencies(instance->hopper_frequencies, subghz_hopper_frequency_list);
 }
 
 // Region check removed
@@ -341,7 +404,8 @@ void subghz_setting_load(SubGhzSetting* instance, const char* file_path) {
             while(flipper_format_read_uint32(
                 fff_data_file, "Hopper_frequency", (uint32_t*)&temp_data32, 1)) {
                 if(furi_hal_subghz_is_frequency_valid(temp_data32)) {
-                    if(!subghz_setting_frequency_exists(instance->hopper_frequencies, temp_data32)) {
+                    if(!subghz_setting_frequency_exists(
+                           instance->hopper_frequencies, temp_data32)) {
                         FURI_LOG_I(TAG, "Hopper frequency loaded %lu", temp_data32);
                         FrequencyList_push_back(instance->hopper_frequencies, temp_data32);
                     }
@@ -396,7 +460,8 @@ void subghz_setting_load(SubGhzSetting* instance, const char* file_path) {
             instance->hopper_frequencies, subghz_hopper_frequency_list);
     }
 
-    if(header_error && file_path && strcmp(file_path, EXT_PATH("subghz/assets/setting_user")) == 0) {
+    if(header_error && file_path &&
+       strcmp(file_path, EXT_PATH("subghz/assets/setting_user")) == 0) {
         FileInfo file_info;
         if(storage_common_stat(storage, file_path, &file_info) == FSE_OK) {
             if(file_info.size > 0) {

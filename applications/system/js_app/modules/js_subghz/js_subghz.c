@@ -444,10 +444,10 @@ static void js_subghz_setup(struct mjs* mjs) {
         return;
     }
 
-    js_subghz->radio_device =
-        radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
+    js_subghz->radio_device = radio_device_loader_set(NULL, SubGhzRadioDeviceTypeExternalCC1101);
     if(!js_subghz->radio_device) {
-        mjs_prepend_errorf(mjs, MJS_INTERNAL_ERROR, "External radio selected but module not detected");
+        mjs_prepend_errorf(
+            mjs, MJS_INTERNAL_ERROR, "External radio selected but module not detected");
         mjs_return(mjs, MJS_UNDEFINED);
         return;
     }

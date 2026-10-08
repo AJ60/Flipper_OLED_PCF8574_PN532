@@ -43,7 +43,8 @@ static void
             AnimatedIconSwap* swap =
                 malloc(sizeof(AnimatedIconSwap) + (sizeof(uint8_t*) * meta.frame_count));
             if(swap == NULL) {
-                FURI_LOG_E(TAG, "Icon %s: failed to alloc %ld frames", name, (long)meta.frame_count);
+                FURI_LOG_E(
+                    TAG, "Icon %s: failed to alloc %ld frames", name, (long)meta.frame_count);
                 return;
             }
             int i = 0;

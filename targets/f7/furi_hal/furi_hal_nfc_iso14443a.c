@@ -193,11 +193,7 @@ static FuriHalNfcEvent furi_hal_nfc_iso14443_3a_listener_wait_event(uint32_t tim
         }
         return FuriHalNfcEventTimeout;
     } else {
-        Pn532Error pn_err = pn532_tg_get_data(
-            PN532_I2C_BUS,
-            rx_cmd,
-            &rx_cmd_len,
-            150);
+        Pn532Error pn_err = pn532_tg_get_data(PN532_I2C_BUS, rx_cmd, &rx_cmd_len, 150);
 
         if(pn_err == Pn532ErrorTimeout) {
             furi_hal_pn532_abort();
@@ -442,14 +438,21 @@ FuriHalNfcError furi_hal_nfc_iso14443a_listener_set_col_res_data(
     furi_check(atqa);
 
 #if defined(FURI_HAL_NFC_CHIP_PN532)
-    UNUSED(uid_len);
     // SENS_RES (ATQA) - 2 bytes
     furi_hal_pn532_ctx.target_params[0] = atqa[0];
     furi_hal_pn532_ctx.target_params[1] = atqa[1];
     // NFCID1t (UID) - 3 bytes
-    furi_hal_pn532_ctx.target_params[2] = uid[0];
-    furi_hal_pn532_ctx.target_params[3] = uid[1];
-    furi_hal_pn532_ctx.target_params[4] = uid[2];
+    // In PN532 target mode, the first byte emitted to the reader is 0x08 (mandated by PN532 ROM).
+    // The 3 bytes programmed into target_params[2..4] form bytes 1..3 of the 4-byte response.
+    if(uid_len == 4) {
+        furi_hal_pn532_ctx.target_params[2] = uid[1];
+        furi_hal_pn532_ctx.target_params[3] = uid[2];
+        furi_hal_pn532_ctx.target_params[4] = uid[3];
+    } else {
+        furi_hal_pn532_ctx.target_params[2] = uid[0];
+        furi_hal_pn532_ctx.target_params[3] = uid[1];
+        furi_hal_pn532_ctx.target_params[4] = uid[2];
+    }
     // SEL_RES (SAK) - 1 byte
     furi_hal_pn532_ctx.target_params[5] = sak;
     // Pad remaining 32 bytes (FeliCaParams, NFCID3t, etc.) with 0

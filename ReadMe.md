@@ -609,10 +609,46 @@ The table below outlines each app's role and its external hardware routing mecha
 | **APRS Transmitter** (`aprstx`) | 📡 Comm & Remote | Automatic Packet Reporting System telemetry & AX.25 beaconing | 🔌 **Native** internal / external CC1101 hardware switcher |
 | **Subdriving / Wardriver** (`wardriver`) | 📡 Comm & Remote | RF mapping tool pairing Sub-GHz captures with GPS coordinates | 🔌 **Automatic** Sub-GHz receiver pipeline |
 | **Quac! Remote** (`quac`) | 📡 Comm & Remote | Universal multi-protocol macro controller (Sub-GHz, IR, RFID) | 🔌 **Native** `SubGhzRadioDeviceTypeExternalCC1101` support |
+| **ProtoView** (`protoview`) | 🛠️ Signal Utility | Real-time digital signal detection, pulse waveform visualizer & on-device decoder | 🔌 **Automatic** via `radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto)` |
+| **Ham Radio Receiver** (`ham_radio`) | 📡 Comm & Remote | 70cm amateur radio receiver with real-time S-meter, spectrum sweep view, and channel manager | 🔌 **Automatic** via `radio_device_loader_set(NULL, SubGhzRadioDeviceTypeAuto)` |
 | **Music to Sub-GHz Radio** (`fmf_to_sub`) | 📡 Comm & Remote | Converts `.fmf` ringtones/audio layouts to broadcast-ready `.sub` files | 💾 File converter (prepares `.sub` files for RF broadcast) |
 
 > [!TIP]
 > **Radio Selection**: When using an external CC1101 or Ebyte E07 module, go to **Settings ➔ Radio** in the firmware and select **External** (or **Auto**). All apps using `subghz_radio_device_loader` will automatically route through the external module on the 18-pin expansion header, unlocking full transmission range and extended frequencies!
+
+---
+
+### 🌟 Advanced Features & Upgrades (v2.3-OLED Edition)
+
+The DIY Flipper Zero (OLED Edition) includes unique enhancements combining the best features of **Unleashed**, **RogueMaster**, and hardware-tailored DIY additions:
+
+1. 🎮 **Covert Stealth Mode ("Games Only" Profile)**:
+   - **Activation**: Enter the famous **Konami Code** (`Up, Up, Down, Down, Left, Right, Left, Right`) while on the main desktop screen.
+   - **Feedback**: Vibrates the PCF8574 haptic motor to confirm toggling.
+   - **Effect**: Instantly masks out security testing modules (`Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO`) from the application menu, presenting a completely benign portable retro handheld gaming console. Repeat the sequence to unhide all tools.
+
+2. 🛡️ **OLED Display Burn-In Protection & Hardware Contrast Scaling**:
+   - **30s Auto Screen-Off**: Default `display_off_delay_ms` set to 30,000 ms to protect monochrome SSD1306/SH1106 displays against stationary pixel burn-in.
+   - **Hardware Contrast Tuning**: `furi_hal_light_set(LightBacklight, ...)` maps brightness levels smoothly to SSD1306 contrast register `0x81` (from `0x15` up to `0xCF`) and issues display sleep `0xAE` on brightness `0`.
+
+3. 🐬 **Gamification & Dolphin Progression (RogueMaster Parity)**:
+   - **Daily Deed Cap**: Increased `dolphin_deed_limits` daily cap from 69 to 198 across Sub-GHz, RFID, and NFC actions.
+   - **Unlocked Level 1–3 Animations**: `.unlock_anims = true` enabled by default to allow cycling through all level animations without gatekeeping.
+
+4. 📻 **Ham Radio 70cm Receiver Suite**:
+   - **Preloaded Frequencies**: Includes 8 standard 70cm amateur channels (`433.000` to `446.000 MHz`), including `433.500 MHz` International FM Calling and `446.000 MHz` National Simplex Calling frequencies.
+   - **Real-Time S-Meter & Spectrum Sweep**: S0–S9+ dBm signal strength meter and live RF channel sweep graph.
+   - **SD Card Persistence**: Automatically saves and loads your custom frequencies to `/ext/ham_radio/band_plan.txt`.
+
+5. 🔍 **Sub-GHz Waveform Visualizer & Auto Signal Recognizer Suite**:
+   - **ProtoView**: Real-time oscilloscope-style pulse/waveform display with microsecond zoom, panning, and live decoding for TPMS tire sensors, KeeLoq, Oregon Weather, and PT2262 remotes.
+   - **Auto-Hopper**: Frequency hopping auto-signal recognizer in the built-in Sub-GHz receiver that cycles across ISM bands and locks onto active transmissions.
+
+6. 💳 **PN532 True 4-Byte UID Target Emulation**:
+   - Corrected byte alignment for PN532 target mode collision resolution, properly accounting for the PN532 ROM's fixed `0x08` prefix and preventing duplicate-byte truncation during reader interrogation.
+
+7. 🏷️ **LF-RFID Discrete Resonance Balance Meter (`lfrfid_debug`)**:
+   - Added real-time delta frequency readout (`Tank: +/- X.X Hz`) and visual balance indicator targeting exact 125.000 kHz to streamline DIY coil and capacitor tuning.
 
 ---
 
@@ -624,6 +660,8 @@ The table below outlines each app's role and its external hardware routing mecha
 * ⚡ [**PN532 NFC Protocol & Hardware Acceleration Guide**](documentation/NFC_PN532_ENGINEERING.md) — Hardware Crypto1 acceleration, ISO 14443-4 APDU tunneling for bank cards, and retry mechanisms.
 * 🔌 [**Expansion Modules & GPIO Protocol Guide**](documentation/ExpansionModules.md) — Serial expansion protocol, RPC framing, and 18-pin expansion header pinout.
 * 📐 [**Hardware & Electrical Engineering Guide**](documentation/HARDWARE_DESIGN.md) — Complete schematic analysis, 18-pin header matrix, I2C pull-up calculations, and decoupling guidelines.
+* 🎮 [**Key Combos & Hardware Recovery Guide**](documentation/KeyCombo.md) — Button combinations, Konami Code Covert Stealth Mode, DFU flashing, and hardware reset.
+* ⚙️ [**Sub-GHz Frequency & Visualizer Guide**](documentation/SubGHzSettings.md) — Frequency list configuration, auto signal recognition / hopping engine, ProtoView, and Ham Radio suite.
 * ❓ [**FAQ & Troubleshooting Guide**](faq_diy_flipper.md) — Common boot issues, I2C freeze recovery, CC1101 calibration, and power troubleshooting.
 
 ---

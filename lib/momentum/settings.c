@@ -10,7 +10,7 @@ MomentumSettings momentum_settings = {
     .asset_pack = "", // Default
     .anim_speed = 100, // 100%
     .cycle_anims = 0, // Meta.txt
-    .unlock_anims = false, // OFF
+    .unlock_anims = true, // ON - RogueMaster standard (all animations play from Level 1)
     .menu_style = MenuStyleDsi, // DSi
     .lock_on_boot = true, // ON
     .bad_pins_format = false, // OFF
@@ -49,6 +49,7 @@ MomentumSettings momentum_settings = {
     .rpc_color_bg = {{ScreenColorModeDefault, {.value = 0xFF8200}}}, // Default Orange
     .subghz_calib = 0,
     .subghz_autocal = false, // Manual-only calibration by default (stable freq on cheap crystals)
+    .games_only_mode = false, // RogueMaster Konami stealth mode: default disabled
 };
 
 typedef enum {
@@ -125,6 +126,7 @@ static const struct {
     {setting_uint(rpc_color_bg, 0x000000, 0xFFFFFF)},
     {setting_int(subghz_calib, -2000, 2000)},
     {setting_bool(subghz_autocal)},
+    {setting_bool(games_only_mode)},
 };
 
 void momentum_settings_load(void) {

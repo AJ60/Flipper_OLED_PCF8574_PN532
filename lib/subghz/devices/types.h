@@ -92,8 +92,8 @@ typedef struct {
 
 typedef struct {
     bool has_extended_range : 1; ///< Supports YARD Stick One extended frequency bands
-    bool has_amplifier : 1;      ///< Has external PA/LNA (e.g. E07 module)
-    bool has_external_spi : 1;   ///< Connected via external SPI header (not internal RF section)
+    bool has_amplifier      : 1; ///< Has external PA/LNA (e.g. E07 module)
+    bool has_external_spi   : 1; ///< Connected via external SPI header (not internal RF section)
 } SubGhzDeviceCapabilities;
 
 struct SubGhzDevice {

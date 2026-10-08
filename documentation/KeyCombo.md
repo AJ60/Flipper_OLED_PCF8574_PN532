@@ -59,3 +59,19 @@ On this DIY hardware build, buttons are wired to a **PCF8574 remote 8-bit I/O ex
 | **Quick Action / Favorite** | Hold `OK` (on Desktop) | Opens the quick-access menu for favorite scripts/apps. |
 | **System Info** | Press `UP` (on Desktop) | Opens device info, battery state, and firmware build details. |
 | **Lock Device** | Hold `UP` (on Desktop) | Locks keypad inputs to prevent unintended presses in pocket. |
+| **Toggle Covert Stealth Mode** | `▲ ▲ ▼ ▼ ◄ ► ◄ ►` (Konami Code) | Toggles "Games Only" profile, masking out RF & hacking tools. |
+
+---
+
+### 4. Covert Stealth Mode ("Games Only" Profile) 🎮
+
+The DIY Flipper features a hardware-integrated covert profile toggled via the classic **Konami Code**:
+
+* **Sequence**: `UP, UP, DOWN, DOWN, LEFT, RIGHT, LEFT, RIGHT` (entered sequentially on the main desktop screen).
+* **Haptic Feedback**: The PCF8574 I2C vibro motor pulses briefly to confirm toggling without generating audible buzzer tones.
+* **Effect**:
+  - Instantly masks out security testing modules (`Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO`) from the primary application menu.
+  - Leaves only benign apps, games, media players, and system utilities visible.
+  - The setting persists across reboots in `/int/momentum.settings`.
+  - Re-entering the Konami code (`▲ ▲ ▼ ▼ ◄ ► ◄ ►`) on Desktop immediately unhides all penetration testing tools.
+

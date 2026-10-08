@@ -34,8 +34,8 @@ static void lfrfid_debug_view_tune_draw_callback(Canvas* canvas, void* _model) {
     canvas_set_color(canvas, ColorBlack);
 
     char buffer[TEMP_STR_LEN + 1];
-    double freq = ((double)SystemCoreClock / (model->ARR + 1));
-    double duty = (double)((model->CCR + 1) * 100) / (model->ARR + 1);
+    float freq = ((float)SystemCoreClock / (float)(model->ARR + 1));
+    float duty = (float)((model->CCR + 1) * 100) / (float)(model->ARR + 1);
     snprintf(
         buffer,
         TEMP_STR_LEN,
@@ -45,11 +45,25 @@ static void lfrfid_debug_view_tune_draw_callback(Canvas* canvas, void* _model) {
         "duty = %.4f",
         model->pos == 0 ? ">" : "",
         model->ARR,
-        freq,
+        (double)freq,
         model->pos == 1 ? ">" : "",
         model->CCR,
-        duty);
+        (double)duty);
     elements_multiline_text_aligned(canvas, 2, 2, AlignLeft, AlignTop, buffer);
+
+    // Resonance tuning meter & delta from 125.000 kHz (y: 43 to 63)
+    canvas_draw_line(canvas, 0, 43, 127, 43);
+    float delta = freq - 125000.0f;
+    char delta_str[32];
+    snprintf(delta_str, sizeof(delta_str), "Tank: %+.1f Hz", (double)delta);
+    canvas_draw_str(canvas, 2, 54, delta_str);
+
+    // Visual resonance balance bar (center tick = exact 125 kHz)
+    canvas_draw_line(canvas, 70, 60, 125, 60);
+    canvas_draw_line(canvas, 97, 54, 97, 60); // 125 kHz target marker
+    int32_t marker_x = 97 + (int32_t)(delta / 200.0f);
+    marker_x = CLAMP(marker_x, 124, 71);
+    canvas_draw_box(canvas, marker_x - 1, 56, 3, 4);
 }
 
 static void lfrfid_debug_view_tune_button_up(LfRfidTuneView* tune_view) {

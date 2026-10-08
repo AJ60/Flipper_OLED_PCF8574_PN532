@@ -132,3 +132,28 @@ The Furi OS framework provides thread-safe abstractions over low-level RTOS cons
 2. **`FuriRecord`**: Thread-safe global service locator and dependency injection container (e.g. `furi_record_open(RECORD_GUI)`).
 3. **`FuriMutex` / `FuriSemaphore`**: Mutual exclusion locks with priority inheritance to prevent priority inversions on shared hardware buses (I2C1, SPI1).
 4. **`FuriThread`**: Encapsulates FreeRTOS tasks with memory-safe initialization, lifecycle callbacks, and signal flag mechanisms.
+
+---
+
+## 5. Advanced Firmware Features & System Enhancements (v2.3 Architecture)
+
+The DIY Flipper firmware integrates specialized subsystem upgrades bridging **Unleashed**, **RogueMaster**, and custom hardware drivers:
+
+### 🎮 A. Covert Stealth Mode ("Games Only" Profile)
+* **Desktop Observer**: Located in [`desktop_view_main.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/desktop/views/desktop_view_main.c). Listens for the Konami code (`▲ ▲ ▼ ▼ ◄ ► ◄ ►`) during main pet screen idle loop.
+* **Haptic Actuation**: Drives PCF8574 I2C output pin 6 to vibrate the motor for 120 ms without producing audio buzzer noise.
+* **Dynamic Menu Masking**: In [`loader_menu.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/loader/loader_menu.c), the menu builder inspects `momentum_settings.games_only_mode`. When active, it filters out all penetration testing modules (`Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO`), presenting a benign retro-gaming interface.
+
+### 🛡️ B. OLED Display Burn-In Mitigation & Contrast Scaling
+* **Auto Sleep**: [`notification_app.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/notification/notification_app.c) enforces a default 30-second screen-off timer (`display_off_delay_ms = 30000`).
+* **Hardware Contrast Scaling**: [`furi_hal_light.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_light.c) maps incoming brightness levels linearly to SSD1306 contrast register `0x81` (from minimum `0x15` to maximum `0xCF`). When brightness is set to 0, it transmits `0xAE` (Display OFF / Sleep mode) over I2C1 to eliminate quiescent OLED current.
+
+### 🐬 C. Dolphin Gamification & Animation Un-Gating
+* **Deed Limits**: [`dolphin_deed.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/dolphin/helpers/dolphin_deed.c) expands daily XP caps from 69 to 198 (RogueMaster standard), accelerating dolphin leveling across Sub-GHz and NFC actions.
+* **Un-Gated Animations**: Sets `.unlock_anims = true` in Momentum settings defaults, enabling users to view and cycle through Level 1–3 animations without gating.
+
+### 📻 D. Sub-GHz Visualizer & RF Analysis Ecosystem
+* **ProtoView**: Real-time pulse visualizer with microsecond horizontal zoom and on-device decoding for TPMS, weather stations, and fixed-code remotes.
+* **Ham Radio**: 70cm amateur radio receiver featuring real-time S0–S9+ signal meter, spectrum sweep graph, and persistent frequency plan stored at `/ext/ham_radio/band_plan.txt`.
+* **Automatic Hardware Radio Routing**: Applications utilize `subghz_radio_device_loader` to automatically switch between onboard and external CC1101 transceivers with pin routing and RF switch coordination.
+

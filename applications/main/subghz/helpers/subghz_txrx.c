@@ -390,22 +390,26 @@ SubGhzTxRxStartTxState subghz_txrx_tx_start(SubGhzTxRx* instance, FlipperFormat*
                             }
                         } else {
                             switch(tx_check) {
-                                case SubGhzTxBlockedRegion:
-                                    FURI_LOG_E(TAG, "TX blocked: frequency not allowed in current region (%s)",
-                                               furi_hal_region_get_name());
-                                    ret = SubGhzTxRxStartTxStateErrorRegionBlocked;
-                                    break;
-                                case SubGhzTxBlockedDefault:
-                                    FURI_LOG_E(TAG, "TX blocked: frequency requires extended range. Enable in Radio Settings.");
-                                    ret = SubGhzTxRxStartTxStateErrorExtendedBlocked;
-                                    break;
-                                case SubGhzTxUnsupported:
-                                    FURI_LOG_E(TAG, "TX blocked: frequency not supported by hardware");
-                                    ret = SubGhzTxRxStartTxStateErrorUnsupported;
-                                    break;
-                                default:
-                                    FURI_LOG_E(TAG, "Only Rx");
-                                    ret = SubGhzTxRxStartTxStateErrorOnlyRx;
+                            case SubGhzTxBlockedRegion:
+                                FURI_LOG_E(
+                                    TAG,
+                                    "TX blocked: frequency not allowed in current region (%s)",
+                                    furi_hal_region_get_name());
+                                ret = SubGhzTxRxStartTxStateErrorRegionBlocked;
+                                break;
+                            case SubGhzTxBlockedDefault:
+                                FURI_LOG_E(
+                                    TAG,
+                                    "TX blocked: frequency requires extended range. Enable in Radio Settings.");
+                                ret = SubGhzTxRxStartTxStateErrorExtendedBlocked;
+                                break;
+                            case SubGhzTxUnsupported:
+                                FURI_LOG_E(TAG, "TX blocked: frequency not supported by hardware");
+                                ret = SubGhzTxRxStartTxStateErrorUnsupported;
+                                break;
+                            default:
+                                FURI_LOG_E(TAG, "Only Rx");
+                                ret = SubGhzTxRxStartTxStateErrorOnlyRx;
                             }
                         }
                     } else {

@@ -69,7 +69,8 @@ bool storage_settings_scene_format_confirm_on_event(void* context, SceneManagerE
                     app->scene_manager, StorageSettingsFormatConfirm, counter);
             } else {
                 scene_manager_set_scene_state(app->scene_manager, StorageSettingsFormatConfirm, 0);
-                scene_manager_set_scene_state(app->scene_manager, StorageSettingsFormatting, false);
+                scene_manager_set_scene_state(
+                    app->scene_manager, StorageSettingsFormatting, false);
                 scene_manager_next_scene(app->scene_manager, StorageSettingsFormatting);
             }
             consumed = true;

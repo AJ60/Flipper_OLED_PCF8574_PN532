@@ -24,101 +24,108 @@ const FuriHalRegion furi_hal_region_zero = {
 const FuriHalRegion furi_hal_region_eu_ru = {
     .country_code = "EU",
     .bands_count = 2,
-    .bands = {{
-        .start = 433050000,
-        .end = 434790000,
-        .power_limit = 12,
-        .duty_cycle = 1,
-        .tokens_ms = 0,
-        .last_update_tick = 0,
-        .last_tx_tick = 0,
-        .lbt_required = false,
-        .lbt_rssi_threshold = 0,
-        .lbt_min_backoff_ms = 0,
-        .lbt_max_backoff_ms = 0,
-    },{
-        .start = 868150000,
-        .end = 868550000,
-        .power_limit = 12,
-        .duty_cycle = 10,
-        .tokens_ms = 0,
-        .last_update_tick = 0,
-        .last_tx_tick = 0,
-        .lbt_required = true,
-        .lbt_rssi_threshold = -90,
-        .lbt_min_backoff_ms = 5,
-        .lbt_max_backoff_ms = 50,
-    }}};
+    .bands = {
+        {
+            .start = 433050000,
+            .end = 434790000,
+            .power_limit = 12,
+            .duty_cycle = 1,
+            .tokens_ms = 0,
+            .last_update_tick = 0,
+            .last_tx_tick = 0,
+            .lbt_required = false,
+            .lbt_rssi_threshold = 0,
+            .lbt_min_backoff_ms = 0,
+            .lbt_max_backoff_ms = 0,
+        },
+        {
+            .start = 868150000,
+            .end = 868550000,
+            .power_limit = 12,
+            .duty_cycle = 10,
+            .tokens_ms = 0,
+            .last_update_tick = 0,
+            .last_tx_tick = 0,
+            .lbt_required = true,
+            .lbt_rssi_threshold = -90,
+            .lbt_min_backoff_ms = 5,
+            .lbt_max_backoff_ms = 50,
+        }}};
 
 const FuriHalRegion furi_hal_region_us_ca_au = {
     .country_code = "US",
     .bands_count = 3,
-    .bands = {{
-        .start = 304100000,
-        .end = 321950000,
-        .power_limit = 12,
-        .duty_cycle = 100,
-        .tokens_ms = 0,
-        .last_update_tick = 0,
-        .last_tx_tick = 0,
-        .lbt_required = false,
-        .lbt_rssi_threshold = 0,
-        .lbt_min_backoff_ms = 0,
-        .lbt_max_backoff_ms = 0,
-    },{
-        .start = 433050000,
-        .end = 434790000,
-        .power_limit = 12,
-        .duty_cycle = 100,
-        .tokens_ms = 0,
-        .last_update_tick = 0,
-        .last_tx_tick = 0,
-        .lbt_required = false,
-        .lbt_rssi_threshold = 0,
-        .lbt_min_backoff_ms = 0,
-        .lbt_max_backoff_ms = 0,
-    },{
-        .start = 915000000,
-        .end = 928000000,
-        .power_limit = 12,
-        .duty_cycle = 100,
-        .tokens_ms = 0,
-        .last_update_tick = 0,
-        .last_tx_tick = 0,
-        .lbt_required = false,
-        .lbt_rssi_threshold = 0,
-        .lbt_min_backoff_ms = 0,
-        .lbt_max_backoff_ms = 0,
-    }}};
+    .bands = {
+        {
+            .start = 304100000,
+            .end = 321950000,
+            .power_limit = 12,
+            .duty_cycle = 100,
+            .tokens_ms = 0,
+            .last_update_tick = 0,
+            .last_tx_tick = 0,
+            .lbt_required = false,
+            .lbt_rssi_threshold = 0,
+            .lbt_min_backoff_ms = 0,
+            .lbt_max_backoff_ms = 0,
+        },
+        {
+            .start = 433050000,
+            .end = 434790000,
+            .power_limit = 12,
+            .duty_cycle = 100,
+            .tokens_ms = 0,
+            .last_update_tick = 0,
+            .last_tx_tick = 0,
+            .lbt_required = false,
+            .lbt_rssi_threshold = 0,
+            .lbt_min_backoff_ms = 0,
+            .lbt_max_backoff_ms = 0,
+        },
+        {
+            .start = 915000000,
+            .end = 928000000,
+            .power_limit = 12,
+            .duty_cycle = 100,
+            .tokens_ms = 0,
+            .last_update_tick = 0,
+            .last_tx_tick = 0,
+            .lbt_required = false,
+            .lbt_rssi_threshold = 0,
+            .lbt_min_backoff_ms = 0,
+            .lbt_max_backoff_ms = 0,
+        }}};
 
 const FuriHalRegion furi_hal_region_jp = {
     .country_code = "JP",
     .bands_count = 2,
-    .bands = {{
-        .start = 312000000,
-        .end = 315250000,
-        .power_limit = 12,
-        .duty_cycle = 1,
-        .tokens_ms = 0,
-        .last_update_tick = 0,
-        .last_tx_tick = 0,
-        .lbt_required = true,
-        .lbt_rssi_threshold = -90,
-        .lbt_min_backoff_ms = 5,
-        .lbt_max_backoff_ms = 50,
-    },{
-        .start = 920500000,
-        .end = 923500000,
-        .power_limit = 12,
-        .duty_cycle = 1,
-        .tokens_ms = 0,
-        .last_update_tick = 0,
-        .last_tx_tick = 0,
-        .lbt_required = true,
-        .lbt_rssi_threshold = -90,
-        .lbt_min_backoff_ms = 5,
-        .lbt_max_backoff_ms = 50,
-    }}};
+    .bands = {
+        {
+            .start = 312000000,
+            .end = 315250000,
+            .power_limit = 12,
+            .duty_cycle = 1,
+            .tokens_ms = 0,
+            .last_update_tick = 0,
+            .last_tx_tick = 0,
+            .lbt_required = true,
+            .lbt_rssi_threshold = -90,
+            .lbt_min_backoff_ms = 5,
+            .lbt_max_backoff_ms = 50,
+        },
+        {
+            .start = 920500000,
+            .end = 923500000,
+            .power_limit = 12,
+            .duty_cycle = 1,
+            .tokens_ms = 0,
+            .last_update_tick = 0,
+            .last_tx_tick = 0,
+            .lbt_required = true,
+            .lbt_rssi_threshold = -90,
+            .lbt_min_backoff_ms = 5,
+            .lbt_max_backoff_ms = 50,
+        }}};
 
 static const FuriHalRegion* const furi_hal_static_regions[] = {
     [FuriHalVersionRegionUnknown] = &furi_hal_region_zero,
@@ -140,7 +147,8 @@ void furi_hal_region_init(void) {
     furi_hal_dynamic_region_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
 
     // Initialize to World region (no restrictions) by default in RAM
-    size_t size = sizeof(FuriHalRegion) + sizeof(FuriHalRegionBand) * furi_hal_region_zero.bands_count;
+    size_t size =
+        sizeof(FuriHalRegion) + sizeof(FuriHalRegionBand) * furi_hal_region_zero.bands_count;
     furi_hal_dynamic_region = malloc(size);
     furi_check(furi_hal_dynamic_region);
     memcpy(furi_hal_dynamic_region, &furi_hal_region_zero, size);

@@ -106,6 +106,7 @@ typedef struct {
     ScreenFrameColor rpc_color_bg;
     int32_t subghz_calib;
     bool subghz_autocal; // true = auto-calibrate on every IDLE->TX (original behavior)
+    bool games_only_mode; // RogueMaster Konami stealth mode: restrict launcher to Games & Utilities
 } MomentumSettings;
 
 void momentum_settings_save(void);

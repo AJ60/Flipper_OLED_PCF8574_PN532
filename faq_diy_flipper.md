@@ -255,9 +255,53 @@ The NRF24L01+ transceiver connects to the 18-pin expansion header:
 
 ---
 
+## 🌟 Advanced v2.3-OLED Firmware Features
+
+### **Q21: How do I activate Covert Stealth Mode ("Games Only" Profile)?**
+* **Trigger**: Press the **Konami Code** on the main desktop pet screen:  
+  `▲ UP, ▲ UP, ▼ DOWN, ▼ DOWN, ◄ LEFT, ► RIGHT, ◄ LEFT, ► RIGHT`
+* **Confirmation**: The PCF8574 haptic vibration motor will pulse briefly (silent haptic feedback).
+* **Behavior**: Instantly conceals all penetration testing modules (`Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO`) from the application menu, presenting a completely benign retro-gaming handheld console.
+* **Reversal**: Enter the same sequence again on the desktop to unhide all tools. Setting persists across reboots in `/int/momentum.settings`.
+
+---
+
+### **Q22: How does OLED Screen Burn-In Protection work?**
+Because stationary monochrome OLED pixels can degrade over time, the firmware incorporates multi-stage burn-in mitigation:
+1. **30s Inactivity Sleep**: The default screen timeout is set to 30 seconds (`display_off_delay_ms = 30000`).
+2. **Hardware Contrast Scaling**: In **Settings ➔ Display**, backlight adjustments scale the SSD1306 contrast register `0x81` dynamically between `0x15` (dim) and `0xCF` (bright).
+3. **True Hardware Power-Down**: When brightness is set to 0 or during sleep, command `0xAE` turns off the internal OLED charge pump entirely, dropping current to $<10\,\mu\text{A}$.
+
+---
+
+### **Q23: How do I tune the discrete 125 kHz LF-RFID resonant antenna coil?**
+* **Tuning App**: Open **Applications ➔ Debug ➔ LF-RFID Debug ➔ Tune Tank**.
+* **Live Readout**: Displays the resonance frequency offset in real time: `Tank: +/- X.X Hz` along with a graphical balance center marker.
+* **Goal**: Adjust your hand-wound coil (typically 90–100 turns of 0.2mm wire) or add/remove small parallel capacitors until the delta is within **$\pm 200\text{ Hz}$** of 125.000 kHz for maximum RFID read range.
+
+---
+
+### **Q24: How does NFC Target / Card Emulation work with the PN532?**
+* The PN532 controller supports hardware target mode (`TgInitAsTarget`).
+* **Hardware ROM Quirk**: For 4-byte UIDs, the PN532 internal ROM hardware enforces byte 0 as `0x08`.
+* **Firmware Fix**: In v2.3, the firmware properly offsets the UID bytes (`uid[1..3]` -> `target_params[2..4]`), preventing duplicate byte corruption and ensuring external smartphone readers and door access controllers properly detect the emulated tag.
+
+---
+
+### **Q25: What is the Ham Radio application and how do I use it?**
+* **Location**: **Applications ➔ Sub-GHz ➔ Ham Radio** (`ham_radio.fap`).
+* **Features**:
+  - Preloaded with 8 standard 70cm amateur channels (`433.000` to `446.000 MHz`), including the `433.500 MHz` International FM Calling frequency.
+  - Live S-meter (S0 to S9+ dBm) calibrated for CC1101 RSSI.
+  - Live RF channel spectrum sweep graph.
+  - Automatically loads and persists custom frequencies to `/ext/ham_radio/band_plan.txt` on your microSD card.
+
+---
+
 ## 🤝 Project Links & Community
 
 * **GitHub Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 * **Bug Reports & Discussions**: [GitHub Issues](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/issues)
 * **License**: [GNU General Public License v3.0](LICENSE)
+
 

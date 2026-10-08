@@ -1,5 +1,36 @@
 # Changelog
 
+## [v2.3-OLED] — 2026-10-08 — Advanced Feature Integration (Unleashed & RogueMaster Parity, Display Burn-In Protection, Ham Radio & Sub-GHz Suite)
+
+### Highlights & Enhancements
+
+- **Covert Stealth Mode ("Games Only" Profile)**:
+  - Added Konami code observer (`Up, Up, Down, Down, Left, Right, Left, Right`) directly on the main desktop view with PCF8574 haptic vibration feedback.
+  - Toggles `momentum_settings.games_only_mode` persistently in flash storage.
+  - Filters and completely masks out wireless security modules (`Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO`) from the application menu when active, presenting a benign handheld gaming console.
+- **OLED Display Burn-In Protection**:
+  - Decreased default `display_off_delay_ms` to 30s (`30000 ms`) to protect monochrome SSD1306/SH1106 displays against phosphor burn-in.
+  - Linked `furi_hal_light_set(LightBacklight, ...)` to SSD1306 hardware contrast scaling register `0x81` (scaling from `0x15` to `0xCF`) and display sleep command `0xAE` on brightness `0`.
+- **Dolphin Gamification & Animations (RogueMaster Parity)**:
+  - Expanded `dolphin_deed_limits` daily cap from 69 to 198 across all RF, RFID, and NFC actions.
+  - Enabled `.unlock_anims = true` by default to unlock and cycle through all Level 1–3 animations without gating.
+- **Ham Radio Suite Overhaul**:
+  - Full amateur radio receiver tool with 8 preloaded 70cm amateur channels (`433.000` to `446.000 MHz`), including `433.500 MHz` International FM Calling and `446.000 MHz` National Simplex Calling frequencies.
+  - Resolved main menu `NULL` callback lockups and enabled standard Back navigation.
+  - Fixed inverted color drawing bug: S-meter, sweep bars, and status text now render in solid high-contrast `ColorBlack` on the OLED screen.
+  - Added full band plan persistence (`/ext/ham_radio/band_plan.txt`) saving added/removed channels across reboots.
+  - Eliminated CC1101 radio re-tuning thrashing during 200ms meter polling ticks.
+  - Re-spaced sweep plot boundaries (`y: 12..42`) and labels (`y: 43..51`) to avoid overlap with bottom on-screen action buttons (`y: 54..63`).
+- **NFC PN532 4-Byte UID Target Emulation**:
+  - Corrected target collision resolution data mapping in `furi_hal_nfc_iso14443a.c`: maps `uid[1..3]` to `target_params[2..4]` for 4-byte UIDs to account for PN532 hardware ROM's fixed `0x08` prefix, preventing duplicate-byte truncation.
+- **125 kHz Discrete LF-RFID Tuning Meter**:
+  - Added delta resonance frequency calculation (`Tank: +/- X.X Hz`) and visual center balance bar in `lfrfid_debug` to streamline discrete inductor/capacitor tank tuning.
+- **Sub-GHz Visualizer & Auto-Recognition Suite**:
+  - Verified and compiled ProtoView (pulse timing, zoom, and live decoding for TPMS, KeeLoq, Oregon v2, PT2262).
+  - Verified and compiled Spectrum Analyzer, Sub Analyzer, SubHound, and core Sub-GHz Frequency Hopper.
+
+---
+
 ## [v2.2-OLED] — 2026-08-30 — DIY Flipper Zero (OLED Edition by AJ_60)
 
 ### Highlights & Enhancements

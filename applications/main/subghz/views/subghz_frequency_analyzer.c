@@ -180,14 +180,14 @@ void subghz_frequency_analyzer_draw(Canvas* canvas, SubGhzFrequencyAnalyzerModel
         "%03ld.%03ld",
         model->frequency / 1000000 % 1000,
         model->frequency / 1000 % 1000);
-    
+
     // Check if frequency is blocked by region
     SubGhzTx tx_check = SubGhzTxUnsupported;
     if(model->frequency > 0) {
         tx_check = furi_hal_subghz_check_tx(model->frequency);
     }
     bool freq_blocked = (tx_check != SubGhzTxAllowed);
-    
+
     if(model->signal) {
         canvas_draw_box(canvas, 4, 10, 121, 19);
         canvas_set_color(canvas, ColorWhite);

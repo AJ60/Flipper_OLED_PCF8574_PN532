@@ -325,7 +325,9 @@ static void nfc_scene_mf_classic_dict_attack_prepare_view(NfcApp* instance) {
             }
 
             instance->nfc_dict_context.dict = keys_dict_alloc(
-                NFC_APP_MF_CLASSIC_DICT_SYSTEM_PATH, KeysDictModeOpenExisting, sizeof(MfClassicKey));
+                NFC_APP_MF_CLASSIC_DICT_SYSTEM_PATH,
+                KeysDictModeOpenExisting,
+                sizeof(MfClassicKey));
             if(keys_dict_get_total_keys(instance->nfc_dict_context.dict) == 0) {
                 keys_dict_free(instance->nfc_dict_context.dict);
                 instance->nfc_dict_context.dict = NULL;

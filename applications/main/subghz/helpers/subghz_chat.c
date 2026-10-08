@@ -111,9 +111,7 @@ bool subghz_chat_worker_start(
 // is only used from the CLI context, which has no SubGhzTxRx instance.
 // The flag mechanism is available for future GUI use via:
 // subghz_chat_worker_set_device_switched_flag(instance, &txrx->device_switched);
-void subghz_chat_worker_set_device_switched_flag(
-    SubGhzChatWorker* instance,
-    volatile bool* flag) {
+void subghz_chat_worker_set_device_switched_flag(SubGhzChatWorker* instance, volatile bool* flag) {
     furi_assert(instance);
     subghz_tx_rx_worker_set_device_switched_flag(instance->subghz_txrx, flag);
 }

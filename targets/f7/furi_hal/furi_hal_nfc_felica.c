@@ -217,11 +217,7 @@ static FuriHalNfcEvent furi_hal_nfc_felica_listener_wait_event(uint32_t timeout_
         }
         return FuriHalNfcEventTimeout;
     } else {
-        Pn532Error pn_err = pn532_tg_get_data(
-            PN532_I2C_BUS,
-            rx_cmd,
-            &rx_cmd_len,
-            150);
+        Pn532Error pn_err = pn532_tg_get_data(PN532_I2C_BUS, rx_cmd, &rx_cmd_len, 150);
 
         if(pn_err == Pn532ErrorTimeout) {
             furi_hal_pn532_abort();

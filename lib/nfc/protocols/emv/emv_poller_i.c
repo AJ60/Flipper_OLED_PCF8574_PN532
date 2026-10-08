@@ -9,7 +9,10 @@ const PDOLValue pdol_term_type = {0x9F5A, {0x00}}; // Terminal transaction type
 const PDOLValue pdol_merchant_type = {0x9F58, {0x01}}; // Merchant type indicator
 const PDOLValue pdol_term_trans_qualifies = {
     0x9F66,
-    {0x36, 0x00, 0x40, 0x00}}; // Terminal transaction qualifiers (EMV contactless & contact, online capable)
+    {0x36,
+     0x00,
+     0x40,
+     0x00}}; // Terminal transaction qualifiers (EMV contactless & contact, online capable)
 const PDOLValue pdol_addtnl_term_qualifies = {
     0x9F40,
     {0x79, 0x00, 0x40, 0x80}}; // Additional terminal qualifiers
@@ -29,7 +32,9 @@ const PDOLValue pdol_transaction_cert = {0x98, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 const PDOLValue pdol_unpredict_number = {0x9F37, {0x82, 0x3D, 0xDE, 0x7A}}; // Unpredictable number
 const PDOLValue pdol_term_type_emv = {0x9F35, {0x22}}; // Terminal Type (Attended, Online capable)
 const PDOLValue pdol_term_capabilities = {0x9F33, {0xE0, 0xF8, 0xC8}}; // Terminal Capabilities
-const PDOLValue pdol_ifd_serial = {0x9F1E, {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38}}; // IFD Serial
+const PDOLValue pdol_ifd_serial = {
+    0x9F1E,
+    {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38}}; // IFD Serial
 const PDOLValue pdol_trans_time = {0x9F21, {0x12, 0x00, 0x00}}; // Transaction Time (HHMMSS)
 const PDOLValue pdol_app_version = {0x9F09, {0x00, 0x02}}; // Application Version
 const PDOLValue pdol_vlp_support = {0x9F7A, {0x00}}; // VLP / Electronic Cash Terminal Support
@@ -217,7 +222,8 @@ static bool
             size_t pan_copy_len = MIN((size_t)pan_bytes, sizeof(app->pan));
             memset(app->pan, 0, sizeof(app->pan));
             for(int n = 0; n < sep_nibble; n++) {
-                uint8_t digit = (n % 2 == 0) ? (buff[i + (n / 2)] >> 4) : (buff[i + (n / 2)] & 0x0F);
+                uint8_t digit = (n % 2 == 0) ? (buff[i + (n / 2)] >> 4) :
+                                               (buff[i + (n / 2)] & 0x0F);
                 if(n % 2 == 0) {
                     app->pan[n / 2] = (digit << 4);
                 } else {
@@ -231,10 +237,18 @@ static bool
 
             // Extract expiry YYMM from 4 nibbles immediately after 'D'
             if(sep_nibble + 4 < total_nibbles) {
-                uint8_t y1 = (buff[i + ((sep_nibble + 1) / 2)] >> (((sep_nibble + 1) % 2 == 0) ? 4 : 0)) & 0x0F;
-                uint8_t y2 = (buff[i + ((sep_nibble + 2) / 2)] >> (((sep_nibble + 2) % 2 == 0) ? 4 : 0)) & 0x0F;
-                uint8_t m1 = (buff[i + ((sep_nibble + 3) / 2)] >> (((sep_nibble + 3) % 2 == 0) ? 4 : 0)) & 0x0F;
-                uint8_t m2 = (buff[i + ((sep_nibble + 4) / 2)] >> (((sep_nibble + 4) % 2 == 0) ? 4 : 0)) & 0x0F;
+                uint8_t y1 =
+                    (buff[i + ((sep_nibble + 1) / 2)] >> (((sep_nibble + 1) % 2 == 0) ? 4 : 0)) &
+                    0x0F;
+                uint8_t y2 =
+                    (buff[i + ((sep_nibble + 2) / 2)] >> (((sep_nibble + 2) % 2 == 0) ? 4 : 0)) &
+                    0x0F;
+                uint8_t m1 =
+                    (buff[i + ((sep_nibble + 3) / 2)] >> (((sep_nibble + 3) % 2 == 0) ? 4 : 0)) &
+                    0x0F;
+                uint8_t m2 =
+                    (buff[i + ((sep_nibble + 4) / 2)] >> (((sep_nibble + 4) % 2 == 0) ? 4 : 0)) &
+                    0x0F;
                 app->exp_year = (y1 << 4) | y2;
                 app->exp_month = (m1 << 4) | m2;
             }
@@ -482,7 +496,8 @@ static bool emv_decode_response_tlv_internal(
         if((first_byte & 32) == 32) { // "Constructed" -- contains more TLV data to parse
             FURI_LOG_T(TAG, "Constructed TLV %x", tag);
             if(i + tlen > len) {
-                FURI_LOG_W(TAG, "Constructed TLV tag length exceeds buffer (%d + %d > %d)", i, tlen, len);
+                FURI_LOG_W(
+                    TAG, "Constructed TLV tag length exceeds buffer (%d + %d > %d)", i, tlen, len);
                 return false;
             }
             if(!emv_decode_response_tlv_internal(&buff[i], tlen, app, depth + 1)) {
@@ -586,10 +601,7 @@ EmvError emv_poller_select_ppse(EmvPoller* instance) {
             rx_len -= 2;
         }
 
-        if(!emv_decode_response_tlv(
-               buff,
-               rx_len,
-               &instance->data->emv_application)) {
+        if(!emv_decode_response_tlv(buff, rx_len, &instance->data->emv_application)) {
             error = EmvErrorProtocol;
             FURI_LOG_E(TAG, "Failed to parse application");
         }
@@ -643,10 +655,7 @@ EmvError emv_poller_select_application(EmvPoller* instance) {
             rx_len -= 2;
         }
 
-        if(!emv_decode_response_tlv(
-               buff,
-               rx_len,
-               &instance->data->emv_application)) {
+        if(!emv_decode_response_tlv(buff, rx_len, &instance->data->emv_application)) {
             error = EmvErrorProtocol;
             FURI_LOG_E(TAG, "Failed to parse application");
             break;
@@ -706,7 +715,8 @@ EmvError emv_poller_get_processing_options(EmvPoller* instance) {
             iso14443_4a_error = iso14443_4a_poller_send_block_pwt_ext(
                 instance->iso14443_4a_poller, instance->tx_buffer, instance->rx_buffer);
             if(iso14443_4a_error != Iso14443_4aErrorNone) {
-                FURI_LOG_E(TAG, "Failed to get processing options on retry, error %u", iso14443_4a_error);
+                FURI_LOG_E(
+                    TAG, "Failed to get processing options on retry, error %u", iso14443_4a_error);
                 error = emv_process_error(iso14443_4a_error);
                 break;
             }
@@ -719,10 +729,7 @@ EmvError emv_poller_get_processing_options(EmvPoller* instance) {
             rx_len -= 2;
         }
 
-        if(!emv_decode_response_tlv(
-               buff,
-               rx_len,
-               &instance->data->emv_application)) {
+        if(!emv_decode_response_tlv(buff, rx_len, &instance->data->emv_application)) {
             error = EmvErrorProtocol;
             FURI_LOG_E(TAG, "Failed to parse processing options");
         }
@@ -772,7 +779,12 @@ EmvError emv_poller_read_sfi_record(EmvPoller* instance, uint8_t sfi, uint8_t re
         const uint8_t* rx_data = bit_buffer_get_data(instance->rx_buffer);
         if(rx_len == 2 && rx_data[0] == EMV_TAG_RESP_BUF_SIZE) {
             uint8_t exact_len = rx_data[1];
-            FURI_LOG_D(TAG, "SFI 0x%X record %d: card requested Le=0x%02X, reissuing", sfi, record_num, exact_len);
+            FURI_LOG_D(
+                TAG,
+                "SFI 0x%X record %d: card requested Le=0x%02X, reissuing",
+                sfi,
+                record_num,
+                exact_len);
             emv_sfi_header[4] = exact_len;
             bit_buffer_reset(instance->tx_buffer);
             bit_buffer_reset(instance->rx_buffer);
@@ -811,9 +823,7 @@ EmvError emv_poller_read_afl(EmvPoller* instance, bool bruteforce_sfi, uint16_t*
                 // Iterate through all records in file
                 for(uint8_t record = record_start; record <= record_end; ++record) {
                     if((sfi >= 2) && (sfi <= 3) && (record <= 5))
-                        FURI_BIT_SET(
-                            *readed_mask,
-                            record + ((sfi - 2) * 8));
+                        FURI_BIT_SET(*readed_mask, record + ((sfi - 2) * 8));
 
                     error = emv_poller_read_sfi_record(instance, sfi, record);
                     if(error != EmvErrorNone) break;
@@ -821,14 +831,13 @@ EmvError emv_poller_read_afl(EmvPoller* instance, bool bruteforce_sfi, uint16_t*
                     size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
                     const uint8_t* rx_data = bit_buffer_get_data(instance->rx_buffer);
                     // Strip ISO 14443-4 status bytes (SW1 SW2)
-                    if(rx_len >= 2 && (rx_data[rx_len - 2] == 0x90 || (rx_data[rx_len - 2] >> 4) == 0x6)) {
+                    if(rx_len >= 2 &&
+                       (rx_data[rx_len - 2] == 0x90 || (rx_data[rx_len - 2] >> 4) == 0x6)) {
                         rx_len -= 2;
                     }
 
                     if(!emv_decode_response_tlv(
-                           rx_data,
-                           rx_len,
-                           &instance->data->emv_application)) {
+                           rx_data, rx_len, &instance->data->emv_application)) {
                         error = EmvErrorProtocol;
                         FURI_LOG_T(TAG, "Failed to parse SFI 0x%X record %d", sfi, record);
                     }
@@ -853,14 +862,13 @@ EmvError emv_poller_read_afl(EmvPoller* instance, bool bruteforce_sfi, uint16_t*
                     size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
                     const uint8_t* rx_data = bit_buffer_get_data(instance->rx_buffer);
                     // Strip ISO 14443-4 status bytes (SW1 SW2)
-                    if(rx_len >= 2 && (rx_data[rx_len - 2] == 0x90 || (rx_data[rx_len - 2] >> 4) == 0x6)) {
+                    if(rx_len >= 2 &&
+                       (rx_data[rx_len - 2] == 0x90 || (rx_data[rx_len - 2] >> 4) == 0x6)) {
                         rx_len -= 2;
                     }
 
                     if(!emv_decode_response_tlv(
-                           rx_data,
-                           rx_len,
-                           &instance->data->emv_application)) {
+                           rx_data, rx_len, &instance->data->emv_application)) {
                         error = EmvErrorProtocol;
                         FURI_LOG_T(TAG, "Failed to parse SFI 0x%X record %d", sfi, record);
                     }
@@ -888,14 +896,12 @@ EmvError emv_poller_read_afl(EmvPoller* instance, bool bruteforce_sfi, uint16_t*
                 size_t rx_len = bit_buffer_get_size_bytes(instance->rx_buffer);
                 const uint8_t* rx_data = bit_buffer_get_data(instance->rx_buffer);
                 // Strip ISO 14443-4 status bytes (SW1 SW2)
-                if(rx_len >= 2 && (rx_data[rx_len - 2] == 0x90 || (rx_data[rx_len - 2] >> 4) == 0x6)) {
+                if(rx_len >= 2 &&
+                   (rx_data[rx_len - 2] == 0x90 || (rx_data[rx_len - 2] >> 4) == 0x6)) {
                     rx_len -= 2;
                 }
 
-                if(!emv_decode_response_tlv(
-                       rx_data,
-                       rx_len,
-                       &instance->data->emv_application)) {
+                if(!emv_decode_response_tlv(rx_data, rx_len, &instance->data->emv_application)) {
                     error = EmvErrorProtocol;
                     FURI_LOG_T(TAG, "Failed to parse SFI 0x%X record %d", sfi, record);
                 }
@@ -945,10 +951,7 @@ static EmvError emv_poller_req_get_data(EmvPoller* instance, uint16_t tag) {
             rx_len -= 2;
         }
 
-        if(!emv_decode_response_tlv(
-               buff,
-               rx_len,
-               &instance->data->emv_application)) {
+        if(!emv_decode_response_tlv(buff, rx_len, &instance->data->emv_application)) {
             error = EmvErrorProtocol;
             FURI_LOG_E(TAG, "Failed to parse get data");
         }

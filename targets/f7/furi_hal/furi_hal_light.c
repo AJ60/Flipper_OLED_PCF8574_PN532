@@ -42,7 +42,8 @@ void furi_hal_light_set(Light light, uint8_t value) {
             gui_lock(gui);
             if(on) {
                 u8g2_SetPowerSave(&gui->canvas->fb, 0);
-                u8g2_SetContrast(&gui->canvas->fb, value);
+                uint8_t ev = (value >= 128) ? 0xCF : (uint8_t)(0x15 + ((uint32_t)value * (0xCF - 0x15)) / 128);
+                u8g2_SetContrast(&gui->canvas->fb, ev);
             } else {
                 u8g2_SetPowerSave(&gui->canvas->fb, 1);
             }

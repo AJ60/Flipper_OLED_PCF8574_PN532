@@ -80,7 +80,8 @@ bool momentum_app_scene_misc_on_event(void* context, SceneManagerEvent event) {
                 bool copy_success = false;
                 for(int i = 0; i < 10; i++) {
                     if(storage_common_copy(
-                           app->storage, EXT_PATH("dolphin/firstboot.bin"), SLIDESHOW_FS_PATH) == FSE_OK) {
+                           app->storage, EXT_PATH("dolphin/firstboot.bin"), SLIDESHOW_FS_PATH) ==
+                       FSE_OK) {
                         copy_success = true;
                         break;
                     }

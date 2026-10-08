@@ -226,6 +226,26 @@ graph LR
 ### Resonant Tank Calculation:
 $$f_0 = \frac{1}{2 \pi \sqrt{L \cdot C}} = \frac{1}{2 \pi \sqrt{1.2 \times 10^{-3} \cdot 2.2 \times 10^{-9}}} \approx 125.02\text{ kHz}$$
 
+### 5.1 Discrete Coil Tuning & Balance Meter (`lfrfid_debug`)
+Because discrete capacitors and hand-wound coils have wide component tolerances (typically ±10% to ±20%), achieving exact 125.000 kHz resonance is vital for optimal read range.
+
+The firmware includes an active resonance tuning view in **Debug ➔ LF-RFID Debug ➔ Tune Tank**:
+* **Real-Time Delta Readout**: Measures pulse ringback frequency and displays `Tank: +XX.X Hz` (if resonant above 125 kHz) or `Tank: -XX.X Hz` (if resonant below 125 kHz).
+* **Visual Balance Indicator**: Renders a centered balance marker on the 128x64 OLED canvas. If the marker is left of center, the tank frequency is too low (excess inductance or capacitance). If right of center, it is too high.
+* **Tuning Guidelines**:
+  - Hand-wound antennas typically require **90 to 100 turns** of 0.2 mm (AWG 32) enameled copper wire wound on a 30 mm ID spool.
+  - Target an inductance of **$1.18\text{ mH} - 1.22\text{ mH}$** when paired with a quality **$2.2\text{ nF}$ C0G/NP0** ceramic or polypropylene film capacitor.
+  - Trim turns by 1–2 loops or solder small parallel trimming capacitors (47 pF–220 pF) until the delta readout is within **$\pm 200\text{ Hz}$** of 125.000 kHz.
+
+### 5.2 Pin Concurrency & Coexistence Architecture
+1. **PA5 (Header Pin 7 / C3)**:
+   - Shared between LF-RFID 125 kHz carrier drive (`TIM2_CH1`) and the external Ebyte E07 CC1101 power amplifier enable (`TXEN`).
+   - The Sub-GHz driver unconditionally parks `PA5 = LOW` during idle, standby, and reception states via `cc1101_ext_txen_park_low()`. This ensures the LF-RFID coil is never accidentally energized during Sub-GHz activity.
+2. **PA2 (Header A2)**:
+   - Shared between LF-RFID tag emulation pulse drive (`TIM2_CH3`) and the NXP PN532 NFC module active-low interrupt line (`IRQ`).
+   - The OS task model enforces mutual exclusion: the NFC poller/listener thread and the LF-RFID worker thread never run concurrently.
+
+
 ---
 
 ## 6. Power Decoupling & Filtering Guidelines

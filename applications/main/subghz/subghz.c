@@ -221,8 +221,8 @@ SubGhz* subghz_alloc(bool alloc_for_tx_only) {
     // previous session left in the txrx instance).
     if(!alloc_for_tx_only) {
         if(subghz->last_settings->radio_device == (uint32_t)SubGhzRadioDeviceTypeExternalCC1101) {
-            SubGhzRadioDeviceType actual = subghz_txrx_radio_device_set(
-                subghz->txrx, SubGhzRadioDeviceTypeExternalCC1101);
+            SubGhzRadioDeviceType actual =
+                subghz_txrx_radio_device_set(subghz->txrx, SubGhzRadioDeviceTypeExternalCC1101);
             if(actual != SubGhzRadioDeviceTypeExternalCC1101) {
                 // RAM-only fallback: keep the file at External so re-attaching
                 // the module needs no re-selection; the Radio Settings scene

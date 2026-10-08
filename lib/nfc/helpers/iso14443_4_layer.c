@@ -223,7 +223,8 @@ Iso14443_4aError iso14443_4_layer_decode_response_pwt_ext(
 
                     bit_buffer_append_byte(
                         output_data,
-                        ISO14443_4_BLOCK_PCB_S | ISO14443_4_BLOCK_PCB_S_WTX | ISO14443_4_BLOCK_PCB);
+                        ISO14443_4_BLOCK_PCB_S | ISO14443_4_BLOCK_PCB_S_WTX |
+                            ISO14443_4_BLOCK_PCB);
                     bit_buffer_append_byte(output_data, wtxm);
                     ret = Iso14443_4aErrorSendExtra;
                 } else {

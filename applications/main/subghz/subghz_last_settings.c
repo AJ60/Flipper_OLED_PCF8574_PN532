@@ -170,7 +170,7 @@ void subghz_last_settings_load(SubGhzLastSettings* instance, size_t preset_count
             }
             uint32_t tx_power = 0;
             if(!flipper_format_read_uint32(
-                    fff_data_file, SUBGHZ_LAST_SETTING_FIELD_TX_POWER, &tx_power, 1)) {
+                   fff_data_file, SUBGHZ_LAST_SETTING_FIELD_TX_POWER, &tx_power, 1)) {
                 flipper_format_rewind(fff_data_file);
             }
             instance->tx_power = (uint8_t)(tx_power & 0xFF);
@@ -178,10 +178,7 @@ void subghz_last_settings_load(SubGhzLastSettings* instance, size_t preset_count
             if(config_version >= SUBGHZ_LAST_SETTING_FILE_VERSION) {
                 uint32_t radio_device = 1;
                 if(!flipper_format_read_uint32(
-                       fff_data_file,
-                       SUBGHZ_LAST_SETTING_FIELD_RADIO_DEVICE,
-                       &radio_device,
-                       1)) {
+                       fff_data_file, SUBGHZ_LAST_SETTING_FIELD_RADIO_DEVICE, &radio_device, 1)) {
                     flipper_format_rewind(fff_data_file);
                 } else {
                     instance->radio_device = radio_device;

@@ -48,7 +48,12 @@ CC1101Status cc1101_write_reg(const FuriHalSpiBusHandle* handle, uint8_t reg, ui
         return rx[1]; // CHIP_RDYn=1 signals failure to callers
     }
     if((rx[0].CHIP_RDYn | rx[1].CHIP_RDYn) != 0) {
-        FURI_LOG_D(TAG, "write_reg 0x%02X: CHIP_RDYn error rx0=%u rx1=%u", reg, rx[0].CHIP_RDYn, rx[1].CHIP_RDYn);
+        FURI_LOG_D(
+            TAG,
+            "write_reg 0x%02X: CHIP_RDYn error rx0=%u rx1=%u",
+            reg,
+            rx[0].CHIP_RDYn,
+            rx[1].CHIP_RDYn);
     }
     return rx[1];
 }
@@ -188,7 +193,8 @@ void cc1101_set_pa_table(const FuriHalSpiBusHandle* handle, const uint8_t value[
         return;
     }
     if((rx[0].CHIP_RDYn | rx[8].CHIP_RDYn) != 0) {
-        FURI_LOG_D(TAG, "set_pa_table: CHIP_RDYn error rx0=%u rx8=%u", rx[0].CHIP_RDYn, rx[8].CHIP_RDYn);
+        FURI_LOG_D(
+            TAG, "set_pa_table: CHIP_RDYn error rx0=%u rx8=%u", rx[0].CHIP_RDYn, rx[8].CHIP_RDYn);
     }
 }
 

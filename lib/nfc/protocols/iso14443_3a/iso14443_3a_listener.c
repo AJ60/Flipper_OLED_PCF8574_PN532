@@ -110,8 +110,7 @@ NfcCommand iso14443_3a_listener_run(NfcGenericEvent event, void* context) {
             command = NfcCommandSleep;
         } else {
 #if defined(FURI_HAL_NFC_CHIP_PN532)
-            instance->iso14443_3a_event.type =
-                Iso14443_3aListenerEventTypeReceivedStandardFrame;
+            instance->iso14443_3a_event.type = Iso14443_3aListenerEventTypeReceivedStandardFrame;
 #else
             if(iso14443_crc_check(Iso14443CrcTypeA, nfc_event->data.buffer)) {
                 instance->iso14443_3a_event.type =

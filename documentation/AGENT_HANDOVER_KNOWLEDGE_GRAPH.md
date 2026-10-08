@@ -253,3 +253,21 @@ sequenceDiagram
 3. **Pin Concurrency Conflicts**:
    - `PA1` is shared between CC1101 GDO0 and LF-RFID Data. Do not run Sub-GHz and RFID simultaneously.
    - `PA2` is shared between PN532 IRQ and LF-RFID Pull.
+
+---
+
+## 6. Advanced Firmware Features (v2.3 Integration)
+
+* **Covert Stealth Mode ("Games Only" Profile)**:
+  - **Observer**: [`applications/services/desktop/views/desktop_view_main.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/desktop/views/desktop_view_main.c) detects the Konami code sequence (`Up, Up, Down, Down, Left, Right, Left, Right`) on desktop.
+  - **Storage**: Toggles `momentum_settings.games_only_mode` serialized in [`lib/momentum/settings.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/lib/momentum/settings.c).
+  - **Menu Masking**: [`applications/services/loader/loader_menu.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/loader/loader_menu.c) intercepts and hides `Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO` when active.
+* **OLED Burn-In & Contrast Engine**:
+  - **Screen Timeout**: Default `display_off_delay_ms` set to 30,000 ms in [`applications/services/notification/notification_app.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/notification/notification_app.c).
+  - **Contrast Scaling**: [`targets/f7/furi_hal/furi_hal_light.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_light.c) maps `LightBacklight` directly to SSD1306 contrast register `0x81` (scaling `0x15` to `0xCF`) and sends display sleep `0xAE` on value `0`.
+* **Ham Radio Suite**:
+  - **App Location**: [`applications/external/ham_radio/`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/external/ham_radio/).
+  - **Defaults**: 8 preloaded 70cm amateur channels (`433.000` to `446.000 MHz`).
+  - **Persistence**: Band plan serialized with `FlipperFormat` at `/ext/ham_radio/band_plan.txt`.
+* **PN532 Target Emulation Alignment**:
+  - In [`targets/f7/furi_hal/furi_hal_nfc_iso14443a.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_nfc_iso14443a.c), 4-byte UIDs map `uid[1..3]` to `target_params[2..4]` to match the PN532 ROM's fixed `0x08` prefix.

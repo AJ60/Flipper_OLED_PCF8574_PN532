@@ -127,3 +127,30 @@ If `#Add_standard_frequencies: true` is not changed, your frequencies will be ad
     434420000,
     868350000,
 ```
+
+---
+
+## 🔍 Sub-GHz Visualizer & Auto Signal Recognizer Ecosystem
+
+The firmware provides advanced RF inspection and decoding tools:
+
+### 1. Auto Signal Recognizer & Hopping Engine
+* **In Sub-GHz App**: In **Read ➔ Config**, toggle **Hopping: ON** to activate the hopping engine.
+* **Operation**: The CC1101 cycles through the `Hopper_frequency` list every 100 ms. When an incoming RF RSSI spike exceeds the detection threshold, the hopper automatically pauses on that frequency and begins decoding pulses into protocol packets.
+
+### 2. ProtoView (Real-Time Pulse Visualizer & On-Device Decoder)
+* **Application**: Located in **Applications ➔ Sub-GHz ➔ ProtoView** (`protoview.fap`).
+* **Features**:
+  - Real-time oscilloscope-style pulse waveform visualizer on the 128x64 OLED display.
+  - Interactive horizontal timebase zoom (from 50 µs up to 10 ms per division) and pan controls.
+  - On-the-fly digital packet decoders for TPMS (car tire pressure sensors), Oregon Scientific weather stations, KeeLoq rolling codes, and PT2262 gate remotes.
+  - Automatically routes through an external CC1101 or Ebyte E07 module if selected.
+
+### 3. Ham Radio 70cm Receiver Suite
+* **Application**: Located in **Applications ➔ Sub-GHz ➔ Ham Radio** (`ham_radio.fap`).
+* **Features**:
+  - Preloaded amateur radio channels (`433.000` to `446.000 MHz`), including `433.500 MHz` International FM Calling.
+  - Real-time S-meter (S0 to S9+ dBm) with OLED-optimized monochrome progress bar.
+  - Spectrum sweep channel activity graph.
+  - Custom frequencies are automatically persisted to `/ext/ham_radio/band_plan.txt`.
+

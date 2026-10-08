@@ -32,11 +32,37 @@ View* desktop_main_get_view(DesktopMainView* main_view) {
     return main_view->view;
 }
 
+#include <momentum/momentum.h>
+#include <furi_hal_vibro.h>
+
+static const InputKey konami_sequence[] = {
+    InputKeyUp, InputKeyUp, InputKeyDown, InputKeyDown,
+    InputKeyLeft, InputKeyRight, InputKeyLeft, InputKeyRight
+};
+static uint8_t konami_step = 0;
+
 bool desktop_main_input_callback(InputEvent* event, void* context) {
     furi_assert(event);
     furi_assert(context);
 
     DesktopMainView* main_view = context;
+
+    if(event->type == InputTypeShort) {
+        if(event->key == konami_sequence[konami_step]) {
+            konami_step++;
+            if(konami_step == COUNT_OF(konami_sequence)) {
+                konami_step = 0;
+                momentum_settings.games_only_mode = !momentum_settings.games_only_mode;
+                momentum_settings_save();
+                furi_hal_vibro_on(true);
+                furi_delay_ms(80);
+                furi_hal_vibro_on(false);
+                return true;
+            }
+        } else {
+            konami_step = (event->key == konami_sequence[0]) ? 1 : 0;
+        }
+    }
 
     if(event->type == InputTypeShort || event->type == InputTypeLong) {
         if(event->key == InputKeyOk) {

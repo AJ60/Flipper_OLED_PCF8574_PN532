@@ -92,9 +92,10 @@ const SubGhzDeviceInterconnect subghz_device_cc1101_int_interconnect = {
 const SubGhzDevice subghz_device_cc1101_int = {
     .name = SUBGHZ_DEVICE_CC1101_INT_NAME,
     .interconnect = &subghz_device_cc1101_int_interconnect,
-    .caps = {
-        .has_extended_range = false,
-        .has_amplifier = false,
-        .has_external_spi = false,
-    },
+    .caps =
+        {
+            .has_extended_range = false,
+            .has_amplifier = false,
+            .has_external_spi = false,
+        },
 };

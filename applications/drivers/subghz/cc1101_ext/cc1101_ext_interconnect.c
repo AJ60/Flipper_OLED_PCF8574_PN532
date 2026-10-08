@@ -97,11 +97,12 @@ const SubGhzDeviceInterconnect subghz_device_cc1101_ext_interconnect = {
 const SubGhzDevice subghz_device_cc1101_ext = {
     .name = SUBGHZ_DEVICE_CC1101_EXT_NAME,
     .interconnect = &subghz_device_cc1101_ext_interconnect,
-    .caps = {
-        .has_extended_range = true,
-        .has_amplifier = true,
-        .has_external_spi = true,
-    },
+    .caps =
+        {
+            .has_extended_range = true,
+            .has_amplifier = true,
+            .has_external_spi = true,
+        },
 };
 
 static const FlipperAppPluginDescriptor subghz_device_cc1101_ext_descriptor = {

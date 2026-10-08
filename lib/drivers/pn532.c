@@ -164,10 +164,8 @@ Pn532Error pn532_wake_up(const FuriHalI2cBusHandle* handle) {
     return Pn532ErrorNone;
 }
 
-static Pn532Error pn532_write_register(
-    const FuriHalI2cBusHandle* handle,
-    uint16_t address,
-    uint8_t value) {
+static Pn532Error
+    pn532_write_register(const FuriHalI2cBusHandle* handle, uint16_t address, uint8_t value) {
     uint8_t cmd[4];
     cmd[0] = PN532_CMD_WRITEREGISTER;
     cmd[1] = (uint8_t)((address >> 8) & 0xFF);
@@ -513,8 +511,7 @@ Pn532Error pn532_mifare_classic_auth(
 
     uint8_t rx[4];
     size_t rx_len = sizeof(rx);
-    return pn532_in_data_exchange(
-        handle, tg, auth_payload, 8 + copy_len, rx, &rx_len, 200);
+    return pn532_in_data_exchange(handle, tg, auth_payload, 8 + copy_len, rx, &rx_len, 200);
 }
 
 Pn532Error pn532_mifare_read_block(

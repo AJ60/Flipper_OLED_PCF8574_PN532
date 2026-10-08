@@ -13,12 +13,12 @@ typedef struct {
     int8_t power_limit;
     uint8_t duty_cycle;
     // Duty cycle enforcement (token bucket)
-    uint32_t tokens_ms;         // Available TX time in ms (scaled *1000)
-    uint32_t last_update_tick;  // Last token refill tick
-    uint32_t last_tx_tick;      // Last TX start tick
+    uint32_t tokens_ms; // Available TX time in ms (scaled *1000)
+    uint32_t last_update_tick; // Last token refill tick
+    uint32_t last_tx_tick; // Last TX start tick
     // Listen-Before-Talk (LBT)
-    bool lbt_required;          // True for ETSI 868, ARIB, CN
-    int8_t lbt_rssi_threshold;  // RSSI threshold in dBm (e.g., -90)
+    bool lbt_required; // True for ETSI 868, ARIB, CN
+    int8_t lbt_rssi_threshold; // RSSI threshold in dBm (e.g., -90)
     uint16_t lbt_min_backoff_ms; // Min backoff (ms)
     uint16_t lbt_max_backoff_ms; // Max backoff (ms)
 } FuriHalRegionBand;

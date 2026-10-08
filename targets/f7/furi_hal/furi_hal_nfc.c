@@ -799,14 +799,11 @@ FuriHalNfcError furi_hal_nfc_poller_tx_common(
     // PicoPass protocol: raw ISO14443-B commands via PN532 InCommunicateThru
     if(furi_hal_nfc.tech == FuriHalNfcTechIso14443b && tx_bytes >= 1) {
         uint8_t cmd = tx_data[0];
-        bool is_picopass_cmd = (cmd == PICOPASS_CMD_ACTALL ||
-                                cmd == PICOPASS_CMD_READ_OR_IDENTIFY ||
-                                cmd == PICOPASS_CMD_SELECT ||
-                                cmd == PICOPASS_CMD_READCHECK_KD ||
-                                cmd == PICOPASS_CMD_READCHECK_KC ||
-                                cmd == PICOPASS_CMD_CHECK ||
-                                cmd == PICOPASS_CMD_UPDATE ||
-                                cmd == PICOPASS_CMD_ADDITIONAL_FRAME);
+        bool is_picopass_cmd =
+            (cmd == PICOPASS_CMD_ACTALL || cmd == PICOPASS_CMD_READ_OR_IDENTIFY ||
+             cmd == PICOPASS_CMD_SELECT || cmd == PICOPASS_CMD_READCHECK_KD ||
+             cmd == PICOPASS_CMD_READCHECK_KC || cmd == PICOPASS_CMD_CHECK ||
+             cmd == PICOPASS_CMD_UPDATE || cmd == PICOPASS_CMD_ADDITIONAL_FRAME);
         if(is_picopass_cmd) {
             size_t send_len = tx_bytes;
             furi_hal_pn532_ctx.rx_len = sizeof(furi_hal_pn532_ctx.rx_buf);

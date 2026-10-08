@@ -253,3 +253,34 @@ PN532 I2C communication in high RF fields can occasionally suffer from transient
 | **Display flickers during NFC scan** | NFC wired to I2C1 instead of I2C3 | Ensure PN532 is wired to **`PA7`/`PB4`** (I2C3), NOT `PA9`/`PB9` (I2C1 OLED bus) |
 | **Intermittent auth failures** | RF power ripple on 3.3V rail | Add a **100 nF ceramic capacitor** across PN532 `VCC` and `GND` right at the module header |
 | **Checksum (DCS) errors in logs** | Jumper wire length too long (>15 cm) | Keep I2C jumper wires short (<10 cm) and twisted with a ground line |
+
+---
+
+## 9. ISO 14443-A Target Emulation & Card Emulation Architecture
+
+The PN532 supports hardware-accelerated target emulation mode via the `TgInitAsTarget` (`0x8C`) command, allowing the DIY Flipper Zero to emulate MIFARE Classic and NTAG transponders to external readers and smartphones.
+
+### ⚠️ The PN532 ROM Hardware UID Quirk
+
+In standard 4-byte UID emulation, the PN532 internal ROM firmware imposes a strict constraint on the target parameter buffer:
+* According to the NXP PN532 User Manual (Section 7.3.5), for a 4-byte UID (`NFCID1t`), **byte 0 is internally fixed to `0x08`** by the PN532 ROM to indicate a random or locally assigned UID.
+* In early firmware implementations, copying `uid[0..2]` into `target_params[2..4]` caused external readers to receive `[0x08, uid[0], uid[1], uid[2]]`, completely omitting `uid[3]` and resulting in corrupt UID reads or collision resolution timeouts on smartphones.
+
+```
+Buffer Layout: [Mode, SensRes (2B), NFCID1t (3B), SelRes (1B), ...]
+Offset 0:     Mode = 0x04 (Target mode only, passive ISO/IEC 14443-4)
+Offset 1..2:  SensRes (ATQA) = {0x04, 0x00}
+Offset 3..5:  NFCID1t = {uid[1], uid[2], uid[3]}  <-- Required 3 trailing bytes!
+Offset 6:     SelRes (SAK) = 0x08 (MIFARE Classic 1K) or 0x00 (Ultralight)
+```
+
+### 🛠️ Hardware Driver Resolution (`furi_hal_nfc_iso14443a.c`):
+In v2.3 of the DIY firmware, the ISO 14443-A target initialization properly offsets the UID bytes:
+```c
+// Targets: map uid[1..3] into target_params to account for PN532 ROM's fixed 0x08 prefix
+target_params[2] = uid[1];
+target_params[3] = uid[2];
+target_params[4] = uid[3];
+```
+This ensures commercial readers, POS terminals, and smartphones running NFC Tools or Flipper mobile apps receive the correct UID bytes during the anticollision loop.
+

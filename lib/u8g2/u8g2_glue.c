@@ -41,11 +41,10 @@ bool u8g2_display_is_connected(void) {
     }
     s_last_display_check_tick = now;
     furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
-    bool ready = furi_hal_i2c_is_device_ready(
-        &furi_hal_i2c_handle_power, (SSD1306_I2C_ADDRESS << 1), 10);
+    bool ready =
+        furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, (SSD1306_I2C_ADDRESS << 1), 10);
     if(!ready) {
-        ready = furi_hal_i2c_is_device_ready(
-            &furi_hal_i2c_handle_power, (0x3D << 1), 10);
+        ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, (0x3D << 1), 10);
     }
     furi_hal_i2c_release(&furi_hal_i2c_handle_power);
     s_display_checked = true;

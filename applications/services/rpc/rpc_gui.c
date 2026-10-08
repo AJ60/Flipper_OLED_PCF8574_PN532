@@ -96,7 +96,9 @@ static void rpc_system_gui_screen_stream_frame_callback(
     furi_assert(context);
 
     RpcGuiSystem* rpc_gui = (RpcGuiSystem*)context;
-    if(!rpc_gui->is_streaming || !rpc_gui->frame_mutex || !rpc_gui->staging_buffer || !rpc_gui->transmit_thread) return;
+    if(!rpc_gui->is_streaming || !rpc_gui->frame_mutex || !rpc_gui->staging_buffer ||
+       !rpc_gui->transmit_thread)
+        return;
 
     if(furi_mutex_acquire(rpc_gui->frame_mutex, 0) == FuriStatusOk) {
         if(rpc_gui->is_streaming && rpc_gui->staging_buffer) {
@@ -107,7 +109,8 @@ static void rpc_system_gui_screen_stream_frame_callback(
         furi_mutex_release(rpc_gui->frame_mutex);
 
         if(rpc_gui->is_streaming && rpc_gui->transmit_thread) {
-            furi_thread_flags_set(furi_thread_get_id(rpc_gui->transmit_thread), RpcGuiWorkerFlagTransmit);
+            furi_thread_flags_set(
+                furi_thread_get_id(rpc_gui->transmit_thread), RpcGuiWorkerFlagTransmit);
         }
     }
 }
@@ -155,8 +158,7 @@ static int32_t rpc_system_gui_screen_stream_frame_transmit_thread(void* context)
                     } else {
                         fg_color.mode = ScreenColorModeRainbow;
                     }
-                    rpc_gui->transmit_frame->content.gui_screen_frame.fg_color =
-                        fg_color.value;
+                    rpc_gui->transmit_frame->content.gui_screen_frame.fg_color = fg_color.value;
                 } else {
                     rpc_gui->transmit_frame->content.gui_screen_frame.fg_color =
                         momentum_settings.rpc_color_fg.value;
@@ -170,8 +172,7 @@ static int32_t rpc_system_gui_screen_stream_frame_transmit_thread(void* context)
                     } else {
                         bg_color.mode = ScreenColorModeRainbow;
                     }
-                    rpc_gui->transmit_frame->content.gui_screen_frame.bg_color =
-                        bg_color.value;
+                    rpc_gui->transmit_frame->content.gui_screen_frame.bg_color = bg_color.value;
                 } else {
                     rpc_gui->transmit_frame->content.gui_screen_frame.bg_color =
                         momentum_settings.rpc_color_bg.value;
@@ -184,7 +185,8 @@ static int32_t rpc_system_gui_screen_stream_frame_transmit_thread(void* context)
                 // Guaranteed bandwidth reserve for BLE & RPC command responses
                 uint32_t extra_delay = transmit_time / 10;
                 if(rpc_session_get_owner(rpc_gui->session) == RpcOwnerBle) {
-                    if(extra_delay < 35) extra_delay = 35; // At least 35ms pause between frames on BLE (~12-14 FPS)
+                    if(extra_delay < 35)
+                        extra_delay = 35; // At least 35ms pause between frames on BLE (~12-14 FPS)
                 }
                 if(extra_delay > 500) extra_delay = 500;
                 if(extra_delay) furi_delay_tick(extra_delay);
@@ -203,7 +205,8 @@ static void rpc_system_gui_stop_screen_stream_internal(RpcGuiSystem* rpc_gui) {
             rpc_gui->gui, rpc_system_gui_screen_stream_frame_callback, rpc_gui);
         // Stop and release worker thread
         if(rpc_gui->transmit_thread) {
-            furi_thread_flags_set(furi_thread_get_id(rpc_gui->transmit_thread), RpcGuiWorkerFlagExit);
+            furi_thread_flags_set(
+                furi_thread_get_id(rpc_gui->transmit_thread), RpcGuiWorkerFlagExit);
             furi_thread_join(rpc_gui->transmit_thread);
             furi_thread_free(rpc_gui->transmit_thread);
             rpc_gui->transmit_thread = NULL;
@@ -424,7 +427,8 @@ static void rpc_system_gui_start_virtual_display_process(const PB_Main* request,
 
     if(request->content.gui_start_virtual_display_request.has_first_frame &&
        request->content.gui_start_virtual_display_request.first_frame.data) {
-        size_t copy_size = request->content.gui_start_virtual_display_request.first_frame.data->size;
+        size_t copy_size =
+            request->content.gui_start_virtual_display_request.first_frame.data->size;
         if(copy_size > buffer_size) {
             copy_size = buffer_size;
         }

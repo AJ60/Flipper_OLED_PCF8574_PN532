@@ -64,9 +64,7 @@ void subghz_tx_rx_worker_set_callback_have_read(
     instance->context_have_read = context;
 }
 
-void subghz_tx_rx_worker_set_device_switched_flag(
-    SubGhzTxRxWorker* instance,
-    volatile bool* flag) {
+void subghz_tx_rx_worker_set_device_switched_flag(SubGhzTxRxWorker* instance, volatile bool* flag) {
     furi_check(instance);
     instance->device_switched = flag;
 }

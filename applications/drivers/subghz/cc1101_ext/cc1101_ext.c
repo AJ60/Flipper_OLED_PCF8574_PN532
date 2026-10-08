@@ -19,13 +19,13 @@
 
 #define TAG "SubGhzDeviceCc1101Ext"
 
-#define SUBGHZ_DEVICE_CC1101_EXT_TX_GPIO (&gpio_ext_pb2)
+#define SUBGHZ_DEVICE_CC1101_EXT_TX_GPIO       (&gpio_ext_pb2)
 // Board wiring (user-confirmed): E07-433M20S TXEN -> board A5.
 // On this DIY board A5 == MCU PA5 == header PC3 (gpio_ext_pc3).
 // PA5 is shared with the LF-RFID 125kHz carrier, so TXEN must be
 // driven low (module idle) whenever SubGHz EXT is not transmitting,
 // and must never be left floating/analog.
-#define SUBGHZ_DEVICE_CC1101_EXT_E07_AMP_GPIO (&gpio_ext_pc3)
+#define SUBGHZ_DEVICE_CC1101_EXT_E07_AMP_GPIO  (&gpio_ext_pc3)
 #define SUBGHZ_DEVICE_CC1101_EXT_E07_TXEN_GPIO SUBGHZ_DEVICE_CC1101_EXT_E07_AMP_GPIO
 
 #define SUBGHZ_DEVICE_CC1101_CONFIG_VER 1
@@ -137,7 +137,7 @@ static bool subghz_device_cc1101_ext_check_init(void) {
     FuriHalCortexTimer timer = furi_hal_cortex_timer_get(100 * 1000);
     bool probed = false;
 
-    for (int retry = 0; retry < 3; retry++) {
+    for(int retry = 0; retry < 3; retry++) {
         // Reset
         furi_hal_gpio_init(
             subghz_device_cc1101_ext->g0_pin, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
@@ -166,84 +166,96 @@ static bool subghz_device_cc1101_ext_check_init(void) {
     }
 
     do {
-            cc1101_status = cc1101_write_reg(
-                subghz_device_cc1101_ext->spi_bus_handle, CC1101_IOCFG0, CC1101IocfgHighImpedance);
-            if(cc1101_status.CHIP_RDYn != 0) {
-                FURI_LOG_E(TAG, "check_init: IOCFG0 HighImpedance write failed CHIP_RDYn=%u", cc1101_status.CHIP_RDYn);
+        cc1101_status = cc1101_write_reg(
+            subghz_device_cc1101_ext->spi_bus_handle, CC1101_IOCFG0, CC1101IocfgHighImpedance);
+        if(cc1101_status.CHIP_RDYn != 0) {
+            FURI_LOG_E(
+                TAG,
+                "check_init: IOCFG0 HighImpedance write failed CHIP_RDYn=%u",
+                cc1101_status.CHIP_RDYn);
+            break;
+        }
+
+        furi_hal_gpio_init(
+            subghz_device_cc1101_ext->g0_pin, GpioModeInput, GpioPullUp, GpioSpeedLow);
+
+        // GD0 low
+        cc1101_status = cc1101_write_reg(
+            subghz_device_cc1101_ext->spi_bus_handle, CC1101_IOCFG0, CC1101IocfgHW);
+        if(cc1101_status.CHIP_RDYn != 0) {
+            FURI_LOG_E(
+                TAG, "check_init: IOCFG0 HW write failed CHIP_RDYn=%u", cc1101_status.CHIP_RDYn);
+            break;
+        }
+        while(furi_hal_gpio_read(subghz_device_cc1101_ext->g0_pin) != false) {
+            if(furi_hal_cortex_timer_is_expired(timer)) {
+                FURI_LOG_E(TAG, "check_init: GD0 low timeout");
                 break;
             }
+        }
+        if(furi_hal_cortex_timer_is_expired(timer)) break;
+        FURI_LOG_D(TAG, "check_init: GD0 low OK");
 
-            furi_hal_gpio_init(
-                subghz_device_cc1101_ext->g0_pin, GpioModeInput, GpioPullUp, GpioSpeedLow);
-
-            // GD0 low
-            cc1101_status = cc1101_write_reg(
-                subghz_device_cc1101_ext->spi_bus_handle, CC1101_IOCFG0, CC1101IocfgHW);
-            if(cc1101_status.CHIP_RDYn != 0) {
-                FURI_LOG_E(TAG, "check_init: IOCFG0 HW write failed CHIP_RDYn=%u", cc1101_status.CHIP_RDYn);
+        // GD0 high
+        furi_hal_gpio_init(
+            subghz_device_cc1101_ext->g0_pin, GpioModeInput, GpioPullDown, GpioSpeedLow);
+        cc1101_status = cc1101_write_reg(
+            subghz_device_cc1101_ext->spi_bus_handle,
+            CC1101_IOCFG0,
+            CC1101IocfgHW | CC1101_IOCFG_INV);
+        if(cc1101_status.CHIP_RDYn != 0) {
+            FURI_LOG_E(
+                TAG,
+                "check_init: IOCFG0 HW+INV write failed CHIP_RDYn=%u",
+                cc1101_status.CHIP_RDYn);
+            break;
+        }
+        while(furi_hal_gpio_read(subghz_device_cc1101_ext->g0_pin) != true) {
+            if(furi_hal_cortex_timer_is_expired(timer)) {
+                FURI_LOG_E(TAG, "check_init: GD0 high timeout");
                 break;
             }
-            while(furi_hal_gpio_read(subghz_device_cc1101_ext->g0_pin) != false) {
-                if(furi_hal_cortex_timer_is_expired(timer)) {
-                    FURI_LOG_E(TAG, "check_init: GD0 low timeout");
-                    break;
-                }
-            }
-            if(furi_hal_cortex_timer_is_expired(timer)) break;
-            FURI_LOG_D(TAG, "check_init: GD0 low OK");
+        }
+        if(furi_hal_cortex_timer_is_expired(timer)) break;
+        FURI_LOG_D(TAG, "check_init: GD0 high OK");
 
-            // GD0 high
-            furi_hal_gpio_init(
-                subghz_device_cc1101_ext->g0_pin, GpioModeInput, GpioPullDown, GpioSpeedLow);
-            cc1101_status = cc1101_write_reg(
-                subghz_device_cc1101_ext->spi_bus_handle,
-                CC1101_IOCFG0,
-                CC1101IocfgHW | CC1101_IOCFG_INV);
-            if(cc1101_status.CHIP_RDYn != 0) {
-                FURI_LOG_E(TAG, "check_init: IOCFG0 HW+INV write failed CHIP_RDYn=%u", cc1101_status.CHIP_RDYn);
-                break;
-            }
-            while(furi_hal_gpio_read(subghz_device_cc1101_ext->g0_pin) != true) {
-                if(furi_hal_cortex_timer_is_expired(timer)) {
-                    FURI_LOG_E(TAG, "check_init: GD0 high timeout");
-                    break;
-                }
-            }
-            if(furi_hal_cortex_timer_is_expired(timer)) break;
-            FURI_LOG_D(TAG, "check_init: GD0 high OK");
+        // Reset GD0 to floating state
+        cc1101_status = cc1101_write_reg(
+            subghz_device_cc1101_ext->spi_bus_handle, CC1101_IOCFG0, CC1101IocfgHighImpedance);
+        if(cc1101_status.CHIP_RDYn != 0) {
+            FURI_LOG_E(
+                TAG,
+                "check_init: IOCFG0 HighImpedance restore failed CHIP_RDYn=%u",
+                cc1101_status.CHIP_RDYn);
+            break;
+        }
 
-            // Reset GD0 to floating state
-            cc1101_status = cc1101_write_reg(
-                subghz_device_cc1101_ext->spi_bus_handle, CC1101_IOCFG0, CC1101IocfgHighImpedance);
-            if(cc1101_status.CHIP_RDYn != 0) {
-                FURI_LOG_E(TAG, "check_init: IOCFG0 HighImpedance restore failed CHIP_RDYn=%u", cc1101_status.CHIP_RDYn);
-                break;
-            }
+        // Drive GDO2 (!TX/RX) low (module idle). RXEN is wired to GDO2.
+        // Keep RXEN driven low so the LNA/RF switch never floats.
+        cc1101_status = cc1101_write_reg(
+            subghz_device_cc1101_ext->spi_bus_handle, CC1101_IOCFG2, CC1101IocfgHW);
+        if(cc1101_status.CHIP_RDYn != 0) {
+            FURI_LOG_E(
+                TAG, "check_init: IOCFG2 HW write failed CHIP_RDYn=%u", cc1101_status.CHIP_RDYn);
+            break;
+        }
 
-            // Drive GDO2 (!TX/RX) low (module idle). RXEN is wired to GDO2.
-            // Keep RXEN driven low so the LNA/RF switch never floats.
-            cc1101_status = cc1101_write_reg(
-                subghz_device_cc1101_ext->spi_bus_handle, CC1101_IOCFG2, CC1101IocfgHW);
-            if(cc1101_status.CHIP_RDYn != 0) {
-                FURI_LOG_E(TAG, "check_init: IOCFG2 HW write failed CHIP_RDYn=%u", cc1101_status.CHIP_RDYn);
-                break;
-            }
+        // Read chip version for diagnostics BEFORE releasing SPI
+        uint8_t part = cc1101_get_partnumber(subghz_device_cc1101_ext->spi_bus_handle);
+        uint8_t ver = cc1101_get_version(subghz_device_cc1101_ext->spi_bus_handle);
+        FURI_LOG_I(TAG, "check_init: part=0x%02X ver=0x%02X", part, ver);
 
-            // Read chip version for diagnostics BEFORE releasing SPI
-            uint8_t part = cc1101_get_partnumber(subghz_device_cc1101_ext->spi_bus_handle);
-            uint8_t ver = cc1101_get_version(subghz_device_cc1101_ext->spi_bus_handle);
-            FURI_LOG_I(TAG, "check_init: part=0x%02X ver=0x%02X", part, ver);
+        // Leave chip in IDLE (not SPWD) so subsequent alloc/reset works without wake sequence
+        cc1101_status = cc1101_switch_to_idle(subghz_device_cc1101_ext->spi_bus_handle);
+        if(cc1101_status.CHIP_RDYn != 0) {
+            FURI_LOG_E(
+                TAG, "check_init: switch_to_idle failed CHIP_RDYn=%u", cc1101_status.CHIP_RDYn);
+            break;
+        }
+        ret = true;
 
-            // Leave chip in IDLE (not SPWD) so subsequent alloc/reset works without wake sequence
-            cc1101_status = cc1101_switch_to_idle(subghz_device_cc1101_ext->spi_bus_handle);
-            if(cc1101_status.CHIP_RDYn != 0) {
-                FURI_LOG_E(TAG, "check_init: switch_to_idle failed CHIP_RDYn=%u", cc1101_status.CHIP_RDYn);
-                break;
-            }
-            ret = true;
-
-            FURI_LOG_I(TAG, "Init OK (part=0x%02X ver=0x%02X)", part, ver);
-        } while(false);
+        FURI_LOG_I(TAG, "Init OK (part=0x%02X ver=0x%02X)", part, ver);
+    } while(false);
 
     furi_hal_spi_release(subghz_device_cc1101_ext->spi_bus_handle);
     FURI_LOG_D(TAG, "check_init: SPI released ret=%u", ret);
@@ -686,8 +698,7 @@ void subghz_device_cc1101_ext_rx(void) {
     furi_hal_spi_acquire(subghz_device_cc1101_ext->spi_bus_handle);
     cc1101_switch_to_rx(subghz_device_cc1101_ext->spi_bus_handle);
     //waiting for the chip to switch to Rx mode
-    if(!cc1101_wait_status_state(
-           subghz_device_cc1101_ext->spi_bus_handle, CC1101StateRX, 10000)) {
+    if(!cc1101_wait_status_state(subghz_device_cc1101_ext->spi_bus_handle, CC1101StateRX, 10000)) {
         FURI_LOG_E(TAG, "CC1101 ext RX failed");
     }
     // Go GDO2 (!TX/RX) to high (RX state -> LNA enabled)
@@ -706,8 +717,7 @@ bool subghz_device_cc1101_ext_tx(void) {
     furi_hal_spi_acquire(subghz_device_cc1101_ext->spi_bus_handle);
     cc1101_switch_to_tx(subghz_device_cc1101_ext->spi_bus_handle);
     //waiting for the chip to switch to Tx mode
-    if(!cc1101_wait_status_state(
-           subghz_device_cc1101_ext->spi_bus_handle, CC1101StateTX, 10000)) {
+    if(!cc1101_wait_status_state(subghz_device_cc1101_ext->spi_bus_handle, CC1101StateTX, 10000)) {
         FURI_LOG_E(TAG, "CC1101 ext TX failed");
         furi_hal_spi_release(subghz_device_cc1101_ext->spi_bus_handle);
         return false;

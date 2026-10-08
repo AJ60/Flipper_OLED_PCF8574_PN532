@@ -221,6 +221,17 @@ static void loader_menu_add_app_entry(
     const char* name,
     const Icon* icon,
     const char* path) {
+    if(momentum_settings.games_only_mode) {
+        if(strcmp(name, "Sub-GHz") == 0 ||
+           strcmp(name, "125 kHz RFID") == 0 ||
+           strcmp(name, "NFC") == 0 ||
+           strcmp(name, "Infrared") == 0 ||
+           strcmp(name, "iButton") == 0 ||
+           strcmp(name, "Bad USB") == 0 ||
+           strcmp(name, "GPIO") == 0) {
+            return;
+        }
+    }
     MenuAppList_push_back(app->apps_list, (MenuApp){name, icon, path});
     menu_add_item(
         app->primary_menu,

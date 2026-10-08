@@ -238,13 +238,11 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
                 furi_hal_spi_acquire(spi_handle);
                 cc1101_switch_to_idle(spi_handle);
                 frequency = cc1101_set_frequency(
-                    spi_handle,
-                    subghz_setting_get_frequency(instance->setting, i));
+                    spi_handle, subghz_setting_get_frequency(instance->setting, i));
 
                 cc1101_calibrate(spi_handle);
 
-                cc1101_wait_status_state(
-                    spi_handle, CC1101StateIDLE, 10000);
+                cc1101_wait_status_state(spi_handle, CC1101StateIDLE, 10000);
 
                 cc1101_switch_to_rx(spi_handle);
                 furi_hal_spi_release(spi_handle);
@@ -289,8 +287,7 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
 
                     cc1101_calibrate(spi_handle);
 
-                    cc1101_wait_status_state(
-                        spi_handle, CC1101StateIDLE, 10000);
+                    cc1101_wait_status_state(spi_handle, CC1101StateIDLE, 10000);
 
                     cc1101_switch_to_rx(spi_handle);
                     furi_hal_spi_release(spi_handle);
@@ -418,9 +415,10 @@ SubGhzFrequencyAnalyzerWorker* subghz_frequency_analyzer_worker_alloc(void* cont
         // When using external radio, the analyzer drives the external SPI handle.
         // The mapping matches cc1101_ext.c: SpiDefault -> external_extra (PA4),
         // !SpiDefault -> external (PC3).
-        instance->spi_handle = (momentum_settings.spi_cc1101_handle == SpiDefault ?
-                                    &furi_hal_spi_bus_handle_external_extra :
-                                    &furi_hal_spi_bus_handle_external);
+        instance->spi_handle =
+            (momentum_settings.spi_cc1101_handle == SpiDefault ?
+                 &furi_hal_spi_bus_handle_external_extra :
+                 &furi_hal_spi_bus_handle_external);
     } else {
         // When using internal radio, the analyzer drives the internal SPI handle.
         instance->spi_handle = &furi_hal_spi_bus_handle_subghz;

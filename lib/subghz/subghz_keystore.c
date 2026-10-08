@@ -71,8 +71,8 @@ static void subghz_keystore_add_key(
 static bool subghz_keystore_is_printable_ascii(const char* str) {
     if(!str || *str == '\0') return false;
     for(const char* p = str; *p != '\0'; p++) {
-        if(((unsigned char)*p < 0x20 || (unsigned char)*p > 0x7E) &&
-           *p != '\r' && *p != '\n' && *p != '\t') {
+        if(((unsigned char)*p < 0x20 || (unsigned char)*p > 0x7E) && *p != '\r' && *p != '\n' &&
+           *p != '\t') {
             return false;
         }
     }
@@ -80,7 +80,8 @@ static bool subghz_keystore_is_printable_ascii(const char* str) {
 }
 
 static bool subghz_keystore_process_line(SubGhzKeystore* instance, char* line) {
-    while(*line == ' ' || *line == '\t') line++;
+    while(*line == ' ' || *line == '\t')
+        line++;
     if(*line == '\0' || *line == '#' || *line == '\r' || *line == '\n') {
         return false;
     }
@@ -176,41 +177,41 @@ static bool subghz_keystore_read_file(SubGhzKeystore* instance, Stream* stream, 
                             }
                             len /= 2;
 
-if(furi_hal_crypto_decrypt(
-                                                            (uint8_t*)encrypted_line, (uint8_t*)decrypted_line, len)) {
-                                                         decrypted_line[len] = '\0';
-if(!subghz_keystore_is_printable_ascii(decrypted_line)) {
-                                                              // Enclave key not provisioned on this hardware.
-                                                              // The file is present but keys can't be decrypted.
-                                                              // Treat the keystore as "loaded" (result stays true)
-                                                              // so the SubGHz app launches without the error popup.
-                                                              if(!enclave_key_warning_logged) {
-                                                                  FURI_LOG_W(
-                                                                      TAG,
-                                                                      "Decrypted keystore data is not valid ASCII (enclave key not provisioned). Skipping encrypted keystore.");
-                                                                  enclave_key_warning_logged = true;
-                                                              }
-                                                              enclave_key_missing = true;
-                                                              break;
-                                                        }
-                                                        subghz_keystore_process_line(instance, decrypted_line);
-                                                    } else {
-                                                        FURI_LOG_E(TAG, "Decryption failed");
-                                                        result = false;
-                                                        break;
-                                                    }
-                                                } else {
-                                                    FURI_LOG_E(TAG, "Invalid encrypted data: %s", encrypted_line);
-                                                }
-                                            } else {
-                                                // For unencrypted files, just process the line
-                                                // Don't fail on binary data - just skip it
-                                                if(subghz_keystore_is_printable_ascii(encrypted_line)) {
-                                                    subghz_keystore_process_line(instance, encrypted_line);
-                                                } else {
-                                                    // Skip binary/unprintable lines silently
-                                                }
-                                            }
+                            if(furi_hal_crypto_decrypt(
+                                   (uint8_t*)encrypted_line, (uint8_t*)decrypted_line, len)) {
+                                decrypted_line[len] = '\0';
+                                if(!subghz_keystore_is_printable_ascii(decrypted_line)) {
+                                    // Enclave key not provisioned on this hardware.
+                                    // The file is present but keys can't be decrypted.
+                                    // Treat the keystore as "loaded" (result stays true)
+                                    // so the SubGHz app launches without the error popup.
+                                    if(!enclave_key_warning_logged) {
+                                        FURI_LOG_W(
+                                            TAG,
+                                            "Decrypted keystore data is not valid ASCII (enclave key not provisioned). Skipping encrypted keystore.");
+                                        enclave_key_warning_logged = true;
+                                    }
+                                    enclave_key_missing = true;
+                                    break;
+                                }
+                                subghz_keystore_process_line(instance, decrypted_line);
+                            } else {
+                                FURI_LOG_E(TAG, "Decryption failed");
+                                result = false;
+                                break;
+                            }
+                        } else {
+                            FURI_LOG_E(TAG, "Invalid encrypted data: %s", encrypted_line);
+                        }
+                    } else {
+                        // For unencrypted files, just process the line
+                        // Don't fail on binary data - just skip it
+                        if(subghz_keystore_is_printable_ascii(encrypted_line)) {
+                            subghz_keystore_process_line(instance, encrypted_line);
+                        } else {
+                            // Skip binary/unprintable lines silently
+                        }
+                    }
                     // reset line buffer
                     memset(decrypted_line, 0, SUBGHZ_KEYSTORE_FILE_DECRYPTED_LINE_SIZE);
                     memset(encrypted_line, 0, SUBGHZ_KEYSTORE_FILE_ENCRYPTED_LINE_SIZE);
