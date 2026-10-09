@@ -18,11 +18,19 @@
 #include <stm32wbxx_ll_pwr.h>
 #include <stm32wbxx_ll_hsem.h>
 #include <stm32wbxx_ll_cortex.h>
+#include <furi_hal_cortex.h>
 #include <stm32wbxx_ll_gpio.h>
 #include <hsem_map.h>
 #include <bq27220.h>
 #include <bq27220_data_memory.h>
 #include <bq25896.h>
+#include <furi_hal_subghz.h>
+#include <furi_hal_nfc.h>
+#include <furi_hal_speaker.h>
+#include <furi_hal_light.h>
+#include <furi_hal_pcf8574.h>
+#include <furi_hal_i2c.h>
+#include <stm32wbxx_ll_exti.h>
 
 #ifdef USE_INA219
 #include <furi_hal_ina219.h>
@@ -67,23 +75,11 @@ float curr_soc_percent = 100.0f;
 const float R_INTERNAL = 0.25f;
 #endif
 
-static volatile bool furi_hal_power_alert_active = false;
-
-static void furi_hal_power_ina_alert_isr(void* ctx) {
-    UNUSED(ctx);
-    // ISR context: Never call FURI_LOG_* (acquires mutexes and allocates dynamic heap strings).
-    furi_hal_power_alert_active = true;
-}
-
 void furi_hal_power_init(void) {
 #ifdef USE_INA219
-    FURI_LOG_I(TAG, "Initializing INA219/INA226 power sensor");
+    FURI_LOG_I(TAG, "Initializing INA219 power sensor");
     furi_hal_ina219_init();
-    if(furi_hal_ina219_is_ready()) {
-        furi_hal_ina226_set_overcurrent_limit(1.8f);
-        furi_hal_ina226_enable_alert_interrupt(furi_hal_power_ina_alert_isr, NULL);
-    }
-    FURI_LOG_I(TAG, "INA219/INA226 initialization complete");
+    FURI_LOG_I(TAG, "INA219 initialization complete");
 #else
     FURI_LOG_I(TAG, "INA219 support not enabled at build time");
 #endif
@@ -102,15 +98,62 @@ bool furi_hal_power_is_shutdown_requested(void) {
         return false;
     }
 
+    // Never auto-request shutdown during early boot (first 30 seconds) to prevent bootloops
+    if(furi_get_tick() < 30000) {
+        return false;
+    }
+
     // If measured battery voltage is below 2.0V, no battery is present (running on external power)
     float vbat = furi_hal_power_get_battery_voltage(FuriHalPowerICFuelGauge);
     if(vbat < 2.0f) {
         return false;
     }
 
-    UNUSED(vbat);
-    // Battery ADC is not calibrated for this board; a misread could trigger a
-    // boot -> 90s -> shutdown -> reset loop. Never auto-request shutdown.
+#ifdef USE_INA219
+    if(furi_hal_ina219_is_ready()) {
+        float v = 0.0f, i = 0.0f;
+        if(furi_hal_ina219_get_voltage_current(&v, &i)) {
+            static uint8_t overcurrent_count = 0;
+            static uint8_t undervoltage_count = 0;
+            static uint8_t low_battery_count = 0;
+
+            // Overcurrent protection: if current magnitude exceeds 2.2A persistently
+            float abs_i = (i < 0.0f) ? -i : i;
+            if(abs_i >= 2.2f) {
+                if(++overcurrent_count >= 3) {
+                    FURI_LOG_E(TAG, "Emergency: Overcurrent detected (%.2f A)!", (double)abs_i);
+                    return true;
+                }
+            } else {
+                overcurrent_count = 0;
+            }
+
+            // IR-compensated open-circuit voltage
+            float v_oc = v - (i * R_INTERNAL);
+
+            // Critical undervoltage emergency cutoff (3.00V) -> protect cell from deep discharge damage
+            if(v_oc <= 3.00f || v <= 2.95f) {
+                if(++undervoltage_count >= 3) {
+                    FURI_LOG_E(TAG, "Emergency: Battery critical undervoltage (%.2f V)!", (double)v_oc);
+                    return true;
+                }
+            } else {
+                undervoltage_count = 0;
+            }
+
+            // Normal low-battery cutoff (3.15V) -> triggers graceful OS poweroff
+            if(v_oc <= 3.15f) {
+                if(++low_battery_count >= 5) {
+                    FURI_LOG_W(TAG, "Battery low (%.2f V), shutdown requested", (double)v_oc);
+                    return true;
+                }
+            } else {
+                low_battery_count = 0;
+            }
+        }
+    }
+#endif
+
     return false;
 }
 
@@ -345,26 +388,113 @@ bool furi_hal_power_is_charging(void) {
 }
 
 bool furi_hal_power_is_charging_done(void) {
-    // Return a default "not charged" state (consistent with not charging)
+#ifdef USE_INA219
+    if(furi_hal_ina219_is_ready()) {
+        float v = 0.0f, i = 0.0f;
+        if(furi_hal_ina219_get_voltage_current(&v, &i)) {
+            // Charging done when USB is connected, battery voltage is full (>= 4.18V),
+            // and charge current has tapered down (< 25mA)
+            if(furi_hal_power_get_usb_voltage() >= 4.0f && v >= 4.18f && i < 0.025f) {
+                return true;
+            }
+        }
+    }
+#endif
     return false;
 }
 
+static volatile bool furi_hal_power_shutdown_active = false;
+extern volatile bool display_is_sleeping;
+
+bool furi_hal_power_is_shutdown(void) {
+    return furi_hal_power_shutdown_active;
+}
+
 void furi_hal_power_shutdown(void) {
-    // Disable interrupts to avoid interrupt preemption during power-down sequence
-    __disable_irq();
+    FURI_LOG_I(TAG, "Entering low-power sleep mode...");
+    furi_delay_ms(50);
 
-    // Enable Cortex-M4 DeepSleep
-    LL_LPM_EnableDeepSleep();
+    furi_hal_power_shutdown_active = true;
+    display_is_sleeping = true;
 
-    // Configure STM32WB55 to enter true low-power SHUTDOWN mode
-    LL_PWR_SetPowerMode(LL_PWR_MODE_SHUTDOWN);
+    // 1. Put external OLED display into sleep mode (SSD1306 Display OFF 0xAE)
+    furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
+    uint8_t oled_off_cmd[] = {0x00, 0xAE};
+    furi_hal_i2c_tx(&furi_hal_i2c_handle_power, (0x3C << 1), oled_off_cmd, sizeof(oled_off_cmd), 50);
+    furi_hal_i2c_release(&furi_hal_i2c_handle_power);
 
-    // Clear all wakeup flags
-    LL_PWR_ClearFlag_WU();
+    // 2. Put Sub-GHz CC1101 radio to sleep
+    furi_hal_subghz_sleep();
 
-    // Enter low-power mode and wait for interrupt/wakeup
+    // 3. Put NFC PN532 module to low power mode
+    furi_hal_nfc_low_power_mode_start();
+
+    // 4. Turn off speaker, vibration, and LEDs
+    if(furi_hal_speaker_is_mine()) {
+        furi_hal_speaker_stop();
+    }
+    furi_hal_vibro_on(false);
+    furi_hal_pcf8574_led_off();
+
+    // 5. Cleanly stop Bluetooth advertising
+    if(furi_hal_bt_is_active()) {
+        furi_hal_bt_stop_advertising();
+    }
+
+    // 6. Ensure PCF8574 input pins (P0..P5) are configured as inputs
+    furi_hal_pcf8574_configure_interrupts(0x3F);
+
+    // Wait until all buttons (P0..P5) are physically released before sleeping
+    for(int wait_release = 0; wait_release < 40; wait_release++) {
+        uint8_t pv = 0xFF;
+        if(furi_hal_pcf8574_read_port(&pv)) {
+            if((pv & 0x3F) == 0x3F) {
+                break;
+            }
+        }
+        furi_delay_ms(25);
+    }
+
+    // Clear fault data in RTC backup register so subsequent boots are clean
+    furi_hal_rtc_set_fault_data(0);
+
+    // Sleep loop: FreeRTOS remains running, tickless idle puts CPU to sleep (__WFI).
+    // Device stays dark and quiet until the OK button (P4) is held continuously for ~1.2s.
     while(1) {
-        __WFI();
+        furi_delay_ms(100);
+
+        uint8_t port_val = 0xFF;
+        if(!furi_hal_pcf8574_read_port(&port_val)) {
+            continue;
+        }
+
+        // PCF8574: pin P4 is bit 4 (0x10). Active-LOW (0 when pressed).
+        if((port_val & (1 << 4)) == 0) {
+            // OK button is pressed! Check if held continuously for ~1.2s (24 * 50ms)
+            bool held = true;
+            for(int i = 0; i < 24; i++) {
+                furi_delay_ms(50);
+                port_val = 0xFF;
+                if(!furi_hal_pcf8574_read_port(&port_val) || ((port_val & (1 << 4)) != 0)) {
+                    held = false;
+                    break;
+                }
+            }
+
+            if(held) {
+                // Long-press of OK button confirmed! Wake up device!
+                // Brief vibration pulse (50ms) to confirm power-on
+                furi_hal_vibro_on(true);
+                furi_delay_ms(50);
+                furi_hal_vibro_on(false);
+
+                // Clear fault data in RTC backup register
+                furi_hal_rtc_set_fault_data(0);
+
+                // Clean hardware reset: boots all subsystems freshly!
+                furi_hal_power_reset();
+            }
+        }
     }
 }
 

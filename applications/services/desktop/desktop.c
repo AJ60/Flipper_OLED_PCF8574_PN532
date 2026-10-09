@@ -590,8 +590,10 @@ int32_t desktop_srv(void* p) {
 
     uint32_t fault_ptr = furi_hal_rtc_get_fault_data();
     if(fault_ptr) {
+        FURI_LOG_E(TAG, "Fault data detected on boot: 0x%08lX", fault_ptr);
         if(fault_ptr >= FLASH_BASE && fault_ptr < (FLASH_BASE + FLASH_SIZE)) {
             const char* msg = (const char*)fault_ptr;
+            FURI_LOG_E(TAG, "Fault message: '%s'", msg);
             if(msg[0] != '\0' && (uint8_t)msg[0] >= 32 && (uint8_t)msg[0] <= 126) {
                 scene_manager_next_scene(desktop->scene_manager, DesktopSceneFault);
             } else {

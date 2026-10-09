@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <furi.h>
 #include <furi_hal_gpio.h>
+#include <furi_hal_power.h>
 #define USE_PCF8574
 #ifdef USE_PCF8574
 #include <furi_hal_pcf8574.h>
@@ -233,6 +234,11 @@ int32_t input_srv(void* p) {
 #endif
 
     while(1) {
+        if(furi_hal_power_is_shutdown()) {
+            furi_delay_ms(100);
+            continue;
+        }
+
         bool is_changing = false;
 
 #ifdef USE_PCF8574

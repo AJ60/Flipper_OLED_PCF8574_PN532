@@ -11,6 +11,8 @@
 #include <gui/gui.h>
 #include <gui/gui_i.h>
 
+#include <furi_hal_power.h>
+
 #define LED_CURRENT_RED   (50u)
 #define LED_CURRENT_GREEN (50u)
 #define LED_CURRENT_BLUE  (50u)
@@ -22,6 +24,9 @@ void furi_hal_light_init(void) {
 }
 
 void furi_hal_light_set(Light light, uint8_t value) {
+    if(furi_hal_power_is_shutdown()) {
+        return;
+    }
     // PCF8574 only supports on/off, not PWM brightness
     bool on = value > 0;
 

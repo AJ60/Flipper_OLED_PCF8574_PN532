@@ -24,7 +24,6 @@ const GpioPin gpio_subghz_cs = {.port = CC1101_CS_GPIO_Port, .pin = CC1101_CS_Pi
 const GpioPin gpio_cc1101_g0 = {.port = CC1101_G0_GPIO_Port, .pin = CC1101_G0_Pin};
 
 const GpioPin gpio_pcf_int = {.port = PCF_INT_GPIO_Port, .pin = PCF_INT_Pin};
-const GpioPin gpio_ina_alert = {.port = INA_ALERT_GPIO_Port, .pin = INA_ALERT_Pin};
 // RF switch pin omitted for this board
 
 // const GpioPin gpio_display_cs = {.port = DISPLAY_CS_GPIO_Port, .pin = DISPLAY_CS_Pin};
@@ -308,10 +307,8 @@ void furi_hal_resources_init(void) {
     //         furi_hal_pcf8574_attach_int() when the input service starts.
     //         NOTE: IR RX (PA0) does NOT use EXTI0 — the IR HAL uses TIM2
     //         input capture (GpioAltFn1TIM2), so the EXTI0 line is free.
-    // EXTI1: PB1 = gpio_ina_alert (INA226 ALERT). NVIC is enabled by
-    //         furi_hal_ina226_enable_alert_interrupt() in power init.
-    //         No other device uses EXTI line 1: RFID data-in (PA1) is routed
-    //         through the analog comparator (EXTI lines 20/21), not EXTI1.
+    // EXTI1: Free (PB1 freed, INA219 has no alert pin). RFID data-in (PA1) is
+    //         routed through the analog comparator (EXTI lines 20/21), not EXTI1.
 
     // EXTI2: PA2 = gpio_nfc_irq. Enabled — NFC HAL expects this.
     NVIC_SetPriority(EXTI2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));

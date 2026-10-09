@@ -110,6 +110,9 @@ bool furi_hal_power_is_charging_done(void);
 /** Switch MCU to SHUTDOWN */
 void furi_hal_power_shutdown(void);
 
+/** Check if device is in low-power shutdown sleep mode */
+bool furi_hal_power_is_shutdown(void);
+
 /** Poweroff device
  */
 void furi_hal_power_off(void);

@@ -26,8 +26,8 @@ void desktop_scene_fault_on_enter(void* context) {
     popup_set_text(popup, message, 64, 37 + STATUS_BAR_Y_SHIFT, AlignCenter, AlignCenter);
     popup_set_callback(popup, desktop_scene_fault_callback);
 
-    // Auto-dismiss after 3 seconds so the device never stays stuck on this screen
-    popup_set_timeout(popup, 3000);
+    // Auto-dismiss after 1 second so the device never stays stuck on this screen
+    popup_set_timeout(popup, 1000);
     popup_enable_timeout(popup);
 
     // Bug #14 fix: do NOT clear fault data here — the on_exit handler already clears it

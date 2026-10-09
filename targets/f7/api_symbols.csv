@@ -1507,6 +1507,8 @@ Function,-,furi_hal_i2c_deinit_early,void,
 Function,-,furi_hal_i2c_init,void,
 Function,-,furi_hal_i2c_init_early,void,
 Function,+,furi_hal_i2c_is_device_ready,_Bool,"const FuriHalI2cBusHandle*, uint8_t, uint32_t"
+Function,+,furi_hal_i2c_raw_read,_Bool,"I2C_TypeDef*, uint8_t, uint8_t*, size_t, uint32_t"
+Function,+,furi_hal_i2c_raw_write,_Bool,"I2C_TypeDef*, uint8_t, const uint8_t*, size_t, uint32_t"
 Function,+,furi_hal_i2c_read_mem,_Bool,"const FuriHalI2cBusHandle*, uint8_t, uint8_t, uint8_t*, size_t, uint32_t"
 Function,+,furi_hal_i2c_read_reg_16,_Bool,"const FuriHalI2cBusHandle*, uint8_t, uint8_t, uint16_t*, uint32_t"
 Function,+,furi_hal_i2c_read_reg_8,_Bool,"const FuriHalI2cBusHandle*, uint8_t, uint8_t, uint8_t*, uint32_t"
@@ -1530,9 +1532,6 @@ Function,+,furi_hal_ina219_get_model_name,const char*,
 Function,+,furi_hal_ina219_get_voltage_current,_Bool,"float*, float*"
 Function,+,furi_hal_ina219_init,_Bool,
 Function,+,furi_hal_ina219_is_ready,_Bool,
-Function,+,furi_hal_ina226_configure_protection,_Bool,"float, float"
-Function,+,furi_hal_ina226_enable_alert_interrupt,void,"GpioExtiCallback, void*"
-Function,+,furi_hal_ina226_set_overcurrent_limit,_Bool,float
 Function,+,furi_hal_info_get,void,"PropertyValueCallback, char, void*"
 Function,+,furi_hal_info_get_api_version,void,"uint16_t*, uint16_t*"
 Function,+,furi_hal_infrared_async_rx_set_capture_isr_callback,void,"FuriHalInfraredRxCaptureCallback, void*"
@@ -1628,8 +1627,10 @@ Function,+,furi_hal_pcf8574_led_set_color,_Bool,"_Bool, _Bool, _Bool"
 Function,+,furi_hal_pcf8574_led_set_green,_Bool,_Bool
 Function,+,furi_hal_pcf8574_led_set_red,_Bool,_Bool
 Function,+,furi_hal_pcf8574_read_port,_Bool,uint8_t*
+Function,+,furi_hal_pcf8574_read_port_raw,_Bool,uint8_t*
 Function,+,furi_hal_pcf8574_set_i2c_bus,void,const FuriHalI2cBusHandle*
 Function,+,furi_hal_pcf8574_write_pin,_Bool,"uint8_t, _Bool"
+Function,+,furi_hal_pcf8574_write_pin_raw,_Bool,"uint8_t, _Bool"
 Function,+,furi_hal_pcf8574_write_port,_Bool,uint8_t
 Function,+,furi_hal_power_check_otg_fault,_Bool,
 Function,+,furi_hal_power_check_otg_status,void,
@@ -1657,6 +1658,7 @@ Function,-,furi_hal_power_insomnia_level,uint16_t,
 Function,+,furi_hal_power_is_charging,_Bool,
 Function,+,furi_hal_power_is_charging_done,_Bool,
 Function,+,furi_hal_power_is_otg_enabled,_Bool,
+Function,+,furi_hal_power_is_shutdown,_Bool,
 Function,+,furi_hal_power_is_shutdown_requested,_Bool,
 Function,+,furi_hal_power_off,void,
 Function,+,furi_hal_power_reset,void,
@@ -4454,7 +4456,6 @@ Variable,+,gpio_i2c_1_sda,const GpioPin,
 Variable,+,gpio_i2c_3_scl,const GpioPin,
 Variable,+,gpio_i2c_3_sda,const GpioPin,
 Variable,+,gpio_ibutton,const GpioPin,
-Variable,+,gpio_ina_alert,const GpioPin,
 Variable,+,gpio_infrared_rx,const GpioPin,
 Variable,+,gpio_infrared_tx,const GpioPin,
 Variable,+,gpio_nfc_cs,const GpioPin,

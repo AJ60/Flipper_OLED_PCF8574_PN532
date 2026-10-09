@@ -42,9 +42,9 @@ bool u8g2_display_is_connected(void) {
     s_last_display_check_tick = now;
     furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
     bool ready =
-        furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, (SSD1306_I2C_ADDRESS << 1), 10);
+        furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, (SSD1306_I2C_ADDRESS << 1), 2);
     if(!ready) {
-        ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, (0x3D << 1), 10);
+        ready = furi_hal_i2c_is_device_ready(&furi_hal_i2c_handle_power, (0x3D << 1), 2);
     }
     furi_hal_i2c_release(&furi_hal_i2c_handle_power);
     s_display_checked = true;
@@ -133,6 +133,7 @@ uint8_t u8g2_gpio_and_delay_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, vo
 uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {
     static uint8_t buffer[512]; // 512 bytes prevents truncation of full-row draws and init sequences
     static uint16_t buf_idx = 0;
+    static bool s_bus_acquired = false;
 
     switch(msg) {
     case U8X8_MSG_BYTE_SEND: {
@@ -157,10 +158,17 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
             return 1;
         }
         furi_hal_i2c_acquire(&furi_hal_i2c_handle_power);
+        s_bus_acquired = true;
         buf_idx = 0;
         break;
     case U8X8_MSG_BYTE_END_TRANSFER:
+        if(!s_bus_acquired) {
+            buf_idx = 0;
+            return 1;
+        }
+        s_bus_acquired = false;
         if(!s_display_is_present) {
+            furi_hal_i2c_release(&furi_hal_i2c_handle_power);
             buf_idx = 0;
             return 1;
         }

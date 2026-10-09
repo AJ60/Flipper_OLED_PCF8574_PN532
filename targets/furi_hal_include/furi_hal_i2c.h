@@ -285,6 +285,22 @@ bool furi_hal_i2c_write_mem(
     size_t len,
     uint32_t timeout);
 
+/** Raw I2C read without FreeRTOS mutexes or assert checks (safe for shutdown/ISR) */
+bool furi_hal_i2c_raw_read(
+    I2C_TypeDef* i2c,
+    uint8_t address_7bit,
+    uint8_t* data,
+    size_t size,
+    uint32_t timeout_ms);
+
+/** Raw I2C write without FreeRTOS mutexes or assert checks (safe for shutdown/ISR) */
+bool furi_hal_i2c_raw_write(
+    I2C_TypeDef* i2c,
+    uint8_t address_7bit,
+    const uint8_t* data,
+    size_t size,
+    uint32_t timeout_ms);
+
 #ifdef __cplusplus
 }
 #endif

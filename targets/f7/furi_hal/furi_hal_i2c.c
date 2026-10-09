@@ -513,3 +513,75 @@ bool furi_hal_i2c_write_mem(
                FuriHalI2cEndStop,
                timeout);
 }
+
+bool furi_hal_i2c_raw_read(
+    I2C_TypeDef* i2c,
+    uint8_t address_7bit,
+    uint8_t* data,
+    size_t size,
+    uint32_t timeout_ms) {
+    if(!i2c || !data || size == 0 || timeout_ms == 0) {
+        return false;
+    }
+    if(i2c == I2C1) {
+        furi_hal_gpio_init_ex(
+            &gpio_i2c_1_sda, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, GpioAltFn4I2C1);
+        furi_hal_gpio_init_ex(
+            &gpio_i2c_1_scl, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, GpioAltFn4I2C1);
+    }
+    if(!LL_I2C_IsEnabled(i2c)) {
+        LL_I2C_Enable(i2c);
+    }
+    FuriHalCortexTimer timer = furi_hal_cortex_timer_get(timeout_ms * 1000);
+    bool ok = furi_hal_i2c_transaction(
+        i2c,
+        (uint16_t)(address_7bit << 1),
+        false,
+        data,
+        size,
+        FuriHalI2cBeginStart,
+        FuriHalI2cEndStop,
+        true,
+        timer);
+    if(!ok) {
+        LL_I2C_Disable(i2c);
+        LL_I2C_Enable(i2c);
+    }
+    return ok;
+}
+
+bool furi_hal_i2c_raw_write(
+    I2C_TypeDef* i2c,
+    uint8_t address_7bit,
+    const uint8_t* data,
+    size_t size,
+    uint32_t timeout_ms) {
+    if(!i2c || !data || size == 0 || timeout_ms == 0) {
+        return false;
+    }
+    if(i2c == I2C1) {
+        furi_hal_gpio_init_ex(
+            &gpio_i2c_1_sda, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, GpioAltFn4I2C1);
+        furi_hal_gpio_init_ex(
+            &gpio_i2c_1_scl, GpioModeAltFunctionOpenDrain, GpioPullUp, GpioSpeedHigh, GpioAltFn4I2C1);
+    }
+    if(!LL_I2C_IsEnabled(i2c)) {
+        LL_I2C_Enable(i2c);
+    }
+    FuriHalCortexTimer timer = furi_hal_cortex_timer_get(timeout_ms * 1000);
+    bool ok = furi_hal_i2c_transaction(
+        i2c,
+        (uint16_t)(address_7bit << 1),
+        false,
+        (uint8_t*)data,
+        size,
+        FuriHalI2cBeginStart,
+        FuriHalI2cEndStop,
+        false,
+        timer);
+    if(!ok) {
+        LL_I2C_Disable(i2c);
+        LL_I2C_Enable(i2c);
+    }
+    return ok;
+}

@@ -5,6 +5,8 @@
 #include <furi_hal_resources.h>
 #include <furi_hal_interrupt.h>
 #include <furi_hal_gpio.h>
+#include <furi_hal_bus.h>
+#include <stm32wbxx_ll_rcc.h>
 #include <stm32wbxx_ll_cortex.h>
 
 #define TAG "FuriHalPCF8574"
@@ -66,18 +68,18 @@ static bool pcf8574_probe_candidate(uint8_t addr) {
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
 
     furi_hal_i2c_acquire(bus);
-    ok = furi_hal_i2c_tx(bus, (uint8_t)(addr << 1), &wr, 1, 50);
+    ok = furi_hal_i2c_tx(bus, (uint8_t)(addr << 1), &wr, 1, 10);
     if(ok) {
         furi_delay_us(50); // let quasi-bidirectional outputs settle
-        ok = furi_hal_i2c_rx(bus, (uint8_t)(addr << 1), &rb_a, 1, 50);
+        ok = furi_hal_i2c_rx(bus, (uint8_t)(addr << 1), &rb_a, 1, 10);
     }
     wr = 0xAA;
     if(ok) {
-        ok = furi_hal_i2c_tx(bus, (uint8_t)(addr << 1), &wr, 1, 50);
+        ok = furi_hal_i2c_tx(bus, (uint8_t)(addr << 1), &wr, 1, 10);
     }
     if(ok) {
         furi_delay_us(50);
-        ok = furi_hal_i2c_rx(bus, (uint8_t)(addr << 1), &rb_b, 1, 50);
+        ok = furi_hal_i2c_rx(bus, (uint8_t)(addr << 1), &rb_b, 1, 10);
     }
     furi_hal_i2c_release(bus);
 
@@ -142,7 +144,7 @@ bool furi_hal_pcf8574_init(void) {
     for(size_t i = 0; i < cidx && !detected; i++) {
         // Cheap ACK pre-check before the full functional probe.
         furi_hal_i2c_acquire(bus);
-        bool ready = furi_hal_i2c_is_device_ready(bus, (uint8_t)(candidates[i] << 1), 10);
+        bool ready = furi_hal_i2c_is_device_ready(bus, (uint8_t)(candidates[i] << 1), 2);
         furi_hal_i2c_release(bus);
         if(!ready) {
             continue;
@@ -318,6 +320,30 @@ bool furi_hal_pcf8574_write_pin(uint8_t pin, bool value) {
     }
     furi_hal_i2c_release(bus);
     return res;
+}
+
+bool furi_hal_pcf8574_read_port_raw(uint8_t* port_state) {
+    if(!port_state || !pcf8574_is_initialized) {
+        return false;
+    }
+    furi_hal_bus_enable(FuriHalBusI2C1);
+    LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_PCLK1);
+    return furi_hal_i2c_raw_read(I2C1, pcf8574_addr, port_state, 1, 50);
+}
+
+bool furi_hal_pcf8574_write_pin_raw(uint8_t pin, bool value) {
+    if(pin > 7 || !pcf8574_is_initialized) {
+        return false;
+    }
+    if(value) {
+        pcf8574_current_state |= (uint8_t)(1u << pin);
+    } else {
+        pcf8574_current_state &= (uint8_t) ~(1u << pin);
+    }
+    furi_hal_bus_enable(FuriHalBusI2C1);
+    LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_PCLK1);
+    uint8_t byte = pcf8574_compose_byte(pcf8574_current_state);
+    return furi_hal_i2c_raw_write(I2C1, pcf8574_addr, &byte, 1, 50);
 }
 
 void furi_hal_pcf8574_attach_int(GpioExtiCallback cb, void* ctx) {

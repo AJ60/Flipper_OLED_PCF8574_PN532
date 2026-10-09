@@ -61,7 +61,6 @@ extern const GpioPin gpio_ibutton;
 
 extern const GpioPin gpio_cc1101_g0;
 extern const GpioPin gpio_pcf_int;
-extern const GpioPin gpio_ina_alert;
 
 extern const GpioPin gpio_subghz_cs;
 extern const GpioPin gpio_sdcard_cs;
@@ -216,10 +215,6 @@ PA5 = LF-RFID carrier (exposed on header as "C3")
 // PCF8574 interrupt default pin
 #define PCF_INT_GPIO_Port GPIOB
 #define PCF_INT_Pin       LL_GPIO_PIN_0
-
-// INA226 Alert pin (PB1, WeAct Pin 23)
-#define INA_ALERT_GPIO_Port GPIOB
-#define INA_ALERT_Pin       LL_GPIO_PIN_1
 
 // VIBRO not present on this board revision.
 // MCU PC0 is used for SD card detect (SD_CD). The header pin labelled "PC0"

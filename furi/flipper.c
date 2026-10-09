@@ -59,11 +59,12 @@ void flipper_migrate_files() {
     Storage* storage = furi_record_open(RECORD_STORAGE);
 
     // Revert cringe
-    FURI_LOG_I(TAG, "Migrate: Remove unused files");
-    storage_common_remove(storage, INT_PATH(".passport.settings"));
+    if(storage_common_exists(storage, INT_PATH(".passport.settings"))) {
+        FURI_LOG_I(TAG, "Migrate: Remove unused files");
+        storage_common_remove(storage, INT_PATH(".passport.settings"));
+    }
 
     // Migrate files
-    FURI_LOG_I(TAG, "Migrate: Rename old paths");
     // If multiple have same destination, first match that exists is kept and others deleted
     const struct {
         const char* src;
@@ -89,33 +90,51 @@ void flipper_migrate_files() {
         {EXT_PATH("dolphin/name.txt"), NAMESPOOF_PATH}, // Adapt to UL
         {EXT_PATH("infrared/.infrared.settings"), INFRARED_SETTINGS_PATH}, // Adapt to OFW
     };
+
+    bool config_dir_exists = storage_common_exists(storage, EXT_PATH(".config"));
+    const size_t config_prefix_len = strlen(EXT_PATH(".config/"));
+
     for(size_t i = 0; i < COUNT_OF(renames); ++i) {
-        // Use copy+remove to not overwrite dst but still delete src
-        storage_common_copy(storage, renames[i].src, renames[i].dst);
-        storage_common_remove(storage, renames[i].src);
+        // If the file is in .config but .config does not exist, fast skip
+        if(strncmp(renames[i].src, EXT_PATH(".config/"), config_prefix_len) == 0) {
+            if(!config_dir_exists) {
+                continue;
+            }
+        }
+
+        // Only perform copy and remove if the source file actually exists
+        if(storage_common_exists(storage, renames[i].src)) {
+            storage_common_copy(storage, renames[i].src, renames[i].dst);
+            storage_common_remove(storage, renames[i].src);
+        }
     }
 
     // Int -> Ext for U2F
-    FURI_LOG_I(TAG, "Migrate: U2F");
     if(storage_common_exists(storage, INT_PATH(".cnt.u2f"))) {
+        FURI_LOG_I(TAG, "Migrate: U2F cnt");
         const char* cnt_dst = storage_common_exists(storage, U2F_CNT_FILE) ? U2F_CNT_FILE ".old" :
                                                                              U2F_CNT_FILE;
         storage_common_rename(storage, INT_PATH(".cnt.u2f"), cnt_dst);
     }
     if(storage_common_exists(storage, INT_PATH(".key.u2f"))) {
+        FURI_LOG_I(TAG, "Migrate: U2F key");
         const char* key_dst = storage_common_exists(storage, U2F_KEY_FILE) ? U2F_KEY_FILE ".old" :
                                                                              U2F_KEY_FILE;
         storage_common_rename(storage, INT_PATH(".key.u2f"), key_dst);
     }
 
     // Remove obsolete .config folder after migration
-    if(!storage_simply_remove(storage, EXT_PATH(".config"))) {
-        FURI_LOG_W(TAG, "Can't remove /ext/.config/, probably not empty");
+    if(config_dir_exists) {
+        if(!storage_simply_remove(storage, EXT_PATH(".config"))) {
+            FURI_LOG_W(TAG, "Can't remove /ext/.config/, probably not empty");
+        }
     }
 
-    // Asset packs migrate, merges together
-    FURI_LOG_I(TAG, "Migrate: Asset Packs");
-    storage_common_migrate(storage, EXT_PATH("dolphin_custom"), ASSET_PACKS_PATH);
+    // Asset packs migrate, merges together (only if dolphin_custom exists)
+    if(storage_common_exists(storage, EXT_PATH("dolphin_custom"))) {
+        FURI_LOG_I(TAG, "Migrate: Asset Packs");
+        storage_common_migrate(storage, EXT_PATH("dolphin_custom"), ASSET_PACKS_PATH);
+    }
 
     furi_record_close(RECORD_STORAGE);
 }
@@ -200,28 +219,25 @@ void flipper_init(void) {
 
             FURI_LOG_W(TAG, "BOOT DIAG: stage migrate start");
             canvas_draw_icon(canvas, 39, 43, &I_dir_10px);
-            canvas_commit(canvas);
             flipper_migrate_files();
             FURI_LOG_W(TAG, "BOOT DIAG: stage migrate done");
 
             canvas_draw_icon(canvas, 59, 42, &I_Apps_10px);
-            canvas_commit(canvas);
             FURI_LOG_W(TAG, "BOOT DIAG: stage namespoof start");
             namespoof_init();
             FURI_LOG_W(TAG, "BOOT DIAG: stage namespoof done");
 
             canvas_draw_icon(canvas, 79, 44, &I_Rpc_active_7x8);
-            canvas_commit(canvas);
             FURI_LOG_W(TAG, "BOOT DIAG: stage settings_load start");
             momentum_settings_load();
             FURI_LOG_W(TAG, "BOOT DIAG: stage settings_load done");
 
             furi_hal_light_sequence("rgb RB");
             canvas_draw_icon(canvas, 99, 44, &I_Hidden_window_9x8);
-            canvas_commit(canvas);
             FURI_LOG_W(TAG, "BOOT DIAG: stage asset_packs_init start");
             asset_packs_init();
             FURI_LOG_W(TAG, "BOOT DIAG: stage asset_packs_init done");
+            canvas_commit(canvas);
         }
         FURI_LOG_W(TAG, "BOOT DIAG: early init done, starting services");
         furi_record_close(RECORD_STORAGE);

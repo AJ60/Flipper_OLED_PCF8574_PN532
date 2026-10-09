@@ -34,6 +34,10 @@ bool furi_hal_pcf8574_write_port(uint8_t port_state);
 // cannot be driven low.
 bool furi_hal_pcf8574_write_pin(uint8_t pin, bool value);
 
+// Raw read/write without FreeRTOS mutex or FURI_IS_ISR checks, safe during shutdown/masked IRQs
+bool furi_hal_pcf8574_read_port_raw(uint8_t* port_state);
+bool furi_hal_pcf8574_write_pin_raw(uint8_t pin, bool value);
+
 // Attach callback for INT pin
 void furi_hal_pcf8574_attach_int(GpioExtiCallback cb, void* ctx);
 
