@@ -166,19 +166,19 @@ inline static void furi_hal_spi_bus_external_handle_event_callback(
             handle->miso,
             GpioModeAltFunctionPushPull,
             GpioPullDown,
-            GpioSpeedVeryHigh,
+            GpioSpeedMedium,
             GpioAltFn5SPI1);
         furi_hal_gpio_init_ex(
             handle->mosi,
             GpioModeAltFunctionPushPull,
             GpioPullDown,
-            GpioSpeedVeryHigh,
+            GpioSpeedMedium,
             GpioAltFn5SPI1);
         furi_hal_gpio_init_ex(
             handle->sck,
             GpioModeAltFunctionPushPull,
             GpioPullDown,
-            GpioSpeedVeryHigh,
+            GpioSpeedMedium,
             GpioAltFn5SPI1);
 
         // Select the external device for the whole acquire/release window.
@@ -302,19 +302,19 @@ inline static void furi_hal_spi_bus_generic_handle_event_callback(
             handle->miso,
             GpioModeAltFunctionPushPull,
             GpioPullNo,
-            GpioSpeedVeryHigh,
+            GpioSpeedMedium,
             GpioAltFn5SPI1);
         furi_hal_gpio_init_ex(
             handle->mosi,
             GpioModeAltFunctionPushPull,
             GpioPullNo,
-            GpioSpeedVeryHigh,
+            GpioSpeedMedium,
             GpioAltFn5SPI1);
         furi_hal_gpio_init_ex(
             handle->sck,
             GpioModeAltFunctionPushPull,
             GpioPullNo,
-            GpioSpeedVeryHigh,
+            GpioSpeedMedium,
             GpioAltFn5SPI1);
 
         //furi_hal_gpio_write(handle->cs, false);

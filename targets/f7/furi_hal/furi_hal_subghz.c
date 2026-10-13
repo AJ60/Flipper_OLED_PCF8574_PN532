@@ -200,9 +200,8 @@ void furi_hal_subghz_init(void) {
             break;
         }
 
-        // Enable extended range for external CC1101 (Yard Stick One)
-        // External CC1101 supports 281-361, 378-481, 749-962 MHz
-        furi_hal_subghz.extended_range = true;
+        // Extended range default is false; enabled via extend_range.txt or external radio device
+        furi_hal_subghz.extended_range = false;
 
         // Keep GDO0 floating for now.
         // GDO0 self-test is temporarily disabled.
@@ -631,7 +630,8 @@ void furi_hal_subghz_set_path(FuriHalSubGhzPath path) {
         cc1101_write_reg(
             &furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW | CC1101_IOCFG_INV);
     } else if(path == FuriHalSubGhzPath315) {
-        cc1101_write_reg(&furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW);
+        cc1101_write_reg(
+            &furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW | CC1101_IOCFG_INV);
     } else if(path == FuriHalSubGhzPath868) {
         cc1101_write_reg(
             &furi_hal_spi_bus_handle_subghz, CC1101_IOCFG2, CC1101IocfgHW | CC1101_IOCFG_INV);

@@ -122,7 +122,7 @@ const uint8_t subghz_device_cc1101_preset_ook_650khz_async_regs[] = {
     CC1101_AGCCTRL1,
     0x0, // 0; 0 - LNA 2 gain is decreased to minimum before decreasing LNA gain; 00 - Relative carrier sense threshold disabled; 0000 - RSSI to MAIN_TARGET
     CC1101_AGCCTRL2,
-    0x07, // 00 - DVGA all; 000 - MAX LNA+LNA2; 111 - MAIN_TARGET 42 dB
+    0x04, // 00 - DVGA all; 000 - MAX LNA+LNA2; 100 - MAIN_TARGET 33 dB (quieter noise floor)
 
     /* Wake on radio and timeouts control */
     CC1101_WORCTRL,

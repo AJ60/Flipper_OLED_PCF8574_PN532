@@ -143,9 +143,15 @@ void subbrute_free(SubBruteState* instance) {
 
     // SubBruteDevice
     subbrute_device_free(instance->device);
+
+    if(instance->radio_device != NULL) {
+        subghz_devices_sleep(instance->radio_device);
+        radio_device_loader_end(instance->radio_device);
+        instance->radio_device = NULL;
+    }
     subghz_devices_deinit();
 
-    //subbrute_settings_save(instance->settings);
+    subbrute_settings_save(instance->settings);
     subbrute_settings_free(instance->settings);
 
     // Notifications

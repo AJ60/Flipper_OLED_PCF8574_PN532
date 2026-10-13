@@ -6,10 +6,10 @@
 #include <storage/storage.h>
 #include <lib/subghz/types.h>
 
-#define SUBGHZ_LAST_SETTING_FREQUENCY_ANALYZER_TRIGGER        (-93.0f)
-// 1 = "AM650"
+#define SUBGHZ_LAST_SETTING_FREQUENCY_ANALYZER_TRIGGER        (-83.0f)
+// 0 = "AM270" (narrower 270kHz BW reduces ambient and harmonic noise vs wide AM650)
 // "AM270", "AM650", "FM238", "FM12K", "FM476",
-#define SUBGHZ_LAST_SETTING_DEFAULT_PRESET                    1
+#define SUBGHZ_LAST_SETTING_DEFAULT_PRESET                    0
 #define SUBGHZ_LAST_SETTING_DEFAULT_FREQUENCY                 433920000
 #define SUBGHZ_LAST_SETTING_FREQUENCY_ANALYZER_FEEDBACK_LEVEL 2
 

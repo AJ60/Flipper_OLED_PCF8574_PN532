@@ -10,7 +10,7 @@
 
 #define TAG "SubghzFrequencyAnalyzerWorker"
 
-#define SUBGHZ_FREQUENCY_ANALYZER_THRESHOLD -97.0f
+#define SUBGHZ_FREQUENCY_ANALYZER_THRESHOLD -85.0f
 
 static const uint8_t subghz_preset_ook_58khz[][2] = {
     {CC1101_MDMCFG4, 0b11110111}, // Rx BW filter is 58.035714kHz
@@ -167,15 +167,15 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
         cc1101_write_reg(
             spi_handle,
             CC1101_AGCCTRL2,
-            0b00000111); // 00 - DVGA all; 000 - MAX LNA+LNA2; 111 - MAGN_TARGET 42 dB
+            0b00000100); // 00 - DVGA all; 000 - MAX LNA+LNA2; 100 - MAGN_TARGET 33 dB
         cc1101_write_reg(
             spi_handle,
             CC1101_AGCCTRL1,
-            0b00001000); // 0; 0 - LNA 2 gain is decreased to minimum before decreasing LNA gain; 00 - Relative carrier sense threshold disabled; 1000 - Absolute carrier sense threshold disabled
+            0b00001000); // 0; 0 - LNA 2 gain decreased to min; 00 - Relative CS disabled; 1000 - Absolute CS disabled
         cc1101_write_reg(
             spi_handle,
             CC1101_AGCCTRL0,
-            0b00110000); // 00 - No hysteresis, medium asymmetric dead zone, medium gain ; 11 - 64 samples agc; 00 - Normal AGC, 00 - 4dB boundary
+            0b01110000); // 01 - Low hysteresis, small dead zone; 11 - 64 samples agc; 00 - Normal AGC, 00 - 4dB boundary
         furi_hal_spi_release(spi_handle);
     } else {
         subghz_frequency_analyzer_txen_off();
@@ -193,15 +193,15 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
         cc1101_write_reg(
             spi_handle,
             CC1101_AGCCTRL2,
-            0b00000111); // 00 - DVGA all; 000 - MAX LNA+LNA2; 111 - MAGN_TARGET 42 dB
+            0b00000100); // 00 - DVGA all; 000 - MAX LNA+LNA2; 100 - MAGN_TARGET 33 dB
         cc1101_write_reg(
             spi_handle,
             CC1101_AGCCTRL1,
-            0b00001000); // 0; 0 - LNA 2 gain is decreased to minimum before decreasing LNA gain; 00 - Relative carrier sense threshold disabled; 1000 - Absolute carrier sense threshold disabled
+            0b00001000); // 0; 0 - LNA 2 gain decreased to min; 00 - Relative CS disabled; 1000 - Absolute CS disabled
         cc1101_write_reg(
             spi_handle,
             CC1101_AGCCTRL0,
-            0b00110000); // 00 - No hysteresis, medium asymmetric dead zone, medium gain ; 11 - 64 samples agc; 00 - Normal AGC, 00 - 4dB boundary
+            0b01110000); // 01 - Low hysteresis, small dead zone; 11 - 64 samples agc; 00 - Normal AGC, 00 - 4dB boundary
 
         furi_hal_spi_release(spi_handle);
 
@@ -233,8 +233,16 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
             uint32_t current_frequency = subghz_setting_get_frequency(instance->setting, i);
             if(furi_hal_subghz_is_frequency_valid(current_frequency) &&
                (((current_frequency != 462750000) && (current_frequency != 467750000) &&
-                 (current_frequency != 464000000)) &&
+                 (current_frequency != 464000000) &&
+                 (current_frequency < 311800000 || current_frequency > 312200000)) &&
                 (current_frequency <= 920000000))) {
+                if(!instance->is_ext_radio) {
+                    furi_hal_subghz_set_path(
+                        (current_frequency >= 378000000 && current_frequency <= 481000000) ?
+                            FuriHalSubGhzPath433 :
+                        (current_frequency >= 749000000) ? FuriHalSubGhzPath868 :
+                                                           FuriHalSubGhzPath315);
+                }
                 furi_hal_spi_acquire(spi_handle);
                 cc1101_switch_to_idle(spi_handle);
                 frequency = cc1101_set_frequency(
@@ -247,7 +255,7 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
                 cc1101_switch_to_rx(spi_handle);
                 furi_hal_spi_release(spi_handle);
 
-                furi_delay_ms(2);
+                furi_delay_ms((current_frequency < 350000000) ? 3 : 2);
 
                 rssi = subghz_frequency_analyzer_worker_get_rssi(instance);
 
@@ -271,8 +279,14 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
             frequency_rssi.frequency_coarse,
             (double)rssi_min);
 
+        float rssi_avg_floor =
+            (rssi_avg_samples > 0) ? (rssi_avg / (float)rssi_avg_samples) : -127.0f;
+        // Require signal to exceed absolute trigger level AND stand out at least 5.5 dB above the band average noise floor
+        bool coarse_peak_detected = (frequency_rssi.rssi_coarse > instance->trigger_level) &&
+                                    (frequency_rssi.rssi_coarse >= rssi_avg_floor + 5.5f);
+
         // Second stage: fine scan
-        if(frequency_rssi.rssi_coarse > instance->trigger_level && instance->worker_running) {
+        if(coarse_peak_detected && instance->worker_running) {
             subghz_frequency_analyzer_worker_idle(instance);
             subghz_frequency_analyzer_worker_load_registers(spi_handle, subghz_preset_ook_58khz);
             //for example -0.3 ... 433.92 ... +0.3 step 20KHz
@@ -280,7 +294,8 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
                 i < frequency_rssi.frequency_coarse + 300000;
                 i += 20000) {
                 if(!instance->worker_running) break;
-                if(furi_hal_subghz_is_frequency_valid(i)) {
+                if(furi_hal_subghz_is_frequency_valid(i) &&
+                   (i < 311900000 || i > 312100000)) {
                     furi_hal_spi_acquire(spi_handle);
                     cc1101_switch_to_idle(spi_handle);
                     frequency = cc1101_set_frequency(spi_handle, i);
@@ -307,7 +322,8 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
         }
 
         // Deliver results fine
-        if(frequency_rssi.rssi_fine > instance->trigger_level) {
+        if((frequency_rssi.rssi_fine > instance->trigger_level) &&
+           (frequency_rssi.rssi_fine >= rssi_avg_floor + 4.5f)) {
             FURI_LOG_D(
                 TAG, "=:%lu:%f", frequency_rssi.frequency_fine, (double)frequency_rssi.rssi_fine);
 
@@ -329,7 +345,7 @@ static int32_t subghz_frequency_analyzer_worker_thread(void* context) {
                     true);
             }
         } else if( // Deliver results coarse
-            (frequency_rssi.rssi_coarse > instance->trigger_level) &&
+            coarse_peak_detected &&
             (instance->sample_hold_counter < 10)) {
             FURI_LOG_D(
                 TAG,

@@ -29,12 +29,8 @@ SubBruteDevice* subbrute_device_alloc(const SubGhzDevice* radio_device) {
 void subbrute_device_free(SubBruteDevice* instance) {
     furi_assert(instance);
 
-    // I don't know how to free this
-    // instance->decoder_result = NULL;
-    if(instance->decoder_result != NULL) {
-        free(instance->decoder_result);
-        instance->decoder_result = NULL;
-    }
+    // decoder_result is owned by receiver registry; do not free()
+    instance->decoder_result = NULL;
 
     if(instance->receiver != NULL) {
         subghz_receiver_free(instance->receiver);
@@ -326,7 +322,12 @@ uint8_t subbrute_device_load_from_file(SubBruteDevice* instance, const char* fil
             result = SubBruteFileResultMissingOrIncorrectBit;
             break;
         }
-        instance->file_protocol_info->bits = temp_data32;
+        if(temp_data32 == 0 || temp_data32 > 64) {
+            FURI_LOG_E(TAG, "Invalid Bit value: %lu (must be 1..64)", temp_data32);
+            result = SubBruteFileResultMissingOrIncorrectBit;
+            break;
+        }
+        instance->file_protocol_info->bits = (uint8_t)temp_data32;
 #ifdef FURI_DEBUG
         FURI_LOG_D(TAG, "Bit: %d", instance->file_protocol_info->bits);
 #endif
