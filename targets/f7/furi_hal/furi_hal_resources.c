@@ -68,12 +68,14 @@ const GpioPin gpio_ext_pa6 = {.port = PA6_GPIO_Port, .pin = PA6_Pin};
 // (gpio_ext_pc0): it is I2C3 SCL and also carries the PWM channel (TIM17_CH1).
 const GpioPin gpio_ext_pa7 = {.port = PA7_GPIO_Port, .pin = PA7_Pin};
 
-const GpioPin gpio_button_up;
-const GpioPin gpio_button_down;
-const GpioPin gpio_button_right;
-const GpioPin gpio_button_left;
-const GpioPin gpio_button_ok;
-const GpioPin gpio_button_back;
+// Buttons mapped directly to PCF8574 pins (port = NULL indicates PCF8574 virtual GPIO):
+// P0 = Up, P1 = Down, P2 = Left, P3 = Right, P4 = OK, P5 = Back
+const GpioPin gpio_button_up = {.port = NULL, .pin = LL_GPIO_PIN_0};
+const GpioPin gpio_button_down = {.port = NULL, .pin = LL_GPIO_PIN_1};
+const GpioPin gpio_button_left = {.port = NULL, .pin = LL_GPIO_PIN_2};
+const GpioPin gpio_button_right = {.port = NULL, .pin = LL_GPIO_PIN_3};
+const GpioPin gpio_button_ok = {.port = NULL, .pin = LL_GPIO_PIN_4};
+const GpioPin gpio_button_back = {.port = NULL, .pin = LL_GPIO_PIN_5};
 
 const GpioPin gpio_infrared_rx = {.port = IR_RX_GPIO_Port, .pin = IR_RX_Pin};
 const GpioPin gpio_infrared_tx = {.port = IR_TX_GPIO_Port, .pin = IR_TX_Pin};

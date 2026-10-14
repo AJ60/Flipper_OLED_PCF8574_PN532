@@ -2,6 +2,7 @@
 #include <furi_hal_gpio.h>
 #include <furi_hal_version.h>
 #include <furi_hal_resources.h>
+#include <furi_hal_pcf8574.h>
 #include <stm32wbxx_ll_comp.h>
 #include <stm32wbxx_ll_pwr.h>
 
@@ -77,6 +78,9 @@ void furi_hal_gpio_init_ex(
     const GpioPull pull,
     const GpioSpeed speed,
     const GpioAltFn alt_fn) {
+    if(!gpio || gpio->port == NULL) {
+        return;
+    }
     const uint32_t sys_exti_port = GET_SYSCFG_EXTI_PORT(gpio->port);
     const uint32_t sys_exti_line = GET_SYSCFG_EXTI_LINE(gpio->pin);
     const uint32_t exti_line = GET_EXTI_LINE(gpio->pin);
@@ -196,6 +200,9 @@ void furi_hal_gpio_init_ex(
 void furi_hal_gpio_add_int_callback(const GpioPin* gpio, GpioExtiCallback cb, void* ctx) {
     furi_check(gpio);
     furi_check(cb);
+    if(gpio->port == NULL) {
+        return;
+    }
 
     FURI_CRITICAL_ENTER();
 
@@ -212,6 +219,9 @@ void furi_hal_gpio_add_int_callback(const GpioPin* gpio, GpioExtiCallback cb, vo
 
 void furi_hal_gpio_enable_int_callback(const GpioPin* gpio) {
     furi_check(gpio);
+    if(gpio->port == NULL) {
+        return;
+    }
 
     FURI_CRITICAL_ENTER();
 
@@ -223,6 +233,9 @@ void furi_hal_gpio_enable_int_callback(const GpioPin* gpio) {
 
 void furi_hal_gpio_disable_int_callback(const GpioPin* gpio) {
     furi_check(gpio);
+    if(gpio->port == NULL) {
+        return;
+    }
 
     FURI_CRITICAL_ENTER();
 
@@ -235,6 +248,9 @@ void furi_hal_gpio_disable_int_callback(const GpioPin* gpio) {
 
 void furi_hal_gpio_remove_int_callback(const GpioPin* gpio) {
     furi_check(gpio);
+    if(gpio->port == NULL) {
+        return;
+    }
 
     FURI_CRITICAL_ENTER();
 
@@ -339,4 +355,14 @@ void EXTI15_10_IRQHandler(void) {
         LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_15);
         furi_hal_gpio_int_call(15);
     }
+}
+
+bool furi_hal_gpio_read_unmapped(const GpioPin* gpio) {
+    if(!gpio) {
+        return false;
+    }
+    uint8_t port_state = 0xFF;
+    furi_hal_pcf8574_read_port(&port_state);
+    uint8_t mask = (gpio->pin < 8) ? (uint8_t)(1u << gpio->pin) : (uint8_t)(gpio->pin & 0xFF);
+    return (port_state & mask) != 0;
 }

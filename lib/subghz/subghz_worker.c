@@ -38,6 +38,8 @@ void subghz_worker_rx_callback(bool level, uint32_t duration, void* context) {
     if(sizeof(LevelDuration) != ret) instance->overrun = true;
 }
 
+#define SUBGHZ_WORKER_BATCH_SIZE 32
+
 /** Worker callback thread
  * 
  * @param context 
@@ -46,11 +48,13 @@ void subghz_worker_rx_callback(bool level, uint32_t duration, void* context) {
 static int32_t subghz_worker_thread_callback(void* context) {
     SubGhzWorker* instance = context;
 
-    LevelDuration level_duration;
+    LevelDuration batch[SUBGHZ_WORKER_BATCH_SIZE];
     while(instance->running) {
-        int ret = furi_stream_buffer_receive(
-            instance->stream, &level_duration, sizeof(LevelDuration), 10);
-        if(ret == sizeof(LevelDuration)) {
+        size_t ret = furi_stream_buffer_receive(
+            instance->stream, batch, sizeof(batch), 10);
+        size_t count = ret / sizeof(LevelDuration);
+        for(size_t i = 0; i < count; i++) {
+            LevelDuration level_duration = batch[i];
             if(level_duration_is_reset(level_duration)) {
                 FURI_LOG_E(TAG, "Overrun buffer");
                 if(instance->overrun_callback) instance->overrun_callback(instance->context);
@@ -84,6 +88,7 @@ SubGhzWorker* subghz_worker_alloc(void) {
 
     instance->thread =
         furi_thread_alloc_ex("SubGhzWorker", 2048, subghz_worker_thread_callback, instance);
+    furi_thread_set_priority(instance->thread, FuriThreadPriorityHigh);
 
     // Halved from 4096 entries: decode is per-edge streaming with reset on
     // overrun, so a shorter window only raises the overrun rate under dense

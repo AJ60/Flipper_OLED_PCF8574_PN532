@@ -1484,6 +1484,7 @@ Function,+,furi_hal_gpio_enable_int_callback,void,const GpioPin*
 Function,+,furi_hal_gpio_init,void,"const GpioPin*, const GpioMode, const GpioPull, const GpioSpeed"
 Function,+,furi_hal_gpio_init_ex,void,"const GpioPin*, const GpioMode, const GpioPull, const GpioSpeed, const GpioAltFn"
 Function,+,furi_hal_gpio_init_simple,void,"const GpioPin*, const GpioMode"
+Function,+,furi_hal_gpio_read_unmapped,_Bool,const GpioPin*
 Function,+,furi_hal_gpio_remove_int_callback,void,const GpioPin*
 Function,+,furi_hal_hid_consumer_key_press,_Bool,uint16_t
 Function,+,furi_hal_hid_consumer_key_release,_Bool,uint16_t

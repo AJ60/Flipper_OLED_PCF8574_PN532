@@ -1,5 +1,7 @@
 #include "pn532.h"
 #include <furi.h>
+#include <furi_hal_gpio.h>
+#include <furi_hal_resources.h>
 #include <string.h>
 
 #define TAG "Pn532"
@@ -7,6 +9,10 @@
 static const uint8_t pn532_ack[] = {0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};
 
 static bool pn532_is_ready(const FuriHalI2cBusHandle* handle) {
+    // If IRQ pin is active low, response is ready immediately without I2C overhead
+    if(!furi_hal_gpio_read(&gpio_nfc_irq_rfid_pull)) {
+        return true;
+    }
     uint8_t status = 0;
     furi_hal_i2c_acquire(handle);
     bool ok = furi_hal_i2c_rx(handle, PN532_I2C_ADDR_8BIT, &status, 1, 20);
@@ -16,12 +22,12 @@ static bool pn532_is_ready(const FuriHalI2cBusHandle* handle) {
 
 static Pn532Error pn532_wait_ready(const FuriHalI2cBusHandle* handle, uint32_t timeout_ms) {
     uint32_t start = furi_get_tick();
-    while((furi_get_tick() - start) < timeout_ms) {
+    do {
         if(pn532_is_ready(handle)) {
             return Pn532ErrorNone;
         }
         furi_delay_ms(2);
-    }
+    } while((furi_get_tick() - start) < timeout_ms);
     return Pn532ErrorTimeout;
 }
 
@@ -190,8 +196,8 @@ Pn532Error pn532_init(const FuriHalI2cBusHandle* handle) {
     pn532_wake_up(handle);
     furi_delay_ms(10);
 
-    // Test communication with SAMConfiguration
-    Pn532Error err = pn532_sam_config(handle, 0x01, 0x14, false);
+    // Test communication with SAMConfiguration and enable P70_IRQ pin
+    Pn532Error err = pn532_sam_config(handle, 0x01, 0x14, true);
     if(err != Pn532ErrorNone) {
         FURI_LOG_E(TAG, "PN532 SAM config failed: %d", err);
         return err;
@@ -204,7 +210,7 @@ Pn532Error pn532_init(const FuriHalI2cBusHandle* handle) {
     pn532_set_rx_gain(handle, 0x07);
     pn532_write_register(handle, PN532_REG_CIU_RxThreshold, 0x85);
 
-    FURI_LOG_I(TAG, "PN532 initialized successfully over I2C (RxGain=+10dB)");
+    FURI_LOG_I(TAG, "PN532 initialized successfully over I2C (RxGain=+10dB, IRQ enabled)");
     return Pn532ErrorNone;
 }
 
@@ -256,7 +262,7 @@ Pn532Error
     uint8_t cmd[4];
     cmd[0] = PN532_CMD_RFCONFIGURATION;
     cmd[1] = 0x05; // Config item 5 (MaxRetries)
-    cmd[2] = 0xFF; // MxRtyATR
+    cmd[2] = max_retries; // MxRtyATR: bounded retries instead of 0xFF (infinite watchdog block)
     cmd[3] = max_retries; // MxRtyPassiveActivation
 
     Pn532Error err = pn532_write_command(handle, cmd, sizeof(cmd));

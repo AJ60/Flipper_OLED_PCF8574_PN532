@@ -264,8 +264,11 @@ bool furi_hal_pcf8574_read_port(uint8_t* port_state) {
 }
 
 bool furi_hal_pcf8574_write_port(uint8_t port_state) {
-    pcf8574_current_state = port_state;
     if(!pcf8574_is_initialized || !furi_hal_i2c_bus_power_mutex || FURI_IS_ISR()) {
+        if(!pcf8574_is_initialized || FURI_IS_ISR()) {
+            pcf8574_current_state = (pcf8574_current_state & pcf8574_input_mask) |
+                                    (port_state & (uint8_t)~pcf8574_input_mask);
+        }
         return false;
     }
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
@@ -290,13 +293,13 @@ bool furi_hal_pcf8574_write_pin(uint8_t pin, bool value) {
     if(pin > 7) {
         return false;
     }
-    // Update shadow state even if uninitialized or in ISR so state is remembered
-    if(value) {
-        pcf8574_current_state |= (uint8_t)(1u << pin);
-    } else {
-        pcf8574_current_state &= (uint8_t) ~(1u << pin);
-    }
     if(!pcf8574_is_initialized || !furi_hal_i2c_bus_power_mutex || FURI_IS_ISR()) {
+        // Update shadow state even if uninitialized or in ISR so state is remembered
+        if(value) {
+            pcf8574_current_state |= (uint8_t)(1u << pin);
+        } else {
+            pcf8574_current_state &= (uint8_t) ~(1u << pin);
+        }
         return true;
     }
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
@@ -335,15 +338,20 @@ bool furi_hal_pcf8574_write_pin_raw(uint8_t pin, bool value) {
     if(pin > 7 || !pcf8574_is_initialized) {
         return false;
     }
+    uint8_t new_state = pcf8574_current_state;
     if(value) {
-        pcf8574_current_state |= (uint8_t)(1u << pin);
+        new_state |= (uint8_t)(1u << pin);
     } else {
-        pcf8574_current_state &= (uint8_t) ~(1u << pin);
+        new_state &= (uint8_t) ~(1u << pin);
     }
     furi_hal_bus_enable(FuriHalBusI2C1);
     LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_PCLK1);
-    uint8_t byte = pcf8574_compose_byte(pcf8574_current_state);
-    return furi_hal_i2c_raw_write(I2C1, pcf8574_addr, &byte, 1, 50);
+    uint8_t byte = pcf8574_compose_byte(new_state);
+    bool res = furi_hal_i2c_raw_write(I2C1, pcf8574_addr, &byte, 1, 50);
+    if(res) {
+        pcf8574_current_state = new_state;
+    }
+    return res;
 }
 
 void furi_hal_pcf8574_attach_int(GpioExtiCallback cb, void* ctx) {

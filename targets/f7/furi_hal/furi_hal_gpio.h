@@ -1,5 +1,7 @@
 #pragma once
-#include "stdbool.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stm32wbxx_ll_gpio.h>
 #include <stm32wbxx_ll_system.h>
 #include <stm32wbxx_ll_exti.h>
@@ -230,6 +232,9 @@ void furi_hal_gpio_remove_int_callback(const GpioPin* gpio);
  * @param state true / false
  */
 static inline void furi_hal_gpio_write(const GpioPin* gpio, const bool state) {
+    if(!gpio || gpio->port == NULL) {
+        return;
+    }
     // writing to BSSR is an atomic operation
     if(state == true) {
         gpio->port->BSRR = gpio->pin;
@@ -239,13 +244,16 @@ static inline void furi_hal_gpio_write(const GpioPin* gpio, const bool state) {
 }
 
 /**
- * GPIO read pin
+ * GPIO write port pin
  * @param port GPIO port
  * @param pin pin mask
  * @return true / false
  */
 static inline void
     furi_hal_gpio_write_port_pin(GPIO_TypeDef* port, uint16_t pin, const bool state) {
+    if(!port) {
+        return;
+    }
     // writing to BSSR is an atomic operation
     if(state == true) {
         port->BSRR = pin;
@@ -254,12 +262,20 @@ static inline void
     }
 }
 
+bool furi_hal_gpio_read_unmapped(const GpioPin* gpio);
+
 /**
  * GPIO read pin
  * @param gpio GpioPin
  * @return true / false
  */
 static inline bool furi_hal_gpio_read(const GpioPin* gpio) {
+    if(!gpio) {
+        return false;
+    }
+    if(gpio->port == NULL) {
+        return furi_hal_gpio_read_unmapped(gpio);
+    }
     if((gpio->port->IDR & gpio->pin) != 0x00U) {
         return true;
     } else {
@@ -268,12 +284,15 @@ static inline bool furi_hal_gpio_read(const GpioPin* gpio) {
 }
 
 /**
- * GPIO read pin
+ * GPIO read port pin
  * @param port GPIO port
  * @param pin pin mask
  * @return true / false
  */
 static inline bool furi_hal_gpio_read_port_pin(GPIO_TypeDef* port, uint16_t pin) {
+    if(!port) {
+        return false;
+    }
     if((port->IDR & pin) != 0x00U) {
         return true;
     } else {
