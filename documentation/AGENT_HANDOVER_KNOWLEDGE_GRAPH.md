@@ -1,9 +1,8 @@
-# 🧠 Agent Handover Knowledge Graph — DIY Flipper Zero (OLED Edition)
+# 🧠 System Architecture & Hardware Knowledge Graph — DIY Flipper Zero (OLED Edition)
 
-**Target Agent**: Hermes / Successor Agent  
 **Repository**: [`Flipper_OLED_PCF8574_PN532`](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)  
 **Hardware Target**: WeAct STM32WB55CGU6 (Dual-Core: Cortex-M4 @ 64MHz + Cortex-M0+ @ 32MHz)  
-**Firmware Base**: Momentum Firmware (v2.2) with custom DIY hardware HAL adaptations  
+**Firmware Base**: Momentum Firmware with custom DIY hardware HAL adaptations  
 
 ---
 
@@ -229,18 +228,18 @@ sequenceDiagram
 
 ## 4. Key Source Code File Locations
 
-* **Pin Mapping & HAL**: [`targets/f7/furi_hal/furi_hal_resources.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_resources.c) & [`furi_hal_resources.h`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_resources.h)
-* **Keypad Driver**: [`targets/f7/furi_hal/furi_hal_pcf8574.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_pcf8574.c)
-* **Battery Fuel Gauge**: [`targets/f7/furi_hal/furi_hal_ina219.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_ina219.c)
-* **NFC HAL & Driver**: [`targets/f7/furi_hal/furi_hal_nfc.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_nfc.c) & [`lib/drivers/pn532.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/lib/drivers/pn532.c)
-* **OLED Driver**: [`lib/u8g2/u8g2_glue.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/lib/u8g2/u8g2_glue.c)
-* **Sub-GHz Driver**: [`targets/f7/furi_hal/furi_hal_subghz.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_subghz.c) & [`lib/drivers/cc1101.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/lib/drivers/cc1101.c)
-* **LF-RFID Driver**: [`targets/f7/furi_hal/furi_hal_rfid.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_rfid.c)
-* **Build System**: [`SConstruct`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/SConstruct), [`firmware.scons`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/firmware.scons), and [`fbt_options.py`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/fbt_options.py)
+* **Pin Mapping & HAL**: [`targets/f7/furi_hal/furi_hal_resources.c`](../targets/f7/furi_hal/furi_hal_resources.c) & [`furi_hal_resources.h`](../targets/f7/furi_hal/furi_hal_resources.h)
+* **Keypad Driver**: [`targets/f7/furi_hal/furi_hal_pcf8574.c`](../targets/f7/furi_hal/furi_hal_pcf8574.c)
+* **Battery Fuel Gauge**: [`targets/f7/furi_hal/furi_hal_ina219.c`](../targets/f7/furi_hal/furi_hal_ina219.c)
+* **NFC HAL & Driver**: [`targets/f7/furi_hal/furi_hal_nfc.c`](../targets/f7/furi_hal/furi_hal_nfc.c) & [`lib/drivers/pn532.c`](../lib/drivers/pn532.c)
+* **OLED Driver**: [`lib/u8g2/u8g2_glue.c`](../lib/u8g2/u8g2_glue.c)
+* **Sub-GHz Driver**: [`targets/f7/furi_hal/furi_hal_subghz.c`](../targets/f7/furi_hal/furi_hal_subghz.c) & [`lib/drivers/cc1101.c`](../lib/drivers/cc1101.c)
+* **LF-RFID Driver**: [`targets/f7/furi_hal/furi_hal_rfid.c`](../targets/f7/furi_hal/furi_hal_rfid.c)
+* **Build System**: [`SConstruct`](../SConstruct), [`firmware.scons`](../firmware.scons), and [`fbt_options.py`](../fbt_options.py)
 
 ---
 
-## 5. Critical Engineering Gotchas & Agent Rules
+## 5. Critical Engineering Gotchas & Architecture Rules
 
 1. **Header Labels vs MCU Pins**:
    - Header **`C0`** = MCU **`PA7`** (I2C3 SCL).
@@ -259,15 +258,15 @@ sequenceDiagram
 ## 6. Advanced Firmware Features (v2.3 Integration)
 
 * **Covert Stealth Mode ("Games Only" Profile)**:
-  - **Observer**: [`applications/services/desktop/views/desktop_view_main.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/desktop/views/desktop_view_main.c) detects the Konami code sequence (`Up, Up, Down, Down, Left, Right, Left, Right`) on desktop.
-  - **Storage**: Toggles `momentum_settings.games_only_mode` serialized in [`lib/momentum/settings.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/lib/momentum/settings.c).
-  - **Menu Masking**: [`applications/services/loader/loader_menu.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/loader/loader_menu.c) intercepts and hides `Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO` when active.
+  - **Observer**: [`applications/services/desktop/views/desktop_view_main.c`](../applications/services/desktop/views/desktop_view_main.c) detects the Konami code sequence (`Up, Up, Down, Down, Left, Right, Left, Right`) on desktop.
+  - **Storage**: Toggles `momentum_settings.games_only_mode` serialized in [`lib/momentum/settings.c`](../lib/momentum/settings.c).
+  - **Menu Masking**: [`applications/services/loader/loader_menu.c`](../applications/services/loader/loader_menu.c) intercepts and hides `Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO` when active.
 * **OLED Burn-In & Contrast Engine**:
-  - **Screen Timeout**: Default `display_off_delay_ms` set to 30,000 ms in [`applications/services/notification/notification_app.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/notification/notification_app.c).
-  - **Contrast Scaling**: [`targets/f7/furi_hal/furi_hal_light.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_light.c) maps `LightBacklight` directly to SSD1306 contrast register `0x81` (scaling `0x15` to `0xCF`) and sends display sleep `0xAE` on value `0`.
+  - **Screen Timeout**: Default `display_off_delay_ms` set to 30,000 ms in [`applications/services/notification/notification_app.c`](../applications/services/notification/notification_app.c).
+  - **Contrast Scaling**: [`targets/f7/furi_hal/furi_hal_light.c`](../targets/f7/furi_hal/furi_hal_light.c) maps `LightBacklight` directly to SSD1306 contrast register `0x81` (scaling `0x15` to `0xCF`) and sends display sleep `0xAE` on value `0`.
 * **Ham Radio Suite**:
-  - **App Location**: [`applications/external/ham_radio/`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/external/ham_radio/).
+  - **App Location**: [`applications/external/ham_radio/`](../applications/external/ham_radio/).
   - **Defaults**: 8 preloaded 70cm amateur channels (`433.000` to `446.000 MHz`).
   - **Persistence**: Band plan serialized with `FlipperFormat` at `/ext/ham_radio/band_plan.txt`.
 * **PN532 Target Emulation Alignment**:
-  - In [`targets/f7/furi_hal/furi_hal_nfc_iso14443a.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_nfc_iso14443a.c), 4-byte UIDs map `uid[1..3]` to `target_params[2..4]` to match the PN532 ROM's fixed `0x08` prefix.
+  - In [`targets/f7/furi_hal/furi_hal_nfc_iso14443a.c`](../targets/f7/furi_hal/furi_hal_nfc_iso14443a.c), 4-byte UIDs map `uid[1..3]` to `target_params[2..4]` to match the PN532 ROM's fixed `0x08` prefix.

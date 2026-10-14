@@ -67,8 +67,6 @@ int main(void) {
         if(boot_mode != FuriHalRtcBootModePostUpdate && boot_mode != FuriHalRtcBootModePreUpdate) {
             furi_hal_set_is_normal_boot(true);
         }
-        // Prevent entering sleep mode when executed from RAM
-        furi_hal_power_insomnia_enter();
 
         furi_thread_start(main_thread);
         //    button_sr_service_start();

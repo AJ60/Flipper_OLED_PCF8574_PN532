@@ -24,6 +24,7 @@ static const uint32_t subghz_frequency_list[] = {
     307500000,
     307800000,
     309000000,
+    310000000,
     // 312.0 - 312.2 MHz excluded: 12th harmonic of CC1101 26MHz XOSC (internal spur)
     // 312000000,
     // 312100000,
@@ -106,6 +107,7 @@ static const uint32_t subghz_extended_frequency_list[] = {
     307500000,
     307800000,
     309000000,
+    310000000,
     // 312.0 - 312.2 MHz excluded: 12th harmonic of CC1101 26MHz XOSC (internal spur)
     // 312000000,
     // 312100000,

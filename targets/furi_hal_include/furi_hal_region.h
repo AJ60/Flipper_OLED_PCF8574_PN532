@@ -89,6 +89,11 @@ extern const FuriHalRegion furi_hal_region_eu_ru;
 extern const FuriHalRegion furi_hal_region_us_ca_au;
 extern const FuriHalRegion furi_hal_region_jp;
 
+static inline bool furi_hal_region_is_in_flash(const void* ptr) {
+    uint32_t addr = (uint32_t)ptr;
+    return (addr >= 0x08000000 && addr < 0x08100000);
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -137,9 +137,16 @@ static const FuriHalRegion* const furi_hal_static_regions[] = {
 static FuriHalRegion* furi_hal_dynamic_region;
 static FuriMutex* furi_hal_dynamic_region_mutex;
 
-static inline bool furi_hal_region_is_in_flash(const void* ptr) {
-    uint32_t addr = (uint32_t)ptr;
-    return (addr >= 0x08000000 && addr < 0x08100000);
+static void furi_hal_region_init_band_tokens(FuriHalRegion* region) {
+    if(!region || furi_hal_region_is_in_flash(region)) return;
+    uint32_t now = furi_get_tick();
+    for(size_t i = 0; i < region->bands_count; i++) {
+        FuriHalRegionBand* b = &region->bands[i];
+        b->tokens_ms = (b->duty_cycle == 0 || b->duty_cycle >= 100) ?
+            UINT32_MAX : ((b->duty_cycle * 3600000UL) / 100) * 1000;
+        b->last_update_tick = now;
+        b->last_tx_tick = 0;
+    }
 }
 
 void furi_hal_region_init(void) {
@@ -152,6 +159,7 @@ void furi_hal_region_init(void) {
     furi_hal_dynamic_region = malloc(size);
     furi_check(furi_hal_dynamic_region);
     memcpy(furi_hal_dynamic_region, &furi_hal_region_zero, size);
+    furi_hal_region_init_band_tokens(furi_hal_dynamic_region);
 }
 
 const FuriHalRegion* furi_hal_region_get(void) {
@@ -161,7 +169,16 @@ const FuriHalRegion* furi_hal_region_get(void) {
     furi_check(furi_mutex_acquire(furi_hal_dynamic_region_mutex, FuriWaitForever) == FuriStatusOk);
 
     if(region < FuriHalVersionRegionWorld && furi_hal_dynamic_region == NULL) {
-        ret = furi_hal_static_regions[region];
+        const FuriHalRegion* static_reg = furi_hal_static_regions[region];
+        size_t size = sizeof(FuriHalRegion) + sizeof(FuriHalRegionBand) * static_reg->bands_count;
+        furi_hal_dynamic_region = malloc(size);
+        if(furi_hal_dynamic_region) {
+            memcpy(furi_hal_dynamic_region, static_reg, size);
+            furi_hal_region_init_band_tokens(furi_hal_dynamic_region);
+            ret = furi_hal_dynamic_region;
+        } else {
+            ret = static_reg;
+        }
     } else {
         ret = furi_hal_dynamic_region;
     }
@@ -182,8 +199,10 @@ void furi_hal_region_set(FuriHalRegion* region) {
         new_region = malloc(size);
         furi_check(new_region);
         memcpy(new_region, region, size);
+        furi_hal_region_init_band_tokens(new_region);
     } else {
         new_region = region;
+        furi_hal_region_init_band_tokens(new_region);
     }
 
     if(furi_hal_dynamic_region && !furi_hal_region_is_in_flash(furi_hal_dynamic_region)) {

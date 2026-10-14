@@ -105,12 +105,18 @@ static uint32_t furi_hal_subghz_max_tokens_ms(const FuriHalRegionBand* band) {
 }
 
 static void furi_hal_subghz_refill_tokens(FuriHalRegionBand* band) {
+    if(!band || furi_hal_region_is_in_flash(band)) return;
     if(band->duty_cycle == 0 || band->duty_cycle >= 100) {
         band->tokens_ms = furi_hal_subghz_max_tokens_ms(band) * DUTY_CYCLE_TOKEN_SCALE;
         band->last_update_tick = furi_get_tick();
         return;
     }
     uint32_t now = furi_get_tick();
+    if(band->last_update_tick == 0) {
+        band->tokens_ms = furi_hal_subghz_max_tokens_ms(band) * DUTY_CYCLE_TOKEN_SCALE;
+        band->last_update_tick = now;
+        return;
+    }
     uint32_t elapsed_ms = now - band->last_update_tick;
     // Tokens replenish at rate: duty_cycle% per ms
     uint32_t refill = (elapsed_ms * band->duty_cycle * DUTY_CYCLE_TOKEN_SCALE) / 100;
@@ -123,6 +129,7 @@ static void furi_hal_subghz_refill_tokens(FuriHalRegionBand* band) {
 }
 
 bool furi_hal_subghz_consume_tokens(FuriHalRegionBand* band, uint32_t tx_duration_ms) {
+    if(!band || furi_hal_region_is_in_flash(band)) return true;
     if(band->duty_cycle == 0 || band->duty_cycle >= 100) return true;
     furi_hal_subghz_refill_tokens(band);
     uint32_t cost = tx_duration_ms * DUTY_CYCLE_TOKEN_SCALE;

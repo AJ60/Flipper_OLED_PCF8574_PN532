@@ -140,16 +140,16 @@ The Furi OS framework provides thread-safe abstractions over low-level RTOS cons
 The DIY Flipper firmware integrates specialized subsystem upgrades bridging **Unleashed**, **RogueMaster**, and custom hardware drivers:
 
 ### 🎮 A. Covert Stealth Mode ("Games Only" Profile)
-* **Desktop Observer**: Located in [`desktop_view_main.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/desktop/views/desktop_view_main.c). Listens for the Konami code (`▲ ▲ ▼ ▼ ◄ ► ◄ ►`) during main pet screen idle loop.
+* **Desktop Observer**: Located in [`desktop_view_main.c`](../applications/services/desktop/views/desktop_view_main.c). Listens for the Konami code (`▲ ▲ ▼ ▼ ◄ ► ◄ ►`) during main pet screen idle loop.
 * **Haptic Actuation**: Drives PCF8574 I2C output pin 6 to vibrate the motor for 120 ms without producing audio buzzer noise.
-* **Dynamic Menu Masking**: In [`loader_menu.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/loader/loader_menu.c), the menu builder inspects `momentum_settings.games_only_mode`. When active, it filters out all penetration testing modules (`Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO`), presenting a benign retro-gaming interface.
+* **Dynamic Menu Masking**: In [`loader_menu.c`](../applications/services/loader/loader_menu.c), the menu builder inspects `momentum_settings.games_only_mode`. When active, it filters out all penetration testing modules (`Sub-GHz`, `125 kHz RFID`, `NFC`, `Infrared`, `iButton`, `Bad USB`, and `GPIO`), presenting a benign retro-gaming interface.
 
 ### 🛡️ B. OLED Display Burn-In Mitigation & Contrast Scaling
-* **Auto Sleep**: [`notification_app.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/notification/notification_app.c) enforces a default 30-second screen-off timer (`display_off_delay_ms = 30000`).
-* **Hardware Contrast Scaling**: [`furi_hal_light.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_light.c) maps incoming brightness levels linearly to SSD1306 contrast register `0x81` (from minimum `0x15` to maximum `0xCF`). When brightness is set to 0, it transmits `0xAE` (Display OFF / Sleep mode) over I2C1 to eliminate quiescent OLED current.
+* **Auto Sleep**: [`notification_app.c`](../applications/services/notification/notification_app.c) enforces a default 30-second screen-off timer (`display_off_delay_ms = 30000`).
+* **Hardware Contrast Scaling**: [`furi_hal_light.c`](../targets/f7/furi_hal/furi_hal_light.c) maps incoming brightness levels linearly to SSD1306 contrast register `0x81` (from minimum `0x15` to maximum `0xCF`). When brightness is set to 0, it transmits `0xAE` (Display OFF / Sleep mode) over I2C1 to eliminate quiescent OLED current.
 
 ### 🐬 C. Dolphin Gamification & Animation Un-Gating
-* **Deed Limits**: [`dolphin_deed.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/dolphin/helpers/dolphin_deed.c) expands daily XP caps from 69 to 198 (RogueMaster standard), accelerating dolphin leveling across Sub-GHz and NFC actions.
+* **Deed Limits**: [`dolphin_deed.c`](../applications/services/dolphin/helpers/dolphin_deed.c) expands daily XP caps from 69 to 198 (RogueMaster standard), accelerating dolphin leveling across Sub-GHz and NFC actions.
 * **Un-Gated Animations**: Sets `.unlock_anims = true` in Momentum settings defaults, enabling users to view and cycle through Level 1–3 animations without gating.
 
 ### 📻 D. Sub-GHz Visualizer & RF Analysis Ecosystem

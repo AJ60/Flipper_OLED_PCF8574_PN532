@@ -629,7 +629,7 @@ class OTPGeneratorApp:
         author_label.pack(side="bottom", pady=(5, 0))
         
         # Link click and hover bindings
-        author_label.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/AJ60/oled_flipper"))
+        author_label.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/AJ60/Flipper_OLED_PCF8574_PN532"))
         author_label.bind("<Enter>", lambda e: author_label.config(fg=ACCENT_COLOR))
         author_label.bind("<Leave>", lambda e: author_label.config(fg=TEXT_MUTED))
 

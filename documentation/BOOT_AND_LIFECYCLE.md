@@ -129,12 +129,12 @@ stateDiagram-v2
 Monochrome I2C OLED displays (SSD1306 and SH1106) rely on organic light-emitting diodes that degrade faster under prolonged stationary pixel excitation. The firmware implements a dedicated burn-in mitigation and power management lifecycle:
 
 ### A. 30-Second Auto Screen-Off
-* **Configured in**: [`applications/services/notification/notification_app.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/applications/services/notification/notification_app.c).
+* **Configured in**: [`applications/services/notification/notification_app.c`](../applications/services/notification/notification_app.c).
 * **Default Value**: `display_off_delay_ms = 30000` (30 seconds).
 * **Behavior**: If no keypad inputs or serial events occur for 30 seconds, the display is automatically shut down, preventing static pet or desktop burn-in while idling.
 
 ### B. Dynamic Hardware Contrast Scaling
-* **Configured in**: [`targets/f7/furi_hal/furi_hal_light.c`](file:///c:/Users/alojy/OneDrive/Desktop/Flipper-OLED-Indian/oled_flipper/Flipper_OLED_PCF8574_PN532/targets/f7/furi_hal/furi_hal_light.c).
+* **Configured in**: [`targets/f7/furi_hal/furi_hal_light.c`](../targets/f7/furi_hal/furi_hal_light.c).
 * **Register Control**: Incoming brightness values (`0` to `255`) map to SSD1306 command register `0x81` (Set Contrast Control):
   $$\text{Contrast Reg} = 0x15 + \left(\frac{\text{value} \cdot (0xCF - 0x15)}{255}\right)$$
 * **Sleep / Wake Commands**:

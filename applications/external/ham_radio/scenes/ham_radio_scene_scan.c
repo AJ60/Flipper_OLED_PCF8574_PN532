@@ -16,14 +16,18 @@ void ham_radio_scene_scan_sweep_callback(const HamScanResult* result, void* cont
     furi_assert(context);
     HamRadioApp* app = context;
     HamScanBridge* bridge = &ham_radio_scene_scan_bridge;
-    if(!bridge->mutex) return;
+    if(!bridge->mutex || !app->sweep_running) return;
 
     furi_check(furi_mutex_acquire(bridge->mutex, FuriWaitForever) == FuriStatusOk);
-    bridge->pending = *result;
-    bridge->has_pending = true;
+    if(app->sweep_running) {
+        bridge->pending = *result;
+        bridge->has_pending = true;
+    }
     furi_mutex_release(bridge->mutex);
 
-    view_dispatcher_send_custom_event(app->view_dispatcher, HamRadioCustomEventSweepDone);
+    if(app->sweep_running) {
+        view_dispatcher_send_custom_event(app->view_dispatcher, HamRadioCustomEventSweepDone);
+    }
 }
 
 bool ham_radio_scene_scan_take_pending(HamScanResult* out) {
@@ -125,6 +129,7 @@ void ham_radio_scene_scan_on_exit(void* context) {
     furi_assert(context);
     HamRadioApp* app = context;
 
+    app->sweep_running = false;
     ham_scan_worker_set_enabled(app->scan_worker, false);
     ham_scan_worker_set_callback(app->scan_worker, NULL, NULL);
 
@@ -133,7 +138,5 @@ void ham_radio_scene_scan_on_exit(void* context) {
         furi_check(furi_mutex_acquire(bridge->mutex, FuriWaitForever) == FuriStatusOk);
         bridge->has_pending = false;
         furi_mutex_release(bridge->mutex);
-        furi_mutex_free(bridge->mutex);
-        bridge->mutex = NULL;
     }
 }
