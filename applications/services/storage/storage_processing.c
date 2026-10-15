@@ -519,8 +519,8 @@ static FS_Error storage_process_sd_mount(Storage* app) {
 
     do {
         StorageData* storage = &app->storage[ST_EXT];
-        if(storage_data_status(storage) != StorageStatusNotReady) {
-            ret = FSE_NOT_READY;
+        if(storage_data_status(storage) == StorageStatusOK) {
+            ret = FSE_OK;
             break;
         }
 

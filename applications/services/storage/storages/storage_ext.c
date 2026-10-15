@@ -320,11 +320,15 @@ FS_Error sd_card_info(StorageData* storage, SDInfo* sd_info) {
 static void storage_ext_tick_internal(StorageData* storage, bool notify) {
     SDData* sd_data = storage->data;
 
-    if(sd_data->sd_was_present) {
+    if(storage->status != StorageStatusOK) {
         if(furi_hal_sd_is_present()) {
             FURI_LOG_I(TAG, "card detected");
-            sd_data->sd_was_present = false;
-            sd_mount_card(storage, notify);
+            FS_Error mount_res = sd_mount_card(storage, notify);
+            if(mount_res == FSE_OK && storage->status == StorageStatusOK) {
+                sd_data->sd_was_present = false;
+            } else {
+                sd_data->sd_was_present = true;
+            }
 
             if(!furi_hal_sd_is_present()) {
                 FURI_LOG_I(TAG, "card removed while mounting");
@@ -333,7 +337,7 @@ static void storage_ext_tick_internal(StorageData* storage, bool notify) {
             }
         }
     } else {
-        if(!furi_hal_sd_is_present()) {
+        if(!furi_hal_sd_is_present() || furi_hal_sd_get_card_state() != FuriStatusOk) {
             FURI_LOG_I(TAG, "card removed");
             sd_data->sd_was_present = true;
 

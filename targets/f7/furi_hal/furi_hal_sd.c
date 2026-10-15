@@ -930,12 +930,12 @@ static FuriStatus sd_device_write(const uint32_t* buff, uint32_t sector, uint32_
 }
 
 void furi_hal_sd_presence_init(void) {
-    // low speed input with pullup
-    // furi_hal_gpio_init(&gpio_sdcard_cd, GpioModeInput, GpioPullUp, GpioSpeedLow);
+    // Board variant uses SPI status polling (CMD13 via furi_hal_sd_get_card_state)
+    // without dedicated mechanical CD switch on MCU GPIO.
 }
 
 bool furi_hal_sd_is_present(void) {
-    //  bool result = !furi_hal_gpio_read(&gpio_sdcard_cd);
+    // Returns true to allow storage tick auto-mount and SPI health check to manage lifecycle.
     return true;
 }
 
