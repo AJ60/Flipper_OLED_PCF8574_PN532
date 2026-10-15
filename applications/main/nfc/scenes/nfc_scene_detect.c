@@ -25,6 +25,11 @@ void nfc_scene_detect_scan_callback(NfcScannerEvent event, void* context) {
 
 void nfc_scene_detect_on_enter(void* context) {
     NfcApp* instance = context;
+
+    nfc_show_loading_popup(instance, true);
+    nfc_supported_cards_load_cache(instance->nfc_supported_cards);
+    nfc_show_loading_popup(instance, false);
+
     scene_manager_set_scene_state(
         instance->scene_manager, NfcSceneDetect, NFC_SCENE_DETECT_STATE_IDLE);
 
