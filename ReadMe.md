@@ -440,11 +440,11 @@ Wire your OLED screen, buttons, and MCU according to the visual wiring diagram a
 3. qFlipper will display **"RECOVERY MODE"**. Click **"REPAIR"** to flash the official bootloader.
 4. Put the board back into **DFU mode** once more.
 5. In qFlipper, click **"Install from file"** and select our **`.tgz`** release package (`flipper-z-f7-update-*.tgz`) from [Releases](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases).
-6. qFlipper will flash the firmware, turn on the OLED screen, and copy all game/app assets and all **55 pre-bundled Asset Packs** directly to your microSD card!
+6. qFlipper will flash the firmware, turn on the OLED screen, and copy all game/app assets and core themes in **just 15–20 seconds**!
 
-> [!NOTE]
-> **Manual / DIY SD Card Setup**:
-> If you are flashing via ST-Link/DFU or setting up an SD card manually without qFlipper, simply download and extract **`flipper-z-f7-resources-*.zip`** directly to the root directory of your FAT32-formatted microSD card. It contains all 55 asset packs, dolphin animations, and external databases ready to use.
+> [!TIP]
+> **Instant 3-Second Install for All 55 Community Themes**:
+> The firmware updater includes the default core themes (**Momentum** and **WatchDogs**) so that flashing is lightning-fast without SD card bottlenecking. To enjoy all **55 community asset packs**, download **`flipper-z-f7-resources-*.zip`** and extract it directly to the root of your microSD card on your PC (takes ~3 seconds). Your Flipper will instantly recognize all 55 packs, and future firmware updates will never delete them!
 
 > [!NOTE]
 > **Black Screen During Update is Normal**: The standalone updater payload only contains drivers for the factory SPI screen. During installation, the screen stays off. Wait until qFlipper shows **"Update Successful!"** and the device will boot into the full OS.
@@ -659,8 +659,9 @@ The DIY Flipper Zero (OLED Edition) includes unique enhancements combining the b
    - Added real-time delta frequency readout (`Tank: +/- X.X Hz`) and visual balance indicator targeting exact 125.000 kHz to streamline DIY coil and capacitor tuning.
 
 8. 🎨 **Pre-bundled Asset Packs (55 Themes & Dual Packaging)**:
-   - Includes **55 curated community themes** (*Pokemon*, *Cyberpunk 2077*, *Akira*, *PipBoy*, *Rick and Morty*, *Star Wars*, *WatchDogs*, *BMO*, *RogueMaster*, *Unleashed*, *Neon Genesis Evangelion*, *Zelda*, *Minecraft*, etc.) pre-compiled and packaged into both `.tgz` (qFlipper) and `.zip` (DIY/Manual) distribution packages.
-   - Built with fast-path asset tree packing and comprehensive tooling, scripts, and previews archived under [`mics/Asset-Packs/`](mics/Asset-Packs/).
+   - Includes **55 curated community themes** (*Pokemon*, *Cyberpunk 2077*, *Akira*, *PipBoy*, *Rick and Morty*, *Star Wars*, *WatchDogs*, *BMO*, *RogueMaster*, *Unleashed*, *Neon Genesis Evangelion*, *Zelda*, *Minecraft*, etc.).
+   - Optimized for **fast 15-second firmware updates**: core themes (**Momentum** & **WatchDogs**) are pre-packaged into `resources.tar.gz`, while all 55 community themes are pre-compiled and bundled into the standalone `flipper-z-f7-resources-*.zip` for instant 3-second extraction to SD card root.
+   - Complete sources, metadata, conversion scripts, and previews archived under [`mics/Asset-Packs/`](mics/Asset-Packs/).
 
 ---
 

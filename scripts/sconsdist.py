@@ -302,6 +302,8 @@ class Main(App):
             # Create standalone SD card resources packages (.zip and .tgz)
             if self.args.resources and exists(self.args.resources):
                 res_dir = self.args.resources
+                extra_packs_dir = join("mics", "Asset-Packs", "packs")
+
                 res_zip_name = self.get_dist_file_name("resources", "zip")
                 res_zip_path = self.get_dist_path(res_zip_name)
                 with zipfile.ZipFile(res_zip_path, "w", zipfile.ZIP_DEFLATED) as rz:
@@ -311,6 +313,25 @@ class Main(App):
                             full_path = join(root, file)
                             rel_path = relpath(full_path, res_dir)
                             rz.write(full_path, rel_path)
+                    if exists(extra_packs_dir):
+                        existing_packs = (
+                            set(listdir(join(res_dir, "asset_packs")))
+                            if exists(join(res_dir, "asset_packs"))
+                            else set()
+                        )
+                        for pack_name in listdir(extra_packs_dir):
+                            if pack_name in existing_packs:
+                                continue
+                            pack_dir = join(extra_packs_dir, pack_name)
+                            if not os.path.isdir(pack_dir):
+                                continue
+                            for root, dirnames, files in walk(pack_dir):
+                                for file in files:
+                                    full_path = join(root, file)
+                                    rel_path = join(
+                                        "asset_packs", relpath(full_path, extra_packs_dir)
+                                    )
+                                    rz.write(full_path, rel_path)
 
                 res_tgz_name = self.get_dist_file_name("resources", "tgz")
                 res_tgz_path = self.get_dist_path(res_tgz_name)
@@ -328,10 +349,27 @@ class Main(App):
                             arcname=entry,
                             filter=tar_sanitizer_filter,
                         )
+                    if exists(extra_packs_dir):
+                        existing_packs = (
+                            set(listdir(join(res_dir, "asset_packs")))
+                            if exists(join(res_dir, "asset_packs"))
+                            else set()
+                        )
+                        for pack_name in listdir(extra_packs_dir):
+                            if pack_name in existing_packs:
+                                continue
+                            pack_dir = join(extra_packs_dir, pack_name)
+                            if not os.path.isdir(pack_dir):
+                                continue
+                            rt.add(
+                                pack_dir,
+                                arcname=join("asset_packs", pack_name),
+                                filter=tar_sanitizer_filter,
+                            )
 
                 self.logger.info(
                     fg.boldgreen(
-                        f"SD card resources packages:\n\t{res_zip_path}\n\t{res_tgz_path}"
+                        f"SD card resources packages (with 55 asset packs):\n\t{res_zip_path}\n\t{res_tgz_path}"
                     )
                 )
         return bundle_result

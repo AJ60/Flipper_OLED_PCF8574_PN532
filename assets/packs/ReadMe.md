@@ -7,11 +7,13 @@
 
 ## Overview
 
-All 55 asset packs listed below are pre-compiled and bundled directly into our external SD card resources (
-esources.tar.gz, 
-esources.zip, and update packages .tgz/.zip).
+All 55 asset packs listed below are pre-compiled and available in this repository:
+- **⚡ Fast Firmware Updates**: The firmware update bundle (`flipper-z-f7-update-*.tgz` / `.zip`) includes the core default themes (**Momentum** and **WatchDogs**) so firmware installation via qFlipper finishes in **just 15–20 seconds** without SD card write bottlenecks.
+- **💾 Full 55-Pack SD Archive**: All 55 community packs are bundled into **`flipper-z-f7-resources-*.zip`** (in `dist/f7-C/`) and permanently stored in [`mics/Asset-Packs/packs/`](../../mics/Asset-Packs/packs/).
+- **🚀 3-Second SD Card Setup**: To install all 55 themes, simply extract `flipper-z-f7-resources-*.zip` directly to the root of your microSD card on your PC (or copy `mics/Asset-Packs/packs/*` into `SD Card/asset_packs/`). Your PC copies all 13,000 files in **3 to 5 seconds**!
+- **🔒 Future-Proof**: Future firmware updates will never delete your installed asset packs.
 
-To switch packs on your Flipper:
+### How to switch packs on your Flipper:
 1. Open **Momentum App** / **Interface Settings** (or press UP on desktop).
 2. Go to **Asset Packs** and select any theme.
 3. Exit to desktop — animations and UI icons will update immediately!

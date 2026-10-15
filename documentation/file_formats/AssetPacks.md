@@ -15,10 +15,11 @@ See the complete [**Asset Packs Catalog & Attribution Guide**](../../assets/pack
 
 ## Bundled Distribution Packages
 
-During firmware compilation (`fbt updater_package`), all 55 asset packs are packaged into both update packages and standalone SD resources:
-- **`flipper-z-f7-update-<version>.tgz`**: Full update package for official **qFlipper** installer.
-- **`flipper-z-f7-update-<version>.zip`**: Full update package for DIY flashers or manual SD card setup.
-- **`flipper-z-f7-resources-<version>.zip` & `.tgz`**: Standalone SD card resources packages containing all asset packs, dolphin animations, and external databases ready to drag-and-drop to your SD card root.
+During firmware compilation (`fbt updater_package`), two optimized sets of packages are produced in `dist/f7-C/`:
+- **⚡ Firmware Update Packages (`flipper-z-f7-update-<version>.tgz` & `.zip`)**: 
+  Includes the core system and default themes (**Momentum** and **WatchDogs**). This keeps the update lean (~2,200 total files instead of 13,000+), allowing qFlipper flashing to finish in **just 15–20 seconds** without SD card write bottlenecks at the 80% mark.
+- **💾 Full SD Resources Packages (`flipper-z-f7-resources-<version>.zip` & `.tgz`)**: 
+  Contains all **55 pre-compiled community asset packs**, dolphin graphics, and external databases. Users can extract this `.zip` directly to their microSD card root on a PC in **3 seconds**!
 
 ---
 
@@ -26,14 +27,19 @@ During firmware compilation (`fbt updater_package`), all 55 asset packs are pack
 
 Installing Asset Packs is straightforward:
 
-1. If you flashed an update package or extracted `flipper-z-f7-resources-*.zip`, all 55 packs are already placed in `SD Card` → `asset_packs`!
+1. **All 55 Packs in 3 Seconds (Recommended)**:
+   - Download `flipper-z-f7-resources-*.zip` from [Releases](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases) (or grab them from [`mics/Asset-Packs/packs/`](../../mics/Asset-Packs/packs/)).
+   - Extract directly to the root of your microSD card on your PC.
+   - All 55 packs will be placed in `SD Card/asset_packs/` instantly!
 
-2. For manually installing individual packs:
-   - Open qFlipper and navigate to `SD Card` → `asset_packs`; if you do not see this folder, create it yourself.
-   - Here (`SD/asset_packs`) is where all Asset Packs are stored. Unzip your packs and upload the folders here.
-   - You should see `SD/asset_packs/PackName/Anims` and/or `SD/asset_packs/PackName/Icons`.
+2. **Core Packs via Firmware Flashing**:
+   - Flashing `flipper-z-f7-update-*.tgz` in qFlipper will automatically install the core packs (`Momentum` and `WatchDogs`) in 15 seconds.
+   - Any community packs already on your SD card will **remain untouched** across future firmware updates!
 
-3. Open the Settings app (from the home screen press `Arrow UP` and select `Asset Packs` / `Interface Settings`) and select the asset pack you want. When you exit, the device will restart and your animations and icons will use the selected pack!
+3. **How to activate a pack**:
+   - Open the Settings app (press `Arrow UP` from desktop and select `Asset Packs` / `Interface Settings`).
+   - Select your favorite theme and exit. The device will restart and load your custom animations and icons!
+
 
 ---
 
