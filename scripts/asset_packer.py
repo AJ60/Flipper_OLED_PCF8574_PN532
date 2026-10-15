@@ -148,6 +148,12 @@ def pack(
             except Exception:
                 pass
 
+        # Fast path: if pack has no raw uncompiled files (.png, .c), fast-copy precompiled tree
+        has_uncompiled = any(source.rglob("*.png")) or any(source.rglob("*.c"))
+        if not has_uncompiled:
+            shutil.copytree(source, packed, dirs_exist_ok=True)
+            continue
+
         if (source / "Anims/manifest.txt").exists():
             (packed / "Anims").mkdir(parents=True, exist_ok=True)
             copy_file_as_lf(

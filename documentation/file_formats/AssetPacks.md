@@ -7,7 +7,18 @@
 
 ## Intro
 
-Asset Packs allow you to load custom Animation and Icon sets without recompiling the firmware or messing with `manifest.txt` files directly. Here you can find info on how to install Asset Packs and also how to make your own.
+Asset Packs allow you to load custom Animation and Icon sets without recompiling the firmware or messing with `manifest.txt` files directly. This firmware comes **pre-bundled with 55 curated asset packs** (Pokemon, Cyberpunk 2077, Akira, PipBoy, Rick and Morty, Star Wars, WatchDogs, BMO, and many more). 
+
+See the complete [**Asset Packs Catalog & Attribution Guide**](../../assets/packs/ReadMe.md) for full screenshots, descriptions, and artist credits.
+
+---
+
+## Bundled Distribution Packages
+
+During firmware compilation (`fbt updater_package`), all 55 asset packs are packaged into both update packages and standalone SD resources:
+- **`flipper-z-f7-update-<version>.tgz`**: Full update package for official **qFlipper** installer.
+- **`flipper-z-f7-update-<version>.zip`**: Full update package for DIY flashers or manual SD card setup.
+- **`flipper-z-f7-resources-<version>.zip` & `.tgz`**: Standalone SD card resources packages containing all asset packs, dolphin animations, and external databases ready to drag-and-drop to your SD card root.
 
 ---
 
@@ -15,10 +26,12 @@ Asset Packs allow you to load custom Animation and Icon sets without recompiling
 
 Installing Asset Packs is straightforward:
 
-1. Open qFlipper and navigate to `SD Card` → `asset_packs`; if you do not see this folder, create it yourself.
+1. If you flashed an update package or extracted `flipper-z-f7-resources-*.zip`, all 55 packs are already placed in `SD Card` → `asset_packs`!
 
-2. Here (`SD/asset_packs`) is where all Asset Packs are stored. Unzip your packs and upload the folders here.
-   You should see `SD/asset_packs/PackName/Anims` and/or `SD/asset_packs/PackName/Icons`.
+2. For manually installing individual packs:
+   - Open qFlipper and navigate to `SD Card` → `asset_packs`; if you do not see this folder, create it yourself.
+   - Here (`SD/asset_packs`) is where all Asset Packs are stored. Unzip your packs and upload the folders here.
+   - You should see `SD/asset_packs/PackName/Anims` and/or `SD/asset_packs/PackName/Icons`.
 
 3. Open the Settings app (from the home screen press `Arrow UP` and select `Asset Packs` / `Interface Settings`) and select the asset pack you want. When you exit, the device will restart and your animations and icons will use the selected pack!
 
@@ -104,6 +117,13 @@ SD/
 
 All `.bm` and `.bmx` conversions are handled by `scripts/asset_packer.py`.
 
+#### Source Repository & Tooling (`mics/Asset-Packs/`):
+The complete source repository for all community packs is archived under [`mics/Asset-Packs/`](../../mics/Asset-Packs/). It contains:
+- Raw animation PNGs, icon sprites, and fonts for all 53 community themes.
+- Pack generation tooling (`make_pack.py`, `convert.py`, `batch_convert.py`).
+- Theme previews and badges.
+- `Makefile` to rebuild all asset packs in batch mode.
+
 #### Standalone Asset Packs:
 1. Install Python dependencies: `pip3 install Pillow heatshrink2`
 2. Create a folder with your pack name: `PackName/Anims` and/or `PackName/Icons`
@@ -112,5 +132,11 @@ All `.bm` and `.bmx` conversions are handled by `scripts/asset_packer.py`.
 5. Upload the compiled pack to `SD/asset_packs` on your device.
 
 #### Building with Firmware:
-- Place packs in `assets/dolphin/custom`
-- Run `./fbt updater_package` to compile firmware with custom assets included.
+- Pre-compiled packs are placed in `assets/packs/<PackName>`
+- Run `./fbt updater_package` (or `fbt.cmd --with-updater updater_package` on Windows)
+- FBT automatically packs all themes into `${RESOURCES_ROOT}/asset_packs` and generates:
+  - `dist/f7-C/flipper-z-f7-update-<version>.tgz`
+  - `dist/f7-C/flipper-z-f7-update-<version>.zip`
+  - `dist/f7-C/flipper-z-f7-resources-<version>.tgz`
+  - `dist/f7-C/flipper-z-f7-resources-<version>.zip`
+

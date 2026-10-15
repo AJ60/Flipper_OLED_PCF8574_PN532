@@ -439,8 +439,12 @@ Wire your OLED screen, buttons, and MCU according to the visual wiring diagram a
 2. Open official **qFlipper** on your PC.
 3. qFlipper will display **"RECOVERY MODE"**. Click **"REPAIR"** to flash the official bootloader.
 4. Put the board back into **DFU mode** once more.
-5. In qFlipper, click **"Install from file"** and select our **`.tgz`** release package from [Releases](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases).
-6. qFlipper will flash the firmware, turn on the OLED screen, and copy all game/app assets to your microSD card!
+5. In qFlipper, click **"Install from file"** and select our **`.tgz`** release package (`flipper-z-f7-update-*.tgz`) from [Releases](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases).
+6. qFlipper will flash the firmware, turn on the OLED screen, and copy all game/app assets and all **55 pre-bundled Asset Packs** directly to your microSD card!
+
+> [!NOTE]
+> **Manual / DIY SD Card Setup**:
+> If you are flashing via ST-Link/DFU or setting up an SD card manually without qFlipper, simply download and extract **`flipper-z-f7-resources-*.zip`** directly to the root directory of your FAT32-formatted microSD card. It contains all 55 asset packs, dolphin animations, and external databases ready to use.
 
 > [!NOTE]
 > **Black Screen During Update is Normal**: The standalone updater payload only contains drivers for the factory SPI screen. During installation, the screen stays off. Wait until qFlipper shows **"Update Successful!"** and the device will boot into the full OS.
@@ -458,11 +462,15 @@ cmd /c fbt.cmd
 # Linux / macOS
 ./fbt
 
-# Build the complete qFlipper .tgz installer bundle & SDK
+# Build the complete qFlipper .tgz / .zip installer bundles & standalone SD resources
 cmd /c fbt.cmd --with-updater updater_package
 ```
 
-Compiled binaries are output to `build/f7-firmware-C/` and `dist/f7-C/`.
+Compiled distribution binaries are generated in `dist/f7-C/`:
+* 📦 **`flipper-z-f7-update-<version>.tgz`**: Update bundle for official **qFlipper** ("Install from file").
+* 📦 **`flipper-z-f7-update-<version>.zip`**: Update zip archive for custom/web flashers.
+* 💾 **`flipper-z-f7-resources-<version>.zip`**: Standalone SD card resource archive containing all 55 Asset Packs, dolphin graphics, and databases.
+* 💾 **`flipper-z-f7-resources-<version>.tgz`**: Tarball edition of SD card resources.
 
 ---
 
@@ -650,11 +658,16 @@ The DIY Flipper Zero (OLED Edition) includes unique enhancements combining the b
 7. 🏷️ **LF-RFID Discrete Resonance Balance Meter (`lfrfid_debug`)**:
    - Added real-time delta frequency readout (`Tank: +/- X.X Hz`) and visual balance indicator targeting exact 125.000 kHz to streamline DIY coil and capacitor tuning.
 
+8. 🎨 **Pre-bundled Asset Packs (55 Themes & Dual Packaging)**:
+   - Includes **55 curated community themes** (*Pokemon*, *Cyberpunk 2077*, *Akira*, *PipBoy*, *Rick and Morty*, *Star Wars*, *WatchDogs*, *BMO*, *RogueMaster*, *Unleashed*, *Neon Genesis Evangelion*, *Zelda*, *Minecraft*, etc.) pre-compiled and packaged into both `.tgz` (qFlipper) and `.zip` (DIY/Manual) distribution packages.
+   - Built with fast-path asset tree packing and comprehensive tooling, scripts, and previews archived under [`mics/Asset-Packs/`](mics/Asset-Packs/).
+
 ---
 
 ### 📚 Deep-Dive Documentation Index
 * 🏛️ [**System & Firmware Architecture Guide**](documentation/ARCHITECTURE.md) — FreeRTOS task scheduling, memory maps, and Furi OS primitives.
 * 🌊 [**Firmware Boot & System Lifecycle Guide**](documentation/BOOT_AND_LIFECYCLE.md) — Waterfall boot sequence, OTP validation, bus recovery, and sleep/wake state machines.
+* 🎨 [**Asset Packs Format & Catalog Guide**](documentation/file_formats/AssetPacks.md) — 55 pre-bundled community themes, animation/icon formats, and custom pack creation (see full [**Asset Packs Catalog**](assets/packs/ReadMe.md)).
 * 📡 [**External CC1101 & Ebyte E07 Technical Reference**](documentation/EXTERNAL_CC1101.md) — Transceiver connection, E07 PA/LNA RF switch sequencing, and Radio Settings v4 integration.
 * 📶 [**NRF24L01+ 2.4 GHz Transceiver Guide**](documentation/NRF24.md) — Pinout wiring, decoupling capacitor power filtration, and MouseJacker/Sniffer FAP apps.
 * ⚡ [**PN532 NFC Protocol & Hardware Acceleration Guide**](documentation/NFC_PN532_ENGINEERING.md) — Hardware Crypto1 acceleration, ISO 14443-4 APDU tunneling for bank cards, and retry mechanisms.

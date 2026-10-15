@@ -4,7 +4,8 @@ import json
 import shutil
 import tarfile
 import zipfile
-from os import makedirs, walk
+import os
+from os import listdir, makedirs, walk
 from os.path import basename, exists, join, relpath
 
 from ansi.color import fg
@@ -275,6 +276,63 @@ class Main(App):
 
                 tar.add(
                     bundle_dir, arcname=bundle_dir_name, filter=tar_sanitizer_filter
+                )
+
+            # Create zip archive of update package
+            bundle_zip = f"{self.DIST_FILE_PREFIX}{bundle_dir_name}.zip"
+            bundle_zip_path = self.get_dist_path(bundle_zip)
+            with zipfile.ZipFile(
+                bundle_zip_path,
+                "w",
+                zipfile.ZIP_DEFLATED,
+            ) as zf:
+                self.note_dist_component("update", "zip", bundle_zip_path)
+                for root, dirnames, files in walk(bundle_dir):
+                    for file in files:
+                        full_path = join(root, file)
+                        rel_path = join(bundle_dir_name, relpath(full_path, bundle_dir))
+                        zf.write(full_path, rel_path)
+
+            self.logger.info(
+                fg.boldgreen(
+                    f"Update package archives:\n\t{self.get_dist_path(bundle_tgz)}\n\t{bundle_zip_path}"
+                )
+            )
+
+            # Create standalone SD card resources packages (.zip and .tgz)
+            if self.args.resources and exists(self.args.resources):
+                res_dir = self.args.resources
+                res_zip_name = self.get_dist_file_name("resources", "zip")
+                res_zip_path = self.get_dist_path(res_zip_name)
+                with zipfile.ZipFile(res_zip_path, "w", zipfile.ZIP_DEFLATED) as rz:
+                    self.note_dist_component("resources", "zip", res_zip_path)
+                    for root, dirnames, files in walk(res_dir):
+                        for file in files:
+                            full_path = join(root, file)
+                            rel_path = relpath(full_path, res_dir)
+                            rz.write(full_path, rel_path)
+
+                res_tgz_name = self.get_dist_file_name("resources", "tgz")
+                res_tgz_path = self.get_dist_path(res_tgz_name)
+                with tarfile.open(
+                    res_tgz_path,
+                    "w:gz",
+                    compresslevel=9,
+                    format=FLIPPER_TAR_FORMAT,
+                ) as rt:
+                    self.note_dist_component("resources", "tgz", res_tgz_path)
+                    for entry in listdir(res_dir):
+                        entry_path = join(res_dir, entry)
+                        rt.add(
+                            entry_path,
+                            arcname=entry,
+                            filter=tar_sanitizer_filter,
+                        )
+
+                self.logger.info(
+                    fg.boldgreen(
+                        f"SD card resources packages:\n\t{res_zip_path}\n\t{res_tgz_path}"
+                    )
                 )
         return bundle_result
 
