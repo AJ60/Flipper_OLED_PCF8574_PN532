@@ -76,7 +76,7 @@ void nfc_scanner_state_handler_idle(NfcScanner* instance) {
         NfcProtocol parent_protocol = nfc_protocol_get_parent(i);
         if(parent_protocol == NfcProtocolInvalid) {
 #if defined(FURI_HAL_NFC_CHIP_PN532)
-            if(i == NfcProtocolIso15693_3) {
+            if(i == NfcProtocolIso15693_3 || i == NfcProtocolSt25tb) {
                 continue;
             }
 #endif

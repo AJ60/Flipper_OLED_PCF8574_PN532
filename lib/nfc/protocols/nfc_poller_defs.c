@@ -1,4 +1,5 @@
 #include "nfc_poller_defs.h"
+#include <furi_hal_resources.h>
 
 #include <nfc/protocols/iso14443_3a/iso14443_3a_poller_defs.h>
 #include <nfc/protocols/iso14443_3b/iso14443_3b_poller_defs.h>
@@ -11,10 +12,14 @@
 #include <nfc/protocols/mf_plus/mf_plus_poller_defs.h>
 #include <nfc/protocols/mf_desfire/mf_desfire_poller_defs.h>
 #include <nfc/protocols/slix/slix_poller_defs.h>
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
 #include <nfc/protocols/st25tb/st25tb_poller_defs.h>
+#endif
 #include <nfc/protocols/ntag4xx/ntag4xx_poller_defs.h>
 #include <nfc/protocols/type_4_tag/type_4_tag_poller_defs.h>
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
 #include <nfc/protocols/emv/emv_poller_defs.h>
+#endif
 
 const NfcPollerBase* const nfc_pollers_api[NfcProtocolNum] = {
     [NfcProtocolIso14443_3a] = &nfc_poller_iso14443_3a,
@@ -28,9 +33,13 @@ const NfcPollerBase* const nfc_pollers_api[NfcProtocolNum] = {
     [NfcProtocolMfPlus] = &mf_plus_poller,
     [NfcProtocolMfDesfire] = &mf_desfire_poller,
     [NfcProtocolSlix] = &nfc_poller_slix,
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
     [NfcProtocolSt25tb] = &nfc_poller_st25tb,
+#endif
     [NfcProtocolNtag4xx] = &ntag4xx_poller,
     [NfcProtocolType4Tag] = &type_4_tag_poller,
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
     [NfcProtocolEmv] = &emv_poller,
+#endif
     /* Add new pollers here */
 };

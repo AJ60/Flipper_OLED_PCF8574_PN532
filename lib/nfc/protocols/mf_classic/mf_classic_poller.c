@@ -22,8 +22,10 @@ const MfClassicBackdoorKeyPair mf_classic_backdoor_keys[] = {
     {{{0x51, 0x8b, 0x33, 0x54, 0xe7, 0x60}}, MfClassicBackdoorAuth2}, // Fudan
 };
 const size_t mf_classic_backdoor_keys_count = COUNT_OF(mf_classic_backdoor_keys);
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
 const uint16_t valid_sums[] =
     {0, 32, 56, 64, 80, 96, 104, 112, 120, 128, 136, 144, 152, 160, 176, 192, 200, 224, 256};
+#endif
 
 typedef NfcCommand (*MfClassicPollerReadHandler)(MfClassicPoller* instance);
 
@@ -638,6 +640,7 @@ NfcCommand mf_classic_poller_handler_analyze_backdoor(MfClassicPoller* instance)
         FURI_LOG_D(TAG, "No backdoor identified");
         dict_attack_ctx->backdoor = MfClassicBackdoorNone;
 
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
         // Check if any keys were cached - if so, go directly to nested attack
         bool has_cached_keys = false;
         for(uint8_t sector = 0; sector < instance->sectors_total; sector++) {
@@ -653,6 +656,9 @@ NfcCommand mf_classic_poller_handler_analyze_backdoor(MfClassicPoller* instance)
         } else {
             instance->state = MfClassicPollerStateRequestKey;
         }
+#else
+        instance->state = MfClassicPollerStateRequestKey;
+#endif
     } else if(error == MfClassicErrorNone) {
         FURI_LOG_I(TAG, "Backdoor identified: v%d", backdoor_version);
         dict_attack_ctx->backdoor = mf_classic_backdoor_keys[next_key_index].type;
@@ -682,7 +688,11 @@ NfcCommand mf_classic_poller_handler_backdoor_read_sector(MfClassicPoller* insta
         if(dict_attack_ctx->current_block >= instance->sectors_total * 4) {
             // We've read all blocks, reset current_block and move to next state
             dict_attack_ctx->current_block = 0;
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+            instance->state = MfClassicPollerStateSuccess;
+#else
             instance->state = MfClassicPollerStateNestedController;
+#endif
             break;
         }
 
@@ -975,6 +985,10 @@ NfcCommand mf_classic_poller_handler_key_reuse_start(MfClassicPoller* instance) 
                 instance->mfc_event.type = MfClassicPollerEventTypeKeyAttackStop;
                 command = instance->callback(instance->general_event, instance->context);
                 // Nested entrypoint
+#if defined(FURI_HAL_NFC_CHIP_PN532)
+                instance->state = MfClassicPollerStateRequestKey;
+                break;
+#else
                 bool nested_active = dict_attack_ctx->nested_phase != MfClassicNestedPhaseNone;
                 if((dict_attack_ctx->enhanced_dict) &&
                    ((nested_active &&
@@ -983,6 +997,7 @@ NfcCommand mf_classic_poller_handler_key_reuse_start(MfClassicPoller* instance) 
                     instance->state = MfClassicPollerStateNestedController;
                     break;
                 }
+#endif
                 instance->state = MfClassicPollerStateRequestKey;
             } else {
                 instance->mfc_event.type = MfClassicPollerEventTypeKeyAttackStart;
@@ -1152,6 +1167,7 @@ NfcCommand mf_classic_poller_handler_key_reuse_read_sector(MfClassicPoller* inst
     return command;
 }
 
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
 // Helper function to add a nonce to the array
 static bool add_nested_nonce(
     MfClassicNestedNonceArray* array,
@@ -2254,6 +2270,7 @@ NfcCommand mf_classic_poller_handler_nested_controller(MfClassicPoller* instance
     instance->state = MfClassicPollerStateSuccess;
     return command;
 }
+#endif
 
 NfcCommand mf_classic_poller_handler_success(MfClassicPoller* instance) {
     NfcCommand command = NfcCommandContinue;
@@ -2298,6 +2315,7 @@ static const MfClassicPollerReadHandler
         [MfClassicPollerStateKeyReuseAuthKeyA] = mf_classic_poller_handler_key_reuse_auth_key_a,
         [MfClassicPollerStateKeyReuseAuthKeyB] = mf_classic_poller_handler_key_reuse_auth_key_b,
         [MfClassicPollerStateKeyReuseReadSector] = mf_classic_poller_handler_key_reuse_read_sector,
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
         [MfClassicPollerStateNestedAnalyzePRNG] = mf_classic_poller_handler_nested_analyze_prng,
         [MfClassicPollerStateNestedCalibrate] = mf_classic_poller_handler_nested_calibrate,
         [MfClassicPollerStateNestedCollectNt] = mf_classic_poller_handler_nested_collect_nt,
@@ -2305,6 +2323,15 @@ static const MfClassicPollerReadHandler
         [MfClassicPollerStateNestedCollectNtEnc] = mf_classic_poller_handler_nested_collect_nt_enc,
         [MfClassicPollerStateNestedDictAttack] = mf_classic_poller_handler_nested_dict_attack,
         [MfClassicPollerStateNestedLog] = mf_classic_poller_handler_nested_log,
+#else
+        [MfClassicPollerStateNestedAnalyzePRNG] = mf_classic_poller_handler_fail,
+        [MfClassicPollerStateNestedCalibrate] = mf_classic_poller_handler_fail,
+        [MfClassicPollerStateNestedCollectNt] = mf_classic_poller_handler_fail,
+        [MfClassicPollerStateNestedController] = mf_classic_poller_handler_fail,
+        [MfClassicPollerStateNestedCollectNtEnc] = mf_classic_poller_handler_fail,
+        [MfClassicPollerStateNestedDictAttack] = mf_classic_poller_handler_fail,
+        [MfClassicPollerStateNestedLog] = mf_classic_poller_handler_fail,
+#endif
         [MfClassicPollerStateSuccess] = mf_classic_poller_handler_success,
         [MfClassicPollerStateFail] = mf_classic_poller_handler_fail,
 };

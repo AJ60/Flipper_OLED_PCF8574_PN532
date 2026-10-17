@@ -184,6 +184,7 @@ bool nfc_device_save(NfcDevice* instance, const char* path) {
         // Write allowed device types
         furi_string_printf(temp_str, "%s can be ", NFC_DEVICE_TYPE_KEY);
         for(NfcProtocol protocol = 0; protocol < NfcProtocolNum; ++protocol) {
+            if(nfc_devices[protocol] == NULL) continue;
             furi_string_cat(temp_str, nfc_devices[protocol]->protocol_name);
             if(protocol < NfcProtocolNum - 1) {
                 furi_string_cat(temp_str, ", ");
@@ -262,6 +263,7 @@ static bool nfc_device_load_unified(NfcDevice* instance, FlipperFormat* ff, uint
         // Detect protocol
         NfcProtocol protocol;
         for(protocol = 0; protocol < NfcProtocolNum; ++protocol) {
+            if(nfc_devices[protocol] == NULL) continue;
             if(furi_string_equal(temp_str, nfc_devices[protocol]->protocol_name)) {
                 break;
             }
@@ -308,6 +310,7 @@ static bool nfc_device_load_legacy(NfcDevice* instance, FlipperFormat* ff, uint3
 
         // Detect protocol
         for(NfcProtocol protocol = 0; protocol < NfcProtocolNum; protocol++) {
+            if(nfc_devices[protocol] == NULL) continue;
             instance->protocol = protocol;
             instance->protocol_data = nfc_devices[protocol]->alloc();
 

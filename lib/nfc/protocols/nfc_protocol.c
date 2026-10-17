@@ -34,6 +34,7 @@
  *
  */
 #include "nfc_protocol.h"
+#include <furi_hal_resources.h>
 
 #include <furi/furi.h>
 
@@ -67,7 +68,9 @@ static const NfcProtocol nfc_protocol_iso14443_4a_children_protocol[] = {
     NfcProtocolMfDesfire,
     NfcProtocolNtag4xx,
     NfcProtocolType4Tag,
+#if !defined(FURI_HAL_NFC_CHIP_PN532)
     NfcProtocolEmv,
+#endif
 };
 
 /** List of ISO115693-3 child protocols. */

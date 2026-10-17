@@ -77,6 +77,9 @@ static void nfc_poller_list_free(NfcPoller* instance) {
 NfcPoller* nfc_poller_alloc(Nfc* nfc, NfcProtocol protocol) {
     furi_check(nfc);
     furi_check(protocol < NfcProtocolNum);
+    if(nfc_pollers_api[protocol] == NULL) {
+        return NULL;
+    }
 
     NfcPoller* instance = malloc(sizeof(NfcPoller));
     instance->session_state = NfcPollerSessionStateIdle;
@@ -88,6 +91,7 @@ NfcPoller* nfc_poller_alloc(Nfc* nfc, NfcProtocol protocol) {
 }
 
 void nfc_poller_free(NfcPoller* instance) {
+    if(instance == NULL) return;
     furi_check(instance);
 
     nfc_poller_list_free(instance);
@@ -247,7 +251,7 @@ static NfcCommand nfc_poller_detect_head_callback(NfcEvent event, void* context)
 }
 
 bool nfc_poller_detect(NfcPoller* instance) {
-    furi_check(instance);
+    if(instance == NULL) return false;
     furi_check(instance->session_state == NfcPollerSessionStateIdle);
 
     instance->session_state = NfcPollerSessionStateActive;
