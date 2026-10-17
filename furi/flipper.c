@@ -211,35 +211,44 @@ void flipper_init(void) {
         // Wait for storage record
         Storage* storage = furi_record_open(RECORD_STORAGE);
         if(storage_sd_status(storage) != FSE_OK) {
-            FURI_LOG_W(TAG, "BOOT DIAG: SD not ready, skipping early init");
+            FURI_LOG_W(TAG, "BOOT DIAG [%lu ms]: SD not ready, skipping early init", furi_get_tick());
             // Init on SD insert done by storage using flipper_mount_callback()
         } else {
+            uint32_t t0 = furi_get_tick();
+            uint32_t t_step;
+
             // Workaround to avoid double load on boot but also have animated boot screen
             skip_double_mount = true;
 
-            FURI_LOG_W(TAG, "BOOT DIAG: stage migrate start");
+            t_step = furi_get_tick();
             canvas_draw_icon(canvas, 39, 43, &I_dir_10px);
             flipper_migrate_files();
-            FURI_LOG_W(TAG, "BOOT DIAG: stage migrate done");
+            FURI_LOG_I(
+                TAG, "BOOT DIAG [%lu ms]: stage migrate done (+%lu ms)", furi_get_tick(), furi_get_tick() - t_step);
 
+            t_step = furi_get_tick();
             canvas_draw_icon(canvas, 59, 42, &I_Apps_10px);
-            FURI_LOG_W(TAG, "BOOT DIAG: stage namespoof start");
             namespoof_init();
-            FURI_LOG_W(TAG, "BOOT DIAG: stage namespoof done");
+            FURI_LOG_I(
+                TAG, "BOOT DIAG [%lu ms]: stage namespoof done (+%lu ms)", furi_get_tick(), furi_get_tick() - t_step);
 
+            t_step = furi_get_tick();
             canvas_draw_icon(canvas, 79, 44, &I_Rpc_active_7x8);
-            FURI_LOG_W(TAG, "BOOT DIAG: stage settings_load start");
             momentum_settings_load();
-            FURI_LOG_W(TAG, "BOOT DIAG: stage settings_load done");
+            FURI_LOG_I(
+                TAG, "BOOT DIAG [%lu ms]: stage settings_load done (+%lu ms)", furi_get_tick(), furi_get_tick() - t_step);
 
+            t_step = furi_get_tick();
             furi_hal_light_sequence("rgb RB");
             canvas_draw_icon(canvas, 99, 44, &I_Hidden_window_9x8);
-            FURI_LOG_W(TAG, "BOOT DIAG: stage asset_packs_init start");
             asset_packs_init();
-            FURI_LOG_W(TAG, "BOOT DIAG: stage asset_packs_init done");
+            FURI_LOG_I(
+                TAG, "BOOT DIAG [%lu ms]: stage asset_packs_init done (+%lu ms)", furi_get_tick(), furi_get_tick() - t_step);
             canvas_commit(canvas);
+            FURI_LOG_I(
+                TAG, "BOOT DIAG [%lu ms]: early init total: %lu ms", furi_get_tick(), furi_get_tick() - t0);
         }
-        FURI_LOG_W(TAG, "BOOT DIAG: early init done, starting services");
+        FURI_LOG_I(TAG, "BOOT DIAG [%lu ms]: early init done, starting services", furi_get_tick());
         furi_record_close(RECORD_STORAGE);
     } else {
         FURI_LOG_I(TAG, "Special boot, skipping optional components");
@@ -255,7 +264,7 @@ void flipper_init(void) {
     canvas_free(canvas);
 #endif
 
-    FURI_LOG_I(TAG, "Startup complete");
+    FURI_LOG_I(TAG, "BOOT DIAG [%lu ms]: Startup complete", furi_get_tick());
 }
 
 void vApplicationGetIdleTaskMemory(

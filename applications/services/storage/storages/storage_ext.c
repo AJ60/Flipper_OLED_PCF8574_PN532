@@ -41,8 +41,11 @@ static bool sd_mount_card_internal(StorageData* storage, bool notify) {
             furi_record_close(RECORD_NOTIFICATION);
         }
 
-        if((counter % 2) == 0) {
-            // power reset sd card
+        if(counter == furi_hal_sd_max_mount_retry_count()) {
+            // First attempt: try warm/soft init without 350ms power reset delay
+            bsp_result = furi_hal_sd_init(false);
+        } else if((counter % 2) == 0) {
+            // power reset sd card on alternate retries
             bsp_result = furi_hal_sd_init(true);
         } else {
             bsp_result = furi_hal_sd_init(false);
@@ -55,16 +58,7 @@ static bool sd_mount_card_internal(StorageData* storage, bool notify) {
             SDError status = f_mount(sd_data->fs, sd_data->path, 1);
 
             if(status == FR_OK || status == FR_NO_FILESYSTEM) {
-#ifndef FURI_RAM_EXEC
-                FATFS* fs;
-                uint32_t free_clusters;
-
-                status = f_getfree(sd_data->path, &free_clusters, &fs);
-#endif
-
-                if(status == FR_OK || status == FR_NO_FILESYSTEM) {
-                    result = true;
-                }
+                result = true;
 
                 if(status == FR_OK) {
                     storage->status = StorageStatusOK;
@@ -85,7 +79,7 @@ static bool sd_mount_card_internal(StorageData* storage, bool notify) {
         }
 
         if(!result) {
-            furi_delay_ms(1000);
+            furi_delay_ms(100);
             FURI_LOG_E(
                 TAG, "init cycle %d, error: %s", counter, storage_data_status_text(storage));
             counter--;

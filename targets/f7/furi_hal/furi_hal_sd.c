@@ -940,7 +940,7 @@ bool furi_hal_sd_is_present(void) {
 }
 
 uint8_t furi_hal_sd_max_mount_retry_count(void) {
-    return 10;
+    return 4;
 }
 
 FuriStatus furi_hal_sd_init(bool power_reset) {

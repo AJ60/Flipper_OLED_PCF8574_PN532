@@ -229,10 +229,38 @@ void asset_packs_init(void) {
         furi_string_printf(p, ASSET_PACKS_PATH "/%s/Icons", pack);
         if(storage_common_stat(storage, furi_string_get_cstr(p), &info) == FSE_OK &&
            info.flags & FSF_DIRECTORY) {
+            File* dir = storage_file_alloc(storage);
+            FuriString* categories = furi_string_alloc();
+            if(storage_dir_open(dir, furi_string_get_cstr(p))) {
+                char entry_name[64];
+                FileInfo entry_info;
+                while(storage_dir_read(dir, &entry_info, entry_name, sizeof(entry_name))) {
+                    if((entry_info.flags & FSF_DIRECTORY) && entry_name[0] != '.') {
+                        furi_string_cat_printf(categories, "/%s/", entry_name);
+                    }
+                }
+                storage_dir_close(dir);
+            }
+            storage_file_free(dir);
+
             for(size_t i = 0; i < ICON_PATHS_COUNT; i++) {
                 // ICON_PATHS can contain NULL entries (see the JS binding, which
                 // already guards this); do not dereference them.
                 if(!ICON_PATHS[i].path || !ICON_PATHS[i].icon) continue;
+
+                // Fast category filter: skip icons whose top-level directory is absent in this pack
+                const char* slash = strchr(ICON_PATHS[i].path, '/');
+                if(slash) {
+                    size_t cat_len = slash - ICON_PATHS[i].path;
+                    if(cat_len < 64) {
+                        char cat_probe[68];
+                        snprintf(
+                            cat_probe, sizeof(cat_probe), "/%.*s/", (int)cat_len, ICON_PATHS[i].path);
+                        if(strstr(furi_string_get_cstr(categories), cat_probe) == NULL) {
+                            continue;
+                        }
+                    }
+                }
 
                 if(ICON_PATHS[i].icon->frame_count > 1) {
                     load_icon_animated(ICON_PATHS[i].icon, ICON_PATHS[i].path, p, f);
@@ -240,6 +268,7 @@ void asset_packs_init(void) {
                     load_icon_static(ICON_PATHS[i].icon, ICON_PATHS[i].path, p, f);
                 }
             }
+            furi_string_free(categories);
         }
 
         furi_string_printf(p, ASSET_PACKS_PATH "/%s/Fonts", pack);
