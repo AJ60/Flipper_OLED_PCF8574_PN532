@@ -103,11 +103,17 @@ if GetOption("fullenv") or any(
     selfupdate_dist = distenv.DistCommand(
         "updater_package",
         (distenv["DIST_DEPENDS"], firmware_env["FW_RESOURCES_MANIFEST"]),
+        # --noclean: do not rmtree dist/f7-C/ here. fap_dist installs the external
+        # app .fap files into dist/f7-C/ via native Install; without this flag the
+        # copy() wipe below clobbers them on any build order where updater_package
+        # runs after fap_dist. The SD-card resources package is still rebuilt fresh
+        # by FW_RESOURCES_MANIFEST -> _resources_dist_action.
         DIST_EXTRA=[
             *dist_basic_arguments,
             *dist_radio_arguments,
             *dist_resource_arguments,
             *dist_splash_arguments,
+            "--noclean",
         ],
     )
 
