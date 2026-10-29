@@ -60,6 +60,10 @@ firmware_env = distenv.AddFwProject(
     fw_env_key="FW_ENV",
 )
 
+# Sentinel so updater_package can be made self-contained (depend on fap_dist)
+# below even when the updater targets above are not initialized.
+selfupdate_dist = None
+
 # If enabled, initialize updater-related targets
 if GetOption("fullenv") or any(
     filter(lambda target: "updater" in target or "flash_usb" in target, BUILD_TARGETS)
@@ -180,6 +184,13 @@ Depends(
     list(app_artifact.validator for app_artifact in external_app_list),
 )
 Alias("fap_dist", fap_dist)
+
+# Make updater_package self-contained: building it alone also installs the
+# external .fap files to the loose dist, so a bare `updater_package` run still
+# populates the SD-card apps folder. fap_dist is defined after this point, so
+# wire the dependency here now that it exists.
+if selfupdate_dist is not None:
+    distenv.Depends(selfupdate_dist, fap_dist)
 
 # Copy all faps to device
 

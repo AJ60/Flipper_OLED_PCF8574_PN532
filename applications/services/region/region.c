@@ -28,9 +28,15 @@ static bool region_istream_decode_band(pb_istream_t* stream, const pb_field_t* f
     }
 
     region->bands_count += 1;
-    region = realloc( //-V701
+    FuriHalRegion* new_region = realloc(
         region,
         sizeof(FuriHalRegion) + sizeof(FuriHalRegionBand) * region->bands_count);
+    if(!new_region) {
+        region->bands_count -= 1;
+        FURI_LOG_E(TAG, "Failed to reallocate region buffer");
+        return false;
+    }
+    region = new_region;
     size_t pos = region->bands_count - 1;
     region->bands[pos].start = band.start;
     region->bands[pos].end = band.end;

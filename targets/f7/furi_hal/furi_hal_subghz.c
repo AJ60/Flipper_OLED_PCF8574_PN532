@@ -1105,6 +1105,7 @@ void furi_hal_subghz_stop_async_tx(void) {
     }
 
     free(furi_hal_subghz_async_tx.buffer);
+    furi_hal_subghz_async_tx.buffer = NULL;
 
     float duty_cycle =
         100.0f * (float)furi_hal_subghz_async_tx.duty_high /

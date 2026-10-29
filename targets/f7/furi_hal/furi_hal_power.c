@@ -39,21 +39,6 @@
 
 #define TAG "FuriHalPower"
 
-// Remove TAG definition as logging won't happen
-
-// Remove debug GPIO defines
-// #ifndef FURI_HAL_POWER_DEBUG_WFI_GPIO
-// #define FURI_HAL_POWER_DEBUG_WFI_GPIO (&gpio_ext_pb2)
-// #endif
-// #ifndef FURI_HAL_POWER_DEBUG_STOP_GPIO
-// #define FURI_HAL_POWER_DEBUG_STOP_GPIO (&gpio_ext_pc3)
-// #endif
-
-// Remove STOP_MODE define
-// #ifndef FURI_HAL_POWER_STOP_MODE
-// #define FURI_HAL_POWER_STOP_MODE (LL_PWR_MODE_STOP2)
-// #endif
-
 typedef struct {
     volatile uint8_t insomnia;
     volatile uint8_t suppress_charge;
@@ -185,13 +170,6 @@ bool furi_hal_power_sleep_available(void) {
     // return false;
     return furi_hal_power.insomnia == 0;
 }
-
-// Remove internal static functions as they are no longer needed
-// static inline bool furi_hal_power_deep_sleep_available(void) { ... }
-// static inline void furi_hal_power_light_sleep(void) { ... }
-// static inline void furi_hal_power_suspend_aux_periphs(void) { ... }
-// static inline void furi_hal_power_resume_aux_periphs(void) { ... }
-// static inline void furi_hal_power_deep_sleep(void) { ... }
 
 void furi_hal_power_sleep(void) {
     // Bug #8 fix: was a no-op, causing the MCU to spin at full speed during idle,
@@ -657,9 +635,6 @@ float furi_hal_power_get_battery_current(FuriHalPowerIC ic) {
 
     return last_current;
 }
-
-// Remove internal static function
-// static float furi_hal_power_get_battery_temperature_internal(FuriHalPowerIC ic) { ... }
 
 float furi_hal_power_get_battery_temperature(FuriHalPowerIC ic) {
     // Return a default room temperature (in Celsius)

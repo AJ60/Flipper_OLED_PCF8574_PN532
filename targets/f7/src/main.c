@@ -4,8 +4,6 @@
 #include <alt_boot.h>
 #include <update_util/update_operation.h>
 
-//#include <button_shift_register_service.h>
-
 #define TAG "Main"
 
 int32_t init_task(void* context) {
@@ -57,19 +55,13 @@ int main(void) {
         // But if we do, abandon to avoid bootloops
         furi_hal_rtc_set_boot_mode(FuriHalRtcBootModeNormal);
         furi_hal_power_reset();
-    } else //if(!furi_hal_gpio_read(&gpio_button_up))
-    {
-        //  //   furi_hal_light_sequence("rgb WR");
-        //     flipper_boot_recovery_exec();
-        //     furi_hal_power_reset();
-        // } else {
+    } else {
         furi_hal_light_sequence("rgb G");
         if(boot_mode != FuriHalRtcBootModePostUpdate && boot_mode != FuriHalRtcBootModePreUpdate) {
             furi_hal_set_is_normal_boot(true);
         }
 
         furi_thread_start(main_thread);
-        //    button_sr_service_start();
     }
 #endif
 

@@ -129,7 +129,9 @@ void furi_hal_light_sequence(const char* sequence) {
 void furi_hal_light_oled_set_invert(bool invert) {
     if(furi_record_exists(RECORD_GUI)) {
         Gui* gui = furi_record_open(RECORD_GUI);
+        gui_lock(gui);
         u8x8_d_ssd1306_set_invert(&gui->canvas->fb.u8x8, invert);
+        gui_unlock(gui);
         furi_record_close(RECORD_GUI);
     }
 }

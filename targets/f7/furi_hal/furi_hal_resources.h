@@ -11,8 +11,6 @@ extern "C" {
 /* Input Related Constants */
 #define INPUT_DEBOUNCE_TICKS 2
 
-// volne A3, A4, A5,
-
 /* Input Keys */
 typedef enum {
     InputKeyUp,
@@ -109,35 +107,15 @@ extern const GpioPin gpio_i2c_3_scl;
 
 extern const GpioPin gpio_speaker;
 
-//extern const GpioPin gpio_periph_power;
-
 extern const GpioPin gpio_usb_dm;
 extern const GpioPin gpio_usb_dp;
 
 // gpio_button_* MCU pin definitions removed: inputs are provided via PCF8574 wiring
 
-// extern const GpioPin gpio_button_IRQ;
-// extern const GpioPin gpio_spi_miso_BTN;
-// extern const GpioPin gpio_button_sr_latch;
-
-// ADC for battery voltage measurement
-// extern const GpioPin gpio_adc_battery_voltage;
-// #define ADC_BATTERY_VOLTAGE_GPIO_Port GPIOA
-// #define ADC_BATTERY_VOLTAGE_Pin       LL_GPIO_PIN_0
-
-//extern const GpioPin gpio_button_sr_latch;
-
 #define CC1101_CS_GPIO_Port GPIOA
 #define CC1101_CS_Pin       LL_GPIO_PIN_15
 #define CC1101_G0_GPIO_Port GPIOA
 #define CC1101_G0_Pin       LL_GPIO_PIN_1
-
-// #define DISPLAY_CS_GPIO_Port  GPIOA
-// #define DISPLAY_CS_Pin        LL_GPIO_PIN_3
-// #define DISPLAY_DI_GPIO_Port  GPIOB
-// #define DISPLAY_DI_Pin        LL_GPIO_PIN_1
-// #define DISPLAY_RST_GPIO_Port GPIOB
-// #define DISPLAY_RST_Pin       LL_GPIO_PIN_0
 
 #define IR_RX_GPIO_Port GPIOA
 #define IR_RX_Pin       LL_GPIO_PIN_0

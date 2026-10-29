@@ -89,6 +89,9 @@ node_modules/
 # Local project files (not for repo)
 .agents/
 .hermes/
+.hhermes/
+\$LOCALAPPDATA/
+\$TMPDIR/
 graphify-out/
 **/graphify-out/
 CHANGELOG_v*.md

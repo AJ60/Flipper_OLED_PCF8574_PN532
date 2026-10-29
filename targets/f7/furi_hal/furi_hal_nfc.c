@@ -38,61 +38,6 @@ FuriHalNfc furi_hal_nfc;
 FuriHalPn532Ctx furi_hal_pn532_ctx = {0};
 #endif
 
-// void //furi_hal_nfc_log_irq(const char* action, uint32_t irq_mask) {
-//     if(irq_mask == ST25R3916_IRQ_MASK_NONE) {
-//         FURI_LOG_D(TAG, "%s: ST25R3916_IRQ_MASK_NONE (0x00000000)", action);
-//         return;
-//     }
-//     if(irq_mask == ST25R3916_IRQ_MASK_ALL) {
-//         FURI_LOG_D(TAG, "%s: ST25R3916_IRQ_MASK_ALL (0xFFFFFFFF)", action);
-//         return;
-//     }
-
-//     FURI_LOG_D(TAG, "%s with mask 0x%08lX:", action, irq_mask);
-//     if(irq_mask & ST25R3916_IRQ_MASK_OSC) FURI_LOG_D(TAG, "  - OSC: Oscillator stable");
-//     if(irq_mask & ST25R3916_IRQ_MASK_FWL) FURI_LOG_D(TAG, "  - FWL: FIFO water level");
-//     if(irq_mask & ST25R3916_IRQ_MASK_RXS) FURI_LOG_D(TAG, "  - RXS: Start of receive");
-//     if(irq_mask & ST25R3916_IRQ_MASK_RXE) FURI_LOG_D(TAG, "  - RXE: End of receive");
-//     if(irq_mask & ST25R3916_IRQ_MASK_TXE) FURI_LOG_D(TAG, "  - TXE: End of transmission");
-//     if(irq_mask & ST25R3916_IRQ_MASK_COL) FURI_LOG_D(TAG, "  - COL: Bit collision");
-//     if(irq_mask & ST25R3916_IRQ_MASK_RX_REST)
-//         FURI_LOG_D(TAG, "  - RX_REST: Automatic reception restart");
-//     if(irq_mask & ST25R3916_IRQ_MASK_DCT)
-//         FURI_LOG_D(TAG, "  - DCT: Termination of direct command");
-//     if(irq_mask & ST25R3916_IRQ_MASK_NRE) FURI_LOG_D(TAG, "  - NRE: No-response timer expired");
-//     if(irq_mask & ST25R3916_IRQ_MASK_GPE)
-//         FURI_LOG_D(TAG, "  - GPE: General purpose timer expired");
-//     if(irq_mask & ST25R3916_IRQ_MASK_EON) FURI_LOG_D(TAG, "  - EON: External field on");
-//     if(irq_mask & ST25R3916_IRQ_MASK_EOF) FURI_LOG_D(TAG, "  - EOF: External field off");
-//     if(irq_mask & ST25R3916_IRQ_MASK_CAC)
-//         FURI_LOG_D(TAG, "  - CAC: Collision during RF collision avoidance");
-//     if(irq_mask & ST25R3916_IRQ_MASK_CAT) FURI_LOG_D(TAG, "  - CAT: Minimum guard time expired");
-//     if(irq_mask & ST25R3916_IRQ_MASK_NFCT)
-//         FURI_LOG_D(TAG, "  - NFCT: Initiator bit rate recognised");
-//     if(irq_mask & ST25R3916_IRQ_MASK_CRC) FURI_LOG_D(TAG, "  - CRC: CRC error");
-//     if(irq_mask & ST25R3916_IRQ_MASK_PAR) FURI_LOG_D(TAG, "  - PAR: Parity error");
-//     if(irq_mask & ST25R3916_IRQ_MASK_ERR2) FURI_LOG_D(TAG, "  - ERR2: Soft framing error");
-//     if(irq_mask & ST25R3916_IRQ_MASK_ERR1) FURI_LOG_D(TAG, "  - ERR1: Hard framing error");
-//     if(irq_mask & ST25R3916_IRQ_MASK_WT) FURI_LOG_D(TAG, "  - WT: Wake-up interrupt");
-//     if(irq_mask & ST25R3916_IRQ_MASK_WAM) FURI_LOG_D(TAG, "  - WAM: Wake-up due to amplitude");
-//     if(irq_mask & ST25R3916_IRQ_MASK_WPH) FURI_LOG_D(TAG, "  - WPH: Wake-up due to phase");
-//     if(irq_mask & ST25R3916_IRQ_MASK_WCAP)
-//         FURI_LOG_D(TAG, "  - WCAP: Wake-up due to capacitance measurement");
-//     if(irq_mask & ST25R3916_IRQ_MASK_PPON2) FURI_LOG_D(TAG, "  - PPON2: Field on waiting Timer");
-//     if(irq_mask & ST25R3916_IRQ_MASK_SL_WL)
-//         FURI_LOG_D(TAG, "  - SL_WL: Passive target slot number water level");
-//     if(irq_mask & ST25R3916_IRQ_MASK_APON)
-//         FURI_LOG_D(TAG, "  - APON: Anticollision done and Field On");
-//     if(irq_mask & ST25R3916_IRQ_MASK_RXE_PTA)
-//         FURI_LOG_D(TAG, "  - RXE_PTA: RXE with an automatic response");
-//     if(irq_mask & ST25R3916_IRQ_MASK_WU_F)
-//         FURI_LOG_D(TAG, "  - WU_F: 212/424b/s Passive target Active");
-//     if(irq_mask & ST25R3916_IRQ_MASK_WU_A_X)
-//         FURI_LOG_D(TAG, "  - WU_A_X: 106kb/s Passive target state Active*");
-//     if(irq_mask & ST25R3916_IRQ_MASK_WU_A)
-//         FURI_LOG_D(TAG, "  - WU_A: 106kb/s Passive target state Active");
-// }
-
 #if !defined(FURI_HAL_NFC_CHIP_PN532)
 static FuriHalNfcError furi_hal_nfc_turn_on_osc(const FuriHalSpiBusHandle* handle) {
     FuriHalNfcError error = FuriHalNfcErrorNone;
