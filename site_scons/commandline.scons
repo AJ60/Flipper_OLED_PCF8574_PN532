@@ -53,6 +53,9 @@ AddOption(
 
 # Construction environment variables
 
+if "COMPRESS" in ARGUMENTS and "COMPACT" not in ARGUMENTS:
+    ARGUMENTS["COMPACT"] = ARGUMENTS["COMPRESS"]
+
 vars = Variables(GetOption("optionfile"), ARGUMENTS)
 
 vars.AddVariables(
@@ -79,6 +82,11 @@ vars.AddVariables(
     BoolVariable(
         "COMPACT",
         help="Optimize for size",
+        default=False,
+    ),
+    BoolVariable(
+        "COMPRESS",
+        help="Alias for COMPACT (optimize for size)",
         default=False,
     ),
     EnumVariable(

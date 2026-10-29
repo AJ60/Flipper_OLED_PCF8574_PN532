@@ -13,6 +13,16 @@ DefaultEnvironment(tools=[])
 
 EnsurePythonVersion(3, 8)
 
+# Expand any space-separated target strings passed as quotes on commandline
+if BUILD_TARGETS:
+    _expanded_targets = []
+    for _t in BUILD_TARGETS:
+        if isinstance(_t, str) and " " in _t:
+            _expanded_targets.extend(_t.split())
+        else:
+            _expanded_targets.append(_t)
+    BUILD_TARGETS[:] = _expanded_targets
+
 # Progress(["OwO\r", "owo\r", "uwu\r", "owo\r"], interval=15)
 
 # This environment is created only for loading options & validating file/dir existence
