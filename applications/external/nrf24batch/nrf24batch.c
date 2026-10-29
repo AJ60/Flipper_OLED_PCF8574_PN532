@@ -658,14 +658,16 @@ bool Run_Read_cmd(FuriString* cmd) {
     char* p = (char*)furi_string_get_cstr(cmd);
     p = strchr(p, '=');
     if(p == NULL) return false;
-    FuriString** new_log = realloc(Log, sizeof(FuriString*) * (Log_Total + 1));
-    if(new_log == NULL) {
+    if(Log == NULL)
+        Log = malloc(sizeof(Log));
+    else
+        Log = realloc(Log, sizeof(Log) * (Log_Total + 1));
+    if(Log == NULL) {
         ERR = 3;
         strcpy(ERR_STR, "Memory low");
         FURI_LOG_D(TAG, ERR_STR);
         return false;
     }
-    Log = new_log;
     FuriString* fs = furi_string_alloc();
     furi_string_set_strn(
         fs, (char*)furi_string_get_cstr(cmd), p - (char*)furi_string_get_cstr(cmd));
@@ -775,15 +777,14 @@ void Prepare_Write_cmd(FuriString* cmd) {
             str_rtrim(p);
             len = strlen(p);
         }
-        FuriString** new_log = realloc(Log, sizeof(FuriString*) * (Log_Total + 1));
-        if(new_log == NULL) {
+        FuriString* fs = furi_string_alloc();
+        if(Log_Total) Log = realloc(Log, sizeof(Log) * (Log_Total + 1));
+        if(Log == NULL) {
             ERR = 3;
             strcpy(ERR_STR, "Memory low");
             FURI_LOG_D(TAG, ERR_STR);
             return;
         }
-        Log = new_log;
-        FuriString* fs = furi_string_alloc();
         furi_string_set_strn(fs, p, len);
         Log[Log_Total++] = fs;
     } while((p = end));
@@ -982,47 +983,58 @@ static uint8_t load_settings_file() {
                 WriteDefault = furi_string_alloc_set_str(p + sizeof(SettingsFld_WriteDefault));
             } else if(strncmp(p, SettingsFld_Read, sizeof(SettingsFld_Read) - 1) == 0) {
                 p += sizeof(SettingsFld_Read);
-                FuriString** new_read_cmd =
-                    realloc(Read_cmd, sizeof(FuriString*) * (Read_cmd_Total + 1));
-                if(new_read_cmd == NULL) {
+                if(Read_cmd == NULL)
+                    Read_cmd = malloc(sizeof(Read_cmd));
+                else {
+                    Read_cmd = realloc(Read_cmd, sizeof(Read_cmd) * (Read_cmd_Total + 1));
+                }
+                if(Read_cmd == NULL) {
                     FURI_LOG_D(TAG, "Memory low, err 4");
                     err = 4;
                     break;
                 }
-                Read_cmd = new_read_cmd;
                 Read_cmd[Read_cmd_Total++] = furi_string_alloc_set_str(p);
             } else if(strncmp(p, SettingsFld_ReadBatch, sizeof(SettingsFld_ReadBatch) - 1) == 0) {
                 p += sizeof(SettingsFld_ReadBatch);
-                FuriString** new_read_batch =
-                    realloc(ReadBatch_cmd, sizeof(FuriString*) * (ReadBatch_cmd_Total + 1));
-                if(new_read_batch == NULL) {
+                if(ReadBatch_cmd == NULL)
+                    ReadBatch_cmd = malloc(sizeof(ReadBatch_cmd));
+                else {
+                    ReadBatch_cmd =
+                        realloc(ReadBatch_cmd, sizeof(ReadBatch_cmd) * (ReadBatch_cmd_Total + 1));
+                }
+                if(ReadBatch_cmd == NULL) {
                     FURI_LOG_D(TAG, "Memory low, err 5");
                     err = 5;
                     break;
                 }
-                ReadBatch_cmd = new_read_batch;
                 ReadBatch_cmd[ReadBatch_cmd_Total++] = furi_string_alloc_set_str(p);
             } else if(strncmp(p, SettingsFld_WriteBatch, sizeof(SettingsFld_WriteBatch) - 1) == 0) {
                 p += sizeof(SettingsFld_WriteBatch);
-                FuriString** new_write_batch =
-                    realloc(WriteBatch_cmd, sizeof(FuriString*) * (WriteBatch_cmd_Total + 1));
-                if(new_write_batch == NULL) {
+                if(WriteBatch_cmd == NULL)
+                    WriteBatch_cmd = malloc(sizeof(WriteBatch_cmd));
+                else {
+                    WriteBatch_cmd = realloc(
+                        WriteBatch_cmd, sizeof(WriteBatch_cmd) * (WriteBatch_cmd_Total + 1));
+                }
+                if(WriteBatch_cmd == NULL) {
                     FURI_LOG_D(TAG, "Memory low, err 6");
                     err = 6;
                     break;
                 }
-                WriteBatch_cmd = new_write_batch;
                 WriteBatch_cmd[WriteBatch_cmd_Total++] = furi_string_alloc_set_str(p);
             } else if(strncmp(p, SettingsFld_SetBatch, sizeof(SettingsFld_SetBatch) - 1) == 0) {
                 p += sizeof(SettingsFld_SetBatch);
-                FuriString** new_set_batch =
-                    realloc(SetBatch_cmd, sizeof(FuriString*) * (SetBatch_cmd_Total + 1));
-                if(new_set_batch == NULL) {
+                if(SetBatch_cmd == NULL)
+                    SetBatch_cmd = malloc(sizeof(SetBatch_cmd));
+                else {
+                    SetBatch_cmd =
+                        realloc(SetBatch_cmd, sizeof(SetBatch_cmd) * (SetBatch_cmd_Total + 1));
+                }
+                if(SetBatch_cmd == NULL) {
                     FURI_LOG_D(TAG, "Memory low, err 7");
                     err = 7;
                     break;
                 }
-                SetBatch_cmd = new_set_batch;
                 SetBatch_cmd[SetBatch_cmd_Total++] = furi_string_alloc_set_str(p);
             } else if(strncmp(p, SettingsFld_Listen, sizeof(SettingsFld_Listen) - 1) == 0) {
                 p += sizeof(SettingsFld_Listen);

@@ -363,6 +363,6 @@ bool furi_hal_gpio_read_unmapped(const GpioPin* gpio) {
     }
     uint8_t port_state = 0xFF;
     furi_hal_pcf8574_read_port(&port_state);
-    uint8_t mask = (uint8_t)(gpio->pin & 0xFF);
+    uint8_t mask = (gpio->pin < 8) ? (uint8_t)(1u << gpio->pin) : (uint8_t)(gpio->pin & 0xFF);
     return (port_state & mask) != 0;
 }

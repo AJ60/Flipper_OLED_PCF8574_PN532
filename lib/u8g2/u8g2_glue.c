@@ -204,6 +204,18 @@ uint8_t u8x8_byte_hw_i2c_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void*
     return 1;
 }
 
+#define ST756X_CMD_ON_OFF            0b10101110 /**< 0:0 Switch Display ON/OFF: last bit */
+#define ST756X_CMD_SET_LINE          0b01000000 /**< 0:0 Set Start Line: last 6 bits  */
+#define ST756X_CMD_SET_PAGE          0b10110000 /**< 0:0 Set Page address: last 4 bits */
+#define ST756X_CMD_SET_COLUMN_MSB    0b00010000 /**< 0:0 Set Column MSB: last 4 bits */
+#define ST756X_CMD_SET_COLUMN_LSB    0b00000000 /**< 0:0 Set Column LSB: last 4 bits */
+#define ST756X_CMD_SEG_DIRECTION     0b10100000 /**< 0:0 Reverse scan direction of SEG: last bit */
+#define ST756X_CMD_INVERSE_DISPLAY   0b10100110 /**< 0:0 Invert display: last bit */
+#define ST756X_CMD_ALL_PIXEL_ON      0b10100100 /**< 0:0 Set all pixel on: last bit */
+#define ST756X_CMD_BIAS_SELECT       0b10100010 /**< 0:0 Select 1/9(0) or 1/7(1) bias: last bit */
+#define ST756X_CMD_R_M_W             0b11100000 /**< 0:0 Enter Read Modify Write mode: read+0, write+1 */
+#define ST756X_CMD_END               0b11101110 /**< 0:0 Exit Read Modify Write mode */
+#define ST756X_CMD_RESET             0b11100010 /**< 0:0 Software Reset */
 #define SSD1306_CMD_ON_OFF           0b10101110 /**< 0:0 Switch Display ON/OFF: last bit */
 #define SSD1306_CMD_SET_LINE         0b01000000 /**< 0:0 Set Start Line: last 6 bits  */
 #define SSD1306_CMD_SET_PAGE         0b10110000 /**< 0:0 Set Page address: last 4 bits */

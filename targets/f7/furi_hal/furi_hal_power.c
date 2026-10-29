@@ -21,6 +21,9 @@
 #include <furi_hal_cortex.h>
 #include <stm32wbxx_ll_gpio.h>
 #include <hsem_map.h>
+#include <bq27220.h>
+#include <bq27220_data_memory.h>
+#include <bq25896.h>
 #include <furi_hal_subghz.h>
 #include <furi_hal_nfc.h>
 #include <furi_hal_speaker.h>
@@ -35,6 +38,21 @@
 #endif
 
 #define TAG "FuriHalPower"
+
+// Remove TAG definition as logging won't happen
+
+// Remove debug GPIO defines
+// #ifndef FURI_HAL_POWER_DEBUG_WFI_GPIO
+// #define FURI_HAL_POWER_DEBUG_WFI_GPIO (&gpio_ext_pb2)
+// #endif
+// #ifndef FURI_HAL_POWER_DEBUG_STOP_GPIO
+// #define FURI_HAL_POWER_DEBUG_STOP_GPIO (&gpio_ext_pc3)
+// #endif
+
+// Remove STOP_MODE define
+// #ifndef FURI_HAL_POWER_STOP_MODE
+// #define FURI_HAL_POWER_STOP_MODE (LL_PWR_MODE_STOP2)
+// #endif
 
 typedef struct {
     volatile uint8_t insomnia;
@@ -167,6 +185,13 @@ bool furi_hal_power_sleep_available(void) {
     // return false;
     return furi_hal_power.insomnia == 0;
 }
+
+// Remove internal static functions as they are no longer needed
+// static inline bool furi_hal_power_deep_sleep_available(void) { ... }
+// static inline void furi_hal_power_light_sleep(void) { ... }
+// static inline void furi_hal_power_suspend_aux_periphs(void) { ... }
+// static inline void furi_hal_power_resume_aux_periphs(void) { ... }
+// static inline void furi_hal_power_deep_sleep(void) { ... }
 
 void furi_hal_power_sleep(void) {
     // Bug #8 fix: was a no-op, causing the MCU to spin at full speed during idle,
@@ -409,6 +434,7 @@ void furi_hal_power_shutdown(void) {
         furi_hal_speaker_stop();
     }
     furi_hal_vibro_on(false);
+    furi_hal_pcf8574_led_off();
 
     // 5. Cleanly stop Bluetooth advertising
     if(furi_hal_bt_is_active()) {
@@ -631,6 +657,9 @@ float furi_hal_power_get_battery_current(FuriHalPowerIC ic) {
 
     return last_current;
 }
+
+// Remove internal static function
+// static float furi_hal_power_get_battery_temperature_internal(FuriHalPowerIC ic) { ... }
 
 float furi_hal_power_get_battery_temperature(FuriHalPowerIC ic) {
     // Return a default room temperature (in Celsius)

@@ -34,9 +34,6 @@ typedef struct {
 
 ProtocolFDXB* protocol_fdx_b_alloc(void) {
     ProtocolFDXB* protocol = malloc(sizeof(ProtocolFDXB));
-    if(protocol) {
-        memset(protocol, 0, sizeof(ProtocolFDXB));
-    }
     return protocol;
 }
 

@@ -282,7 +282,11 @@ static uint8_t fullhouse() {
     return 0;
 }
 
-// Determine score for a small straight (sequence of 4 consecutive dice)
+// # # # # # # # # # # # # # # # # # # # # # # # # # # #
+// # I'm dumb so I asked ChatGPT to write the          #
+// # smallstraight function for me. Then I adapted it  #
+// # fo the largestraight function.                    #
+// # # # # # # # # # # # # # # # # # # # # # # # # # # #
 static uint8_t smallstraight() {
     // Create a new array with the frequencies of the different die faces
     int8_t frequencies[6] = {0};

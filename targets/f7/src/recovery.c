@@ -75,6 +75,4 @@ void flipper_boot_recovery_exec(void) {
         furi_hal_rtc_reset_registers();
         furi_hal_rtc_set_flag(FuriHalRtcFlagStorageFormatInternal);
     }
-
-    canvas_free(canvas);
 }

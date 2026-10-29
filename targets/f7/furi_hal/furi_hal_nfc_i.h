@@ -12,8 +12,13 @@
 #include <furi_hal_nfc.h>
 #include <furi_hal_spi.h>
 
+#if defined(FURI_HAL_NFC_CHIP_PN532)
 #include <pn532.h>
 #include <pn532_reg.h>
+#else
+#include <drivers/st25r3916.h>
+#include <drivers/st25r3916_reg.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,6 +70,7 @@ typedef struct {
 
 extern FuriHalNfc furi_hal_nfc;
 
+#if defined(FURI_HAL_NFC_CHIP_PN532)
 typedef struct {
     Pn532TargetIso14443a target;
     Pn532TargetIso14443b target_b;
@@ -88,6 +94,7 @@ static inline Pn532Error furi_hal_pn532_abort(void) {
     furi_delay_ms(5);
     return ok ? Pn532ErrorNone : Pn532ErrorBus;
 }
+#endif
 
 /**
  * @brief Initialise NFC HAL event system.

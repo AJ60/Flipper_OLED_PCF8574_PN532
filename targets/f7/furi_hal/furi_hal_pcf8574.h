@@ -45,7 +45,7 @@ void furi_hal_pcf8574_attach_int(GpioExtiCallback cb, void* ctx);
 bool furi_hal_pcf8574_configure_interrupts(uint8_t gpios_to_input_mask);
 bool furi_hal_pcf8574_check_and_restore(uint8_t expected_mask);
 
-// SDK compatibility stubs for external applications
+// Stubs for LED control so we don't break furi_hal_light
 bool furi_hal_pcf8574_led_init(void);
 bool furi_hal_pcf8574_led_set_red(bool on);
 bool furi_hal_pcf8574_led_set_green(bool on);

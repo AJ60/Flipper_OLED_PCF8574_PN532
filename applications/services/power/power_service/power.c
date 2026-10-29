@@ -634,12 +634,13 @@ static void power_init_settings(Power* power) {
     Storage* storage = furi_record_open(RECORD_STORAGE);
     furi_pubsub_subscribe(storage_get_pubsub(storage), power_storage_callback, power);
 
-    if(storage_sd_status(storage) == FSE_OK) {
-        power_settings_load(&power->settings);
-        power_settings_apply(power);
-    } else {
+    if(storage_sd_status(storage) != FSE_OK) {
         FURI_LOG_D(TAG, "SD Card not ready, skipping settings");
+        return;
     }
+
+    power_settings_load(&power->settings);
+    power_settings_apply(power);
     furi_record_close(RECORD_STORAGE);
     power->charge_is_supressed = false;
 }

@@ -146,10 +146,7 @@ class AppBuilder:
 
         self.app_env.Append(
             LIBS=[*self.app.fap_libs, *self.private_libs, *self.app.fap_libs],
-            CPPPATH=[
-                self.app_env.Dir(self.app_work_dir),
-                self.app._appdir,
-            ],
+            CPPPATH=[self.app_env.Dir(self.app_work_dir), self.app._appdir],
         )
 
         app_sources = self.app_env.GatherSources(
