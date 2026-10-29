@@ -422,7 +422,7 @@ bool furi_hal_pcf8574_check_and_restore(uint8_t expected_mask) {
     return res;
 }
 
-// LED Stub functions - Since PCF8574 has only 8 pins, there's no room for RGB LED.
+// SDK compatibility stubs for external applications
 bool furi_hal_pcf8574_led_init(void) {
     return true;
 }
@@ -438,16 +438,16 @@ bool furi_hal_pcf8574_led_set_blue(bool on) {
     UNUSED(on);
     return true;
 }
-bool furi_hal_pcf8574_led_set_color(bool red, bool green, bool blue) {
-    UNUSED(red);
-    UNUSED(green);
-    UNUSED(blue);
+bool furi_hal_pcf8574_led_set_color(bool r, bool g, bool b) {
+    UNUSED(r);
+    UNUSED(g);
+    UNUSED(b);
     return true;
 }
-bool furi_hal_pcf8574_led_set(uint8_t red, uint8_t green, uint8_t blue) {
-    UNUSED(red);
-    UNUSED(green);
-    UNUSED(blue);
+bool furi_hal_pcf8574_led_set(uint8_t r, uint8_t g, uint8_t b) {
+    UNUSED(r);
+    UNUSED(g);
+    UNUSED(b);
     return true;
 }
 bool furi_hal_pcf8574_led_off(void) {

@@ -19,26 +19,15 @@
 #define LED_CURRENT_WHITE (150u)
 
 void furi_hal_light_init(void) {
-    // Initialize RGB LED on PCF8574
-    furi_hal_pcf8574_led_init();
+    // DIY hardware: no RGB LED wired to PCF8574
 }
 
 void furi_hal_light_set(Light light, uint8_t value) {
     if(furi_hal_power_is_shutdown()) {
         return;
     }
-    // PCF8574 only supports on/off, not PWM brightness
     bool on = value > 0;
 
-    if(light & LightRed) {
-        furi_hal_pcf8574_led_set_red(on);
-    }
-    if(light & LightGreen) {
-        furi_hal_pcf8574_led_set_green(on);
-    }
-    if(light & LightBlue) {
-        furi_hal_pcf8574_led_set_blue(on);
-    }
     if(light & LightBacklight) {
         bool was_sleeping = display_is_sleeping;
         display_is_sleeping = !on;
@@ -65,7 +54,6 @@ void furi_hal_light_set(Light light, uint8_t value) {
 }
 
 void furi_hal_light_blink_start(Light light, uint8_t brightness, uint16_t on_time, uint16_t period) {
-    // PCF8574 doesn't support hardware blinking, so just turn LED on at max brightness
     UNUSED(brightness);
     UNUSED(on_time);
     UNUSED(period);
@@ -73,16 +61,11 @@ void furi_hal_light_blink_start(Light light, uint8_t brightness, uint16_t on_tim
 }
 
 void furi_hal_light_blink_stop(void) {
-    // Stop blinking by turning LED off
-    furi_hal_pcf8574_led_off();
+    // DIY hardware: no RGB LED
 }
 
 void furi_hal_light_blink_set_color(Light light) {
-    // For PCF8574, just set the LED color (on/off)
-    bool red = (light & LightRed) != 0;
-    bool green = (light & LightGreen) != 0;
-    bool blue = (light & LightBlue) != 0;
-    furi_hal_pcf8574_led_set_color(red, green, blue);
+    UNUSED(light);
 }
 
 void furi_hal_light_sequence(const char* sequence) {

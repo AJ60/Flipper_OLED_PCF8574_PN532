@@ -21,9 +21,6 @@
 #include <furi_hal_cortex.h>
 #include <stm32wbxx_ll_gpio.h>
 #include <hsem_map.h>
-#include <bq27220.h>
-#include <bq27220_data_memory.h>
-#include <bq25896.h>
 #include <furi_hal_subghz.h>
 #include <furi_hal_nfc.h>
 #include <furi_hal_speaker.h>
@@ -412,7 +409,6 @@ void furi_hal_power_shutdown(void) {
         furi_hal_speaker_stop();
     }
     furi_hal_vibro_on(false);
-    furi_hal_pcf8574_led_off();
 
     // 5. Cleanly stop Bluetooth advertising
     if(furi_hal_bt_is_active()) {
