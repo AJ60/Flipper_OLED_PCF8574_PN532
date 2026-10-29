@@ -57,8 +57,13 @@ static bool max_len_assign(
             mjs, MJS_BAD_ARGS_ERROR, "maxLength must be larger than defaultText length");
         return false;
     }
+    void* new_buf = realloc(context->buffer, new_buffer_size);
+    if(!new_buf) {
+        mjs_prepend_errorf(mjs, MJS_INTERNAL_ERROR, "Out of memory");
+        return false;
+    }
+    context->buffer = new_buf;
     context->buffer_size = new_buffer_size;
-    context->buffer = realloc(context->buffer, context->buffer_size); //-V701
     text_input_set_result_callback(
         input,
         (TextInputCallback)input_callback,
@@ -74,18 +79,22 @@ static bool default_text_assign(
     TextInput* input,
     JsViewPropValue value,
     JsKbdContext* context) {
-    UNUSED(mjs);
     UNUSED(input);
 
     if(value.string) {
         context->default_text_size = strlen(value.string) + 1;
         if(context->buffer_size < context->default_text_size) {
             // Ensure buffer is large enough for defaultData
+            void* new_buf = realloc(context->buffer, context->default_text_size);
+            if(!new_buf) {
+                mjs_prepend_errorf(mjs, MJS_INTERNAL_ERROR, "Out of memory");
+                return false;
+            }
+            context->buffer = new_buf;
             context->buffer_size = context->default_text_size;
-            context->buffer = realloc(context->buffer, context->buffer_size); //-V701
         }
         // Also trim excess previous data with strlcpy()
-        strlcpy(context->buffer, value.string, context->buffer_size); //-V575
+        strlcpy(context->buffer, value.string, context->buffer_size);
         text_input_set_result_callback(
             input,
             (TextInputCallback)input_callback,

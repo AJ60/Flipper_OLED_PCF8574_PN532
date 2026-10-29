@@ -22,6 +22,7 @@ typedef struct {
     FATFS* fs;
     const char* path;
     bool sd_was_present;
+    uint8_t mount_retry_cooldown;
 } SDData;
 
 static FS_Error storage_ext_parse_error(SDError error);
@@ -94,6 +95,11 @@ static bool sd_mount_card_internal(StorageData* storage, bool notify) {
 static bool sd_remove_recursive(const char* path) {
     SDDir* current_dir = malloc(sizeof(DIR));
     SDFileInfo* file_info = malloc(sizeof(FILINFO));
+    if(!current_dir || !file_info) {
+        free(current_dir);
+        free(file_info);
+        return false;
+    }
     FuriString* current_path = furi_string_alloc_set(path);
 
     bool go_deeper = false;
@@ -315,25 +321,34 @@ static void storage_ext_tick_internal(StorageData* storage, bool notify) {
     SDData* sd_data = storage->data;
 
     if(storage->status != StorageStatusOK) {
+        if(sd_data->mount_retry_cooldown > 0) {
+            sd_data->mount_retry_cooldown--;
+            return;
+        }
+
         if(furi_hal_sd_is_present()) {
             FURI_LOG_I(TAG, "card detected");
             FS_Error mount_res = sd_mount_card(storage, notify);
             if(mount_res == FSE_OK && storage->status == StorageStatusOK) {
                 sd_data->sd_was_present = false;
+                sd_data->mount_retry_cooldown = 0;
             } else {
                 sd_data->sd_was_present = true;
+                sd_data->mount_retry_cooldown = 30;
             }
 
             if(!furi_hal_sd_is_present()) {
                 FURI_LOG_I(TAG, "card removed while mounting");
                 sd_unmount_card(storage);
                 sd_data->sd_was_present = true;
+                sd_data->mount_retry_cooldown = 30;
             }
         }
     } else {
         if(!furi_hal_sd_is_present() || furi_hal_sd_get_card_state() != FuriStatusOk) {
             FURI_LOG_I(TAG, "card removed");
             sd_data->sd_was_present = true;
+            sd_data->mount_retry_cooldown = 0;
 
             sd_unmount_card(storage);
             if(notify) {
@@ -775,6 +790,7 @@ void storage_ext_init(StorageData* storage) {
     sd_data->fs = &fatfs_object;
     sd_data->path = fatfs_path;
     sd_data->sd_was_present = true;
+    sd_data->mount_retry_cooldown = 0;
 
     storage->data = sd_data;
     storage->api.tick = storage_ext_tick;
@@ -988,6 +1004,8 @@ void storage_mnt_init(StorageData* storage) {
     SDData* sd_data = malloc(sizeof(SDData));
     sd_data->fs = malloc(sizeof(FATFS));
     sd_data->path = strdup(path);
+    sd_data->sd_was_present = false;
+    sd_data->mount_retry_cooldown = 0;
 
     storage->data = sd_data;
     storage->fs_api = &fs_api;

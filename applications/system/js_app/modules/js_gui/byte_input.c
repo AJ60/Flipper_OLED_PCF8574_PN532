@@ -46,8 +46,13 @@ static bool
             mjs, MJS_BAD_ARGS_ERROR, "length must be larger than defaultData length");
         return false;
     }
+    void* new_buf = realloc(context->buffer, new_buffer_size);
+    if(!new_buf) {
+        mjs_prepend_errorf(mjs, MJS_INTERNAL_ERROR, "Out of memory");
+        return false;
+    }
+    context->buffer = new_buf;
     context->buffer_size = new_buffer_size;
-    context->buffer = realloc(context->buffer, context->buffer_size); //-V701
     byte_input_set_result_callback(
         input,
         (ByteInputCallback)input_callback,
@@ -63,7 +68,7 @@ static bool default_data_assign(
     ByteInput* input,
     JsViewPropValue value,
     JsByteKbContext* context) {
-    UNUSED(mjs);
+    UNUSED(input);
 
     mjs_val_t array_buf = value.term;
     if(mjs_is_data_view(array_buf)) {
@@ -72,8 +77,13 @@ static bool default_data_assign(
     char* default_data = mjs_array_buf_get_ptr(mjs, array_buf, &context->default_data_size);
     if(context->buffer_size < context->default_data_size) {
         // Ensure buffer is large enough for defaultData
+        void* new_buf = realloc(context->buffer, context->default_data_size);
+        if(!new_buf) {
+            mjs_prepend_errorf(mjs, MJS_INTERNAL_ERROR, "Out of memory");
+            return false;
+        }
+        context->buffer = new_buf;
         context->buffer_size = context->default_data_size;
-        context->buffer = realloc(context->buffer, context->buffer_size); //-V701
     }
     memcpy(context->buffer, (uint8_t*)default_data, context->default_data_size);
     if(context->buffer_size > context->default_data_size) {
