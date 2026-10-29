@@ -3,7 +3,6 @@
 
 #include "reversi.h"
 
-// Psst! Most of this file was written with Copilot
 
 const int weights[BOARD_SIZE][BOARD_SIZE] = {
     {100, -10, 10, 10, 10, 10, -10, 100},

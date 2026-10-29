@@ -49,7 +49,6 @@ SubBruteWorker* subbrute_worker_alloc(const SubGhzDevice* radio_device) {
 void subbrute_worker_free(SubBruteWorker* instance) {
     furi_assert(instance);
 
-    // I don't know how to free this
     instance->decoder_result = NULL;
 
     if(instance->transmitter != NULL) {
