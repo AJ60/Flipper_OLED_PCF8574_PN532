@@ -293,15 +293,15 @@ static const u8x8_display_info_t u8x8_ssd1306_128x64_display_info = {
     .pixel_height = 64};
 
 static uint8_t u8g2_get_oled_driver(void) {
-    // Safe default for boot
-    uint8_t driver = NotificationOledDriverSSD1306;
+    // Safe default for boot: SH1106
+    uint8_t driver = NotificationOledDriverSH1106;
 
     if(!furi_record_exists(RECORD_STORAGE)) {
         return driver;
     }
 
     NotificationSettings settings = {0};
-    settings.oled_driver = NotificationOledDriverSSD1306;
+    settings.oled_driver = NotificationOledDriverSH1106;
 
     if(saved_struct_load(
            NOTIFICATION_SETTINGS_PATH,
@@ -314,9 +314,9 @@ static uint8_t u8g2_get_oled_driver(void) {
         }
     }
 
-    // DIY board uses I2C SSD1306/SH1106 only; legacy ST7567S setting maps to SSD1306.
+    // DIY board uses I2C SH1106/SSD1306 only; legacy ST7567S setting maps to SH1106.
     if(driver == NotificationOledDriverST7567S) {
-        driver = NotificationOledDriverSSD1306;
+        driver = NotificationOledDriverSH1106;
     }
 
     return driver;
@@ -464,9 +464,9 @@ void u8g2_Setup_ssd1306_flipper(
     UNUSED(byte_cb);
 
     const uint8_t oled_driver = u8g2_get_oled_driver();
-    const u8x8_msg_cb display_cb = (oled_driver == NotificationOledDriverSH1106) ?
-                                       u8x8_d_sh1106_128x64_noname :
-                                       u8x8_d_ssd1306_128x64_noname;
+    const u8x8_msg_cb display_cb = (oled_driver == NotificationOledDriverSSD1306) ?
+                                       u8x8_d_ssd1306_128x64_noname :
+                                       u8x8_d_sh1106_128x64_noname;
 
     u8g2_SetupDisplay(
         u8g2, display_cb, u8x8_cad_ssd13xx_fast_i2c, u8x8_byte_hw_i2c_stm32, gpio_and_delay_cb);

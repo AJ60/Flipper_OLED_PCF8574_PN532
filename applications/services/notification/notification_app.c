@@ -490,7 +490,7 @@ static NotificationApp* notification_app_alloc(void) {
     app->settings.led_brightness = 1.0f;
     app->settings.display_off_delay_ms = 30000; // 30s default timeout to prevent OLED burn-in
     app->settings.vibro_on = true;
-    app->settings.oled_driver = NotificationOledDriverSSD1306;
+    app->settings.oled_driver = NotificationOledDriverSH1106;
     app->settings.contrast = 8;
 
     app->display.value[LayerInternal] = 0x00;

@@ -37,8 +37,8 @@ typedef struct {
 #define NOTIFICATION_SETTINGS_MAGIC   0x16
 
 typedef enum {
-    NotificationOledDriverSSD1306 = 0,
-    NotificationOledDriverSH1106 = 1,
+    NotificationOledDriverSH1106 = 0,
+    NotificationOledDriverSSD1306 = 1,
     NotificationOledDriverST7567S = 2,
 } NotificationOledDriver;
 
