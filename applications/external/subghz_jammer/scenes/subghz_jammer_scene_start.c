@@ -1,101 +1,179 @@
 #include <furi.h>
+#include <furi_hal_subghz.h>
 #include <gui/view_dispatcher.h>
 #include <gui/scene_manager.h>
 #include <gui/modules/widget.h>
-#include <input/input.h>
-#include <gui/modules/widget.h>
+#include <notification/notification_messages.h>
 
 #include "subghz_jammer.h"
 #include "scenes/subghz_jammer_scene.h"
 
-static const char* const status_text[] = {
-    "Jamming",
-    "Idle",
-};
-
-static const char* mode_text(JammerSignalMode mode) {
-    return mode == JammerSignalModeCarrier ? "Carrier" : "Noise";
-}
-
-static const char* radio_text(JammerRadioChoice radio) {
-    switch(radio) {
-    case JammerRadioAuto: return "Auto";
-    case JammerRadioInternal: return "Internal";
-    case JammerRadioExternalCC1101: return "External";
+static void format_status(char* buffer, size_t buf_size, Jammer* jammer) {
+    const char* mode_str = "Unknown";
+    switch(jammer->settings.mode) {
+    case JammerSignalModeCarrier:
+        mode_str = "Carrier";
+        break;
+    case JammerSignalModeNoise:
+        mode_str = "Noise";
+        break;
+    case JammerSignalModeSweep:
+        mode_str = "Sweep";
+        break;
+    case JammerSignalModePingPong:
+        mode_str = "PingPong";
+        break;
+    default:
+        break;
     }
-    return "Unknown";
-}
 
-static void format_status(char* buffer, Jammer* jammer) {
+    const char* radio_str = "Auto";
+    switch(jammer->settings.radio) {
+    case JammerRadioAuto:
+        radio_str = "Auto";
+        break;
+    case JammerRadioInternal:
+        radio_str = "Internal";
+        break;
+    case JammerRadioExternalCC1101:
+        radio_str = "External";
+        break;
+    }
+
+    uint32_t freq_mhz = jammer->settings.frequency / 1000000;
+    uint32_t freq_khz = (jammer->settings.frequency % 1000000) / 1000;
+
+    const char* status_str = "IDLE";
+    if(jammer->tx_error) {
+        status_str = "BLOCKED";
+    } else if(jammer->tx_active) {
+        status_str = "TRANSMITTING";
+    }
+
     snprintf(
         buffer,
-        128,
-        "%s\n%s\n%u Hz\n%u ms\n%s\n",
-        mode_text(jammer->settings.mode),
-        radio_text(jammer->settings.radio),
-        (unsigned int)jammer->settings.frequency,
-        (unsigned int)jammer->settings.dwell_ms,
-        status_text[jammer->tx_active]);
+        buf_size,
+        "Mode: %s\nFreq: %lu.%03lu MHz\nRadio: %s\nStatus: %s",
+        mode_str,
+        (unsigned long)freq_mhz,
+        (unsigned long)freq_khz,
+        radio_str,
+        status_str);
 }
 
-static void jammer_start_input_callback(const void* message, void* context) {
+static void jammer_start_button_callback(GuiButtonType result, InputType type, void* context) {
+    UNUSED(result);
     Jammer* jammer = (Jammer*)context;
-    const InputEvent* event = (const InputEvent*)message;
 
-    if(event->type == InputTypePress && event->key == InputKeyLeft) {
-        /* Begin the transmission worker on the next event-loop tick. */
-        jammer->worker = furi_thread_alloc_ex(
-            "SubGhzJammerWorker", 2 * 1024, jammer_worker_thread, jammer);
-        if(jammer->worker == NULL) {
-            FURI_LOG_E(TAG, "thread alloc failed");
-            return;
+    if(jammer->tx_error) {
+        if(type == InputTypeShort) {
+            scene_manager_search_and_switch_to_previous_scene(
+                jammer->scene_manager, SubGhzJammerScenemenu);
         }
-        furi_thread_start(jammer->worker);
-    } else if(event->type == InputTypeRelease && event->key == InputKeyLeft) {
-        /* Release the trigger: request a clean abort. */
-        jammer->abort_requested = true;
+        return;
+    }
+
+    if(jammer->settings.latch) {
+        if(type == InputTypeShort) {
+            view_dispatcher_send_custom_event(jammer->view_dispatcher, SubGhzJammerEventStop);
+        }
+    } else {
+        if(type == InputTypePress) {
+            if(furi_hal_subghz_check_tx(jammer->settings.frequency) != SubGhzTxAllowed) {
+                view_dispatcher_send_custom_event(
+                    jammer->view_dispatcher, SubGhzJammerEventTxError);
+                return;
+            }
+            jammer_start_worker(jammer);
+            if(jammer->notifications) {
+                notification_message(jammer->notifications, &sequence_set_red_255);
+            }
+        } else if(type == InputTypeRelease) {
+            jammer_stop_worker(jammer);
+            if(jammer->notifications) {
+                notification_message(jammer->notifications, &sequence_reset_red);
+            }
+        }
     }
 }
 
 void subghz_jammer_scene_start_on_enter(void* context) {
     Jammer* jammer = (Jammer*)context;
-    Widget* widget = jammer->widget;
+    jammer->tx_error = false;
+    Widget* widget = jammer->widget_start;
+    widget_reset(widget);
+
+    if(jammer->settings.latch) {
+        jammer_start_worker(jammer);
+        if(jammer->notifications) {
+            notification_message(jammer->notifications, &sequence_set_red_255);
+        }
+        widget_add_button_element(
+            widget, GuiButtonTypeCenter, "Stop", jammer_start_button_callback, jammer);
+    } else {
+        widget_add_button_element(
+            widget, GuiButtonTypeCenter, "Hold OK", jammer_start_button_callback, jammer);
+    }
+
     char buffer[128];
+    format_status(buffer, sizeof(buffer), jammer);
+    widget_add_text_box_element(
+        widget, 0, 0, 128, 48, AlignLeft, AlignTop, buffer, false);
 
-    jammer->abort_requested = false;
-    jammer->tx_active = false;
-
-    format_status(buffer, jammer);
-    widget_add_text_scroll_element(widget, 0, 0, 128, 64, buffer);
-
-    view_dispatcher_add_view(
-        jammer->view_dispatcher, SubGhzJammerViewStart, widget_get_view(widget));
     view_dispatcher_switch_to_view(jammer->view_dispatcher, SubGhzJammerViewStart);
-
-    jammer->input_subscription = furi_pubsub_subscribe(
-        jammer->input_pubsub, jammer_start_input_callback, jammer);
 }
 
 bool subghz_jammer_scene_start_on_event(void* context, SceneManagerEvent event) {
     Jammer* jammer = (Jammer*)context;
+    bool consumed = false;
 
-    if(event.type == SceneManagerEventTypeBack) {
-        jammer->abort_requested = true;
-        scene_manager_next_scene(jammer->scene_manager, SubGhzJammerScenestop);
-        return true;
+    if(event.type == SceneManagerEventTypeCustom) {
+        if(event.event == SubGhzJammerEventStop) {
+            jammer_stop_worker(jammer);
+            if(jammer->notifications) {
+                notification_message(jammer->notifications, &sequence_reset_red);
+            }
+            scene_manager_next_scene(jammer->scene_manager, SubGhzJammerScenestop);
+            consumed = true;
+        } else if(event.event == SubGhzJammerEventTxError) {
+            jammer_stop_worker(jammer);
+            if(jammer->notifications) {
+                notification_message(jammer->notifications, &sequence_reset_red);
+            }
+            Widget* widget = jammer->widget_start;
+            widget_reset(widget);
+            widget_add_string_element(
+                widget, 64, 8, AlignCenter, AlignCenter, FontPrimary, "TX Error / Blocked");
+            widget_add_string_element(
+                widget, 64, 24, AlignCenter, AlignCenter, FontSecondary, "Region restricted or");
+            widget_add_string_element(
+                widget, 64, 36, AlignCenter, AlignCenter, FontSecondary, "radio init failed.");
+            widget_add_button_element(
+                widget, GuiButtonTypeCenter, "Back", jammer_start_button_callback, jammer);
+            consumed = true;
+        }
+    } else if(event.type == SceneManagerEventTypeBack) {
+        jammer_stop_worker(jammer);
+        if(jammer->notifications) {
+            notification_message(jammer->notifications, &sequence_reset_red);
+        }
+        if(jammer->tx_error) {
+            scene_manager_search_and_switch_to_previous_scene(
+                jammer->scene_manager, SubGhzJammerScenemenu);
+        } else {
+            scene_manager_next_scene(jammer->scene_manager, SubGhzJammerScenestop);
+        }
+        consumed = true;
     }
 
-    return false;
+    return consumed;
 }
 
 void subghz_jammer_scene_start_on_exit(void* context) {
     Jammer* jammer = (Jammer*)context;
-    Widget* widget = jammer->widget;
-
-    if(jammer->input_subscription != NULL) {
-        furi_pubsub_unsubscribe(jammer->input_pubsub, jammer->input_subscription);
-        jammer->input_subscription = NULL;
+    jammer_stop_worker(jammer);
+    if(jammer->notifications) {
+        notification_message(jammer->notifications, &sequence_reset_red);
     }
-
-    widget_reset(widget);
+    widget_reset(jammer->widget_start);
 }

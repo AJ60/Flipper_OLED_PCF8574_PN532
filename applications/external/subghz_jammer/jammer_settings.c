@@ -63,6 +63,10 @@ void jammer_settings_load(JammerSettings* settings) {
 
     if(loaded) {
         settings->mode = (JammerSignalMode)temp_mode;
+        // Migrate legacy 868.00 MHz preset to standard 868.35 MHz
+        if(temp_freq == 868000000u) {
+            temp_freq = 868350000u;
+        }
         settings->frequency = temp_freq;
         settings->band_min = temp_band_min;
         settings->band_max = temp_band_max;

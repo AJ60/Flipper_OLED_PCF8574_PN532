@@ -25,6 +25,9 @@
 typedef enum {
     JammerSignalModeCarrier, /**< Fixed-frequency square-wave carrier */
     JammerSignalModeNoise,   /**< Random OOK noise */
+    JammerSignalModeSweep,   /**< Carrier sweeping across the band */
+    JammerSignalModePingPong,/**< Carrier sweeping, reversing at the band ends */
+    JammerSignalModeCount,   /**< Sentinel: number of modes (for cycling) */
 } JammerSignalMode;
 
 typedef struct {
@@ -33,6 +36,7 @@ typedef struct {
     uint32_t carrier_period_us; /**< Full period of the square wave (us) */
     uint32_t noise_dur_min_us; /**< Shortest random noise duration (us) */
     uint32_t noise_dur_max_us; /**< Longest random noise duration (us) */
+    uint32_t rng_state; /**< PRNG state for non-blocking noise generation in ISR */
 } JammerSignal;
 
 /** Allocate a JammerSignal with sane defaults. */

@@ -49,3 +49,6 @@ void jammer_radio_stop(const SubGhzDevice* device);
  * frequency hopping.
  */
 void jammer_radio_set_frequency(const SubGhzDevice* device, uint32_t frequency);
+
+/** Check whether async TX is currently running. */
+bool jammer_radio_is_tx_running(void);

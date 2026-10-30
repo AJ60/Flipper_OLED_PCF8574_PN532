@@ -2,6 +2,7 @@
 
 #include <furi.h>
 #include <gui/gui.h>
+#include <gui/modules/variable_item_list.h>
 #include <gui/modules/widget.h>
 #include <gui/view_dispatcher.h>
 #include <gui/scene_manager.h>
@@ -24,6 +25,7 @@ typedef enum {
     SubGhzJammerEventAbort,
     SubGhzJammerEventHop,
     SubGhzJammerEventBack,
+    SubGhzJammerEventTxError,
 } SubGhzJammerEvent;
 
 /** View identifiers for the view dispatcher. */
@@ -36,19 +38,10 @@ typedef enum {
 /** Application instance. */
 typedef struct Jammer Jammer;
 
-/**
- * Worker thread owns the entire transmission lifecycle: start the async-TX
- * loop, (for hop mode) reconfigure the frequency on each dwell, and wait for
- * the abort signal before stopping. The async-TX itself runs in the DMA
- * interrupt; this thread only coordinates.
- */
+/** Worker thread */
 int32_t jammer_worker_thread(void* context);
-
-/** Request a clean abort of the current transmission. */
-void jammer_worker_request_abort(void);
-
-/** @return true if a transmission is currently active. */
-bool jammer_worker_is_active(void);
+void jammer_start_worker(Jammer* jammer);
+void jammer_stop_worker(Jammer* jammer);
 
 /** App struct. */
 struct Jammer {
@@ -58,14 +51,15 @@ struct Jammer {
     DialogsApp* dialogs;
     NotificationApp* notifications;
 
-    JammerSignal* signal;
+    VariableItemList* var_item_list;
+    Widget* widget_start;
+    Widget* widget_stop;
+
     JammerSettings settings;
-    Widget* widget;
     FuriThread* worker;
-    FuriPubSub* input_pubsub;
-    FuriPubSubSubscription* input_subscription;
     bool abort_requested;
     bool tx_active;
+    bool tx_error;
 };
 
 /** Entry point registered in application.fam. */

@@ -5,10 +5,12 @@
 #include <gui/gui.h>
 #include <gui/view_dispatcher.h>
 #include <gui/scene_manager.h>
+#include <gui/modules/variable_item_list.h>
 #include <gui/modules/widget.h>
 #include <input/input.h>
 
 #include "subghz_jammer.h"
+#include "jammer_freq.h"
 #include "scenes/subghz_jammer_scene.h"
 
 #define TAG "SubGhzJammer"
@@ -16,27 +18,48 @@
 #define RECORD_DIALOGS "dialogs"
 #define RECORD_NOTIFICATION "notification"
 
-/**
- * Worker thread: owns the transmission lifecycle. Starts the async-TX loop
- * (the actual RF energy is emitted by the DMA interrupt) and, for hop mode,
- * reconfigures the frequency on each dwell. It waits for the abort signal
- * before stopping.
- */
+static uint32_t jammer_worker_next_frequency(JammerSettings* s, uint32_t* sweep_step) {
+    switch(s->mode) {
+    case JammerSignalModeNoise:
+        if(s->hop_count > 1) {
+            uint32_t idx = (*sweep_step)++ % s->hop_count;
+            return jammer_signal_hop_frequency(
+                s->band_min, s->band_max, idx, s->hop_count);
+        }
+        return s->frequency;
+    case JammerSignalModeSweep:
+        return jammer_freq_sweep_point(
+            s->band_min, s->band_max, (*sweep_step)++, s->hop_count);
+    case JammerSignalModePingPong: {
+        uint32_t pos = jammer_freq_pingpong((*sweep_step)++, s->hop_count);
+        uint32_t step =
+            s->band_max > s->band_min
+                ? (s->band_max - s->band_min) / (s->hop_count > 1 ? s->hop_count - 1 : 1)
+                : 0;
+        return s->band_min + step * pos;
+    }
+    case JammerSignalModeCarrier:
+    default:
+        return s->frequency;
+    }
+}
+
 int32_t jammer_worker_thread(void* context) {
     Jammer* jammer = (Jammer*)context;
-    const SubGhzDevice* device = NULL;
-    JammerSignal* signal = NULL;
-
-    device = jammer_radio_get_device();
+    const SubGhzDevice* device = jammer_radio_get_device();
     if(device == NULL) {
         FURI_LOG_E(TAG, "No radio device");
         jammer->tx_active = false;
+        jammer->tx_error = true;
+        view_dispatcher_send_custom_event(jammer->view_dispatcher, SubGhzJammerEventTxError);
         return 0;
     }
 
-    signal = jammer_signal_alloc();
+    JammerSignal* signal = jammer_signal_alloc();
     if(signal == NULL) {
         jammer->tx_active = false;
+        jammer->tx_error = true;
+        view_dispatcher_send_custom_event(jammer->view_dispatcher, SubGhzJammerEventTxError);
         return 0;
     }
     jammer_signal_set_mode(signal, jammer->settings.mode);
@@ -46,56 +69,83 @@ int32_t jammer_worker_thread(void* context) {
         FURI_LOG_E(TAG, "radio begin failed");
         jammer_signal_free(signal);
         jammer->tx_active = false;
+        jammer->tx_error = true;
+        view_dispatcher_send_custom_event(jammer->view_dispatcher, SubGhzJammerEventTxError);
         return 0;
     }
+
     if(!jammer_radio_start(device, signal)) {
         FURI_LOG_E(TAG, "radio start failed");
         jammer_signal_free(signal);
-        jammer_radio_stop(device);
         jammer->tx_active = false;
+        jammer->tx_error = true;
+        view_dispatcher_send_custom_event(jammer->view_dispatcher, SubGhzJammerEventTxError);
         return 0;
     }
 
     jammer->tx_active = true;
+    jammer->tx_error = false;
 
-    /* Main loop: for hop mode, change frequency on each dwell. */
-    uint32_t hop_index = 0;
+    uint32_t sweep_step = 0;
     while(!jammer->abort_requested) {
-        if(jammer->settings.mode == JammerSignalModeNoise &&
-           jammer->settings.hop_count > 1) {
-            uint32_t freq = jammer_signal_hop_frequency(
-                jammer->settings.band_min,
-                jammer->settings.band_max,
-                hop_index % jammer->settings.hop_count,
-                jammer->settings.hop_count);
+        bool sweep = (jammer->settings.mode == JammerSignalModeSweep ||
+                      jammer->settings.mode == JammerSignalModePingPong ||
+                      (jammer->settings.mode == JammerSignalModeNoise &&
+                       jammer->settings.hop_count > 1));
+        if(sweep) {
+            uint32_t freq = jammer_worker_next_frequency(&jammer->settings, &sweep_step);
             jammer_radio_set_frequency(device, freq);
             jammer_signal_reset(signal);
-            hop_index++;
-            furi_delay_ms(jammer->settings.dwell_ms);
+
+            uint32_t dwell_elapsed = 0;
+            while(!jammer->abort_requested && dwell_elapsed < jammer->settings.dwell_ms) {
+                uint32_t step = (jammer->settings.dwell_ms - dwell_elapsed > 50) ?
+                                    50 :
+                                    (jammer->settings.dwell_ms - dwell_elapsed);
+                furi_delay_ms(step);
+                dwell_elapsed += step;
+            }
         } else {
-            furi_delay_ms(jammer->settings.dwell_ms * 10);
+            furi_delay_ms(50);
         }
     }
 
-    /* Stop transmission. */
-    jammer->tx_active = false;
-    jammer_signal_free(signal);
     jammer_radio_stop(device);
+    jammer_signal_free(signal);
+    jammer->tx_active = false;
     return 0;
 }
 
-/** Request a clean abort of the current transmission. */
-void jammer_worker_request_abort(void) {
-    // No-op: abort is coordinated via jammer->abort_requested in the scene.
+void jammer_start_worker(Jammer* jammer) {
+    if(jammer->worker == NULL) {
+        jammer->abort_requested = false;
+        jammer->worker = furi_thread_alloc_ex(
+            "SubGhzJammerWorker", 2 * 1024, jammer_worker_thread, jammer);
+        furi_check(jammer->worker);
+        furi_thread_start(jammer->worker);
+    }
 }
 
-/** @return true if a transmission is currently active. */
-bool jammer_worker_is_active(void) {
-    return false;
+void jammer_stop_worker(Jammer* jammer) {
+    if(jammer->worker != NULL) {
+        jammer->abort_requested = true;
+        furi_thread_join(jammer->worker);
+        furi_thread_free(jammer->worker);
+        jammer->worker = NULL;
+    }
 }
 
-/** Back-event handler: forwards a scene "back" to a custom abort event. */
-static bool subghz_jammer_navigation_callback(void* context);
+static bool subghz_jammer_custom_event_callback(void* context, uint32_t event) {
+    furi_assert(context);
+    Jammer* jammer = (Jammer*)context;
+    return scene_manager_handle_custom_event(jammer->scene_manager, event);
+}
+
+static bool subghz_jammer_navigation_callback(void* context) {
+    furi_assert(context);
+    Jammer* jammer = (Jammer*)context;
+    return scene_manager_handle_back_event(jammer->scene_manager);
+}
 
 Jammer* jammer_alloc(void) {
     Jammer* jammer = malloc(sizeof(Jammer));
@@ -104,34 +154,45 @@ Jammer* jammer_alloc(void) {
     }
     memset(jammer, 0, sizeof(Jammer));
 
+    jammer_settings_load(&jammer->settings);
+
+    if(!jammer_radio_init(jammer->settings.radio)) {
+        FURI_LOG_E(TAG, "Radio init failed");
+        free(jammer);
+        return NULL;
+    }
+
     jammer->scene_manager = scene_manager_alloc(&subghz_jammer_scene_handlers, jammer);
     jammer->view_dispatcher = view_dispatcher_alloc();
-    jammer->widget = widget_alloc();
 
     jammer->gui = furi_record_open(RECORD_GUI);
     view_dispatcher_set_event_callback_context(jammer->view_dispatcher, jammer);
+    view_dispatcher_set_custom_event_callback(
+        jammer->view_dispatcher, subghz_jammer_custom_event_callback);
     view_dispatcher_set_navigation_event_callback(
         jammer->view_dispatcher, subghz_jammer_navigation_callback);
     view_dispatcher_attach_to_gui(jammer->view_dispatcher, jammer->gui, ViewDispatcherTypeFullscreen);
 
     jammer->dialogs = furi_record_open(RECORD_DIALOGS);
     jammer->notifications = furi_record_open(RECORD_NOTIFICATION);
-    jammer->input_pubsub = furi_record_open(RECORD_INPUT_EVENTS);
 
-    if(!jammer_radio_init(jammer->settings.radio)) {
-        FURI_LOG_E(TAG, "Radio init failed");
-        scene_manager_free(jammer->scene_manager);
-        view_dispatcher_free(jammer->view_dispatcher);
-        furi_record_close(RECORD_GUI);
-        furi_record_close(RECORD_DIALOGS);
-        furi_record_close(RECORD_NOTIFICATION);
-        furi_record_close(RECORD_INPUT_EVENTS);
-        free(jammer);
-        return NULL;
-    }
+    jammer->var_item_list = variable_item_list_alloc();
+    view_dispatcher_add_view(
+        jammer->view_dispatcher,
+        SubGhzJammerViewMenu,
+        variable_item_list_get_view(jammer->var_item_list));
 
-    jammer_settings_defaults(&jammer->settings);
-    jammer_settings_load(&jammer->settings);
+    jammer->widget_start = widget_alloc();
+    view_dispatcher_add_view(
+        jammer->view_dispatcher,
+        SubGhzJammerViewStart,
+        widget_get_view(jammer->widget_start));
+
+    jammer->widget_stop = widget_alloc();
+    view_dispatcher_add_view(
+        jammer->view_dispatcher,
+        SubGhzJammerViewStop,
+        widget_get_view(jammer->widget_stop));
 
     return jammer;
 }
@@ -139,54 +200,40 @@ Jammer* jammer_alloc(void) {
 void jammer_free(Jammer* jammer) {
     furi_assert(jammer);
 
-    jammer->abort_requested = true;
-    if(jammer->worker != NULL) {
-        furi_thread_free(jammer->worker);
-        jammer->worker = NULL;
-    }
+    jammer_stop_worker(jammer);
+    jammer_settings_save(&jammer->settings);
+
+    view_dispatcher_remove_view(jammer->view_dispatcher, SubGhzJammerViewMenu);
+    view_dispatcher_remove_view(jammer->view_dispatcher, SubGhzJammerViewStart);
+    view_dispatcher_remove_view(jammer->view_dispatcher, SubGhzJammerViewStop);
+
+    variable_item_list_free(jammer->var_item_list);
+    widget_free(jammer->widget_start);
+    widget_free(jammer->widget_stop);
+
+    view_dispatcher_free(jammer->view_dispatcher);
+    scene_manager_free(jammer->scene_manager);
 
     jammer_radio_deinit();
 
     furi_record_close(RECORD_GUI);
     furi_record_close(RECORD_DIALOGS);
     furi_record_close(RECORD_NOTIFICATION);
-    furi_record_close(RECORD_INPUT_EVENTS);
-
-    scene_manager_free(jammer->scene_manager);
-    view_dispatcher_free(jammer->view_dispatcher);
-
-    widget_free(jammer->widget);
-
-    jammer_settings_save(&jammer->settings);
 
     free(jammer);
 }
 
-static bool subghz_jammer_navigation_callback(void* context) {
-    Jammer* jammer = (Jammer*)context;
-    if(scene_manager_handle_back_event(jammer->scene_manager)) {
-        view_dispatcher_send_custom_event(jammer->view_dispatcher, SubGhzJammerEventBack);
-        return true;
-    }
-    return false;
-}
-
 int32_t subghz_jammer_app(void* p) {
     UNUSED(p);
-    furi_hal_power_suppress_charge_enter();
 
     Jammer* jammer = jammer_alloc();
     if(jammer == NULL) {
-        furi_hal_power_suppress_charge_exit();
         return 255;
     }
 
     scene_manager_next_scene(jammer->scene_manager, SubGhzJammerScenemenu);
-
     view_dispatcher_run(jammer->view_dispatcher);
-
     jammer_free(jammer);
 
-    furi_hal_power_suppress_charge_exit();
     return 0;
 }
