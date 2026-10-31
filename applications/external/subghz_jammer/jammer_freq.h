@@ -38,3 +38,17 @@ uint32_t jammer_freq_sweep_point(uint32_t min, uint32_t max, uint32_t point, uin
  * @return position in [0, points-1]
  */
 uint32_t jammer_freq_pingpong(uint32_t step, uint32_t points);
+
+/**
+ * Return the OOK "on" time (us) for a pulse train.
+ *
+ * on = period_us * ratio / 100, clamped to [1, period_us]. A duty ratio above
+ * 100 is clamped to 100 (full period); a ratio of 0 yields the 1 us minimum so
+ * the on-slot is never zero-width. The period is floored to 2 us so a 1 us
+ * period can still hold a 1 us on-slot.
+ *
+ * @param period_us full pulse-train period in microseconds (>= 1)
+ * @param ratio     duty cycle in percent (0-100; >100 clamps to 100)
+ * @return on-time in microseconds in [1, period_us]
+ */
+uint32_t jammer_freq_pulse_on_us(uint32_t period_us, uint32_t ratio);

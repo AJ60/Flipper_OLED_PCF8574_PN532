@@ -25,3 +25,20 @@ uint32_t jammer_freq_pingpong(uint32_t step, uint32_t points) {
     /* Second half: mirror back toward 0. */
     return period - pos;
 }
+
+uint32_t jammer_freq_pulse_on_us(uint32_t period_us, uint32_t ratio) {
+    /* Floor the period to 2 us so a 1 us period can still hold a 1 us on-slot. */
+    if(period_us < 2) period_us = 2;
+
+    /* Clamp the duty cycle to [0, 100]. */
+    if(ratio > 100) ratio = 100;
+
+    /* on_us = period * ratio / 100, with a 1 us minimum (never zero-width). */
+    uint32_t on_us = period_us * ratio / 100;
+    if(on_us < 1) on_us = 1;
+
+    /* Clamp to the period (guards rounding on tiny periods). */
+    if(on_us > period_us) on_us = period_us;
+
+    return on_us;
+}
