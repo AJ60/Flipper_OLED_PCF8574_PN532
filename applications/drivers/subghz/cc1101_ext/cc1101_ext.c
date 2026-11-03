@@ -510,6 +510,7 @@ void subghz_device_cc1101_ext_load_registers(const uint8_t* data) {
     }
     if(i >= 256 || data[i] != 0) {
         FURI_LOG_E(TAG, "load_registers: missing terminator");
+        return;
     }
     furi_hal_spi_release(subghz_device_cc1101_ext->spi_bus_handle);
 }
