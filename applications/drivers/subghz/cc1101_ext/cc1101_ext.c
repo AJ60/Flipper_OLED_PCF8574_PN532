@@ -86,7 +86,6 @@ typedef struct {
 } SubGhzDeviceCC1101ExtAsyncTx;
 
 typedef struct {
-    uint32_t capture_delta_duration;
     SubGhzDeviceCC1101ExtCaptureCallback capture_callback;
     void* capture_callback_context;
 } SubGhzDeviceCC1101ExtAsyncRx;
@@ -296,8 +295,6 @@ bool subghz_device_cc1101_ext_alloc(SubGhzDeviceConf* conf) {
             FURI_LOG_E(TAG, "Config version mismatch");
         }
     }
-
-    subghz_device_cc1101_ext->async_rx.capture_delta_duration = 0;
 
     // External SPI CS is PA4 (Header Pin 4)
     subghz_device_cc1101_ext->spi_bus_handle = &furi_hal_spi_bus_handle_external;
@@ -929,7 +926,11 @@ static void subghz_device_cc1101_ext_capture_ISR(void* context) {
                 (void*)subghz_device_cc1101_ext->async_rx.capture_callback_context);
         }
     }
-    LL_TIM_SetCounter(TIM17, 4); //8>>1
+    // Reset TIM17 to 0 after each edge. The counter is read as
+    // LL_TIM_GetCounter(TIM17) << 1 (2us/tick), so it must start from 0
+    // at capture start; leaving a non-zero base here would add a fixed
+    // per-level timing bias to every level after the first.
+    LL_TIM_SetCounter(TIM17, 0);
 }
 
 void subghz_device_cc1101_ext_start_async_rx(
@@ -981,9 +982,6 @@ void subghz_device_cc1101_ext_start_async_rx(
 
     // Switch to RX
     subghz_device_cc1101_ext_rx();
-
-    //Clear the variable after the end of the session
-    subghz_device_cc1101_ext->async_rx.capture_delta_duration = 0;
 
     // Publish the state last: a concurrent stop before this point must still
     // observe Idle and take the orderly early-return path.
