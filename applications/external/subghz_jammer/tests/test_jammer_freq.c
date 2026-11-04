@@ -32,7 +32,7 @@ static void test_sweep_linear(void) {
     const uint32_t min = 433000000u;
     const uint32_t max = 435000000u;
     const uint32_t points = 5u;
-    const uint32_t step = (max - min) / points; /* 400000 */
+    const uint32_t step = (max - min) / (points - 1); /* 500000 */
 
     CHECK(jammer_freq_sweep_point(min, max, 0, points), min,
         jammer_freq_sweep_point(min, max, 0, points), "sweep[0]");
@@ -60,6 +60,15 @@ static void test_sweep_guards(void) {
         jammer_freq_sweep_point(433000000u, 433000000u, 3, 5), "sweep flat band");
 }
 
+static void test_sweep_undershoot(void) {
+    /* Non-even span (span=1000000, points=4 -> step=333333): the last point
+       undershoots max by 1 Hz without the deferral fix. */
+    CHECK(jammer_freq_sweep_point(433000000u, 434000000u, 3, 4), 434000000u,
+        jammer_freq_sweep_point(433000000u, 434000000u, 3, 4), "sweep last==max");
+    CHECK(jammer_freq_sweep_point(433000000u, 434000000u, 0, 4), 433000000u,
+        jammer_freq_sweep_point(433000000u, 434000000u, 0, 4), "sweep first==min");
+}
+
 static void test_pingpong(void) {
     const uint32_t points = 4u;
     /* Bounce: 0,1,2,3,2,1,0,1,... period = 2*(points-1) = 6. */
@@ -76,11 +85,37 @@ static void test_pingpong(void) {
 int main(void) {
     test_sweep_linear();
     test_sweep_guards();
+    test_sweep_undershoot();
     test_pingpong();
 
     printf("\n%d checks, %d failures\n", g_checks, g_failures);
     if(g_failures == 0) {
-        printf("ALL PASS\n");
+        /* clamp: below range -> min */
+        if(jammer_freq_clamp_khz(200000, JAMMER_FREQ_MIN_KHZ, JAMMER_FREQ_MAX_KHZ) != 300000u) {
+            printf("FAIL clamp low\n");
+            return 1;
+        }
+        /* clamp: above range -> max */
+        if(jammer_freq_clamp_khz(1000000, JAMMER_FREQ_MIN_KHZ, JAMMER_FREQ_MAX_KHZ) != 928000u) {
+            printf("FAIL clamp high\n");
+            return 1;
+        }
+        /* clamp: in range -> unchanged */
+        if(jammer_freq_clamp_khz(433920, JAMMER_FREQ_MIN_KHZ, JAMMER_FREQ_MAX_KHZ) != 433920u) {
+            printf("FAIL clamp mid\n");
+            return 1;
+        }
+        /* conversions */
+        if(jammer_freq_khz_to_hz(433920u) != 433920000u) {
+            printf("FAIL khz->hz\n");
+            return 1;
+        }
+        if(jammer_freq_hz_to_khz(433920000u) != 433920u) {
+            printf("FAIL hz->khz\n");
+            return 1;
+        }
+
+        printf("ALL TESTS PASSED\n");
         return 0;
     }
     return 1;

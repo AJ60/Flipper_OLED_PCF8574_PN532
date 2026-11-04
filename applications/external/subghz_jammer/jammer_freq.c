@@ -2,6 +2,20 @@
 
 #define TAG "SubGhzJammerFreq"
 
+uint32_t jammer_freq_khz_to_hz(uint32_t freq_khz) {
+    return freq_khz * 1000u;
+}
+
+uint32_t jammer_freq_hz_to_khz(uint32_t freq_hz) {
+    return freq_hz / 1000u;
+}
+
+uint32_t jammer_freq_clamp_khz(uint32_t freq_khz, uint32_t min_khz, uint32_t max_khz) {
+    if(freq_khz < min_khz) return min_khz;
+    if(freq_khz > max_khz) return max_khz;
+    return freq_khz;
+}
+
 uint32_t jammer_freq_sweep_point(uint32_t min, uint32_t max, uint32_t point, uint32_t points) {
     if(points < 2) return min;
     if(max <= min) return min;
@@ -44,4 +58,79 @@ uint32_t jammer_freq_pulse_on_us(uint32_t period_us, uint32_t ratio) {
     if(on_us > period_us) on_us = period_us;
 
     return on_us;
+}
+
+uint32_t jammer_freq_step_target(
+    uint32_t base,
+    uint32_t step_hz,
+    uint32_t n,
+    uint32_t min,
+    uint32_t max) {
+    if(step_hz == 0 || max <= min) {
+        return base;
+    }
+    /* 64-bit intermediate so base + n*step_hz cannot overflow 32-bit. */
+    uint64_t target = (uint64_t)base + (uint64_t)n * (uint64_t)step_hz;
+    if(target > max) {
+        target = max;
+    }
+    if(target < min) {
+        target = min;
+    }
+    return (uint32_t)target;
+}
+
+uint32_t jammer_freq_dwell_target(
+    uint32_t dwell_min,
+    uint32_t dwell_max,
+    uint32_t dwell_step_hz,
+    uint32_t dwell_index) {
+    if(dwell_step_hz == 0 || dwell_max <= dwell_min) {
+        return dwell_min;
+    }
+    uint64_t target = (uint64_t)dwell_min + (uint64_t)dwell_index * (uint64_t)dwell_step_hz;
+    if(target > dwell_max) {
+        target = dwell_max;
+    }
+    return (uint32_t)target;
+}
+
+uint32_t jammer_freq_noise_hop_target(
+    uint32_t noise_min,
+    uint32_t noise_max,
+    uint32_t noise_step_hz,
+    uint32_t hop_index) {
+    if(noise_step_hz == 0 || noise_max <= noise_min) {
+        return noise_min;
+    }
+    uint64_t target = (uint64_t)noise_min + (uint64_t)hop_index * (uint64_t)noise_step_hz;
+    if(target > noise_max) {
+        target = noise_max;
+    }
+    return (uint32_t)target;
+}
+
+uint32_t jammer_freq_hop_count_for_span(uint32_t min, uint32_t max, uint32_t step_hz) {
+    if(step_hz == 0 || max <= min) {
+        return 1;
+    }
+    /* ceil((max - min) / step_hz) + 1, 64-bit to avoid overflow. */
+    uint64_t span = (uint64_t)max - (uint64_t)min;
+    uint64_t count = span / (uint64_t)step_hz + 1;
+    if((span % (uint64_t)step_hz) != 0) {
+        count += 1;
+    }
+    return (uint32_t)count;
+}
+
+uint32_t jammer_freq_hop_pingpong(uint32_t step, uint32_t count) {
+    if(count < 2) {
+        return 0;
+    }
+    uint32_t period = 2u * (count - 1u);
+    uint32_t pos = step % period;
+    if(pos >= count) {
+        pos = period - pos;
+    }
+    return pos;
 }
