@@ -24,3 +24,8 @@ extern volatile bool display_needs_reinit;
 extern volatile bool display_is_sleeping;
 
 bool u8g2_display_is_connected(void);
+
+// Ensure the OLED is detected and powered. Forces a detection pass even inside
+// the 3s cooldown. Cheap once a panel is known present. Returns true if a panel
+// is attached. Safe to call repeatedly from the GUI init path.
+bool u8g2_display_ensure_connected(void);

@@ -33,8 +33,13 @@ bool u8g2_display_is_connected(void) {
         return true;
     }
     uint32_t now = furi_get_tick();
-    if(s_display_checked && (now - s_last_display_check_tick < 3000)) {
-        return false;
+    // Only skip the scan when the panel is known present AND recently checked.
+    // A scan that ran but found nothing must retry immediately instead of
+    // waiting the full 3s cooldown — a panel warming up or sharing the I2C
+    // power bus needs a prompt retry, not a 3s blind spot.
+    if(s_display_checked && s_display_is_present &&
+       (now - s_last_display_check_tick < 3000)) {
+        return true;
     }
     if(!furi_hal_i2c_bus_power_mutex || FURI_IS_ISR()) {
         return false;
@@ -54,6 +59,16 @@ bool u8g2_display_is_connected(void) {
         FURI_LOG_I("U8G2", "SSD1306 OLED display detected on I2C power bus");
     }
     return ready;
+}
+
+bool u8g2_display_ensure_connected(void) {
+    // Force a detection pass even inside the 3s cooldown window. Resetting the
+    // last-check tick makes the guard in u8g2_display_is_connected() treat this
+    // as a cold scan, so the panel is powered up on the very first GUI init
+    // instead of waiting for a later draw. Cheap once s_display_is_present is set
+    // (that path returns true before touching the I2C bus).
+    s_last_display_check_tick = 0;
+    return u8g2_display_is_connected();
 }
 
 uint8_t u8g2_gpio_and_delay_stm32(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr) {

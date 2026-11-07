@@ -4,6 +4,7 @@
 #include <storage/storage.h>
 #include <storage/storage_i.h>
 #include <momentum/momentum.h>
+#include <u8g2_glue.h>
 
 #define TAG "GuiSrv"
 
@@ -638,6 +639,12 @@ Gui* gui_alloc(void) {
 
     // Drawing canvas
     gui->canvas = canvas_init();
+
+    // Ensure the OLED is detected and powered before any app draws to it.
+    // canvas_init() only initializes the panel if u8g2_display_is_connected()
+    // returns true within its 3s cooldown; force a scan here so the panel is
+    // guaranteed up at GUI startup (fixes the intermittent dark-display bug).
+    u8g2_display_ensure_connected();
 
     // Input
     gui->input_queue = furi_message_queue_alloc(8, sizeof(InputEvent));
