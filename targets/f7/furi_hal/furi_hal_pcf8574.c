@@ -294,13 +294,16 @@ bool furi_hal_pcf8574_write_pin(uint8_t pin, bool value) {
         return false;
     }
     if(!pcf8574_is_initialized || !furi_hal_i2c_bus_power_mutex || FURI_IS_ISR()) {
-        // Update shadow state even if uninitialized or in ISR so state is remembered
+        // Update shadow state even if uninitialized or in ISR so state is remembered.
+        // Return false (like write_port) to keep the contract uniform: false means
+        // the value was only updated in the shadow, not written to the wire, so
+        // callers cannot read the return value as "the write succeeded".
         if(value) {
             pcf8574_current_state |= (uint8_t)(1u << pin);
         } else {
             pcf8574_current_state &= (uint8_t) ~(1u << pin);
         }
-        return true;
+        return false;
     }
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
     furi_hal_i2c_acquire(bus);
