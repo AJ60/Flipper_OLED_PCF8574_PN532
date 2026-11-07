@@ -25,6 +25,7 @@ typedef enum {
     SubGhzJammerEventAbort,
     SubGhzJammerEventHop,
     SubGhzJammerEventBack,
+    SubGhzJammerEventFreqEdit,
     SubGhzJammerEventTxError,
 } SubGhzJammerEvent;
 
@@ -33,6 +34,7 @@ typedef enum {
     SubGhzJammerViewMenu,
     SubGhzJammerViewStart,
     SubGhzJammerViewStop,
+    SubGhzJammerViewFreqEdit,
 } SubGhzJammerView;
 
 /** Application instance. */
@@ -54,12 +56,14 @@ struct Jammer {
     VariableItemList* var_item_list;
     Widget* widget_start;
     Widget* widget_stop;
+    Widget* widget_freq_edit;
+    uint16_t freq_edit_index;
 
     JammerSettings settings;
     FuriThread* worker;
-    bool abort_requested;
-    bool tx_active;
-    bool tx_error;
+    volatile bool abort_requested;
+    volatile bool tx_active;
+    volatile bool tx_error;
 };
 
 /** Entry point registered in application.fam. */

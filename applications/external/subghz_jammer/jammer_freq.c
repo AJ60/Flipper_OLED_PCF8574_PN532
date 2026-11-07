@@ -3,7 +3,10 @@
 #define TAG "SubGhzJammerFreq"
 
 uint32_t jammer_freq_khz_to_hz(uint32_t freq_khz) {
-    return freq_khz * 1000u;
+    /* 64-bit intermediate: freq_khz * 1000 overflows uint32 above ~4.29 GHz.
+       The result is truncated to uint32_t on return, so callers still get the
+       correct value for any sub-GHz band (CC1101 max ~928 MHz -> 928000000 Hz). */
+    return (uint32_t)((uint64_t)freq_khz * 1000u);
 }
 
 uint32_t jammer_freq_hz_to_khz(uint32_t freq_hz) {
