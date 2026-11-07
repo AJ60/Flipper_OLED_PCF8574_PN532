@@ -13,6 +13,7 @@ static const char* const mode_names[] = {
     "Noise",
     "Sweep",
     "PingPong",
+    "Pulse",
 };
 #define MODE_COUNT (sizeof(mode_names) / sizeof(mode_names[0]))
 
@@ -65,14 +66,46 @@ static const char* const latch_names[] = {
 };
 #define LATCH_COUNT (sizeof(latch_names) / sizeof(latch_names[0]))
 
+static const uint32_t power_presets[] = {0, 10, 25, 50, 75, 100};
+static const char* const power_names[] = {
+    "Auto",
+    "10%",
+    "25%",
+    "50%",
+    "75%",
+    "100%",
+};
+#define POWER_COUNT (sizeof(power_presets) / sizeof(power_presets[0]))
+
+static const uint32_t max_duration_presets[] = {
+    0,      // Infinite
+    30000,  // 30 s
+    60000,  // 1 min
+    300000, // 5 min
+    600000, // 10 min
+};
+static const char* const max_duration_names[] = {
+    "Infinite",
+    "30 s",
+    "1 min",
+    "5 min",
+    "10 min",
+};
+#define MAX_DURATION_COUNT (sizeof(max_duration_presets) / sizeof(max_duration_presets[0]))
+
 enum MenuItemIndex {
     MenuItemMode,
+    MenuItemPulseRatio,
+    MenuItemPower,
+    MenuItemMaxDuration,
+    MenuItemBypassRegion,
     MenuItemFrequency,
     MenuItemBand,
     MenuItemRadio,
     MenuItemHop,
     MenuItemDwell,
     MenuItemLatch,
+    MenuItemEditFreq,
     MenuItemStart,
 };
 
@@ -127,10 +160,45 @@ static void menu_latch_change(VariableItem* item) {
     variable_item_set_current_value_text(item, latch_names[index]);
 }
 
+static void menu_pulse_ratio_change(VariableItem* item) {
+    Jammer* jammer = variable_item_get_context(item);
+    uint8_t index = variable_item_get_current_value_index(item);
+    if(index > 100) index = 100;
+    jammer->settings.pulse_ratio = index;
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%u%%", index);
+    variable_item_set_current_value_text(item, buf);
+}
+
+static void menu_power_change(VariableItem* item) {
+    Jammer* jammer = variable_item_get_context(item);
+    uint8_t index = variable_item_get_current_value_index(item);
+    if(index >= POWER_COUNT) index = POWER_COUNT - 1;
+    jammer->settings.power_level = power_presets[index];
+    variable_item_set_current_value_text(item, power_names[index]);
+}
+
+static void menu_max_duration_change(VariableItem* item) {
+    Jammer* jammer = variable_item_get_context(item);
+    uint8_t index = variable_item_get_current_value_index(item);
+    if(index >= MAX_DURATION_COUNT) index = MAX_DURATION_COUNT - 1;
+    jammer->settings.max_tx_duration_ms = max_duration_presets[index];
+    variable_item_set_current_value_text(item, max_duration_names[index]);
+}
+
+static void menu_bypass_region_change(VariableItem* item) {
+    Jammer* jammer = variable_item_get_context(item);
+    jammer->settings.bypass_region = !jammer->settings.bypass_region;
+    variable_item_set_current_value_text(
+        item, jammer->settings.bypass_region ? "Bypass" : "EU Gate");
+}
+
 static void menu_enter_callback(void* context, uint32_t index) {
     Jammer* jammer = (Jammer*)context;
     if(index == MenuItemStart) {
         view_dispatcher_send_custom_event(jammer->view_dispatcher, SubGhzJammerEventStart);
+    } else if(index == MenuItemEditFreq) {
+        view_dispatcher_send_custom_event(jammer->view_dispatcher, SubGhzJammerEventFreqEdit);
     }
 }
 
@@ -146,6 +214,48 @@ void subghz_jammer_scene_menu_on_enter(void* context) {
     uint8_t mode_idx = (jammer->settings.mode < MODE_COUNT) ? jammer->settings.mode : 0;
     variable_item_set_current_value_index(item, mode_idx);
     variable_item_set_current_value_text(item, mode_names[mode_idx]);
+
+    // 1b. Pulse Ratio (duty cycle 0..100%, applies to Pulse mode)
+    item = variable_item_list_add(
+        var_list, "Pulse Ratio", 101, menu_pulse_ratio_change, jammer);
+    uint8_t ratio_idx = jammer->settings.pulse_ratio > 100 ? 100 : (uint8_t)jammer->settings.pulse_ratio;
+    variable_item_set_current_value_index(item, ratio_idx);
+    char ratio_buf[16];
+    snprintf(ratio_buf, sizeof(ratio_buf), "%u%%", ratio_idx);
+    variable_item_set_current_value_text(item, ratio_buf);
+
+    // 1c. Power Level (0..100%; 0 = Auto)
+    item = variable_item_list_add(var_list, "Power", POWER_COUNT, menu_power_change, jammer);
+    uint8_t power_idx = 0;
+    for(size_t i = 0; i < POWER_COUNT; i++) {
+        if(power_presets[i] == jammer->settings.power_level) {
+            power_idx = (uint8_t)i;
+            break;
+        }
+    }
+    variable_item_set_current_value_index(item, power_idx);
+    variable_item_set_current_value_text(item, power_names[power_idx]);
+
+    // 1d. Max TX Duration (0 = Infinite)
+    item = variable_item_list_add(
+        var_list, "Max TX Dur", MAX_DURATION_COUNT, menu_max_duration_change, jammer);
+    uint8_t dur_idx = 0;
+    for(size_t i = 0; i < MAX_DURATION_COUNT; i++) {
+        if(max_duration_presets[i] == jammer->settings.max_tx_duration_ms) {
+            dur_idx = (uint8_t)i;
+            break;
+        }
+    }
+    variable_item_set_current_value_index(item, dur_idx);
+    variable_item_set_current_value_text(item, max_duration_names[dur_idx]);
+
+    // 1f. Bypass Region (EU TX gate: EU ISM band 433.05-434.79 MHz is gated
+    //     unless opted out; see jammer_eu_gate_blocks / jammer_radio_pre_tx_check)
+    item = variable_item_list_add(
+        var_list, "Bypass Region", 2, menu_bypass_region_change, jammer);
+    variable_item_set_current_value_index(item, jammer->settings.bypass_region ? 1 : 0);
+    variable_item_set_current_value_text(
+        item, jammer->settings.bypass_region ? "Bypass" : "EU Gate");
 
     // 2. Frequency
     item = variable_item_list_add(var_list, "Frequency", FREQ_COUNT, menu_freq_change, jammer);
@@ -208,7 +318,10 @@ void subghz_jammer_scene_menu_on_enter(void* context) {
     variable_item_set_current_value_index(item, latch_idx);
     variable_item_set_current_value_text(item, latch_names[latch_idx]);
 
-    // 8. START JAMMING action item
+    // 8. Edit Frequency (custom editor)
+    variable_item_list_add(var_list, "Edit Frequency", 0, NULL, NULL);
+
+    // 9. START JAMMING action item
     variable_item_list_add(var_list, "[ START JAMMING ]", 0, NULL, NULL);
 
     variable_item_list_set_enter_callback(var_list, menu_enter_callback, jammer);
@@ -241,6 +354,9 @@ bool subghz_jammer_scene_menu_on_event(void* context, SceneManagerEvent event) {
                 scene_manager_next_scene(jammer->scene_manager, SubGhzJammerScenestart);
                 consumed = true;
             }
+        } else if(event.event == SubGhzJammerEventFreqEdit) {
+            scene_manager_next_scene(jammer->scene_manager, SubGhzJammerScenefreq_edit);
+            consumed = true;
         }
     }
 

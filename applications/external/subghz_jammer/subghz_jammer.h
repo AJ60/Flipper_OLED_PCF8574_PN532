@@ -22,8 +22,6 @@
 typedef enum {
     SubGhzJammerEventStart,
     SubGhzJammerEventStop,
-    SubGhzJammerEventAbort,
-    SubGhzJammerEventHop,
     SubGhzJammerEventBack,
     SubGhzJammerEventFreqEdit,
     SubGhzJammerEventTxError,

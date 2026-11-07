@@ -27,6 +27,7 @@ typedef enum {
     JammerSignalModeNoise,   /**< Random OOK noise */
     JammerSignalModeSweep,   /**< Carrier sweeping across the band */
     JammerSignalModePingPong,/**< Carrier sweeping, reversing at the band ends */
+    JammerSignalModePulse,   /**< OOK pulse train at a fixed duty cycle (protocol jamming) */
     JammerSignalModeCount,   /**< Sentinel: number of modes (for cycling) */
 } JammerSignalMode;
 
@@ -34,10 +35,25 @@ typedef struct {
     JammerSignalMode mode;
     bool level; /**< Current carrier output level (carrier mode only) */
     uint32_t carrier_period_us; /**< Full period of the square wave (us) */
+    uint32_t pulse_ratio;       /**< Duty cycle 0..100. Pulse mode only (Stage 2). */
     uint32_t noise_dur_min_us; /**< Shortest random noise duration (us) */
     uint32_t noise_dur_max_us; /**< Longest random noise duration (us) */
     uint32_t rng_state; /**< PRNG state for non-blocking noise generation in ISR */
 } JammerSignal;
+
+/**
+ * EU-region (EN 300 220) TX gate decision.
+ *
+ * The Flipper firmware blocks transmission in the EU ISM band (433.05-434.79 MHz)
+ * unless the user opts out. This is the pure decision behind
+ * jammer_radio_pre_tx_check: it returns true when the EU gate should BLOCK
+ * transmission at @p frequency.
+ *
+ * @param frequency       transmit frequency, Hz
+ * @param bypass_region   bitmask; bit0 set => skip the EU-region gate
+ * @return true if the EU-region gate blocks transmission at @p frequency
+ */
+bool jammer_eu_gate_blocks(uint32_t frequency, uint32_t bypass_region);
 
 /** Allocate a JammerSignal with sane defaults. */
 JammerSignal* jammer_signal_alloc(void);

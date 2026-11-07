@@ -1,7 +1,9 @@
 #include "jammer_signal.h"
 
+#include "jammer_freq.h"
 #include <furi.h>
 #include <furi_hal_random.h>
+#include <stdlib.h>
 
 #define TAG "SubGhzJammerSignal"
 
@@ -14,6 +16,14 @@ static inline uint32_t xorshift32(uint32_t* state) {
     return x;
 }
 
+bool jammer_eu_gate_blocks(uint32_t frequency, uint32_t bypass_region) {
+    /* EN 300 220 EU ISM band; firmware blocks TX here unless the user opts out. */
+    const uint32_t EU_BAND_MIN_HZ = 433050000u; /* 433.05 MHz */
+    const uint32_t EU_BAND_MAX_HZ = 434790000u; /* 434.79 MHz */
+    return (frequency >= EU_BAND_MIN_HZ && frequency <= EU_BAND_MAX_HZ) &&
+           !(bypass_region & 1u);
+}
+
 JammerSignal* jammer_signal_alloc(void) {
     JammerSignal* signal = calloc(1, sizeof(JammerSignal));
     if(signal == NULL) {
@@ -23,6 +33,7 @@ JammerSignal* jammer_signal_alloc(void) {
     signal->mode = JammerSignalModeCarrier;
     signal->level = false;
     signal->carrier_period_us = 1000; /**< 1000us full period -> 500us half period (1 kHz modulation) */
+    signal->pulse_ratio = 50;         /**< Default duty cycle 50%. Pulse mode only (Stage 2). */
     signal->noise_dur_min_us = 200;
     signal->noise_dur_max_us = 1000;
     signal->rng_state = furi_hal_random_get();
@@ -53,6 +64,19 @@ LevelDuration jammer_signal_yield(JammerSignal* signal) {
             half_period = 2;
         }
         level_duration = level_duration_make(level, half_period);
+        break;
+    }
+    case JammerSignalModePulse: {
+        uint32_t period = signal->carrier_period_us;
+        if(period < 2) period = 2;
+        uint32_t on_us = jammer_freq_pulse_on_us(period, signal->pulse_ratio);
+        bool level = signal->level;
+        signal->level = !level;
+        /* Emit the pre-toggle level (matching the carrier branch): the HIGH
+           (ON) slot is on_us, the LOW (OFF) slot is period - on_us, so the
+           resulting OOK duty cycle equals ratio/100. */
+        uint32_t dur = level ? on_us : (period - on_us);
+        level_duration = level_duration_make(level, dur);
         break;
     }
     case JammerSignalModeNoise: {
@@ -103,7 +127,9 @@ uint32_t jammer_signal_hop_frequency(
     if(hop_count < 2) return band_min;
     if(band_max <= band_min) return band_min;
     uint32_t span = band_max - band_min;
-    uint32_t step = span / (hop_count - 1);
     if(hop_index >= hop_count) hop_index = hop_count - 1;
-    return band_min + step * hop_index;
+    /* Defer the division so the final hop lands exactly on band_max
+       (min + span*(n-1)/(n-1) == max) even when span isn't divisible by
+       (n-1). The 64-bit intermediate avoids overflow for wide bands. */
+    return band_min + (uint64_t)span * hop_index / (hop_count - 1);
 }

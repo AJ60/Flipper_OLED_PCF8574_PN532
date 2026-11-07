@@ -486,8 +486,8 @@ void subghz_device_cc1101_ext_load_custom_preset(const uint8_t* preset_data) {
             FURI_LOG_D(TAG, "Reg[%lu]: %02X=%02X", i, preset_data[i], preset_data[i + 1]);
             i += 2;
         }
-        for(uint8_t y = i; y < i + 10; y++) {
-            FURI_LOG_D(TAG, "PA[%u]:  %02X", y, preset_data[y]);
+        for(uint8_t pa = 0; pa < 8; pa++) {
+            FURI_LOG_D(TAG, "PA[%u]: %02X", pa, preset_data[i + 2 + pa]);
         }
     }
 }
@@ -569,19 +569,50 @@ bool subghz_device_cc1101_ext_rx_pipe_not_empty(void) {
         FURI_LOG_E(TAG, "rx_pipe_not_empty: no device");
         return false;
     }
-    CC1101RxBytes status[1];
+    CC1101RxBytes s1, s2;
+    uint8_t tries = 3;
+
     furi_hal_spi_acquire(subghz_device_cc1101_ext->spi_bus_handle);
-    cc1101_read_reg(
-        subghz_device_cc1101_ext->spi_bus_handle,
-        (CC1101_STATUS_RXBYTES) | CC1101_BURST,
-        (uint8_t*)status);
+
+    // Mirror the canonical double-read-with-retry guard (furi_hal_subghz.c):
+    // read RXFIFO status twice and, if they disagree, retry up to 3 times.
+    // A packet arriving between the two reads (or a transient SPI glitch) makes
+    // the counts disagree; trusting a single indeterminate read can report the
+    // pipe non-empty while the FIFO holds fewer/overflowed bytes, corrupting
+    // received data.
+    bool read_failed = false;
+    do {
+        CC1101Status st1 = cc1101_read_reg(
+            subghz_device_cc1101_ext->spi_bus_handle,
+            (CC1101_STATUS_RXBYTES) | CC1101_BURST,
+            (uint8_t*)&s1);
+        CC1101Status st2 = cc1101_read_reg(
+            subghz_device_cc1101_ext->spi_bus_handle,
+            (CC1101_STATUS_RXBYTES) | CC1101_BURST,
+            (uint8_t*)&s2);
+        // CHIP_RDYn != 0 signals a failed SPI read (MISO stuck high / timeout).
+        // Treat a failed read as a disagreement so the retry loop retries; a
+        // persistent failure is reported as empty below.
+        if(st1.CHIP_RDYn || st2.CHIP_RDYn) {
+            read_failed = true;
+        }
+    } while((s1.NUM_RXBYTES != s2.NUM_RXBYTES) && --tries);
+
     furi_hal_spi_release(subghz_device_cc1101_ext->spi_bus_handle);
-    // TODO: Find reason why RXFIFO_OVERFLOW doesnt work correctly
-    if(status->NUM_RXBYTES > 0) {
-        return true;
-    } else {
+
+    // A failed SPI read leaves the counts unreliable (data filled with 0xFF);
+    // report empty rather than trusting them.
+    if(read_failed) {
+        FURI_LOG_D(TAG, "rx_pipe_not_empty: SPI read failed");
         return false;
     }
+
+    // Bug #22 fix: if retries are exhausted and the two reads still disagree,
+    // return false (report empty) rather than trusting an indeterminate value.
+    if(tries == 0 && s1.NUM_RXBYTES != s2.NUM_RXBYTES) {
+        return false;
+    }
+    return s2.NUM_RXBYTES > 0;
 }
 
 bool subghz_device_cc1101_ext_is_rx_data_crc_valid(void) {
@@ -591,9 +622,13 @@ bool subghz_device_cc1101_ext_is_rx_data_crc_valid(void) {
     }
     furi_hal_spi_acquire(subghz_device_cc1101_ext->spi_bus_handle);
     uint8_t data[1];
-    cc1101_read_reg(
+    CC1101Status st = cc1101_read_reg(
         subghz_device_cc1101_ext->spi_bus_handle, CC1101_STATUS_LQI | CC1101_BURST, data);
     furi_hal_spi_release(subghz_device_cc1101_ext->spi_bus_handle);
+    if(st.CHIP_RDYn) {
+        FURI_LOG_D(TAG, "is_rx_data_crc_valid: SPI read failed");
+        return false;
+    }
     if((data[0] >> 7) & 0x01) {
         return true;
     } else {
@@ -756,9 +791,13 @@ uint8_t subghz_device_cc1101_ext_get_lqi(void) {
     }
     furi_hal_spi_acquire(subghz_device_cc1101_ext->spi_bus_handle);
     uint8_t data[1];
-    cc1101_read_reg(
+    CC1101Status st = cc1101_read_reg(
         subghz_device_cc1101_ext->spi_bus_handle, CC1101_STATUS_LQI | CC1101_BURST, data);
     furi_hal_spi_release(subghz_device_cc1101_ext->spi_bus_handle);
+    if(st.CHIP_RDYn) {
+        FURI_LOG_D(TAG, "get_lqi: SPI read failed");
+        return 0;
+    }
     return data[0] & 0x7F;
 }
 

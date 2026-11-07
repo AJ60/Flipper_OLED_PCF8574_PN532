@@ -23,6 +23,9 @@ static void format_status(char* buffer, size_t buf_size, Jammer* jammer) {
     case JammerSignalModePingPong:
         mode_str = "PingPong";
         break;
+    case JammerSignalModePulse:
+        mode_str = "Pulse";
+        break;
     default:
         break;
     }
@@ -43,6 +46,17 @@ static void format_status(char* buffer, size_t buf_size, Jammer* jammer) {
     uint32_t freq_mhz = jammer->settings.frequency / 1000000;
     uint32_t freq_khz = (jammer->settings.frequency % 1000000) / 1000;
 
+    char duty_line[32] = "";
+    if(jammer->settings.mode == JammerSignalModePulse) {
+        uint32_t duty_pct =
+            jammer->settings.pulse_ratio > 100 ? 100u : jammer->settings.pulse_ratio;
+        snprintf(
+            duty_line,
+            sizeof(duty_line),
+            "\nDuty: %lu%%",
+            (unsigned long)duty_pct);
+    }
+
     const char* status_str = "IDLE";
     if(jammer->tx_error) {
         status_str = "BLOCKED";
@@ -53,11 +67,12 @@ static void format_status(char* buffer, size_t buf_size, Jammer* jammer) {
     snprintf(
         buffer,
         buf_size,
-        "Mode: %s\nFreq: %lu.%03lu MHz\nRadio: %s\nStatus: %s",
+        "Mode: %s\nFreq: %lu.%03lu MHz\nRadio: %s%s\nStatus: %s",
         mode_str,
         (unsigned long)freq_mhz,
         (unsigned long)freq_khz,
         radio_str,
+        duty_line,
         status_str);
 }
 
@@ -104,6 +119,24 @@ void subghz_jammer_scene_start_on_enter(void* context) {
     widget_reset(widget);
 
     if(jammer->settings.latch) {
+        // Latch mode holds TX continuously, so gate on the region check here
+        // (matching the non-latch hold-to-jam path at :97) before committing
+        // to transmit. On failure, show the blocked state instead of starting.
+        if(furi_hal_subghz_check_tx(jammer->settings.frequency) != SubGhzTxAllowed) {
+            jammer->tx_error = true;
+            Widget* widget = jammer->widget_start;
+            widget_reset(widget);
+            widget_add_string_element(
+                widget, 64, 8, AlignCenter, AlignCenter, FontPrimary, "TX Error / Blocked");
+            widget_add_string_element(
+                widget, 64, 24, AlignCenter, AlignCenter, FontSecondary, "Region restricted or");
+            widget_add_string_element(
+                widget, 64, 36, AlignCenter, AlignCenter, FontSecondary, "radio init failed.");
+            widget_add_button_element(
+                widget, GuiButtonTypeCenter, "Back", jammer_start_button_callback, jammer);
+            view_dispatcher_switch_to_view(jammer->view_dispatcher, SubGhzJammerViewStart);
+            return;
+        }
         jammer_start_worker(jammer);
         if(jammer->notifications) {
             notification_message(jammer->notifications, &sequence_set_red_255);

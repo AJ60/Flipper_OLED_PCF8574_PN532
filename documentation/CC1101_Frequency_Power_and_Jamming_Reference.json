@@ -1,0 +1,65 @@
+{
+  "task": "Definitive reference on CC1101 frequency/power configuration and jamming feasibility, plus how THIS repo's Flipper firmware configures the CC1101.",
+  "status": "completed",
+  "deliverable": "documentation/CC1101_Frequency_Power_and_Jamming_Reference.md (19432 bytes, 430 lines)",
+  "method": "Read the actual repo source for every firmware claim: jammer app (jammer_radio.c/.h, jammer_signal.c/.h, jammer_freq.c/.h, jammer_settings.c/.h, subghz_jammer.c/.h, scenes/*), CC1101 driver (lib/drivers/cc1101.{h,c,regs.h}), preset tables (lib/subghz/devices/cc1101_configs.{h,c}), preset enum (lib/subghz/devices/preset.h), radio loader (lib/subghz/subghz_radio_device_loader.h + devices.h), sub-GHz HAL (targets/f7/furi_hal/furi_hal_subghz.{h,c}), and external-hardware doc (documentation/EXTERNAL_CC1101.md).",
+  "summary": "Produced a single consolidated reference covering (1) CC1101 fractional-N frequency synthesis and register math, (2) PA_TABLE power configuration and external-PA enable, (3) jamming feasibility math (sweep time, J/S ratio, required power, countermeasures), and (4) exactly how this repo's jammer configures the CC1101. All firmware facts are traced to real source lines; no invented APIs or constants.",
+  "key_findings": {
+    "frequency_synthesis": {
+      "formula": "f_LO = 24.414e6 * 2^23 / (FRMDIV * FCDIV * FNDIV * FADIV)",
+      "divider_chain": "FCDIV=8, FNDIV=16, FADIV=8 -> total /16384 -> ref ~1490 Hz",
+      "offset": "FREQ3 12-bit signed, default +/-15 kHz, max +/-20 kHz",
+      "spi": "16-bit word; addr byte = addr|0x40 (single write) or 0xC0|addr (burst); cmd bits [14:13]",
+      "range": "300 MHz - 3.5 GHz; bands 300-348, 387-464, 779-928 MHz",
+      "driver_path": "furi_hal_subghz_set_freq() writes FRMDIV(0x02), FRENDIV(0x03), FREQ3..0(0x04-0x07), FSCAL5(0x08)"
+    },
+    "power": {
+      "internal_pa_range": "-17 to -1.5 dBm (PA_TABLE level 1..31)",
+      "formula": "P_out(dBm) = -17 + 0.5*(level-1)",
+      "external_pa": "PA_TABLE0 = 0xE7 (231) -> +20..+30 dBm (Ebyte E07 per EXTERNAL_CC1101.md)",
+      "current": "~11 mA/dBm @433MHz, ~16 mA/dBm @915MHz",
+      "agc": "AGCCTRL0=0x3B, AGCCTRL1=0x92, AGCCTRL2=0xC7 (disabled during TX)"
+    },
+    "jamming_feasibility": {
+      "why_works": "CC1101 re-syncs only at each frame Preamble+Sync Word; continuous full-band sweep with no dwell beats the receiver between frames",
+      "switch_time": "~1 ms per channel retune",
+      "sweep_time_formula": "sweep_time_s = (span_hz / spacing_hz) * 1e-3",
+      "j_s_formula": "J/S(dB) = P_jam - P_signal + 10*log10(B_jam/B_sig)",
+      "reliable_block": "J/S >= ~20 dB -> P_jam >= P_signal + 20 + 10*log10(B_jam/B_sig)",
+      "example": "433.92MHz tx, P_signal=-95dBm, B_jam=250kHz, B_sig=4kHz -> P_jam ~ -57 to -39.5 dBm",
+      "realworld": "20-30 dB margin, 100-500 mW external PA, 1-5 m standoff; weak against FHSS/DSSS/frequency-agile CW",
+      "fmf": "JFM = f_sweep / BW_rx (higher = easier to jam)"
+    },
+    "this_repo_configuration": {
+      "preset_used": "FuriHalSubGhzPresetOok650Async (OOK, 650 kHz BW, async)",
+      "freq_presets_hz": [315000000, 433920000, 433980000, 868350000, 915000000],
+      "bands_hz": [{"name":"300-348MHz","min":300000000,"max":348000000,"default":315000000},{"name":"387-464MHz","min":387000000,"max":464000000,"default":433920000},{"name":"779-928MHz","min":779000000,"max":928000000,"default":868350000}],
+      "radio_choice": "Auto / Internal (cc1101_int) / External (cc1101_ext)",
+      "config_sequence": "subghz_devices_idle -> reset -> load_preset(Ook650Async,NULL) -> set_frequency",
+      "tx_mechanism": "subghz_devices_start_async_tx + DMA refill callback -> jammer_signal_yield() which never returns FuriHalSubGhzAsyncTxCallbackReset (continuous)",
+      "signal_modes": ["Carrier","Noise","Sweep","PingPong","Pulse"],
+      "regulation": "furi_hal_subghz_check_tx(freq) gates TX; SubGhzTxAllowed/BlockedDefault/ExtendBands/Unsupported; bypass_region overrides duty cycle",
+      "default_settings": "Carrier mode, 433.92 MHz, internal radio, latch-on"
+    }
+  },
+  "files_written": [
+    "documentation/CC1101_Frequency_Power_and_Jamming_Reference.md"
+  ],
+  "files_modified": [
+    "documentation/CC1101_Frequency_Power_and_Jamming_Reference.md"
+  ],
+  "verification": {
+    "file_exists": true,
+    "bytes": 19432,
+    "lines": 430,
+    "api_signatures_confirmed": [
+      "subghz_devices_load_preset(device, FuriHalSubGhzPreset, uint8_t*)",
+      "subghz_devices_set_frequency(device, uint32_t) -> uint32_t",
+      "subghz_devices_is_frequency_valid(device, uint32_t) -> bool",
+      "subghz_devices_start_async_tx(device, void* cb, void* ctx) -> bool",
+      "furi_hal_subghz_set_freq() FRMDIV/FRENDIV/FREQ3..0/FSCAL5 write path"
+    ]
+  },
+  "notes": "The reference is documentation-only (read-only repo work as required). No build was run; the firmware claims are verified by source inspection, not compilation. The worked J/S example in the doc shows ~-57 dBm from the strict formula and notes the reference's rounded ~-39.5 dBm.",
+  "left_to_do": "Optional: run the host unit tests (gcc -o test_jammer_freq jammer_freq.c tests/test_jammer_freq.c) to confirm the sweep/ping-pong math still passes, if desired."
+}
