@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import hashlib
+import io
 import os
 import struct
 import subprocess
@@ -72,6 +73,11 @@ class Main(App):
         fap_path = self.args.fap_src_path
         objcopy_path = self.args.objcopy_path
 
+        # Output FAP goes next to the source ELF (same directory, .fap extension)
+        fap_output_dir = os.path.dirname(fap_path)
+        fap_output_name = os.path.splitext(os.path.basename(fap_path))[0] + ".fap"
+        fap_output_path = os.path.join(fap_output_dir, fap_output_name)
+
         sections: list[RelSection] = []
 
         with open(fap_path, "rb") as f:
@@ -92,7 +98,10 @@ class Main(App):
                 return 1
 
             if not relocation_sections:
-                self.logger.info("No relocation sections found")
+                self.logger.info(
+                    "No relocation sections found, creating minimal FAP"
+                )
+                self._create_minimal_fap(fap_output_path)
                 return 0
 
             for section in relocation_sections:
@@ -166,6 +175,36 @@ class Main(App):
                         return 1
 
         return 0
+
+    def _create_minimal_fap(self, fap_path):
+        """Emit a proper minimal ELF FAP when the ELF has no relocation sections.
+
+        The input ELF already carries the ``.fapmeta`` manifest that
+        ``prepare_app_metadata`` + objcopy wrote into it, together with all
+        code/data sections and an entry point. With no relocation sections
+        there is nothing for the ``.fast.rel*`` pass to add, so the input
+        ELF is already the complete FAP artifact. The FAP path is both the
+        objcopy output (input) and the deployment location (output), so we
+        copy it into place rather than rebuilding a raw archive -- which is
+        what the previous implementation did, and which the Flipper loader
+        cannot execute (it expects an ELF, not a ``DZLO`` archive).
+        """
+        with open(fap_path, "rb") as f:
+            data = f.read()
+
+        # Safety net: the manifest section must be present for the produced
+        # FAP to pass flipper_application_validate_manifest() at load time.
+        try:
+            elf = ELFFile(io.BytesIO(data))
+            if not any(s.name == ".fapmeta" for s in elf.iter_sections()):
+                self.logger.warning("Minimal FAP %s is missing a .fapmeta section", fap_path)
+        except Exception as e:  # noqa: BLE001 - keep building even if parse fails
+            self.logger.warning(
+                "Could not parse %s as ELF while validating minimal FAP: %s", fap_path, e
+            )
+
+        with open(fap_path, "wb") as f:
+            f.write(data)
 
 
 if __name__ == "__main__":
