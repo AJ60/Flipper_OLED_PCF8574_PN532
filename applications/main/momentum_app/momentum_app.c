@@ -12,6 +12,35 @@ void callback_reboot(void* context) {
     power_reboot(power, PowerBootModeNormal);
 }
 
+/* Back up a sub-GHz asset file before it is overwritten, so the user's
+   original sub-GHz settings can be restored if needed. No-op if the file
+   does not already exist. Momentum writes to the stock sub-GHz asset files
+   (setting_user / extend_range.txt), which the sub-GHz app reads on open, so
+   the originals are preserved under a .momentum_bak sibling. */
+static void momentum_app_backup_subghz_asset(const char* path) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    char dst_path[256];
+    File* src = storage_file_alloc(storage);
+    File* dst = storage_file_alloc(storage);
+
+    snprintf(dst_path, sizeof(dst_path), "%s.momentum_bak", path);
+
+    if(storage_file_open(src, path, FSAM_READ, FSOM_OPEN_EXISTING)) {
+        uint8_t buf[512];
+        size_t n;
+        if(storage_file_open(dst, dst_path, FSAM_WRITE, FSOM_CREATE_ALWAYS)) {
+            while((n = storage_file_read(src, buf, sizeof(buf))) > 0) {
+                storage_file_write(dst, buf, n);
+            }
+            storage_file_close(dst);
+        }
+        storage_file_close(src);
+    }
+    storage_file_free(src);
+    storage_file_free(dst);
+    furi_record_close(RECORD_STORAGE);
+}
+
 bool momentum_app_apply(MomentumApp* app) {
     if(app->save_mainmenu_apps) {
         Stream* stream = file_stream_alloc(app->storage);
@@ -31,8 +60,8 @@ bool momentum_app_apply(MomentumApp* app) {
 
     if(app->save_subghz_freqs) {
         FlipperFormat* file = flipper_format_file_alloc(app->storage);
+        momentum_app_backup_subghz_asset(EXT_PATH("subghz/assets/setting_user"));
         do {
-            FrequencyList_it_t it;
             if(!flipper_format_file_open_always(file, EXT_PATH("subghz/assets/setting_user")))
                 break;
 
@@ -48,7 +77,6 @@ bool momentum_app_apply(MomentumApp* app) {
             if(!flipper_format_rewind(file)) break;
             while(flipper_format_delete_key(file, "Frequency"))
                 ;
-            FrequencyList_it(it, app->subghz_static_freqs);
             for(size_t i = 0; i < FrequencyList_size(app->subghz_static_freqs); i++) {
                 flipper_format_write_uint32(
                     file, "Frequency", FrequencyList_get(app->subghz_static_freqs, i), 1);
@@ -67,6 +95,7 @@ bool momentum_app_apply(MomentumApp* app) {
 
     if(app->save_subghz) {
         FlipperFormat* file = flipper_format_file_alloc(app->storage);
+        momentum_app_backup_subghz_asset("/ext/subghz/assets/extend_range.txt");
         do {
             if(!flipper_format_file_open_always(file, "/ext/subghz/assets/extend_range.txt"))
                 break;
@@ -180,9 +209,9 @@ static void
 void momentum_app_push_mainmenu_app(MomentumApp* app, FuriString* exe) {
     FuriString* label = furi_string_alloc();
     if(furi_string_start_with(exe, "/")) {
-        uint8_t unused_icon[FAP_MANIFEST_MAX_ICON_SIZE];
-        uint8_t* unused_icon_ptr = unused_icon;
-        if(!flipper_application_load_name_and_icon(exe, app->storage, &unused_icon_ptr, label)) {
+        uint8_t icon_buf[FAP_MANIFEST_MAX_ICON_SIZE];
+        uint8_t* icon_buf_ptr = icon_buf;
+        if(!flipper_application_load_name_and_icon(exe, app->storage, &icon_buf_ptr, label)) {
             const char* end = strrchr(furi_string_get_cstr(exe), '/');
             furi_string_set(label, end ? end + 1 : furi_string_get_cstr(exe));
         }
@@ -215,7 +244,7 @@ void momentum_app_load_mainmenu_apps(MomentumApp* app) {
     FuriString* line = furi_string_alloc();
     FuriString* label = furi_string_alloc();
     uint32_t version;
-    uint8_t* unused_icon = malloc(FAP_MANIFEST_MAX_ICON_SIZE);
+    uint8_t* icon_buf = malloc(FAP_MANIFEST_MAX_ICON_SIZE);
     if(file_stream_open(stream, MAINMENU_APPS_PATH, FSAM_READ, FSOM_OPEN_EXISTING) &&
        stream_read_line(stream, line) &&
        sscanf(furi_string_get_cstr(line), "MenuAppList Version %lu", &version) == 1 &&
@@ -246,7 +275,7 @@ void momentum_app_load_mainmenu_apps(MomentumApp* app) {
             momentum_app_push_mainmenu_app_raw(app, label, line);
         }
     }
-    free(unused_icon);
+    free(icon_buf);
     furi_string_free(label);
     furi_string_free(line);
     file_stream_close(stream);
