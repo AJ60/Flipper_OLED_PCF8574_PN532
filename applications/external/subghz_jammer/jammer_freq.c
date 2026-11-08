@@ -1,4 +1,5 @@
 #include "jammer_freq.h"
+#include <stddef.h>
 
 #define TAG "SubGhzJammerFreq"
 
@@ -124,6 +125,12 @@ uint32_t jammer_freq_hop_count_for_span(uint32_t min, uint32_t max, uint32_t ste
         count += 1;
     }
     return (uint32_t)count;
+}
+
+uint32_t jammer_freq_hop_queue_next(uint32_t cursor, const uint32_t* targets, uint32_t count) {
+    if(count == 0 || targets == NULL) return 0;
+    if(count == 1) return targets[0];
+    return targets[cursor % count];
 }
 
 uint32_t jammer_freq_hop_pingpong(uint32_t step, uint32_t count) {

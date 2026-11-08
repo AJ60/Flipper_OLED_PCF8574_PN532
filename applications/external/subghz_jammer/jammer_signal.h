@@ -5,6 +5,32 @@
 #include <string.h>
 #include <lib/toolbox/level_duration.h>
 
+/* --- Hop queue (ring buffer of staged hop targets) --- */
+
+/* Maximum number of hop targets the JammerHopQueue can hold at once. The
+ * worker fills it with the ascending schedule and drains it one target per
+ * hop; when exhausted it refills. Capped so the schedule always fits in RAM. */
+#define JAMMER_HOP_QUEUE_LEN 16u
+
+/* Ring buffer of hop target frequencies (Hz). head/tail/count form a fixed
+ * FIFO; current_hz/dirty are telemetry for the UI (last staged target). */
+typedef struct {
+    uint32_t freq[JAMMER_HOP_QUEUE_LEN];
+    uint16_t head;
+    uint16_t tail;
+    uint8_t count;
+    uint32_t current_hz;
+    bool dirty;
+} JammerHopQueue;
+
+/* Zero-initialize a hop queue (empty ring). */
+void jammer_hop_queue_init(JammerHopQueue* q);
+
+/* Enqueue a hop target into the ring buffer. Returns false if q is NULL.
+ * When the queue is full the oldest target is dropped (head advances) and the
+ * new target overwrites the tail slot, so the buffer never blocks. */
+bool jammer_hop_queue_enqueue(JammerHopQueue* q, uint32_t freq_hz);
+
 /**
  * @brief Jammer signal encoder.
  *
@@ -39,6 +65,7 @@ typedef struct {
     uint32_t noise_dur_min_us; /**< Shortest random noise duration (us) */
     uint32_t noise_dur_max_us; /**< Longest random noise duration (us) */
     uint32_t rng_state; /**< PRNG state for non-blocking noise generation in ISR */
+    JammerHopQueue hop_q; /**< Staged hop targets (FIFO ring buffer). */
 } JammerSignal;
 
 /**
@@ -60,6 +87,19 @@ JammerSignal* jammer_signal_alloc(void);
 
 /** Free a JammerSignal. */
 void jammer_signal_free(JammerSignal* signal);
+
+/**
+ * Enqueue a hop target into the signal's hop queue.
+ *
+ * The worker stages the computed hop schedule here; the radio drains one
+ * target per hop via jammer_freq_hop_queue_next(). Returns false if signal is
+ * NULL.
+ *
+ * @param signal  signal to stage a hop target into
+ * @param freq_hz hop target frequency (Hz)
+ * @return true if the target was enqueued (or overwrote the oldest when full)
+ */
+bool jammer_signal_hop_enqueue(JammerSignal* signal, uint32_t freq_hz);
 
 /**
  * Yield the next LevelDuration. Never returns a reset duration while the

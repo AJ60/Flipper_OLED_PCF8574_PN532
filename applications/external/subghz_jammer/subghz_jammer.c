@@ -11,6 +11,7 @@
 
 #include "subghz_jammer.h"
 #include "jammer_freq.h"
+#include "jammer_thermal.h"
 #include "scenes/subghz_jammer_scene.h"
 
 #define TAG "SubGhzJammer"
@@ -18,30 +19,100 @@
 #define RECORD_DIALOGS "dialogs"
 #define RECORD_NOTIFICATION "notification"
 
-static uint32_t jammer_worker_next_frequency(JammerSettings* s, uint32_t* sweep_step) {
+/* Next hop frequency for the current mode.
+ *
+ * Sweep / PingPong derive the target set from the band span + step_hz so the
+ * hops resolve at the user's configured frequency resolution and span the whole
+ * [band_min, band_max]. PingPong reverses direction at the band ends. Noise
+ * (with hop_count > 1) steps broadband bursts by noise_step_hz across the band.
+ * Carrier / single-hop modes hold on the fixed frequency.
+ */
+/* Stage the next window of hop targets into signal->hop_q (FIFO ring).
+ *
+ * The queue holds up to JAMMER_HOP_QUEUE_LEN targets; the worker drains one
+ * target per hop and refills when exhausted, advancing @p base_step by the
+ * window size each refill so the sweep / ping-pong cadence is preserved across
+ * windows. Carrier / single-hop modes leave the queue empty.
+ *
+ * @return the next base_step to use for the following refill.
+ */
+static uint32_t jammer_worker_fill_queue(JammerSignal* signal, JammerSettings* s, uint32_t base_step) {
+    jammer_hop_queue_init(&signal->hop_q);
     switch(s->mode) {
+    case JammerSignalModeSweep:
+    case JammerSignalModePingPong: {
+        uint32_t count = jammer_freq_hop_count_for_span(
+            s->band_min, s->band_max, s->sweep_step_hz);
+        for(uint32_t i = 0u; i < JAMMER_HOP_QUEUE_LEN; i++) {
+            uint32_t idx;
+            if(s->mode == JammerSignalModePingPong) {
+                idx = jammer_freq_hop_pingpong(base_step + i, count);
+            } else {
+                idx = (base_step + i) % count;
+            }
+            uint32_t freq = jammer_freq_step_target(
+                s->band_min, s->sweep_step_hz, idx, s->band_min, s->band_max);
+            jammer_signal_hop_enqueue(signal, freq);
+        }
+        break;
+    }
     case JammerSignalModeNoise:
         if(s->hop_count > 1) {
-            uint32_t idx = (*sweep_step)++ % s->hop_count;
-            return jammer_signal_hop_frequency(
-                s->band_min, s->band_max, idx, s->hop_count);
+            uint32_t count = jammer_freq_hop_count_for_span(
+                s->band_min, s->band_max, s->noise_step_hz);
+            for(uint32_t i = 0u; i < JAMMER_HOP_QUEUE_LEN; i++) {
+                uint32_t idx = (base_step + i) % count;
+                uint32_t freq = jammer_freq_noise_hop_target(
+                    s->band_min, s->band_max, s->noise_step_hz, idx);
+                jammer_signal_hop_enqueue(signal, freq);
+            }
         }
-        return s->frequency;
-    case JammerSignalModeSweep:
-        return jammer_freq_sweep_point(
-            s->band_min, s->band_max, (*sweep_step)++, s->hop_count);
-    case JammerSignalModePingPong: {
-        uint32_t pos = jammer_freq_pingpong((*sweep_step)++, s->hop_count);
-        return s->band_min +
-            (s->band_max > s->band_min ?
-                (uint64_t)(s->band_max - s->band_min) * pos /
-                    (s->hop_count > 1 ? s->hop_count - 1 : 1) :
-                0);
-    }
-    case JammerSignalModeCarrier:
+        break;
     default:
-        return s->frequency;
+        break;
     }
+    return base_step + JAMMER_HOP_QUEUE_LEN;
+}
+
+/* Pure thermal throttle: estimate junction temperature and average TX current
+ * at the target frequency, then apply the decision (reduce duty -> reduce
+ * power -> stop). Mutates settings.pulse_ratio / settings.power_level and
+ * re-applies them to the radio/signal. Returns true if the TX session should
+ * stop now.
+ */
+static bool jammer_worker_apply_thermal(
+    Jammer* jammer,
+    uint32_t freq,
+    bool* duty_already_reduced,
+    uint32_t elapsed_ms) {
+    const bool external_pa = (freq >= 900000000u);
+    uint32_t i_full = jammer_thermal_est_current_ma(
+        freq, jammer->settings.power_level, external_pa);
+    uint32_t i_avg = (i_full * jammer->settings.pulse_ratio) / 100u;
+    uint32_t temp = jammer_thermal_est_temp_c(25u, i_avg);
+    JammerThermalDecision d = jammer_thermal_decide(
+        temp, i_avg, 0u, jammer->settings.max_tx_duration_ms, elapsed_ms, *duty_already_reduced);
+    switch(d) {
+    case JammerThermalReduceDuty:
+        if(jammer->settings.pulse_ratio > 5u) {
+            jammer->settings.pulse_ratio -= 5u;
+        }
+        *duty_already_reduced = true;
+        break;
+    case JammerThermalReducePower:
+        if(jammer->settings.power_level > 1u) {
+            jammer->settings.power_level -= 1u;
+            const SubGhzDevice* dev = jammer_radio_get_device();
+            if(dev != NULL) jammer_radio_set_tx_power(dev, jammer->settings.power_level);
+        }
+        break;
+    case JammerThermalForceStop:
+        return true;
+    case JammerThermalOk:
+    default:
+        break;
+    }
+    return false;
 }
 
 int32_t jammer_worker_thread(void* context) {
@@ -91,6 +162,8 @@ int32_t jammer_worker_thread(void* context) {
     jammer->tx_error = false;
 
     uint32_t sweep_step = 0;
+    bool duty_already_reduced = false;
+    uint32_t hop_cursor = 0u;
     const uint32_t tick_ms = 50;
     // Real wall-clock watchdog: stop after max_tx_duration_ms of actual elapsed
     // time. We accumulate the real delay each iteration (tick_ms for the
@@ -105,7 +178,24 @@ int32_t jammer_worker_thread(void* context) {
                       (jammer->settings.mode == JammerSignalModeNoise &&
                        jammer->settings.hop_count > 1));
         if(sweep) {
-            uint32_t freq = jammer_worker_next_frequency(&jammer->settings, &sweep_step);
+            // Refill the hop queue when empty or exhausted, advancing the
+            // persistent sweep step so the sweep / ping-pong cadence is
+            // preserved across windows.
+            if(signal->hop_q.count == 0u || hop_cursor >= signal->hop_q.count) {
+                sweep_step = jammer_worker_fill_queue(signal, &jammer->settings, sweep_step);
+                hop_cursor = 0u;
+            }
+            // Drain the next hop target from the queue.
+            uint32_t freq = jammer_freq_hop_queue_next(
+                hop_cursor, signal->hop_q.freq, signal->hop_q.count);
+            hop_cursor++;
+            // Thermal throttle before committing the hop: may reduce duty /
+            // power, or stop the session.
+            if(jammer_worker_apply_thermal(
+                   jammer, freq, &duty_already_reduced, elapsed_ms)) {
+                break;
+            }
+            signal->pulse_ratio = jammer->settings.pulse_ratio;
             // Validate against the band + EU-region gate before committing.
             if(!jammer_radio_pre_tx_check(device, freq, jammer->settings.bypass_region)) {
                 // Frequency gated: skip this hop, keep the loop alive.
@@ -140,6 +230,13 @@ int32_t jammer_worker_thread(void* context) {
             }
             elapsed_ms += dwell_elapsed;
         } else {
+            // Carrier / single-hop: steady frequency, but still throttle.
+            uint32_t freq = jammer->settings.frequency;
+            if(jammer_worker_apply_thermal(
+                   jammer, freq, &duty_already_reduced, elapsed_ms)) {
+                break;
+            }
+            signal->pulse_ratio = jammer->settings.pulse_ratio;
             furi_delay_ms(tick_ms);
             elapsed_ms += tick_ms;
         }

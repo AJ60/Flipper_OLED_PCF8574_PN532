@@ -1,2 +1,6 @@
 # Host unit-test build output (test_host.sh compiles here).
 build/
+
+# Host unit-test binaries (test_host.sh writes these to the app root).
+*.exe
+.probe/

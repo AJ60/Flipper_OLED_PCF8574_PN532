@@ -61,6 +61,56 @@ static int test_hop_band_max(void) {
     return fails;
 }
 
+/* Task 1.5: hop-queue ring buffer — init, FIFO order, and drop-oldest when full. */
+static int test_hop_queue(void) {
+    int fails = 0;
+    JammerHopQueue q;
+
+    jammer_hop_queue_init(&q);
+    if(q.count != 0u || q.head != 0u || q.tail != 0u) {
+        printf("FAIL queue init (count=%u head=%u tail=%u)\n", q.count, q.head, q.tail);
+        fails++;
+    }
+
+    /* Enqueue 17 values (100,110,...,260); the 17th overflows and drops 100. */
+    for(uint32_t i = 0u; i < 17u; i++) {
+        jammer_hop_queue_enqueue(&q, 100u + i * 10u);
+    }
+    if(q.count != JAMMER_HOP_QUEUE_LEN) {
+        printf("FAIL queue full count=%u (want %u)\n", q.count, JAMMER_HOP_QUEUE_LEN);
+        fails++;
+    }
+    if(q.head != 1u) {
+        printf("FAIL queue head=%u (want 1 after wrap)\n", q.head);
+        fails++;
+    }
+    /* FIFO order read from head: 110,120,...,260 (100 dropped). */
+    int fifo_ok = 1;
+    for(uint32_t i = 0u; i < q.count; i++) {
+        uint32_t expected = 110u + i * 10u; /* 110..260 */
+        uint32_t got = q.freq[(q.head + i) % JAMMER_HOP_QUEUE_LEN];
+        if(got != expected) {
+            printf("FAIL fifo[%u]=%u want %u\n", i, got, expected);
+            fifo_ok = 0;
+            fails++;
+        }
+    }
+    if(fifo_ok) printf("ok   ring FIFO order preserved across wrap\n");
+
+    /* jammer_signal_hop_enqueue routes into signal->hop_q. */
+    JammerSignal* sig = jammer_signal_alloc();
+    jammer_signal_hop_enqueue(sig, 433920000u);
+    if(sig->hop_q.count != 1u || sig->hop_q.current_hz != 433920000u) {
+        printf("FAIL signal_hop_enqueue (count=%u cur=%u)\n", sig->hop_q.count, sig->hop_q.current_hz);
+        fails++;
+    } else {
+        printf("ok   signal_hop_enqueue staged target\n");
+    }
+    jammer_signal_free(sig);
+
+    return fails;
+}
+
 int main(void) {
     int fails = 0;
     uint32_t ratios[] = {0, 10, 25, 50, 75, 90, 100};
@@ -82,6 +132,8 @@ int main(void) {
     }
     /* Task 6.1: hop/sweep/pingpong must reach band_max exactly. */
     fails += test_hop_band_max();
+    /* Task 1.5: hop-queue ring buffer. */
+    fails += test_hop_queue();
     printf("\n%s\n", fails ? "SOME TESTS FAILED" : "ALL JAMMER_SIGNAL TESTS PASSED");
     return fails ? 1 : 0;
 }

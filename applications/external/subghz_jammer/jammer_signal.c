@@ -37,10 +37,45 @@ JammerSignal* jammer_signal_alloc(void) {
     signal->noise_dur_min_us = 200;
     signal->noise_dur_max_us = 1000;
     signal->rng_state = furi_hal_random_get();
+    jammer_hop_queue_init(&signal->hop_q);
     if(signal->rng_state == 0) {
         signal->rng_state = 0x854321u;
     }
     return signal;
+}
+
+void jammer_hop_queue_init(JammerHopQueue* q) {
+    if(q == NULL) return;
+    q->head = 0;
+    q->tail = 0;
+    q->count = 0;
+    q->current_hz = 0;
+    q->dirty = false;
+    memset(q->freq, 0, sizeof(q->freq));
+}
+
+bool jammer_hop_queue_enqueue(JammerHopQueue* q, uint32_t freq_hz) {
+    if(q == NULL) return false;
+    if(q->count < JAMMER_HOP_QUEUE_LEN) {
+        /* Room: write at tail, advance tail. */
+        q->freq[q->tail] = freq_hz;
+        q->tail = (uint16_t)((q->tail + 1u) % JAMMER_HOP_QUEUE_LEN);
+        q->count++;
+    } else {
+        /* Full: drop oldest (advance head) and overwrite tail. FIFO order is
+         * preserved because drain reads from head. */
+        q->freq[q->tail] = freq_hz;
+        q->tail = (uint16_t)((q->tail + 1u) % JAMMER_HOP_QUEUE_LEN);
+        q->head = (uint16_t)((q->head + 1u) % JAMMER_HOP_QUEUE_LEN);
+    }
+    q->current_hz = freq_hz;
+    q->dirty = true;
+    return true;
+}
+
+bool jammer_signal_hop_enqueue(JammerSignal* signal, uint32_t freq_hz) {
+    if(signal == NULL) return false;
+    return jammer_hop_queue_enqueue(&signal->hop_q, freq_hz);
 }
 
 void jammer_signal_free(JammerSignal* signal) {

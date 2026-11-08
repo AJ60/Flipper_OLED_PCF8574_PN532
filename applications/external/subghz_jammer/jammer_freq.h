@@ -133,9 +133,28 @@ uint32_t jammer_freq_noise_hop_target(
  * @param min     band lower edge (Hz)
  * @param max     band upper edge (Hz)
  * @param step_hz step size in Hz (>= 0)
- * @return number of hop targets (>= 1)
+ * @return number of hop targets in the band (>= 1).
  */
-uint32_t jammer_freq_hop_count_for_span(uint32_t min, uint32_t max, uint32_t step_hz);
+uint32_t jammer_freq_hop_count_for_span(uint32_t min_hz, uint32_t max_hz, uint32_t step_hz);
+
+/**
+ * Return the hop target at a position in a hop schedule (FIFO ring iterator).
+ *
+ * Given an array of precomputed hop targets, return the one at `cursor`,
+ * wrapping around so a caller can feed a monotonically increasing counter
+ * forever. This is the pure, host-testable core of the hop-queue drain: the
+ * worker fills the JammerHopQueue with the ascending schedule and drains it
+ * one target per hop.
+ *
+ * Guards: count == 0 -> 0 (sentinel: no target available); count == 1 ->
+ * targets[0]; NULL targets with count > 0 -> 0.
+ *
+ * @param cursor  monotonically increasing drain index (>= 0)
+ * @param targets array of hop target frequencies (Hz), non-NULL when count > 0
+ * @param count   number of valid targets in the array (>= 0)
+ * @return hop target in Hz, or 0 when count == 0
+ */
+uint32_t jammer_freq_hop_queue_next(uint32_t cursor, const uint32_t* targets, uint32_t count);
 
 /**
  * Return the hop target index for a ping-pong (triangle) hop schedule.
