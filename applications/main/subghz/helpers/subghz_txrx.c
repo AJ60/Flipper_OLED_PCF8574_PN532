@@ -66,14 +66,17 @@ SubGhzTxRx* subghz_txrx_alloc(void) {
 
     // Load extend_range.txt (Momentum format)
     bool ext_range_acknowledged = false;
-    bool use_ext_range = false;
-    bool ignore_default_tx = false;
+    bool use_ext_range = furi_hal_subghz_get_extended_range();
+    bool ignore_default_tx = furi_hal_subghz_get_bypass_region();
 
     Storage* storage = furi_record_open(RECORD_STORAGE);
     FlipperFormat* ext_file = flipper_format_file_alloc(storage);
     if(flipper_format_file_open_existing(ext_file, EXT_PATH("subghz/assets/extend_range.txt"))) {
+        flipper_format_rewind(ext_file);
         flipper_format_read_bool(ext_file, "acknowledged", &ext_range_acknowledged, 1);
+        flipper_format_rewind(ext_file);
         flipper_format_read_bool(ext_file, "use_ext_range_at_own_risk", &use_ext_range, 1);
+        flipper_format_rewind(ext_file);
         flipper_format_read_bool(ext_file, "ignore_default_tx_region", &ignore_default_tx, 1);
     }
     flipper_format_free(ext_file);

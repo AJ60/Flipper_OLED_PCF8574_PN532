@@ -250,6 +250,8 @@ static void subghz_scene_radio_settings_set_ext_range(VariableItem* item) {
 
     // Save to extend_range.txt and setting_user
     Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_mkdir(storage, EXT_PATH("subghz"));
+    storage_simply_mkdir(storage, EXT_PATH("subghz/assets"));
     FlipperFormat* ext_file = flipper_format_file_alloc(storage);
     if(flipper_format_file_open_always(ext_file, EXT_PATH("subghz/assets/extend_range.txt"))) {
         flipper_format_write_header_cstr(ext_file, "Flipper SubGhz Setting File", 1);

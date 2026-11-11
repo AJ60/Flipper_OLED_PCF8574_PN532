@@ -16,8 +16,10 @@ static int32_t subghz_extended_freq_apply(void* context) {
     Storage* storage = furi_record_open(RECORD_STORAGE);
     FlipperFormat* file = flipper_format_file_alloc(storage);
 
-    if(flipper_format_file_open_existing(file, "/ext/subghz/assets/extend_range.txt")) {
+    if(flipper_format_file_open_existing(file, EXT_PATH("subghz/assets/extend_range.txt"))) {
+        flipper_format_rewind(file);
         flipper_format_read_bool(file, "use_ext_range_at_own_risk", &is_extended_i, 1);
+        flipper_format_rewind(file);
         flipper_format_read_bool(file, "ignore_default_tx_region", &is_bypassed, 1);
         flipper_format_file_close(file);
         FURI_LOG_I(

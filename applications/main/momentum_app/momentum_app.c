@@ -94,15 +94,19 @@ bool momentum_app_apply(MomentumApp* app) {
     }
 
     if(app->save_subghz) {
+        storage_simply_mkdir(app->storage, EXT_PATH("subghz"));
+        storage_simply_mkdir(app->storage, EXT_PATH("subghz/assets"));
         FlipperFormat* file = flipper_format_file_alloc(app->storage);
-        momentum_app_backup_subghz_asset("/ext/subghz/assets/extend_range.txt");
+        momentum_app_backup_subghz_asset(EXT_PATH("subghz/assets/extend_range.txt"));
         do {
-            if(!flipper_format_file_open_always(file, "/ext/subghz/assets/extend_range.txt"))
+            if(!flipper_format_file_open_always(file, EXT_PATH("subghz/assets/extend_range.txt")))
                 break;
             if(!flipper_format_write_header_cstr(file, "Flipper SubGhz Setting File", 1)) break;
             if(!flipper_format_write_comment_cstr(
                    file, "Whether to allow extended ranges that can break your flipper"))
                 break;
+            bool ack = app->subghz_bypass || app->subghz_extend;
+            if(!flipper_format_write_bool(file, "acknowledged", &ack, 1)) break;
             if(!flipper_format_write_bool(
                    file, "use_ext_range_at_own_risk", &app->subghz_extend, 1))
                 break;
@@ -110,6 +114,9 @@ bool momentum_app_apply(MomentumApp* app) {
                 break;
         } while(0);
         flipper_format_free(file);
+
+        furi_hal_subghz_set_extended_range(app->subghz_extend);
+        furi_hal_subghz_set_bypass_region(app->subghz_bypass);
     }
 
     if(app->save_name) {
@@ -296,6 +303,7 @@ void momentum_app_empty_mainmenu_apps(MomentumApp* app) {
 
 MomentumApp* momentum_app_alloc() {
     MomentumApp* app = malloc(sizeof(MomentumApp));
+    memset(app, 0, sizeof(MomentumApp));
     app->gui = furi_record_open(RECORD_GUI);
     app->storage = furi_record_open(RECORD_STORAGE);
     app->desktop = furi_record_open(RECORD_DESKTOP);
@@ -414,8 +422,12 @@ MomentumApp* momentum_app_alloc() {
     flipper_format_free(file);
 
     file = flipper_format_file_alloc(app->storage);
-    if(flipper_format_file_open_existing(file, "/ext/subghz/assets/extend_range.txt")) {
+    app->subghz_extend = furi_hal_subghz_get_extended_range();
+    app->subghz_bypass = furi_hal_subghz_get_bypass_region();
+    if(flipper_format_file_open_existing(file, EXT_PATH("subghz/assets/extend_range.txt"))) {
+        flipper_format_rewind(file);
         flipper_format_read_bool(file, "use_ext_range_at_own_risk", &app->subghz_extend, 1);
+        flipper_format_rewind(file);
         flipper_format_read_bool(file, "ignore_default_tx_region", &app->subghz_bypass, 1);
     }
     flipper_format_free(file);

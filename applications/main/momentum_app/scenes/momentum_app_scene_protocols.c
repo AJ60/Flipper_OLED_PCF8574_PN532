@@ -192,12 +192,22 @@ bool momentum_app_scene_protocols_on_event(void* context, SceneManagerEvent even
             if(change) {
                 *setting = value;
                 app->save_subghz = true;
-                app->require_reboot = true;
                 if(event.event == VarItemListIndexSubghzBypass) {
+                    furi_hal_subghz_set_bypass_region(value);
+                    if(!value) {
+                        app->subghz_extend = false;
+                        furi_hal_subghz_set_extended_range(false);
+                        VariableItem* ext_item = variable_item_list_get(
+                            app->var_item_list, VarItemListIndexSubghzExtend);
+                        variable_item_set_current_value_index(ext_item, 0);
+                        variable_item_set_current_value_text(ext_item, "OFF");
+                    }
                     variable_item_set_locked(
                         variable_item_list_get(app->var_item_list, VarItemListIndexSubghzExtend),
                         !value,
                         NULL);
+                } else if(event.event == VarItemListIndexSubghzExtend) {
+                    furi_hal_subghz_set_extended_range(value);
                 }
             } else {
                 value = !value;
