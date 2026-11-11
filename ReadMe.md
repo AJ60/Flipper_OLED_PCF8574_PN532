@@ -1,11 +1,12 @@
-# 🐬 DIY Flipper Zero (OLED Edition)
+# 🐬 DIY Flipper Zero (OLED Edition) — Cybersecurity Research Platform
 
 **Maintainer**: [**AJ_60**](https://github.com/AJ60)  
 **Repository**: [https://github.com/AJ60/Flipper_OLED_PCF8574_PN532](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
 
 ---
 
-> Build your own DIY Flipper Zero with an I2C OLED display, PCF8574 keypad, PN532 NFC reader, CC1101 sub-GHz radio, and discrete 125 kHz RFID hardware!
+> **An advanced embedded firmware fork and hardware platform engineered specifically for Cybersecurity Researchers, RF Penetration Testers, Embedded Engineers, and Hardware Security Professionals.**  
+> Adapts the Momentum Flipper Zero firmware for custom STM32WB55 architectures featuring I2C OLED (SSD1306/SH1106), PCF8574 I2C keypad expander, NXP PN532 NFC frontend, CC1101 sub-GHz radio transceiver, and discrete 125 kHz RFID hardware.
 
 [![CI Build](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/actions/workflows/build.yml/badge.svg)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/actions/workflows/build.yml)
 [![FBT Build](https://img.shields.io/badge/build-FBT-blue.svg)](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532)
@@ -14,15 +15,19 @@
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
 > [!CAUTION]
-> ⚖️ **LEGAL & EDUCATIONAL DISCLAIMER**:  
-> This project and firmware are created strictly for **educational, academic research, and authorized security testing purposes only**. 
-> - **DO NOT** use this firmware or hardware for unauthorized access, card cloning, or malicious activities.
-> - The developers and contributors assume **no liability or responsibility** for any misuse, damage to property, or illegal actions committed using this software or hardware.
+> ⚖️ **CRITICAL LEGAL, ETHICAL & REGULATORY DISCLAIMER**:  
+> **FOR AUTHORIZED CYBERSECURITY PROFESSIONALS & LAB RESEARCHERS ONLY.**  
+> This firmware and hardware platform incorporate advanced RF transmission, protocol analysis, and hardware interaction features intended solely for authorized security evaluations, academic vulnerability research, and controlled laboratory environments.
+> - **Authorized Access Only:** Operating RF transmitters (Sub-GHz, RFID, NFC) against systems without express, documented authorization is illegal.
+> - **RF Emission Compliance:** Transmission on unapproved frequencies or bypassing regional transmission restrictions (e.g. EU 433 MHz / US 915 MHz power caps) may violate national radio communications laws (FCC, CE, ITU, RED). Jamming, de-authentication, or disruption of communications must be conducted **strictly inside a calibrated RF shielded chamber or Faraday tent**.
+> - **Liability:** The developers, contributors, and maintainers assume **no responsibility or liability** for damages, legal violations, or adverse operational consequences resulting from the use or misuse of this repository.
 
 > [!WARNING]
-> 🚧 **DEVELOPMENT STATUS NOTICE**:
-> - **NFC Subsystem (PN532)**: **Under Active Development / Experimental.** Currently verified with **MIFARE Classic 1K/4K tags**, **NTAG series (NTAG213/215/216/Ultralight)**, and **EMV ATM / Bank payment cards** (ISO 14443-4 APDU reading).
-> - **125 kHz LF-RFID Subsystem**: **Under Active Development / Experimental.** May contain bugs due to discrete analog hardware tolerances, coil inductance variance, and signal demodulation thresholds.
+> 🚧 **HARDWARE BRING-UP & ARCHITECTURE NOTICE**:
+> - **Display & Keypad Subsystem**: SSD1306/SH1106 OLED (128×64) and PCF8574 keypad operate concurrently on `I2C1` with FreeRTOS priority-inheritance mutex guards (`FuriThreadPriorityHighest`) ensuring zero input latency.
+> - **NFC Subsystem (NXP PN532)**: Dedicated `I2C3` bus (SDA: `PB4`, SCL: `PA7`) with hardware collision protection and bounded timeout clamping. Verified with MIFARE Classic, NTAG21x, and EMV bank payment cards (ISO 14443-4).
+> - **Sub-GHz & 125 kHz RFID Coexistence**: Hardware mutex guards protect shared lines `PA1` (CC1101 capture vs RFID timer) and `PA2` (PN532 IRQ vs RFID carrier pull), preventing electrical shoot-through and signal corruption.
+
 
 ---
 
@@ -412,19 +417,15 @@ The buttons operate in an **active-low** configuration (pressing connects the pi
 
 ---
 
-## 🚀 4-Step Quick Start: Flashing the Device
+## 🚀 3-Step Quick Start: Flashing the Device
 
 ```mermaid
 graph LR
-    A[1. Connect Hardware] --> B[2. Set OTP Profile]
-    B --> C[3. Bootloader Repair in qFlipper]
-    C --> D[4. Install Firmware .tgz]
+    A[1. Set OTP Profile] --> B[2. Flash Full Firmware directly to 0x08000000]
+    B --> C[3. Boot Furi OS & Load SD Resources via qFlipper]
 ```
 
-### Step 1: Connect your modules
-Wire your OLED screen, buttons, and MCU according to the visual wiring diagram above.
-
-### Step 2: Configure OTP Memory (One-Time Only)
+### Step 1: Configure OTP Memory (One-Time Only)
 1. Open **`generate_otp_gui.exe`** (in [`mics/FlipperOTP/`](mics/FlipperOTP/)).
 2. Set **Device Name** (e.g. `Flipper`), **Board Version: 12** *(WeAct STM32WB55)*, and **Display Type: MGG** *(Required for OLED)*.
 3. Put the board into **DFU mode**: hold physical **BOOT0** on the WeAct board, plug in USB, and release BOOT0.
@@ -432,45 +433,66 @@ Wire your OLED screen, buttons, and MCU according to the visual wiring diagram a
 
 ---
 
-### Step 3: Flash Firmware via qFlipper (1-Click Install)
+### Step 2: Flash Standalone Firmware (Direct DFU)
 
-#### For First-Time Setup:
-1. Put the board into **DFU mode** (hold `BOOT0`, plug in USB, release `BOOT0`).
-2. Open official **qFlipper** on your PC.
-3. qFlipper will display **"RECOVERY MODE"**. Click **"REPAIR"** to flash the official bootloader.
-4. Put the board back into **DFU mode** once more.
-5. In qFlipper, click **"Install from file"** and select our **`.tgz`** release package (`flipper-z-f7-update-*.tgz`) from [Releases](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases).
-6. qFlipper will flash the firmware, turn on the OLED screen, and copy all game/app assets and core themes in **just 15–20 seconds**!
+> [!CAUTION]
+> ⛔ **CRITICAL WARNING: NEVER CLICK "REPAIR" IN OFFICIAL QFLIPPER!**  
+> Clicking "Repair" in official qFlipper flashes the stock Flipper Zero bootloader. On official hardware, pin `PB4` is physical button **`Left`**; on our DIY board, `PB4` is dedicated to PN532 **`I2C3 SDA`**. The stock bootloader perceives `PB4` as held low and forces the MCU into an **unrecoverable DFU bootloop** and crashes qFlipper's RPC worker!  
+> Our custom firmware is engineered as a **single-stage standalone image** that must be flashed directly to flash address **`0x08000000`**.
 
-> [!TIP]
-> **Instant 3-Second Install for All 55 Community Themes**:
-> The firmware updater includes the default core themes (**Momentum** and **WatchDogs**) so that flashing is lightning-fast without SD card bottlenecking. To enjoy all **55 community asset packs**, download **`flipper-z-f7-resources-*.zip`** and extract it directly to the root of your microSD card on your PC (takes ~3 seconds). Your Flipper will instantly recognize all 55 packs, and future firmware updates will never delete them!
+#### Method A: 1-Click Flash via `dfu-util` (Recommended)
+1. Put the board into **DFU mode** (hold `BOOT0`, plug in USB or press `NRST`, release `BOOT0`).
+2. Run the bundled flasher from PowerShell or terminal:
+   ```bash
+   ./toolchain/x86_64-windows/bin/dfu-util.exe -a 0 -s 0x08000000:leave -D dist/f7-C/flipper-z-f7-full-*.bin
+   ```
+3. The flasher will erase sectors, commit the firmware, and issue a USB detach. The SSD1306/SH1106 OLED will immediately illuminate with the boot splash!
 
-> [!NOTE]
-> **Black Screen During Update is Normal**: The standalone updater payload only contains drivers for the factory SPI screen. During installation, the screen stays off. Wait until qFlipper shows **"Update Successful!"** and the device will boot into the full OS.
+#### Method B: Flash via STM32CubeProgrammer (GUI)
+1. Open **STM32CubeProgrammer** and select **USB** communication (Device in DFU mode `0483:df11`).
+2. Set Start Address to **`0x08000000`**.
+3. Browse to `dist/f7-C/flipper-z-f7-full-*.bin` (or downloaded from [Releases](https://github.com/AJ60/Flipper_OLED_PCF8574_PN532/releases)).
+4. Click **Start Programming**. Once verified, disconnect and reset the board.
+
+---
+
+### Step 3: Install SD Resources & Connect to qFlipper
+
+Once your DIY Flipper boots to the desktop, it enumerates as a standard **USB Virtual COM Port (`0483:5740`)**:
+1. Open **qFlipper**. It will cleanly detect your DIY Flipper Zero without crashing.
+2. You can use qFlipper for real-time screen streaming, command-line terminal, and file browsing.
+3. **Install Resources & Themes**: Extract `flipper-z-f7-resources-*.zip` directly onto the root of your microSD card. This instantly deploys all system assets, games, animations, and **55 community asset packs**. Future firmware updates will never overwrite your custom assets!
+
 
 ---
 
 ## 🛠️ How to Build from Source (For Developers)
 
-Use the built-in FBT build tool to compile locally:
+Use the built-in vendored toolchain and SCons build tool to compile locally:
+
+```powershell
+# Windows (PowerShell with vendored ARM toolchain & Python 3.11):
+$env:PATH = "$PWD/toolchain/x86_64-windows/python;$PWD/toolchain/x86_64-windows/bin;" + $env:PATH
+$env:FBT_NO_SYNC = "1"
+
+# 1. Build base firmware:
+python -m SCons TARGET_HW=7
+
+# 2. Build full distribution (Firmware + RAM Updater + OTA bundles + External FAPs):
+python -m SCons TARGET_HW=7 --with-updater updater_package fap_dist
+```
 
 ```bash
-# Windows (Command Prompt / PowerShell)
-cmd /c fbt.cmd
-
 # Linux / macOS
-./fbt
-
-# Build the complete qFlipper .tgz / .zip installer bundles & standalone SD resources
-cmd /c fbt.cmd --with-updater updater_package
+./fbt TARGET_HW=7 --with-updater updater_package fap_dist
 ```
 
 Compiled distribution binaries are generated in `dist/f7-C/`:
-* 📦 **`flipper-z-f7-update-<version>.tgz`**: Update bundle for official **qFlipper** ("Install from file").
-* 📦 **`flipper-z-f7-update-<version>.zip`**: Update zip archive for custom/web flashers.
-* 💾 **`flipper-z-f7-resources-<version>.zip`**: Standalone SD card resource archive containing all 55 Asset Packs, dolphin graphics, and databases.
-* 💾 **`flipper-z-f7-resources-<version>.tgz`**: Tarball edition of SD card resources.
+* ⚡ **`flipper-z-f7-full-<version>.bin / .dfu`**: Full standalone single-stage firmware for direct flashing starting at `0x08000000` via `dfu-util` or STM32CubeProgrammer.
+* 📦 **`flipper-z-f7-update-<version>.tgz / .zip`**: OTA self-update package for on-device updater or qFlipper.
+* 💾 **`flipper-z-f7-resources-<version>.zip / .tgz`**: Standalone SD card resource archive containing all 55 Asset Packs, dolphin graphics, and databases.
+* 🎮 **`dist/f7-C/apps/`**: Complete catalog of external `.fap` binaries compiled against API 87.5.
+
 
 ---
 
