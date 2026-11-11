@@ -3,6 +3,8 @@
 #include <furi_hal_interrupt.h>
 #include <furi_hal_resources.h>
 #include <furi_hal_bus.h>
+#include <furi_hal_subghz.h>
+#include <furi_hal_nfc.h>
 #include <furi.h>
 
 #include <stm32wbxx_ll_tim.h>
@@ -123,9 +125,15 @@ void furi_hal_rfid_pins_reset(void) {
     furi_hal_gpio_init(&gpio_nfc_irq_rfid_pull, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
 
     furi_hal_gpio_init(&gpio_rfid_data_in, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+
+    // Re-enable NFC IRQ after RFID release
+    furi_hal_gpio_init(&gpio_nfc_irq, GpioModeInterruptFall, GpioPullUp, GpioSpeedLow);
 }
 
 static void furi_hal_rfid_pins_emulate(void) {
+    // Put PN532 into low-power sleep before driving PA2 push-pull
+    furi_hal_nfc_sleep();
+
     // ibutton low
     furi_hal_ibutton_pin_configure();
     furi_hal_ibutton_pin_write(false);
@@ -146,6 +154,9 @@ static void furi_hal_rfid_pins_emulate(void) {
 }
 
 static void furi_hal_rfid_pins_read(void) {
+    // PA1 collision guard: verify Sub-GHz radio is not capturing on PA1
+    furi_check(!furi_hal_subghz_is_async_active(), "PA1 collision: SubGHz is active");
+
     // ibutton low
     furi_hal_ibutton_pin_configure();
     furi_hal_ibutton_pin_write(false);

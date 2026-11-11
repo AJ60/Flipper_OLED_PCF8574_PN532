@@ -496,6 +496,10 @@ FuriHalNfcError furi_hal_nfc_low_power_mode_start(void) {
     return error;
 }
 
+FuriHalNfcError furi_hal_nfc_sleep(void) {
+    return furi_hal_nfc_low_power_mode_start();
+}
+
 FuriHalNfcError furi_hal_nfc_low_power_mode_stop(void) {
     FuriHalNfcError error = furi_hal_nfc_acquire();
     if(error != FuriHalNfcErrorNone) return error;

@@ -1581,6 +1581,7 @@ Function,+,furi_hal_nfc_poller_wait_event,FuriHalNfcEvent,uint32_t
 Function,+,furi_hal_nfc_release,FuriHalNfcError,
 Function,+,furi_hal_nfc_reset_mode,FuriHalNfcError,
 Function,+,furi_hal_nfc_set_mode,FuriHalNfcError,"FuriHalNfcMode, FuriHalNfcTech"
+Function,+,furi_hal_nfc_sleep,FuriHalNfcError,
 Function,+,furi_hal_nfc_timer_block_tx_is_running,_Bool,
 Function,+,furi_hal_nfc_timer_block_tx_start,void,uint32_t
 Function,+,furi_hal_nfc_timer_block_tx_start_us,void,uint32_t
@@ -1595,6 +1596,7 @@ Function,+,furi_hal_pcf8574_check_and_restore,_Bool,uint8_t
 Function,+,furi_hal_pcf8574_configure_interrupts,_Bool,uint8_t
 Function,+,furi_hal_pcf8574_init,_Bool,
 Function,+,furi_hal_pcf8574_init_ex,_Bool,uint8_t
+Function,+,furi_hal_pcf8574_is_ok,_Bool,
 Function,+,furi_hal_pcf8574_led_init,_Bool,
 Function,+,furi_hal_pcf8574_led_off,_Bool,
 Function,+,furi_hal_pcf8574_led_set,_Bool,"uint8_t, uint8_t, uint8_t"
@@ -1602,9 +1604,11 @@ Function,+,furi_hal_pcf8574_led_set_blue,_Bool,_Bool
 Function,+,furi_hal_pcf8574_led_set_color,_Bool,"_Bool, _Bool, _Bool"
 Function,+,furi_hal_pcf8574_led_set_green,_Bool,_Bool
 Function,+,furi_hal_pcf8574_led_set_red,_Bool,_Bool
+Function,+,furi_hal_pcf8574_read,uint8_t,
 Function,+,furi_hal_pcf8574_read_port,_Bool,uint8_t*
 Function,+,furi_hal_pcf8574_read_port_raw,_Bool,uint8_t*
 Function,+,furi_hal_pcf8574_set_i2c_bus,void,const FuriHalI2cBusHandle*
+Function,+,furi_hal_pcf8574_write,_Bool,uint8_t
 Function,+,furi_hal_pcf8574_write_pin,_Bool,"uint8_t, _Bool"
 Function,+,furi_hal_pcf8574_write_pin_raw,_Bool,"uint8_t, _Bool"
 Function,+,furi_hal_pcf8574_write_port,_Bool,uint8_t
@@ -1797,6 +1801,7 @@ Function,+,furi_hal_subghz_get_rssi,float,
 Function,+,furi_hal_subghz_idle,void,
 Function,-,furi_hal_subghz_init,void,
 Function,+,furi_hal_subghz_is_alive,_Bool,
+Function,+,furi_hal_subghz_is_async_active,_Bool,
 Function,+,furi_hal_subghz_is_async_tx_complete,_Bool,
 Function,+,furi_hal_subghz_is_frequency_valid,_Bool,uint32_t
 Function,+,furi_hal_subghz_is_rx_data_crc_valid,_Bool,

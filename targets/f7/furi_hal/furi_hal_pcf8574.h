@@ -29,6 +29,11 @@ bool furi_hal_pcf8574_read_port(uint8_t* port_state);
 // forced high on the wire; writing them low is ignored so a button can never
 // be latched. On success updates the internal shadow state.
 bool furi_hal_pcf8574_write_port(uint8_t port_state);
+bool furi_hal_pcf8574_write(uint8_t value);
+
+// Status check and port read helpers
+bool furi_hal_pcf8574_is_ok(void);
+uint8_t furi_hal_pcf8574_read(void);
 
 // Write single PCF8574 pin (0-7). Pins declared as inputs are forced high and
 // cannot be driven low.

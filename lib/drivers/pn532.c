@@ -32,6 +32,10 @@ static Pn532Error pn532_wait_ready(const FuriHalI2cBusHandle* handle, uint32_t t
 }
 
 static Pn532Error pn532_read_ack(const FuriHalI2cBusHandle* handle, uint32_t timeout_ms) {
+    // Clamp timeout to 40ms max to prevent freezing worker threads during RF field loss
+    if(timeout_ms > 40) {
+        timeout_ms = 40;
+    }
     Pn532Error err = pn532_wait_ready(handle, timeout_ms);
     if(err != Pn532ErrorNone) return err;
 
@@ -39,7 +43,7 @@ static Pn532Error pn532_read_ack(const FuriHalI2cBusHandle* handle, uint32_t tim
 
     uint8_t buf[7] = {0};
     furi_hal_i2c_acquire(handle);
-    bool ok = furi_hal_i2c_rx(handle, PN532_I2C_ADDR_8BIT, buf, sizeof(buf), 50);
+    bool ok = furi_hal_i2c_rx(handle, PN532_I2C_ADDR_8BIT, buf, sizeof(buf), 2);
     furi_hal_i2c_release(handle);
 
     if(!ok) return Pn532ErrorBus;

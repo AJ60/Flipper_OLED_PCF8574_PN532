@@ -155,6 +155,8 @@ int32_t input_srv(void* p) {
     UNUSED(p);
 
     const FuriThreadId thread_id = furi_thread_get_current_id();
+    // Elevate priority above GuiService and running FAPs to eliminate tick-slicing latency
+    furi_thread_set_current_priority(FuriThreadPriorityHighest);
     FuriPubSub* event_pubsub = furi_pubsub_alloc();
     FuriPubSub* ascii_pubsub = furi_pubsub_alloc();
     uint32_t counter = 1;

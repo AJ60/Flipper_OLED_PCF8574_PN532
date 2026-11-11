@@ -161,6 +161,13 @@ bool furi_hal_nfc_is_mine(void);
 FuriHalNfcError furi_hal_nfc_low_power_mode_start(void);
 
 /**
+ * @brief Put NFC subsystem into low-power sleep mode (alias to low_power_mode_start)
+ *
+ * @returns FuriHalNfcErrorNone on success, any other error code on failure.
+ */
+FuriHalNfcError furi_hal_nfc_sleep(void);
+
+/**
  * @brief Configure the NFC hardware to exit the low-power mode.
  *
  * This function must be called each time when the user code begins working

@@ -96,6 +96,10 @@ bool furi_hal_subghz_is_alive(void) {
     return furi_hal_subghz.state != SubGhzStateInit && furi_hal_subghz.state != SubGhzStateBroken;
 }
 
+bool furi_hal_subghz_is_async_active(void) {
+    return (furi_hal_subghz.state == SubGhzStateAsyncRx || furi_hal_subghz.state == SubGhzStateAsyncTx);
+}
+
 // Token bucket for duty cycle enforcement
 #define DUTY_CYCLE_TOKEN_SCALE 1000 // ms * 1000 for sub-ms precision
 

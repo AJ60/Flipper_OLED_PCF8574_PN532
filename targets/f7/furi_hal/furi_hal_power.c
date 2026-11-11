@@ -21,9 +21,6 @@
 #include <furi_hal_cortex.h>
 #include <stm32wbxx_ll_gpio.h>
 #include <hsem_map.h>
-#include <bq27220.h>
-#include <bq27220_data_memory.h>
-#include <bq25896.h>
 #include <furi_hal_subghz.h>
 #include <furi_hal_nfc.h>
 #include <furi_hal_speaker.h>

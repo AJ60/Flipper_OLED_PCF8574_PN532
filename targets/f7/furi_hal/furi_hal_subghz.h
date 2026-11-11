@@ -195,6 +195,12 @@ bool furi_hal_subghz_is_tx_allowed(uint32_t value);
  */
 bool furi_hal_subghz_is_alive(void);
 
+/** Check if Sub-GHz radio is actively capturing or transmitting on PA1
+ *
+ * @return     true if async RX or TX is active, false otherwise
+ */
+bool furi_hal_subghz_is_async_active(void);
+
 /** Consume tokens from duty cycle token bucket
  * @param band  Region band to check
  * @param tx_duration_ms  Estimated TX duration in ms

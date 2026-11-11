@@ -273,20 +273,33 @@ bool furi_hal_pcf8574_write_port(uint8_t port_state) {
     }
     const FuriHalI2cBusHandle* bus = pcf8574_get_bus();
     furi_hal_i2c_acquire(bus);
-    // Only non-input bits are writable; input pins are forced high regardless
-    // of what the caller passes (writing 0 to an input pin would latch it low).
-    // The RMW and compose run under the bus mutex so they stay atomic with the
-    // input service's periodic read_port shadow sync; the shadow is committed
-    // only if the wire write succeeds.
+    FURI_CRITICAL_ENTER();
     uint8_t new_state = (pcf8574_current_state & pcf8574_input_mask) |
                         (port_state & (uint8_t)~pcf8574_input_mask);
     uint8_t byte = pcf8574_compose_byte(new_state);
+    FURI_CRITICAL_EXIT();
     bool res = furi_hal_i2c_tx(bus, (uint8_t)(pcf8574_addr << 1), &byte, 1, 100);
     if(res) {
         pcf8574_current_state = new_state;
     }
     furi_hal_i2c_release(bus);
     return res;
+}
+
+bool furi_hal_pcf8574_write(uint8_t value) {
+    return furi_hal_pcf8574_write_port(value);
+}
+
+bool furi_hal_pcf8574_is_ok(void) {
+    return pcf8574_is_initialized;
+}
+
+uint8_t furi_hal_pcf8574_read(void) {
+    uint8_t state = 0xFF;
+    if(furi_hal_pcf8574_read_port_raw(&state)) {
+        return state;
+    }
+    return 0xFF;
 }
 
 bool furi_hal_pcf8574_write_pin(uint8_t pin, bool value) {
