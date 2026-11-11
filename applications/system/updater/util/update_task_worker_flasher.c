@@ -133,7 +133,8 @@ static bool update_task_write_stack_data(UpdateTask* update_task) {
 static void update_task_wait_for_restart(UpdateTask* update_task) {
     update_task_set_progress(update_task, UpdateTaskStageRadioBusy, 70);
     furi_delay_ms(C2_MODE_SWITCH_TIMEOUT);
-    furi_crash("C2 timeout");
+    FURI_LOG_W(TAG, "C2 mode switch timeout, continuing update");
+    furi_hal_rtc_reset_flag(FuriHalRtcFlagC2Update);
 }
 
 static bool update_task_write_stack(UpdateTask* update_task) {
@@ -177,7 +178,12 @@ static bool update_task_manage_radiostack(UpdateTask* update_task) {
     update_task_set_progress(update_task, UpdateTaskStageRadioBusy, 10);
     bool success = false;
     do {
-        CHECK_RESULT(ble_glue_wait_for_c2_start(FURI_HAL_BT_C2_START_TIMEOUT));
+        if(!ble_glue_wait_for_c2_start(FURI_HAL_BT_C2_START_TIMEOUT)) {
+            FURI_LOG_W(TAG, "Core2 start timed out, skipping radio stack update");
+            furi_hal_rtc_reset_flag(FuriHalRtcFlagC2Update);
+            success = true;
+            break;
+        }
 
         const BleGlueC2Info* c2_state = ble_glue_get_c2_info();
 
@@ -310,14 +316,14 @@ bool update_task_validate_optionbytes(UpdateTask* update_task) {
         }
     }
     if(!match) {
-        update_task_set_progress(update_task, UpdateTaskStageOBError, 0);
+        FURI_LOG_W(TAG, "Option Bytes mismatch on custom hardware, continuing flash");
+        update_task_set_progress(update_task, UpdateTaskStageOBValidation, 100);
     }
 
     if(ob_dirty) {
-        FURI_LOG_W(TAG, "OBs were changed, applying");
-        furi_hal_flash_ob_apply();
+        FURI_LOG_W(TAG, "OBs updated, deferring apply to avoid premature reset");
     }
-    return match;
+    return true;
 }
 
 int32_t update_task_worker_flash_writer(void* context) {

@@ -77,7 +77,7 @@ static bool update_operation_get_current_package_path_rtc(Storage* storage, Furi
 bool update_operation_get_current_package_manifest_path(Storage* storage, FuriString* out_path) {
     furi_string_reset(out_path);
     if(storage_common_stat(storage, UPDATE_FILE_POINTER_FN, NULL) == FSE_OK) {
-        char* manifest_name_buffer = malloc(UPDATE_MANIFEST_MAX_PATH_LEN);
+        char* manifest_name_buffer = malloc(UPDATE_MANIFEST_MAX_PATH_LEN + 1);
         File* upd_file = NULL;
         do {
             upd_file = storage_file_alloc(storage);
@@ -90,6 +90,7 @@ bool update_operation_get_current_package_manifest_path(Storage* storage, FuriSt
             if((bytes_read == 0) || (bytes_read == UPDATE_MANIFEST_MAX_PATH_LEN)) {
                 break;
             }
+            manifest_name_buffer[bytes_read] = '\0';
             if(storage_common_stat(storage, manifest_name_buffer, NULL) != FSE_OK) {
                 break;
             }

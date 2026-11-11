@@ -10,7 +10,7 @@ extern "C" {
 #include <stdbool.h>
 
 #define UPDATE_DELAY_OPERATION_OK    10
-#define UPDATE_DELAY_OPERATION_ERROR INT_MAX
+#define UPDATE_DELAY_OPERATION_ERROR 15000
 
 typedef enum {
     UpdateTaskStageProgress = 0,

@@ -78,6 +78,10 @@ static bool flipper_update_load_stage(const FuriString* work_dir, UpdateManifest
     furi_string_free(loader_img_path);
 
     void* img = malloc(stat.fsize);
+    if(!img) {
+        f_close(&file);
+        return false;
+    }
     uint32_t read_total = 0;
     uint16_t read_current = 0;
     const uint16_t MAX_READ = 0xFFFF;
