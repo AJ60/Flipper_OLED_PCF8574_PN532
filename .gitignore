@@ -47,6 +47,8 @@ null.d
 
 # bundle output
 /dist
+applications/external/**/dist/
+
 
 # SCons build dir
 /build
@@ -101,3 +103,19 @@ scripts/diy_otp_*.bin
 /analyze_map.py
 /get_cmds.py
 nm_*.txt
+
+# Local agent, workspace, documentation & scratch artifacts
+HANDOVER.md
+AGENTS.md
+PROJECT_COMPARISON.md
+.copilot/
+.opencode/
+hermes/
+*.log
+*_log.txt
+build_*.txt
+*.patch
+*.bak
+design-*.json
+
+
