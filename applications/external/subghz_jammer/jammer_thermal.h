@@ -73,3 +73,12 @@ uint32_t jammer_thermal_est_current_ma(uint32_t freq_hz, uint32_t power_level, b
  * @return estimated junction temperature (deg C)
  */
 uint32_t jammer_thermal_est_temp_c(uint32_t t_amb_c, uint32_t avg_current_ma);
+
+/**
+ * Live thermal state, published by the worker each hop for the on-screen
+ * status display.
+ */
+typedef struct {
+    uint32_t temp_c;   ///< estimated junction temperature (deg C)
+    uint32_t avg_current_ma; ///< estimated average TX current (mA)
+} JammerThermalState;

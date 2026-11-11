@@ -15,6 +15,7 @@
 #include "jammer_signal.h"
 #include "jammer_radio.h"
 #include "jammer_settings.h"
+#include "jammer_thermal.h"
 
 #define TAG "SubGhzJammer"
 
@@ -24,6 +25,7 @@ typedef enum {
     SubGhzJammerEventStop,
     SubGhzJammerEventBack,
     SubGhzJammerEventFreqEdit,
+    SubGhzJammerEventMenuEnter,
     SubGhzJammerEventTxError,
 } SubGhzJammerEvent;
 
@@ -58,6 +60,7 @@ struct Jammer {
     uint16_t freq_edit_index;
 
     JammerSettings settings;
+    JammerThermalState thermal;
     FuriThread* worker;
     volatile bool abort_requested;
     volatile bool tx_active;

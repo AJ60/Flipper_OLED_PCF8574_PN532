@@ -90,6 +90,8 @@ static bool jammer_worker_apply_thermal(
         freq, jammer->settings.power_level, external_pa);
     uint32_t i_avg = (i_full * jammer->settings.pulse_ratio) / 100u;
     uint32_t temp = jammer_thermal_est_temp_c(25u, i_avg);
+    jammer->thermal.temp_c = temp;
+    jammer->thermal.avg_current_ma = i_avg;
     JammerThermalDecision d = jammer_thermal_decide(
         temp, i_avg, 0u, jammer->settings.max_tx_duration_ms, elapsed_ms, *duty_already_reduced);
     switch(d) {
@@ -229,6 +231,17 @@ int32_t jammer_worker_thread(void* context) {
                 dwell_elapsed += step;
             }
             elapsed_ms += dwell_elapsed;
+            // Inter-hop gap (DwellCycle): brief pause between hop targets.
+            uint32_t hold_elapsed = 0;
+            while(!jammer->abort_requested &&
+                   hold_elapsed < jammer->settings.dwell_hold_ms) {
+                uint32_t step = (jammer->settings.dwell_hold_ms - hold_elapsed > tick_ms) ?
+                                    tick_ms :
+                                    (jammer->settings.dwell_hold_ms - hold_elapsed);
+                furi_delay_ms(step);
+                hold_elapsed += step;
+            }
+            elapsed_ms += hold_elapsed;
         } else {
             // Carrier / single-hop: steady frequency, but still throttle.
             uint32_t freq = jammer->settings.frequency;

@@ -57,6 +57,13 @@ static void format_status(char* buffer, size_t buf_size, Jammer* jammer) {
             (unsigned long)duty_pct);
     }
 
+    char power_line[16];
+    if(jammer->settings.power_level == 0) {
+        snprintf(power_line, sizeof(power_line), "Auto");
+    } else {
+        snprintf(power_line, sizeof(power_line), "%lu%%", (unsigned long)jammer->settings.power_level);
+    }
+
     const char* status_str = "IDLE";
     if(jammer->tx_error) {
         status_str = "BLOCKED";
@@ -67,12 +74,16 @@ static void format_status(char* buffer, size_t buf_size, Jammer* jammer) {
     snprintf(
         buffer,
         buf_size,
-        "Mode: %s\nFreq: %lu.%03lu MHz\nRadio: %s%s\nStatus: %s",
+        "Mode: %s\nFreq: %lu.%03lu MHz\nRadio: %s%s\nPower: %s\nHops: %lu\nTemp: %lu C / %lu mA\nStatus: %s",
         mode_str,
         (unsigned long)freq_mhz,
         (unsigned long)freq_khz,
         radio_str,
         duty_line,
+        power_line,
+        (unsigned long)jammer->settings.hop_count,
+        (unsigned long)jammer->thermal.temp_c,
+        (unsigned long)jammer->thermal.avg_current_ma,
         status_str);
 }
 
@@ -148,10 +159,10 @@ void subghz_jammer_scene_start_on_enter(void* context) {
             widget, GuiButtonTypeCenter, "Hold OK", jammer_start_button_callback, jammer);
     }
 
-    char buffer[128];
+    char buffer[256];
     format_status(buffer, sizeof(buffer), jammer);
     widget_add_text_box_element(
-        widget, 0, 0, 128, 48, AlignLeft, AlignTop, buffer, false);
+        widget, 0, 0, 128, 52, AlignLeft, AlignTop, buffer, false);
 
     view_dispatcher_switch_to_view(jammer->view_dispatcher, SubGhzJammerViewStart);
 }
