@@ -283,9 +283,7 @@ static uint8_t fullhouse() {
 }
 
 // # # # # # # # # # # # # # # # # # # # # # # # # # # #
-// # I'm dumb so I asked ChatGPT to write the          #
-// # smallstraight function for me. Then I adapted it  #
-// # fo the largestraight function.                    #
+// # Evaluates small straight (sequence of 4 faces)   #
 // # # # # # # # # # # # # # # # # # # # # # # # # # # #
 static uint8_t smallstraight() {
     // Create a new array with the frequencies of the different die faces

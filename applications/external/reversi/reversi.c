@@ -3,7 +3,7 @@
 
 #include "reversi.h"
 
-// Psst! Most of this file was written with Copilot
+// Reversi position weight matrix for AI evaluation
 
 const int weights[BOARD_SIZE][BOARD_SIZE] = {
     {100, -10, 10, 10, 10, 10, -10, 100},
