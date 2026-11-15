@@ -1,40 +1,70 @@
 #include "jammer_freq_edit.h"
-#include <stdio.h>
-#include <stddef.h>
 
-uint16_t freq_hz_to_index(uint32_t freq_hz) {
-    if(freq_hz < FREQ_MIN_HZ) {
-        return 0;
-    }
-    if(freq_hz > FREQ_MAX_HZ) {
-        return FREQ_STEP_COUNT - 1;
-    }
-    return (uint16_t)((freq_hz - FREQ_MIN_HZ) / FREQ_STEP_HZ);
+/* kHz bounds for the full 300-928 MHz band (1 kHz resolution). */
+#define FREQ_MIN_KHZ (300000u)
+#define FREQ_MAX_KHZ (928000u)
+
+/* kHz -> Hz. Pure math, host-tested. */
+uint32_t freq_khz_to_hz(uint32_t khz) {
+    return khz * 1000u;
 }
 
-uint32_t freq_index_to_hz(uint16_t index) {
-    if(index >= FREQ_STEP_COUNT) {
-        return FREQ_MAX_HZ;
-    }
-    return FREQ_MIN_HZ + (uint32_t)index * FREQ_STEP_HZ;
+/* Hz -> kHz (integer division). Pure math, host-tested. */
+uint32_t freq_hz_to_khz(uint32_t hz) {
+    return hz / 1000u;
 }
 
-const char* freq_hz_to_text(uint32_t freq_hz, char* buf, size_t buf_size) {
-    float mhz = (float)freq_hz / 1000000.0f;
-    snprintf(buf, buf_size, "%.2f MHz", (double)mhz);
-    return buf;
+/* Clamp kHz into the band. Pure math, host-tested. */
+uint32_t freq_khz_clamp(uint32_t khz) {
+    if(khz < FREQ_MIN_KHZ) {
+        return FREQ_MIN_KHZ;
+    }
+    if(khz > FREQ_MAX_KHZ) {
+        return FREQ_MAX_KHZ;
+    }
+    return khz;
 }
 
-int32_t freq_edit_step_index(int32_t index, int32_t delta) {
-    if(index < 0 || index >= (int32_t)FREQ_STEP_COUNT || (delta != -1 && delta != 1)) {
-        return -1;
+#ifndef HOST_TEST
+
+#include <gui/scene_manager.h>
+#include <gui/modules/number_input.h>
+#include <gui/view_dispatcher.h>
+
+#include "subghz_jammer.h"
+#include "scenes/subghz_jammer_scene.h"
+
+#define TAG "JammerFreqEdit"
+
+/* Commit the edited kHz value (kHz*1000 = Hz), persist, and return to the menu. */
+static void freq_edit_result_callback(void* context, int32_t number) {
+    Jammer* jammer = (Jammer*)context;
+    if(jammer == NULL) {
+        return;
     }
-    int64_t next = (int64_t)index + delta;
-    if(next < 0) {
-        next = 0;
-    }
-    if(next >= (int64_t)FREQ_STEP_COUNT) {
-        next = FREQ_STEP_COUNT - 1;
-    }
-    return (int32_t)next;
+    uint32_t khz = freq_khz_clamp((uint32_t)number);
+    jammer->settings.frequency = freq_khz_to_hz(khz);
+    jammer_settings_save(&jammer->settings);
+    scene_manager_next_scene(jammer->scene_manager, SubGhzJammerScenemenu);
 }
+
+void jammer_freq_edit_enter(Jammer* jammer) {
+    furi_assert(jammer);
+    furi_assert(jammer->number_input);
+
+    uint32_t khz = freq_khz_clamp(freq_hz_to_khz(jammer->settings.frequency));
+
+    number_input_reset(jammer->number_input);
+    number_input_set_header_text(jammer->number_input, "Freq (kHz)");
+    number_input_set_result_callback(
+        jammer->number_input,
+        freq_edit_result_callback,
+        jammer,
+        (int32_t)khz,
+        FREQ_MIN_KHZ,
+        FREQ_MAX_KHZ);
+
+    view_dispatcher_switch_to_view(jammer->view_dispatcher, SubGhzJammerViewFreqEdit);
+}
+
+#endif /* HOST_TEST */

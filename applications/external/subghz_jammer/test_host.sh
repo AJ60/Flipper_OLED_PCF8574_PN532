@@ -45,7 +45,7 @@ extra_includes="-Ibuild/stubs -I../../.."
 cleanup() { rm -rf "$tmpdir"; }
 trap cleanup EXIT
 
-if ! gcc -I. $extra_includes -o "$out" "$test_file" "$@"; then
+if ! gcc -DHOST_TEST -I. $extra_includes -o "$out" "$test_file" "$@"; then
     echo "BUILD FAILED: gcc -I. $extra_includes -o \"$out\" \"$test_file\" $*" >&2
     exit 1
 fi

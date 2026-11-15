@@ -1,32 +1,25 @@
 #pragma once
 
-#include <stddef.h>
 #include <stdint.h>
 
-/* Full CC1101 sub-GHz range, in Hz. */
-#define FREQ_MIN_HZ (300000000u)   /* 300 MHz */
-#define FREQ_MAX_HZ (928000000u)   /* 928 MHz */
-
-/* Selector step. 1 MHz matches the "300,301,302..." examples.
- * For CC1101-native 125 kHz resolution change to 125000u (see Open Questions). */
-#define FREQ_STEP_HZ (1000000u)
-
-/* Number of selectable steps, inclusive of both ends (629 at 1 MHz). */
-#define FREQ_STEP_COUNT \
-    (((FREQ_MAX_HZ - FREQ_MIN_HZ) / FREQ_STEP_HZ) + 1u)
-
-/* Map a user-entered frequency (Hz) to a selector index, clamping into range. */
-uint16_t freq_hz_to_index(uint32_t freq_hz);
-
-/* Map a selector index back to a frequency (Hz). */
-uint32_t freq_index_to_hz(uint16_t index);
-
-/* Format a frequency (Hz) as "XXX.XX MHz" into buf; returns buf. */
-const char* freq_hz_to_text(uint32_t freq_hz, char* buf, size_t buf_size);
+typedef struct Jammer Jammer;
 
 /**
- * Given a selectable index and a signed step delta (+1/-1), return the clamped
- * next index in [0, FREQ_STEP_COUNT-1]. Returns -1 if index is out of range or
- * delta is not +1/-1.
+ * kHz <-> Hz conversions and band clamp for arbitrary-frequency entry.
+ *
+ * Pure math with no Furi dependency, host-tested (see
+ * tests/test_jammer_freq_edit.c). 1 kHz resolution across the full
+ * 300-928 MHz range.
  */
-int32_t freq_edit_step_index(int32_t index, int32_t delta);
+uint32_t freq_khz_to_hz(uint32_t freq_khz);
+uint32_t freq_hz_to_khz(uint32_t freq_hz);
+uint32_t freq_khz_clamp(uint32_t freq_khz);
+
+/**
+ * Frequency editor backed by NumberInput (native numeric keypad).
+ *
+ * The value is stored in Hz (JammerSettings.frequency) and edited with 1 kHz
+ * resolution across the full 300-928 MHz range. OK commits and returns to the
+ * menu; Back cancels without changing the value.
+ */
+void jammer_freq_edit_enter(Jammer* jammer);
