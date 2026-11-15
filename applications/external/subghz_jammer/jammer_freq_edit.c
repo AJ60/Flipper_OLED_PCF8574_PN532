@@ -34,8 +34,6 @@ uint32_t freq_khz_clamp(uint32_t khz) {
 #include "subghz_jammer.h"
 #include "scenes/subghz_jammer_scene.h"
 
-#define TAG "JammerFreqEdit"
-
 /* Commit the edited kHz value (kHz*1000 = Hz), persist, and return to the menu. */
 static void freq_edit_result_callback(void* context, int32_t number) {
     Jammer* jammer = (Jammer*)context;
@@ -54,7 +52,8 @@ void jammer_freq_edit_enter(Jammer* jammer) {
 
     uint32_t khz = freq_khz_clamp(freq_hz_to_khz(jammer->settings.frequency));
 
-    number_input_reset(jammer->number_input);
+    /* set_result_callback() fully (re)initialises the NumberInput model
+     * (value, bounds, text buffer, callback), so no separate reset is needed. */
     number_input_set_header_text(jammer->number_input, "Freq (kHz)");
     number_input_set_result_callback(
         jammer->number_input,

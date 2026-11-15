@@ -52,6 +52,7 @@ typedef void (*SubGhzReadPacket)(uint8_t* data, uint8_t* size);
 typedef void (*SubGhzWritePacket)(const uint8_t* data, uint8_t size);
 
 typedef SubGhzTx (*SubGhzCheckTx)(uint32_t frequency);
+typedef void (*SubGhzLoadPaTable)(const uint8_t data[8]);
 
 typedef struct {
     SubGhzBegin begin;
@@ -63,6 +64,7 @@ typedef struct {
     SubGhzIdle idle;
 
     SubGhzLoadPreset load_preset;
+    SubGhzLoadPaTable load_patable;
     SubGhzSetFrequency set_frequency;
     SubGhzIsFrequencyValid is_frequency_valid;
     SubGhzSetAsyncMirrorPin set_async_mirror_pin;

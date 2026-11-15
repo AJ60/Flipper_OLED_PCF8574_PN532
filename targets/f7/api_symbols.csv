@@ -3615,6 +3615,7 @@ Function,+,subghz_devices_is_async_complete_tx,_Bool,const SubGhzDevice*
 Function,+,subghz_devices_is_connect,_Bool,const SubGhzDevice*
 Function,+,subghz_devices_is_frequency_valid,_Bool,"const SubGhzDevice*, uint32_t"
 Function,+,subghz_devices_is_rx_data_crc_valid,_Bool,const SubGhzDevice*
+Function,+,subghz_devices_load_patable,void,"const SubGhzDevice*, const uint8_t[8]"
 Function,+,subghz_devices_load_preset,void,"const SubGhzDevice*, FuriHalSubGhzPreset, uint8_t*"
 Function,+,subghz_devices_read_packet,void,"const SubGhzDevice*, uint8_t*, uint8_t*"
 Function,+,subghz_devices_reset,void,const SubGhzDevice*

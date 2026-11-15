@@ -62,6 +62,7 @@ const SubGhzDeviceInterconnect subghz_device_cc1101_int_interconnect = {
     .sleep = furi_hal_subghz_sleep,
     .idle = furi_hal_subghz_idle,
     .load_preset = subghz_device_cc1101_int_interconnect_load_preset,
+    .load_patable = furi_hal_subghz_load_patable,
     .set_frequency = subghz_device_cc1101_int_interconnect_set_frequency,
     .is_frequency_valid = furi_hal_subghz_is_frequency_valid,
     .set_async_mirror_pin = furi_hal_subghz_set_async_mirror_pin,

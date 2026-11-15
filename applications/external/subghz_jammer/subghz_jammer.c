@@ -139,6 +139,10 @@ int32_t jammer_worker_thread(void* context) {
     jammer_signal_set_frequency(signal, jammer->settings.frequency);
     signal->pulse_ratio = jammer->settings.pulse_ratio;
 
+    // Set the user's TX power before begin so the first hop's PA table is
+    // correct: jammer_radio_begin() applies it after load_preset + set_frequency.
+    jammer_radio_set_tx_power(device, jammer->settings.power_level);
+
     if(!jammer_radio_begin(device, jammer->settings.frequency)) {
         FURI_LOG_E(TAG, "radio begin failed");
         jammer_signal_free(signal);
@@ -157,7 +161,10 @@ int32_t jammer_worker_thread(void* context) {
         return 0;
     }
 
-    // Apply the user's TX power setting once at start.
+    // Power is now applied by jammer_radio_begin() above (and re-applied on each
+    // hop via jammer_radio_commit_hop, and immediately by the thermal throttle
+    // below). Kept here as a belt-and-braces re-apply in case the setting changed
+    // between begin and here.
     jammer_radio_set_tx_power(device, jammer->settings.power_level);
 
     jammer->tx_active = true;
@@ -403,9 +410,9 @@ Jammer* jammer_alloc(void) {
         SubGhzJammerViewStop,
         widget_get_view(jammer->widget_stop));
 
-    jammer->widget_freq_edit = widget_alloc();
-    if(jammer->widget_freq_edit == NULL) {
-        FURI_LOG_E(TAG, "widget_alloc(freq_edit) failed");
+    jammer->number_input = number_input_alloc();
+    if(jammer->number_input == NULL) {
+        FURI_LOG_E(TAG, "number_input_alloc(freq_edit) failed");
         view_dispatcher_remove_view(jammer->view_dispatcher, SubGhzJammerViewStop);
         widget_free(jammer->widget_start);
         widget_free(jammer->widget_stop);
@@ -422,7 +429,7 @@ Jammer* jammer_alloc(void) {
     view_dispatcher_add_view(
         jammer->view_dispatcher,
         SubGhzJammerViewFreqEdit,
-        widget_get_view(jammer->widget_freq_edit));
+        number_input_get_view(jammer->number_input));
 
     return jammer;
 }
@@ -441,7 +448,7 @@ void jammer_free(Jammer* jammer) {
     variable_item_list_free(jammer->var_item_list);
     widget_free(jammer->widget_start);
     widget_free(jammer->widget_stop);
-    widget_free(jammer->widget_freq_edit);
+    number_input_free(jammer->number_input);
 
     view_dispatcher_free(jammer->view_dispatcher);
     scene_manager_free(jammer->scene_manager);

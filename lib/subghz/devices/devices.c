@@ -99,6 +99,13 @@ void subghz_devices_load_preset(
     }
 }
 
+void subghz_devices_load_patable(const SubGhzDevice* device, const uint8_t data[8]) {
+    furi_check(device);
+    if(device->interconnect->load_patable) {
+        device->interconnect->load_patable(data);
+    }
+}
+
 uint32_t subghz_devices_set_frequency(const SubGhzDevice* device, uint32_t frequency) {
     furi_check(device);
     uint32_t ret = 0;

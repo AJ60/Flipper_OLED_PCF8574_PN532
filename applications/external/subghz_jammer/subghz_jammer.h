@@ -4,6 +4,7 @@
 #include <gui/gui.h>
 #include <gui/modules/variable_item_list.h>
 #include <gui/modules/widget.h>
+#include <gui/modules/number_input.h>
 #include <gui/view_dispatcher.h>
 #include <gui/scene_manager.h>
 #include <storage/storage.h>
@@ -56,8 +57,7 @@ struct Jammer {
     VariableItemList* var_item_list;
     Widget* widget_start;
     Widget* widget_stop;
-    Widget* widget_freq_edit;
-    uint16_t freq_edit_index;
+    NumberInput* number_input;
 
     JammerSettings settings;
     JammerThermalState thermal;
