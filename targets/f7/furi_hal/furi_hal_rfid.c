@@ -15,6 +15,8 @@
 // Set to 0 to disable carrier generation and release external Pin 7 (PA5) for GPIO and ADC use.
 #define RFID_125KHZ_CARRIER_ENABLED 0
 
+#define TAG "FuriHalRfid"
+
 #define FURI_HAL_RFID_READ_TIMER                TIM2
 #define FURI_HAL_RFID_READ_TIMER_BUS            FuriHalBusTIM2
 #define FURI_HAL_RFID_READ_TIMER_CHANNEL        LL_TIM_CHANNEL_CH1
@@ -65,6 +67,7 @@ typedef struct {
     uint32_t capture_pulse_us;
     bool capture_have_last;
     bool capture_have_pulse;
+    bool nfc_locked;
 } FuriHalRfid;
 
 FuriHalRfid* furi_hal_rfid = NULL;
@@ -82,6 +85,7 @@ void furi_hal_rfid_init(void) {
     furi_check(furi_hal_rfid);
     furi_hal_rfid->field.counter = 0;
     furi_hal_rfid->field.set_tim_counter_cnt = 0;
+    furi_hal_rfid->nfc_locked = false;
 
     furi_hal_rfid_pins_reset();
 
@@ -128,6 +132,12 @@ void furi_hal_rfid_pins_reset(void) {
 
     // Re-enable NFC IRQ after RFID release
     furi_hal_gpio_init(&gpio_nfc_irq, GpioModeInterruptFall, GpioPullUp, GpioSpeedLow);
+
+    // Release NFC lock if acquired for RFID emulation
+    if(furi_hal_rfid && furi_hal_rfid->nfc_locked) {
+        furi_hal_rfid->nfc_locked = false;
+        furi_hal_nfc_release();
+    }
 }
 
 static void furi_hal_rfid_pins_emulate(void) {
@@ -153,9 +163,12 @@ static void furi_hal_rfid_pins_emulate(void) {
 #endif
 }
 
-static void furi_hal_rfid_pins_read(void) {
+static bool furi_hal_rfid_pins_read(void) {
     // PA1 collision guard: verify Sub-GHz radio is not capturing on PA1
-    furi_check(!furi_hal_subghz_is_async_active(), "PA1 collision: SubGHz is active");
+    if(furi_hal_subghz_is_async_active()) {
+        FURI_LOG_E(TAG, "PA1 collision: SubGHz is active, aborting RFID read setup");
+        return false;
+    }
 
     // ibutton low
     furi_hal_ibutton_pin_configure();
@@ -177,6 +190,7 @@ static void furi_hal_rfid_pins_read(void) {
 
     // comparator in (PA1 must stay analog for COMP1 IO3)
     furi_hal_gpio_init(&gpio_rfid_data_in, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+    return true;
 }
 
 static void furi_hal_rfid_pins_field(void) {
@@ -212,9 +226,11 @@ void furi_hal_rfid_pin_pull_pulldown(void) {
 
 void furi_hal_rfid_tim_read_start(float freq, float duty_cycle) {
 #if RFID_125KHZ_CARRIER_ENABLED
-    furi_hal_bus_enable(FURI_HAL_RFID_READ_TIMER_BUS);
+    if(!furi_hal_rfid_pins_read()) {
+        return;
+    }
 
-    furi_hal_rfid_pins_read();
+    furi_hal_bus_enable(FURI_HAL_RFID_READ_TIMER_BUS);
 
     LL_TIM_InitTypeDef TIM_InitStruct = {0};
     TIM_InitStruct.Autoreload = (SystemCoreClock / freq) - 1;
@@ -326,6 +342,10 @@ static void furi_hal_rfid_comp_capture_cb(bool level, void* context) {
 
 void furi_hal_rfid_tim_read_capture_start(FuriHalRfidReadCaptureCallback callback, void* context) {
     furi_check(furi_hal_rfid);
+    if(furi_hal_subghz_is_async_active()) {
+        FURI_LOG_E(TAG, "PA1 collision: SubGHz is active, aborting capture start");
+        return;
+    }
 
     furi_hal_rfid->read_capture_callback = callback;
     furi_hal_rfid->context = context;
@@ -382,6 +402,16 @@ void furi_hal_rfid_tim_emulate_dma_start(
     FuriHalRfidDMACallback callback,
     void* context) {
     furi_check(furi_hal_rfid);
+
+    // Acquire NFC subsystem lock so PN532 transactions and active-low IRQ cannot
+    // conflict with PA2 while driven as TIM2_CH3 push-pull for RFID emulation.
+    if(!furi_hal_rfid->nfc_locked) {
+        if(furi_hal_nfc_acquire() == FuriHalNfcErrorNone) {
+            furi_hal_rfid->nfc_locked = true;
+        } else {
+            FURI_LOG_W(TAG, "Could not acquire NFC mutex for emulation");
+        }
+    }
 
     // setup interrupts
     furi_hal_rfid->dma_callback = callback;
@@ -463,6 +493,9 @@ void furi_hal_rfid_tim_emulate_dma_stop(void) {
     furi_hal_bus_disable(FURI_HAL_RFID_EMULATE_TIMER_BUS);
 
     FURI_CRITICAL_EXIT();
+
+    // Reset pins (restores PA2 to analog) and releases NFC mutex if locked
+    furi_hal_rfid_pins_reset();
 }
 
 void furi_hal_rfid_set_read_period(uint32_t period) {

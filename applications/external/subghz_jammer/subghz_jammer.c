@@ -431,6 +431,8 @@ Jammer* jammer_alloc(void) {
     if(jammer->number_input == NULL) {
         FURI_LOG_E(TAG, "number_input_alloc(freq_edit) failed");
         view_dispatcher_remove_view(jammer->view_dispatcher, SubGhzJammerViewStop);
+        view_dispatcher_remove_view(jammer->view_dispatcher, SubGhzJammerViewStart);
+        view_dispatcher_remove_view(jammer->view_dispatcher, SubGhzJammerViewMenu);
         widget_free(jammer->widget_start);
         widget_free(jammer->widget_stop);
         variable_item_list_free(jammer->var_item_list);

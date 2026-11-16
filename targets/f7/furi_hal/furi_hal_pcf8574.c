@@ -296,8 +296,17 @@ bool furi_hal_pcf8574_is_ok(void) {
 
 uint8_t furi_hal_pcf8574_read(void) {
     uint8_t state = 0xFF;
-    if(furi_hal_pcf8574_read_port_raw(&state)) {
-        return state;
+    // Prefer safe mutex-protected read with shadow synchronization.
+    // If the bus mutex is not ready or if called from an ISR (or deep sleep / early boot),
+    // fall back to raw read so shutdown, deep-sleep, and wakeup sequences are never blocked.
+    if(furi_hal_i2c_bus_power_mutex && !FURI_IS_ISR()) {
+        if(furi_hal_pcf8574_read_port(&state)) {
+            return state;
+        }
+    } else {
+        if(furi_hal_pcf8574_read_port_raw(&state)) {
+            return state;
+        }
     }
     return 0xFF;
 }
