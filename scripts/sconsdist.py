@@ -118,11 +118,25 @@ class Main(App):
             dist_dir_components.append(self.flavor)
 
         self.output_dir_path = join("dist", "-".join(dist_dir_components))
-        if exists(self.output_dir_path) and not self.args.noclean:
-            try:
-                shutil.rmtree(self.output_dir_path)
-            except Exception as ex:
-                self.logger.warning(f"Failed to clean output directory: {ex}")
+        if exists(self.output_dir_path):
+            if not self.args.noclean:
+                try:
+                    shutil.rmtree(self.output_dir_path)
+                except Exception as ex:
+                    self.logger.warning(f"Failed to clean output directory: {ex}")
+            else:
+                # Clean up stale commit-tagged artifacts from earlier commits so they don't accumulate
+                for item in listdir(self.output_dir_path):
+                    item_path = join(self.output_dir_path, item)
+                    if item.startswith("flipper-z-") or item.startswith(f"{self.target}-update-"):
+                        if self.args.suffix not in item:
+                            try:
+                                if os.path.isdir(item_path):
+                                    shutil.rmtree(item_path)
+                                else:
+                                    os.remove(item_path)
+                            except Exception as ex:
+                                self.logger.warning(f"Failed to remove stale artifact {item}: {ex}")
 
         if not exists(self.output_dir_path):
             self.logger.debug(f"Creating output directory {self.output_dir_path}")

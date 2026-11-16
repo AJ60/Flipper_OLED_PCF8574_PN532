@@ -65,6 +65,12 @@ struct Jammer {
     volatile bool abort_requested;
     volatile bool tx_active;
     volatile bool tx_error;
+
+    // Runtime-only thermal throttle for pulse_ratio.
+    // Starts equal to settings.pulse_ratio at worker launch; thermal logic may
+    // reduce it during a TX session. Never written back to settings so the
+    // user's configured duty-cycle is preserved across sessions.
+    uint32_t runtime_pulse_ratio;
 };
 
 /** Entry point registered in application.fam. */

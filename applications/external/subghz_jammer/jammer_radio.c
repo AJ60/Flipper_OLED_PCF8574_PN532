@@ -191,36 +191,47 @@ bool jammer_radio_commit_hop(const SubGhzDevice* device, JammerSignal* signal, u
 
 static uint32_t s_tx_power_level = 0; // last requested power level (0..100); 0 = auto
 
-// Map the UI power level (0..100) to a CC1101 internal-PA level (1..31).
-// 0 => auto => highest level (31). Clamped to [1,31].
-static uint8_t jammer_radio_power_to_level(uint32_t power_level) {
-    if(power_level == 0 || power_level > 100) {
-        return 31; // auto or over-range -> highest internal level
+// Map the UI power level (0..100) to genuine CC1101 PATABLE dBm values.
+// In OOK async mode (FuriHalSubGhzPresetOok650Async, FREND0 PA_POWER = 1):
+// - PATABLE[0] MUST be 0x00 so carrier turns completely off for logic '0'.
+// - PATABLE[1] sets carrier power for logic '1':
+//   0 (Auto) / 100% -> 0xC0 (+12 dBm)
+//   75%             -> 0xCD (+7 dBm)
+//   50%             -> 0x50 (0 dBm)
+//   25%             -> 0x26 (-10 dBm)
+//   10%             -> 0x17 (-20 dBm)
+static uint8_t jammer_radio_power_to_patable(uint32_t power_level) {
+    if(power_level == 0 || power_level >= 100) {
+        return 0xC0; // +12 dBm (Auto / 100%)
+    } else if(power_level >= 75) {
+        return 0xCD; // +7 dBm (75%)
+    } else if(power_level >= 50) {
+        return 0x50; // 0 dBm (50%)
+    } else if(power_level >= 25) {
+        return 0x26; // -10 dBm (25%)
+    } else {
+        return 0x17; // -20 dBm (10%)
     }
-    return (uint8_t)((power_level * 31 + 99) / 100); // 1..100 -> 1..31
 }
 
 // Write the CC1101 PA_TABLE directly (bypassing the opaque SubGhzDevice) so the
-// TX power matches the user's power_level. The internal CC1101 uses the mapped
-// level across all 8 entries; the external PA is enabled with 0xE7 (+20..+30 dBm).
+// TX power matches the user's power_level.
 static void jammer_radio_apply_tx_power(const SubGhzDevice* device) {
     if(device == NULL) {
         return;
     }
-    uint8_t level = jammer_radio_power_to_level(s_tx_power_level);
-    uint8_t pa[8];
+    uint8_t pa_val = jammer_radio_power_to_patable(s_tx_power_level);
+    uint8_t pa[8] = {0x00, pa_val, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     int external = radio_device_loader_is_external(device);
-    for(int i = 0; i < 8; i++) {
-        pa[i] = external ? 0xE7 : (uint8_t)level;
-    }
+
     // Route through the device interconnect so both the internal CC1101 and the
     // external cc1101_ext plugin apply the PA table on their own bus.
     subghz_devices_load_patable(device, pa);
     FURI_LOG_D(
         TAG,
-        "tx power applied: %lu%% -> level %u (external=%d)",
-        s_tx_power_level,
-        level,
+        "tx power applied: %lu%% -> PATABLE[1]=0x%02X (external=%d)",
+        (unsigned long)s_tx_power_level,
+        pa_val,
         external);
 }
 
@@ -230,8 +241,11 @@ void jammer_radio_set_tx_power(const SubGhzDevice* device, uint32_t power_level)
     }
     s_tx_power_level = power_level;
     jammer_radio_apply_tx_power(device);
-    uint8_t level = jammer_radio_power_to_level(power_level);
-    FURI_LOG_D(TAG, "tx power requested: %lu%% -> level %u", power_level, level);
+    FURI_LOG_D(
+        TAG,
+        "tx power requested: %lu%% -> 0x%02X",
+        (unsigned long)power_level,
+        jammer_radio_power_to_patable(power_level));
 }
 
 bool jammer_radio_pre_tx_check(

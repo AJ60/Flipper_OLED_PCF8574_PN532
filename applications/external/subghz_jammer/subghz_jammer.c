@@ -76,9 +76,9 @@ static uint32_t jammer_worker_fill_queue(JammerSignal* signal, JammerSettings* s
 
 /* Pure thermal throttle: estimate junction temperature and average TX current
  * at the target frequency, then apply the decision (reduce duty -> reduce
- * power -> stop). Mutates settings.pulse_ratio / settings.power_level and
- * re-applies them to the radio/signal. Returns true if the TX session should
- * stop now.
+ * power -> stop). Uses runtime_pulse_ratio (NOT settings.pulse_ratio) so the
+ * user's configured duty-cycle survives the session and is not flash-saved with
+ * a thermally-degraded value. Returns true if the TX session should stop now.
  */
 static bool jammer_worker_apply_thermal(
     Jammer* jammer,
@@ -88,7 +88,7 @@ static bool jammer_worker_apply_thermal(
     const bool external_pa = (freq >= 900000000u);
     uint32_t i_full = jammer_thermal_est_current_ma(
         freq, jammer->settings.power_level, external_pa);
-    uint32_t i_avg = (i_full * jammer->settings.pulse_ratio) / 100u;
+    uint32_t i_avg = (i_full * jammer->runtime_pulse_ratio) / 100u;
     uint32_t temp = jammer_thermal_est_temp_c(25u, i_avg);
     jammer->thermal.temp_c = temp;
     jammer->thermal.avg_current_ma = i_avg;
@@ -96,17 +96,22 @@ static bool jammer_worker_apply_thermal(
         temp, i_avg, 0u, jammer->settings.max_tx_duration_ms, elapsed_ms, *duty_already_reduced);
     switch(d) {
     case JammerThermalReduceDuty:
-        if(jammer->settings.pulse_ratio > 5u) {
-            jammer->settings.pulse_ratio -= 5u;
+        // Reduce the runtime duty only — never touch settings.pulse_ratio which
+        // is the user's persisted config and is saved to flash on app exit.
+        if(jammer->runtime_pulse_ratio > 5u) {
+            jammer->runtime_pulse_ratio -= 5u;
+            FURI_LOG_W(
+                TAG,
+                "thermal: duty throttled to %lu%%",
+                (unsigned long)jammer->runtime_pulse_ratio);
         }
         *duty_already_reduced = true;
         break;
     case JammerThermalReducePower:
-        if(jammer->settings.power_level > 1u) {
-            jammer->settings.power_level -= 1u;
-            const SubGhzDevice* dev = jammer_radio_get_device();
-            if(dev != NULL) jammer_radio_set_tx_power(dev, jammer->settings.power_level);
-        }
+        // Do NOT destructively mutate jammer->settings.power_level.
+        // Mutating settings permanently degraded the user's config down to 1% in flash.
+        // Duty cycle throttling (JammerThermalReduceDuty) already cools the radio safely.
+        FURI_LOG_W(TAG, "thermal: power-reduce requested; using duty throttle instead");
         break;
     case JammerThermalForceStop:
         return true;
@@ -137,7 +142,11 @@ int32_t jammer_worker_thread(void* context) {
     }
     jammer_signal_set_mode(signal, jammer->settings.mode);
     jammer_signal_set_frequency(signal, jammer->settings.frequency);
-    signal->pulse_ratio = jammer->settings.pulse_ratio;
+    // Initialize runtime_pulse_ratio from the user's setting at session start.
+    // Thermal throttling reduces runtime_pulse_ratio only; settings.pulse_ratio
+    // is never modified during a TX session so it is preserved for flash save.
+    jammer->runtime_pulse_ratio = jammer->settings.pulse_ratio;
+    signal->pulse_ratio = jammer->runtime_pulse_ratio;
 
     // Set the user's TX power before begin so the first hop's PA table is
     // correct: jammer_radio_begin() applies it after load_preset + set_frequency.
@@ -204,7 +213,7 @@ int32_t jammer_worker_thread(void* context) {
                    jammer, freq, &duty_already_reduced, elapsed_ms)) {
                 break;
             }
-            signal->pulse_ratio = jammer->settings.pulse_ratio;
+            signal->pulse_ratio = jammer->runtime_pulse_ratio;
             // Validate against the band + EU-region gate before committing.
             if(!jammer_radio_pre_tx_check(device, freq, jammer->settings.bypass_region)) {
                 // Frequency gated: skip this hop, keep the loop alive.
@@ -256,7 +265,7 @@ int32_t jammer_worker_thread(void* context) {
                    jammer, freq, &duty_already_reduced, elapsed_ms)) {
                 break;
             }
-            signal->pulse_ratio = jammer->settings.pulse_ratio;
+            signal->pulse_ratio = jammer->runtime_pulse_ratio;
             furi_delay_ms(tick_ms);
             elapsed_ms += tick_ms;
         }
@@ -301,6 +310,12 @@ static bool subghz_jammer_navigation_callback(void* context) {
     furi_assert(context);
     Jammer* jammer = (Jammer*)context;
     return scene_manager_handle_back_event(jammer->scene_manager);
+}
+
+static void subghz_jammer_tick_event_callback(void* context) {
+    furi_assert(context);
+    Jammer* jammer = (Jammer*)context;
+    scene_manager_handle_tick_event(jammer->scene_manager);
 }
 
 Jammer* jammer_alloc(void) {
@@ -348,6 +363,8 @@ Jammer* jammer_alloc(void) {
         jammer->view_dispatcher, subghz_jammer_custom_event_callback);
     view_dispatcher_set_navigation_event_callback(
         jammer->view_dispatcher, subghz_jammer_navigation_callback);
+    view_dispatcher_set_tick_event_callback(
+        jammer->view_dispatcher, subghz_jammer_tick_event_callback, 250);
     view_dispatcher_attach_to_gui(jammer->view_dispatcher, jammer->gui, ViewDispatcherTypeFullscreen);
 
     jammer->dialogs = furi_record_open(RECORD_DIALOGS);

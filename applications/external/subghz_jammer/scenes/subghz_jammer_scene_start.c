@@ -46,45 +46,54 @@ static void format_status(char* buffer, size_t buf_size, Jammer* jammer) {
     uint32_t freq_mhz = jammer->settings.frequency / 1000000;
     uint32_t freq_khz = (jammer->settings.frequency % 1000000) / 1000;
 
-    char duty_line[32] = "";
-    if(jammer->settings.mode == JammerSignalModePulse) {
-        uint32_t duty_pct =
-            jammer->settings.pulse_ratio > 100 ? 100u : jammer->settings.pulse_ratio;
-        snprintf(
-            duty_line,
-            sizeof(duty_line),
-            "\nDuty: %lu%%",
-            (unsigned long)duty_pct);
-    }
-
-    char power_line[16];
+    char power_str[16];
     if(jammer->settings.power_level == 0) {
-        snprintf(power_line, sizeof(power_line), "Auto");
+        snprintf(power_str, sizeof(power_str), "Auto");
     } else {
-        snprintf(power_line, sizeof(power_line), "%lu%%", (unsigned long)jammer->settings.power_level);
+        snprintf(power_str, sizeof(power_str), "%lu%%", (unsigned long)jammer->settings.power_level);
     }
 
-    const char* status_str = "IDLE";
+    const char* status_tag = "[IDLE]";
     if(jammer->tx_error) {
-        status_str = "BLOCKED";
+        status_tag = "[BLOCK]";
     } else if(jammer->tx_active) {
-        status_str = "TRANSMITTING";
+        status_tag = "[JAMMING]";
     }
 
     snprintf(
         buffer,
         buf_size,
-        "Mode: %s\nFreq: %lu.%03lu MHz\nRadio: %s%s\nPower: %s\nHops: %lu\nTemp: %lu C / %lu mA\nStatus: %s",
-        mode_str,
+        "TX: %lu.%03lu MHz %s\nMode: %s | Rad: %s\nPwr: %s | %lu C / %lu mA\nHops: %lu",
         (unsigned long)freq_mhz,
         (unsigned long)freq_khz,
+        status_tag,
+        mode_str,
         radio_str,
-        duty_line,
-        power_line,
-        (unsigned long)jammer->settings.hop_count,
+        power_str,
         (unsigned long)jammer->thermal.temp_c,
         (unsigned long)jammer->thermal.avg_current_ma,
-        status_str);
+        (unsigned long)jammer->settings.hop_count);
+}
+
+static void jammer_start_button_callback(GuiButtonType result, InputType type, void* context);
+
+static void subghz_jammer_scene_start_update_view(Jammer* jammer) {
+    if(jammer->tx_error) return;
+    Widget* widget = jammer->widget_start;
+    widget_reset(widget);
+
+    if(jammer->settings.latch) {
+        widget_add_button_element(
+            widget, GuiButtonTypeCenter, "Stop", jammer_start_button_callback, jammer);
+    } else {
+        widget_add_button_element(
+            widget, GuiButtonTypeCenter, "Hold OK", jammer_start_button_callback, jammer);
+    }
+
+    char buffer[256];
+    format_status(buffer, sizeof(buffer), jammer);
+    widget_add_text_box_element(
+        widget, 0, 0, 128, 48, AlignLeft, AlignTop, buffer, false);
 }
 
 static void jammer_start_button_callback(GuiButtonType result, InputType type, void* context) {
@@ -152,18 +161,9 @@ void subghz_jammer_scene_start_on_enter(void* context) {
         if(jammer->notifications) {
             notification_message(jammer->notifications, &sequence_set_red_255);
         }
-        widget_add_button_element(
-            widget, GuiButtonTypeCenter, "Stop", jammer_start_button_callback, jammer);
-    } else {
-        widget_add_button_element(
-            widget, GuiButtonTypeCenter, "Hold OK", jammer_start_button_callback, jammer);
     }
 
-    char buffer[256];
-    format_status(buffer, sizeof(buffer), jammer);
-    widget_add_text_box_element(
-        widget, 0, 0, 128, 52, AlignLeft, AlignTop, buffer, false);
-
+    subghz_jammer_scene_start_update_view(jammer);
     view_dispatcher_switch_to_view(jammer->view_dispatcher, SubGhzJammerViewStart);
 }
 
@@ -171,7 +171,12 @@ bool subghz_jammer_scene_start_on_event(void* context, SceneManagerEvent event) 
     Jammer* jammer = (Jammer*)context;
     bool consumed = false;
 
-    if(event.type == SceneManagerEventTypeCustom) {
+    if(event.type == SceneManagerEventTypeTick) {
+        if(!jammer->tx_error) {
+            subghz_jammer_scene_start_update_view(jammer);
+            consumed = true;
+        }
+    } else if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == SubGhzJammerEventStop) {
             jammer_stop_worker(jammer);
             if(jammer->notifications) {

@@ -43,7 +43,8 @@ static void freq_edit_result_callback(void* context, int32_t number) {
     uint32_t khz = freq_khz_clamp((uint32_t)number);
     jammer->settings.frequency = freq_khz_to_hz(khz);
     jammer_settings_save(&jammer->settings);
-    scene_manager_next_scene(jammer->scene_manager, SubGhzJammerScenemenu);
+    scene_manager_search_and_switch_to_previous_scene(
+        jammer->scene_manager, SubGhzJammerScenemenu);
 }
 
 void jammer_freq_edit_enter(Jammer* jammer) {
