@@ -8,6 +8,8 @@
 
 #include <furi.h>
 
+#define TAG "FuriHalPwm"
+
 const uint32_t lptim_psc_table[] = {
     LL_LPTIM_PRESCALER_DIV1,
     LL_LPTIM_PRESCALER_DIV2,
@@ -40,6 +42,11 @@ void furi_hal_pwm_start(FuriHalPwmOutputId channel, uint32_t freq, uint8_t duty)
         if(pwm_tim17_active) {
             // Already running: update the parameters in place.
             furi_hal_pwm_set_params(channel, freq, duty);
+            return;
+        }
+
+        if(furi_hal_bus_is_enabled(FuriHalBusTIM17)) {
+            FURI_LOG_E(TAG, "TIM17 bus in use (NFC or external driver active), cannot start PWM on PA7");
             return;
         }
 
